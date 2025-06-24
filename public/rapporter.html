@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rapporter – Kundportal</title>
+  <link rel="stylesheet" href="rapporter.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="logo-container">
+      <a href="customerportal.html">
+        <img src="Customerportalimage/Sesede.png" alt="Logotyp" />
+      </a>
+    </div>
+    <div class="menu-container">
+      <div class="menu-toggle" onclick="toggleMenu()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <div class="menu-content" id="menuContent">
+        <a href="kontakt.html">📞 Kontakt</a>
+        <a href="rapporter.html">📊 Rapporter</a>
+        <a href="fakturor.html">📄 Fakturor</a>
+        <a href="kunder.html">💬 Kunder</a>
+        <a href="inventarier.html">📦 Inventarier</a>
+        <a href="#">⚙️ Inställningar</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="reports-container">
+    <h1>Utbetalningsrapporter</h1>
+    <p class="placeholder-text">Inga rapporter tillgängliga just nu.</p>
+
+    <div id="report-list">
+      <!-- API-genererade rapporter kommer att visas här -->
+    </div>
+  </main>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById("menuContent").classList.toggle("show");
+    }
+
+    // Här laddar du in rapporter via API i framtiden
+    async function fetchReports() {
+      try {
+        const res = await fetch("/api/reports"); // exempel-endpoint
+        const reports = await res.json();
+
+        const reportList = document.getElementById("report-list");
+        reportList.innerHTML = "";
+
+        if (reports.length === 0) {
+          reportList.innerHTML = "<p class='placeholder-text'>Inga rapporter hittades.</p>";
+          return;
+        }
+
+        reports.forEach(report => {
+          const div = document.createElement("div");
+          div.classList.add("report-card");
+          div.innerHTML = `
+            <div class="report-summary">
+              <p><strong>Totalt:</strong> ${report.amount} kr</p>
+              <p><strong>Från:</strong> ${report.date}</p>
+            </div>
+            <div class="report-actions">
+              <a href="${report.detailsUrl}" class="btn">Visa detaljer</a>
+              <a href="${report.pdfUrl}" class="btn btn-secondary">Ladda ner PDF</a>
+            </div>
+          `;
+          reportList.appendChild(div);
+        });
+
+      } catch (err) {
+        console.error("Fel vid hämtning av rapporter", err);
+        document.getElementById("report-list").innerHTML = "<p class='placeholder-text'>Kunde inte ladda rapporter.</p>";
+      }
+    }
+
+    // Körs senare när API finns
+    // fetchReports();
+  </script>
+</body>
+</html>

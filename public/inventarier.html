@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventarier – Source Kundportal</title>
+  <link rel="stylesheet" href="inventarier.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo-container">
+      <a href="customerportal.html">
+        <img src="Customerportalimage/Sesede.png" alt="Logotyp" />
+      </a>
+    </div>
+    <div class="menu-container">
+      <div class="menu-toggle" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="menu-content" id="menuContent">
+        <a href="kontakt.html">📞 Kontakt</a>
+        <a href="rapporter.html">📊 Rapporter</a>
+        <a href="fakturor.html">📄 Fakturor</a>
+        <a href="kunder.html">💬 Kunder</a>
+        <a href="inventarier.html">📦 Inventarier</a>
+        <a href="installningar.html">⚙️ Inställningar</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="inventory-dashboard">
+    <h1>Dina Produkter</h1>
+    <p class="info-text">Här kommer dina produkter att visas. Systemet kopplas till din e-handel och uppdaterar automatiskt vid köp, retur eller lagerpåfyllning.</p>
+
+    <table class="inventory-table">
+      <thead>
+        <tr>
+          <th>Produktnamn</th>
+          <th>Artikelnummer</th>
+          <th>Lagersaldo</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="inventory-body">
+        <tr>
+          <td colspan="4" class="placeholder">🔄 Väntar på data från lager-API...</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="note">Ex: Om en kund köper 1 vit t-shirt, dras den automatiskt från lagret. Vid retur läggs den tillbaka.</p>
+  </main>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById("menuContent").classList.toggle("show");
+    }
+
+    // Framtida fetch från backend
+    // fetch('/api/inventory').then(...);
+  </script>
+
+</body>
+</html>

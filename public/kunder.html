@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kundinkorg – Source Kundportal</title>
+  <link rel="stylesheet" href="kunder.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="header">
+    <div class="logo-container">
+      <a href="customerportal.html">
+        <img src="Customerportalimage/Sesede.png" alt="Logotyp" />
+      </a>
+    </div>
+    <div class="menu-container">
+      <div class="menu-toggle" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="menu-content" id="menuContent">
+        <a href="kontakt.html">📞 Kontakt</a>
+        <a href="rapporter.html">📊 Rapporter</a>
+        <a href="fakturor.html">📄 Fakturor</a>
+        <a href="kunder.html">💬 Kunder</a>
+        <a href="inventarier.html">📦 Inventarier</a>
+        <a href="installningar.html">⚙️ Inställningar</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="inbox-container">
+    <h1>Inkommande Kundmeddelanden</h1>
+    <p class="info">Den här vyn kommer att visa e-post och meddelanden från dina kunder så fort API-integrationen är klar.</p>
+
+    <!-- Filter / Sortering -->
+    <div class="controls">
+      <select>
+        <option>Alla</option>
+        <option>Olästa</option>
+        <option>Lästa</option>
+      </select>
+      <input type="text" placeholder="Sök kundens namn eller e-post..." />
+    </div>
+
+    <!-- Placeholder innan integration -->
+    <div class="placeholder">
+      <p>🔄 Väntar på att ansluta till kundens inkorg via API...</p>
+      <p>Här kommer inkommande kundmejl visas och kunna hanteras.</p>
+    </div>
+
+    <!-- I framtiden: <div class="message-list"> … laddas dynamiskt här via JS/API … </div> -->
+  </main>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById("menuContent").classList.toggle("show");
+    }
+
+    // I framtiden: fetch('/api/inbox') eller fetchGmail() osv.
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registrera konto – Source</title>
+  <link rel="stylesheet" href="register.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <div class="login-container">
+    <h1>Skapa ett konto</h1>
+    <form action="/register" method="POST">
+      <input type="text" name="name" placeholder="Namn" required />
+      <input type="email" name="email" placeholder="E-postadress" required />
+      <input type="password" name="password" placeholder="Lösenord" required />
+      <button type="submit">Registrera</button>
+    </form>
+    <p>Har du redan ett konto? <a href="/login.html">Logga in här</a></p>
+  </div>
+
+</body>
+</html>

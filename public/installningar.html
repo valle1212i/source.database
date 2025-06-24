@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inställningar – Kundportal</title>
+  <link rel="stylesheet" href="installningar.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="header">
+  <div class="logo-container">
+    <a href="customerportal.html">
+      <img src="Customerportalimage/Sesede.png" alt="Logotyp" />
+    </a>
+  </div>
+  <div class="menu-container">
+    <div class="menu-toggle" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="menu-content" id="menuContent">
+      <a href="kontakt.html">📞 Kontakt</a>
+      <a href="rapporter.html">📊 Rapporter</a>
+      <a href="fakturor.html">📄 Fakturor</a>
+      <a href="kunder.html">💬 Kunder</a>
+      <a href="inventarier.html">📦 Inventarier</a>
+      <a href="installningar.html">⚙️ Inställningar</a>
+    </div>
+  </div>
+</header>
+
+<main class="settings-page">
+  <h1>Inställningar</h1>
+
+  <section class="setting-group">
+    <h2>🌐 Språk</h2>
+    <select id="language">
+      <option value="sv">Svenska</option>
+      <option value="en">English</option>
+    </select>
+  </section>
+
+  <section class="setting-group">
+    <h2>👥 Användare & Roller</h2>
+    <div class="user-list">
+      <p><strong>Du:</strong> Admin</p>
+      <p>+ Fler användare kommer kunna läggas till via API i framtiden.</p>
+    </div>
+  </section>
+
+  <section class="setting-group">
+    <h2>🎨 Tema</h2>
+    <label><input type="radio" name="theme" value="light" checked> Ljust</label>
+    <label><input type="radio" name="theme" value="dark"> Mörkt</label>
+  </section>
+
+  <section class="setting-group">
+    <h2>📩 Kontakta support</h2>
+    <p>Behöver du hjälp? <a href="kontakt.html">Kontakta oss här</a></p>
+  </section>
+
+  <section class="setting-group">
+    <h2>🛠 Kommande inställningar</h2>
+    <ul>
+      <li>API-nycklar för integrationer</li>
+      <li>Webhook-händelser</li>
+      <li>Branding (eget namn, färg)</li>
+    </ul>
+  </section>
+
+  <button class="save-btn">💾 Spara inställningar</button>
+</main>
+
+<script>
+  function toggleMenu() {
+    document.getElementById("menuContent").classList.toggle("show");
+  }
+
+  // Spara-knapp (förberett för API-koppling)
+  document.querySelector('.save-btn').addEventListener('click', () => {
+    const selectedLanguage = document.getElementById('language').value;
+    const selectedTheme = document.querySelector('input[name="theme"]:checked').value;
+
+    // Här skulle API-anrop ske:
+    console.log('Skicka till servern:', {
+      language: selectedLanguage,
+      theme: selectedTheme
+    });
+
+    alert("✅ Inställningar sparade (simulerat)");
+  });
+</script>
+
+</body>
+</html>

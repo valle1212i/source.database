@@ -1,0 +1,47 @@
+<!-- login.html -->
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logga in – Source</title>
+  <link rel="stylesheet" href="login.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="form-container">
+    <h1>Logga in</h1>
+    <form action="/login" method="POST">
+      <input type="email" name="email" placeholder="E-post" required>
+      <input type="password" name="password" placeholder="Lösenord" required>
+      <button type="submit">Logga in</button>
+    </form>
+    <p>Inget konto? <a href="/register.html">Registrera dig</a></p>
+  </div>
+</body>
+</html>
+
+<script>
+  document.querySelector("form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+
+    const res = await fetch("/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
+    });
+
+    if (res.ok) {
+      // ✅ Om lyckad login – skicka vidare till dashboard
+      window.location.href = "/customerportal.html";
+    } else {
+      const text = await res.text();
+      alert("Inloggning misslyckades: " + text);
+    }
+  });
+</script>

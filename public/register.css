@@ -1,0 +1,88 @@
+/* ===== Reset ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  /* ===== Body ===== */
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #eafaf8, #ffffff);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  /* ===== Container ===== */
+  .login-container {
+    background-color: #ffffff;
+    padding: 40px 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .login-container h1 {
+    font-size: 1.8rem;
+    color: #1a1a1a;
+    margin-bottom: 25px;
+  }
+  
+  /* ===== Form Styling ===== */
+  .login-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .login-container input {
+    padding: 12px 15px;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+    transition: border 0.3s ease;
+  }
+  
+  .login-container input:focus {
+    border-color: #00bfa6;
+  }
+  
+  /* ===== Button ===== */
+  .login-container button {
+    background-color: #00bfa6;
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .login-container button:hover {
+    background-color: #009e8f;
+  }
+  
+  /* ===== Link below form ===== */
+  .login-container p {
+    margin-top: 20px;
+    font-size: 0.95rem;
+    color: #555;
+  }
+  
+  .login-container a {
+    color: #00bfa6;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .login-container a:hover {
+    text-decoration: underline;
+  }
+  

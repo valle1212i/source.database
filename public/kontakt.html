@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kontakta oss – Kundportal</title>
+  <link rel="stylesheet" href="kontakt.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header med logotyp och hamburgermeny -->
+  <header class="header">
+    <div class="logo-container">
+      <a href="customerportal.html">
+        <img src="Customerportalimage/Sesede.png" alt="Logotyp" />
+      </a>
+    </div>
+    <div class="menu-container">
+      <div class="menu-toggle" onclick="toggleMenu()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <div class="menu-content" id="menuContent">
+        <a href="kontakt.html">📞 Kontakta oss</a>
+        <a href="rapporter.html">📊 Rapporter</a>
+        <a href="fakturor.html">📄 Fakturor</a>
+        <a href="kunder.html">💬 Kunder</a>
+        <a href="inventarier.html">📦 Inventarier</a>
+        <a href="installningar.html">⚙️ Inställningar</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Kontaktinnehåll -->
+  <main class="contact-page">
+    <h1>Kontakta oss</h1>
+
+    <section class="contact-section">
+      <h2>💬 Chatta med oss</h2>
+      <p>Vi är tillgängliga måndag–fredag, 09:00–17:00.<br>
+        Klicka på knappen nedan för att starta en chatt med vårt supportteam.</p>
+      <a href="chatt-redirect.html" class="btn">Starta chatt</a>
+    </section>
+
+    <section class="contact-section">
+      <h2>📞 Ring oss</h2>
+      <p>Behöver du prata med oss direkt?<br> Ring vår kundtjänst:</p>
+      <p class="phone-number"><a href="tel:+46733221212">📱 +46 73 322 12 12</a></p>
+    </section>
+
+    <section class="contact-section faq">
+      <h2>❓ Vanliga frågor</h2>
+      <details>
+        <summary>Hur snabbt får jag svar från supporten?</summary>
+        <p>Oftast inom 2 timmar under kontorstid.</p>
+      </details>
+      <details>
+        <summary>Vad kostar det att komma igång?</summary>
+        <p>Vi har olika paket – se vår <a href="pricing.html">prissida</a>.</p>
+      </details>
+      <details>
+        <summary>Kan ni hjälpa till med hela hemsidan?</summary>
+        <p>Ja! Vi tar hand om allt – design, funktion, betalning och drift.</p>
+      </details>
+    </section>
+  </main>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById("menuContent").classList.toggle("show");
+    }
+  </script>
+</body>
+</html>

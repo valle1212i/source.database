@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fakturor – Kundportal</title>
+  <link rel="stylesheet" href="fakturor.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="logo-container">
+      <a href="customerportal.html">
+        <img src="Customerportalimage/" alt="Logotyp" />
+      </a>
+    </div>
+    <div class="menu-container">
+      <div class="menu-toggle" onclick="toggleMenu()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <div class="menu-content" id="menuContent">
+        <a href="kontakt.html">📞 Kontakt</a>
+        <a href="rapporter.html">📊 Rapporter</a>
+        <a href="fakturor.html">📄 Fakturor</a>
+        <a href="kunder.html">💬 Kunder</a>
+        <a href="inventarier.html">📦 Inventarier</a>
+        <a href="installningar.html">⚙️ Inställningar</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="invoice-dashboard">
+    <h1>Fakturor</h1>
+    <p class="subtitle">Här visas dina fakturor så snart systemet är kopplat till din kunddata.</p>
+
+    <div class="loading-message">🔄 Väntar på fakturainformation från servern...</div>
+
+    <table class="invoice-table">
+      <thead>
+        <tr>
+          <th>Faktura</th>
+          <th>Datum</th>
+          <th>Belopp</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="invoice-body">
+        <!-- Fakturor kommer att laddas här via API -->
+      </tbody>
+    </table>
+  </main>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById("menuContent").classList.toggle("show");
+    }
+
+    // 🔧 Exempel på framtida API-hämtning
+    async function fetchInvoices() {
+      const tbody = document.getElementById("invoice-body");
+      const loading = document.querySelector('.loading-message');
+
+      try {
+        const res = await fetch("/api/invoices"); // <-- Din API-endpoint här
+        const data = await res.json();
+
+        loading.style.display = "none";
+
+        if (data.length === 0) {
+          tbody.innerHTML = "<tr><td colspan='4'>Inga fakturor tillgängliga ännu.</td></tr>";
+        } else {
+          data.forEach(inv => {
+            const row = `
+              <tr>
+                <td>${inv.invoiceId}</td>
+                <td>${inv.date}</td>
+                <td>${inv.amount} kr</td>
+                <td><span class="status ${inv.status.toLowerCase()}">${inv.status}</span></td>
+              </tr>
+            `;
+            tbody.innerHTML += row;
+          });
+        }
+      } catch (err) {
+        loading.textContent = "🚫 Kunde inte hämta fakturadata. Kontrollera API-anslutningen.";
+      }
+    }
+
+    // Kör när sidan laddats
+    window.onload = fetchInvoices;
+  </script>
+</body>
+</html>

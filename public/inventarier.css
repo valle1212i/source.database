@@ -1,0 +1,105 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f5f7fa;
+    margin: 0;
+    padding: 0;
+    color: #333;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background-color: #fff;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .logo-container img {
+    height: 45px;
+  }
+  
+  .menu-toggle {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    gap: 5px;
+  }
+  
+  .menu-toggle span {
+    width: 25px;
+    height: 3px;
+    background-color: #333;
+    border-radius: 2px;
+  }
+  
+  .menu-content {
+    display: none;
+    position: absolute;
+    top: 70px;
+    right: 30px;
+    background-color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0px 6px 16px rgba(0,0,0,0.1);
+  }
+  
+  .menu-content.show {
+    display: block;
+  }
+  
+  .menu-content a {
+    display: block;
+    margin-bottom: 10px;
+    color: #0077cc;
+    text-decoration: none;
+  }
+  
+  .inventory-dashboard {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+  
+  .inventory-dashboard h1 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+  }
+  
+  .info-text {
+    color: #555;
+    margin-bottom: 20px;
+  }
+  
+  .inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .inventory-table thead {
+    background-color: #e0e0e0;
+  }
+  
+  .inventory-table th, .inventory-table td {
+    padding: 14px 18px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .placeholder {
+    text-align: center;
+    color: #888;
+  }
+  
+  .note {
+    font-size: 0.9rem;
+    margin-top: 20px;
+    color: #777;
+  }
+  
