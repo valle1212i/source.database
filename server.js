@@ -6,13 +6,21 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const Customer = require('./models/Customer');
+const cors = require('cors');
 
 dotenv.config();
 const app = express();
 
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
+
 // 📂 Gör public-mappen tillgänglig
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(express.json());
 
 // 🔐 Sessioninställningar
 app.use(session({
@@ -108,8 +116,12 @@ app.get('/logout', (req, res) => {
   });
 });
 
+// 🧠 AI-support router
+app.use('/api/support', require('./routes/support'));
+
 // 🚀 Starta server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Servern körs på http://localhost:${PORT}`);
 });
+

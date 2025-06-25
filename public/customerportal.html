@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="customerportal.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div class="menu-container">
         <div class="menu-toggle">
@@ -93,6 +94,39 @@
               <th>Konvertering</th>
             </tr>
           </thead>
+          <!-- 🔹 AI-supportagent -->
+<hr>
+<h3>💬 Fråga AI-supporten</h3>
+<textarea id="aiMessage" rows="3" placeholder="Ex: Hur ändrar jag kampanjen?"></textarea><br>
+<button onclick="askAI()">Skicka fråga</button>
+
+<div id="aiResponse" style="margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-radius: 4px;"></div>
+
+<script>
+  async function askAI() {
+    const message = document.getElementById("aiMessage").value;
+    const responseDiv = document.getElementById("aiResponse");
+    if (!message) {
+      responseDiv.textContent = "⚠️ Vänligen skriv en fråga först.";
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/support/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+        credentials: "include"
+      });
+
+      const data = await res.json();
+      responseDiv.textContent = data.reply || "❌ Inget svar från AI.";
+    } catch (err) {
+      responseDiv.textContent = "❌ Det gick inte att kontakta AI-agenten.";
+      console.error(err);
+    }
+  }
+</script>
           <tbody>
             <tr><td>Google Ads</td><td>3 200</td><td>3,2%</td></tr>
             <tr><td>Instagram</td><td>1 400</td><td>2,5%</td></tr>
