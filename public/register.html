@@ -11,7 +11,7 @@
 
   <div class="login-container">
     <h1>Skapa ett konto</h1>
-    <form action="/register" method="POST">
+    <form id="registerForm">
       <input type="text" name="name" placeholder="Namn" required />
       <input type="email" name="email" placeholder="E-postadress" required />
       <input type="password" name="password" placeholder="Lösenord" required />
@@ -19,6 +19,33 @@
     </form>
     <p>Har du redan ett konto? <a href="/login.html">Logga in här</a></p>
   </div>
+<script>
+document.querySelector('#registerForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const name = document.querySelector('input[name="name"]').value;
+  const email = document.querySelector('input[name="email"]').value;
+  const password = document.querySelector('input[name="password"]').value;
+
+  try {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
+    });
+
+    const result = await response.json();
+    alert(result.message);
+
+    if (result.success) {
+      window.location.href = '/login.html'; // skicka användaren till inloggningen
+    }
+  } catch (err) {
+    alert('❌ Något gick fel vid anslutning till servern.');
+    console.error(err);
+  }
+});
+</script>
 
 </body>
 </html>

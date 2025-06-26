@@ -47,25 +47,6 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// 📝 Registrera ny användare
-app.post('/register', async (req, res) => {
-  const { name, email, password } = req.body;
-  try {
-    const existingUser = await Customer.findOne({ email });
-    if (existingUser) {
-      return res.status(400).send('⚠️ E-postadressen är redan registrerad.');
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new Customer({ name, email, password: hashedPassword });
-    await newUser.save();
-    res.redirect('/login.html');
-  } catch (err) {
-    console.error('❌ Fel vid registrering:', err);
-    res.status(500).send('Något gick fel vid registrering.');
-  }
-});
-
 // 🔑 Logga in användare
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -118,6 +99,16 @@ app.get('/logout', (req, res) => {
 
 // 🧠 AI-support router
 app.use('/api/support', require('./routes/support'));
+
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
+
+const invoiceRoutes = require('./routes/invoiceRoutes');
+app.use('/api/invoices', invoiceRoutes);
+
+const analyticsRoutes = require('./routes/analyticsRoutes');
+app.use('/api/analytics', analyticsRoutes);
+
 
 // 🚀 Starta server
 const PORT = process.env.PORT || 3000;

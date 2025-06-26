@@ -39,13 +39,16 @@
 
     <table class="invoice-table">
       <thead>
-        <tr>
-          <th>Faktura</th>
-          <th>Datum</th>
-          <th>Belopp</th>
-          <th>Status</th>
-        </tr>
-      </thead>
+  <tr>
+    <th>Faktura</th>
+    <th>Utfärdad</th>
+    <th>Förfallodatum</th>
+    <th>Betaldatum</th>
+    <th>Belopp</th>
+    <th>Status</th>
+  </tr>
+</thead>
+
       <tbody id="invoice-body">
         <!-- Fakturor kommer att laddas här via API -->
       </tbody>
@@ -71,15 +74,18 @@
         if (data.length === 0) {
           tbody.innerHTML = "<tr><td colspan='4'>Inga fakturor tillgängliga ännu.</td></tr>";
         } else {
-          data.forEach(inv => {
+          data.fakturor.forEach(inv => {
             const row = `
-              <tr>
-                <td>${inv.invoiceId}</td>
-                <td>${inv.date}</td>
-                <td>${inv.amount} kr</td>
-                <td><span class="status ${inv.status.toLowerCase()}">${inv.status}</span></td>
-              </tr>
-            `;
+  <tr>
+    <td>${inv.id}</td>
+    <td>${inv.datum}</td>
+    <td>${inv.forfallodatum || '-'}</td>
+    <td>${inv.betaldatum || '-'}</td>
+    <td>${inv.belopp} kr</td>
+    <td><span class="status ${inv.status.toLowerCase()}">${inv.status}</span></td>
+  </tr>
+`;
+
             tbody.innerHTML += row;
           });
         }

@@ -11,37 +11,43 @@
 <body>
   <div class="form-container">
     <h1>Logga in</h1>
-    <form action="/login" method="POST">
-      <input type="email" name="email" placeholder="E-post" required>
-      <input type="password" name="password" placeholder="Lösenord" required>
-      <button type="submit">Logga in</button>
-    </form>
+    <form id="loginForm">
+  <input type="email" name="email" placeholder="E-post" required />
+  <input type="password" name="password" placeholder="Lösenord" required />
+  <button type="submit">Logga in</button>
+</form>
+
     <p>Inget konto? <a href="/register.html">Registrera dig</a></p>
   </div>
 </body>
 </html>
 
 <script>
-  document.querySelector("form").addEventListener("submit", async (e) => {
+  document.querySelector("#loginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const email = e.target.email.value;
     const password = e.target.password.value;
 
-    const res = await fetch("/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
-    });
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // 👈 viktig för att sessions-cookien ska sparas
+        body: JSON.stringify({ email, password })
+      });
 
-    if (res.ok) {
-      // ✅ Om lyckad login – skicka vidare till dashboard
-      window.location.href = "/customerportal.html";
-    } else {
-      const text = await res.text();
-      alert("Inloggning misslyckades: " + text);
+      const result = await res.json();
+
+      if (result.success) {
+        window.location.href = "/customerportal.html";
+      } else {
+        alert("❌ Inloggning misslyckades: " + result.message);
+      }
+    } catch (err) {
+      alert("❌ Ett fel uppstod. Kunde inte kontakta servern.");
+      console.error(err);
     }
   });
 </script>
+

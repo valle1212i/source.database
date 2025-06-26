@@ -34,6 +34,17 @@
   <main class="reports-container">
     <h1>Utbetalningsrapporter</h1>
     <p class="placeholder-text">Inga rapporter tillgängliga just nu.</p>
+    <table class="analytics-table">
+  <thead>
+    <tr>
+      <th>Nyckeltal</th>
+      <th>Värde</th>
+    </tr>
+  </thead>
+  <tbody id="analytics-body">
+    <!-- Rapportdata laddas här -->
+  </tbody>
+</table>
 
     <div id="report-list">
       <!-- API-genererade rapporter kommer att visas här -->
@@ -41,48 +52,39 @@
   </main>
 
   <script>
-    function toggleMenu() {
-      document.getElementById("menuContent").classList.toggle("show");
-    }
+  function toggleMenu() {
+    document.getElementById("menuContent").classList.toggle("show");
+  }
 
-    // Här laddar du in rapporter via API i framtiden
-    async function fetchReports() {
-      try {
-        const res = await fetch("/api/reports"); // exempel-endpoint
-        const reports = await res.json();
+  async function fetchAnalytics() {
+    const tbody = document.getElementById("analytics-body");
 
-        const reportList = document.getElementById("report-list");
-        reportList.innerHTML = "";
+    try {
+      const res = await fetch("/api/analytics");
+      const data = await res.json();
 
-        if (reports.length === 0) {
-          reportList.innerHTML = "<p class='placeholder-text'>Inga rapporter hittades.</p>";
-          return;
-        }
-
-        reports.forEach(report => {
-          const div = document.createElement("div");
-          div.classList.add("report-card");
-          div.innerHTML = `
-            <div class="report-summary">
-              <p><strong>Totalt:</strong> ${report.amount} kr</p>
-              <p><strong>Från:</strong> ${report.date}</p>
-            </div>
-            <div class="report-actions">
-              <a href="${report.detailsUrl}" class="btn">Visa detaljer</a>
-              <a href="${report.pdfUrl}" class="btn btn-secondary">Ladda ner PDF</a>
-            </div>
-          `;
-          reportList.appendChild(div);
-        });
-
-      } catch (err) {
-        console.error("Fel vid hämtning av rapporter", err);
-        document.getElementById("report-list").innerHTML = "<p class='placeholder-text'>Kunde inte ladda rapporter.</p>";
+      if (!data || data.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='2'>Inga rapportdata tillgängliga.</td></tr>";
+        return;
       }
-    }
 
-    // Körs senare när API finns
-    // fetchReports();
-  </script>
+      data.forEach(row => {
+        const html = `
+          <tr>
+            <td>${row.label}</td>
+            <td>${row.value}</td>
+          </tr>
+        `;
+        tbody.innerHTML += html;
+      });
+    } catch (err) {
+      console.error("🚫 Fel vid hämtning av rapporter", err);
+      tbody.innerHTML = "<tr><td colspan='2'>Kunde inte ladda rapporter.</td></tr>";
+    }
+  }
+
+  window.onload = fetchAnalytics;
+</script>
+
 </body>
 </html>
