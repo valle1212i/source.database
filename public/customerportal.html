@@ -112,29 +112,58 @@
   </div>
 
   <script>
-    async function askAI() {
-      const message = document.getElementById("aiMessage").value;
-      const responseDiv = document.getElementById("aiResponse");
-      if (!message) {
-        responseDiv.textContent = "⚠️ Vänligen skriv en fråga först.";
-        return;
-      }
-
-      try {
-        const res = await fetch("/api/support/ask", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message }),
-          credentials: "include"
-        });
-
-        const data = await res.json();
-        responseDiv.textContent = data.reply || "❌ Inget svar från AI.";
-      } catch (err) {
-        responseDiv.textContent = "❌ Det gick inte att kontakta AI-agenten.";
-        console.error(err);
-      }
+   async function askAI() {
+    const message = document.getElementById("aiMessage").value;
+    const responseDiv = document.getElementById("aiResponse");
+    if (!message) {
+      responseDiv.textContent = "⚠️ Vänligen skriv en fråga först.";
+      return;
     }
-  </script>
+
+    // ⏳ Visa laddningsstatus direkt
+    responseDiv.textContent = "🔄 AI tänker...";
+
+    try {
+      const res = await fetch("/api/chat/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+        credentials: "include"
+      });
+
+      const data = await res.json();
+      const reply = data.reply || "❌ Inget svar från AI.";
+
+      // Töm och börja skrivmaskin-effekten
+      responseDiv.textContent = "";
+      let i = 0;
+      const speed = 40; // ms per tecken
+
+      function typeChar() {
+        if (i < reply.length) {
+          responseDiv.textContent += reply.charAt(i);
+          i++;
+          setTimeout(typeChar, speed);
+        }
+      }
+
+      typeChar(); // Starta effekten
+
+    } catch (err) {
+      responseDiv.textContent = "❌ Det gick inte att kontakta AI-agenten.";
+      console.error(err);
+    }
+  }
+
+  // ⌨️ Lyssna på Enter-knappen i textarea
+  const textarea = document.getElementById("aiMessage");
+  textarea.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault(); // Förhindrar radbrytning
+      askAI(); // Skickar frågan
+    }
+  });
+</script>
+
 </body>
 </html>

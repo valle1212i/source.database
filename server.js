@@ -98,7 +98,6 @@ app.get('/logout', (req, res) => {
 });
 
 // 🧠 AI-support router
-app.use('/api/support', require('./routes/support'));
 
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
@@ -108,6 +107,11 @@ app.use('/api/invoices', invoiceRoutes);
 
 const analyticsRoutes = require('./routes/analyticsRoutes');
 app.use('/api/analytics', analyticsRoutes);
+
+const chatRoutes = require('./routes/chatRoutes');
+app.use('/api/support', require('./routes/support'));
+app.use('/api/chat', require('./routes/chatRoutes')); // 👈 flyttad
+
 
 
 // 🚀 Starta server
