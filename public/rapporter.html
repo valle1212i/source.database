@@ -3,88 +3,173 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rapporter – Kundportal</title>
-  <link rel="stylesheet" href="rapporter.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <title>Kundportal - Utbetalningsrapporter</title>
+  <link rel="stylesheet" href="CSS/betalningar.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+  />
 </head>
-<body>
-  <header class="header">
-    <div class="logo-container">
-      <a href="customerportal.html">
-        <img src="Customerportalimage/Sesede.png" alt="Logotyp" />
-      </a>
-    </div>
-    <div class="menu-container">
-      <div class="menu-toggle" onclick="toggleMenu()">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-      <div class="menu-content" id="menuContent">
-        <a href="kontakt.html">📞 Kontakt</a>
-        <a href="rapporter.html">📊 Rapporter</a>
-        <a href="fakturor.html">📄 Fakturor</a>
-        <a href="kunder.html">💬 Kunder</a>
-        <a href="inventarier.html">📦 Inventarier</a>
-        <a href="#">⚙️ Inställningar</a>
-      </div>
-    </div>
-  </header>
+ <div class="sidebar">
+  <div class="logo">
+    <h2>Source</h2>
+  </div>
+ <ul class="nav-menu">
+  <li>
+    <a href="customerportal.html"><i class="fas fa-home"></i> Hem</a>
+  </li>
+  <li>
+    <a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a>
+  </li>
+  <li>
+    <a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a>
+  </li>
+  <li class="active">
+    <a href="rapporter.html" class="active"><i class="fas fa-chart-line"></i> Rapporter</a>
+  </li>
+  <li>
+    <a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a>
+  </li>
+  <li>
+    <a href="kunder.html"><i class="fas fa-users"></i> Kunder</a>
+  </li>
+  <li>
+    <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a>
+  </li>
+  <li>
+    <a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a>
+  </li>
+  <li>
+    <a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a>
+  </li>
+</ul>
+  <div class="help">
+    <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
+  </div>
+</div>
+  <div class="main">
+    <div class="header">Utbetalningsrapporter</div>
+    <a href="customerportal.html" class="back-button">← Tillbaka till översikt</a>
+    <p class="info-text">Här visas senaste genomförda utbetalningar.</p>
 
-  <main class="reports-container">
-    <h1>Utbetalningsrapporter</h1>
-    <p class="placeholder-text">Inga rapporter tillgängliga just nu.</p>
-    <table class="analytics-table">
-  <thead>
-    <tr>
-      <th>Nyckeltal</th>
-      <th>Värde</th>
-    </tr>
-  </thead>
-  <tbody id="analytics-body">
-    <!-- Rapportdata laddas här -->
-  </tbody>
-</table>
-
-    <div id="report-list">
-      <!-- API-genererade rapporter kommer att visas här -->
+    <div class="filters">
+      <input type="text" id="searchInput" placeholder="Sök belopp eller datum...">
+      <select id="statusFilter">
+        <option value="all">Alla</option>
+        <option value="genomförd">Genomförd</option>
+        <option value="avvisad">Avvisad</option>
+      </select>
+      <input type="date" id="startDate">
+      <button class="black-button" onclick="filterReports()">Filtrera</button>
+      <button class="black-button" onclick="sortByDate()">Sortera efter datum</button>
+      <button class="black-button" onclick="exportReports()">Exportera som Excel</button>
     </div>
-  </main>
+
+    <div id="paymentsList">
+      <!-- Exempelrapporter -->
+      <div class="card">
+        <div class="card-top">
+          <div>
+            <strong>Utbetalning</strong>
+            <p class="amount">215 000 SEK</p>
+          </div>
+          <div class="status open">
+            <i class="fas fa-check-circle"></i> Genomförd
+          </div>
+        </div>
+        <div class="card-details">
+          <p>Datum: 2025-06-25</p>
+          <p>Referens-ID: UTXN-001</p>
+        </div>
+        <div class="actions">
+          <button class="black-button" onclick='showReport({
+            amount: "215 000 SEK",
+            status: "Genomförd",
+            date: "2025-06-25",
+            id: "UTXN-001"
+          })'>Visa detaljer</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-top">
+          <div>
+            <strong>Utbetalning</strong>
+            <p class="amount">180 500 SEK</p>
+          </div>
+          <div class="status open">
+            <i class="fas fa-check-circle"></i> Genomförd
+          </div>
+        </div>
+        <div class="card-details">
+          <p>Datum: 2025-06-18</p>
+          <p>Referens-ID: UTXN-002</p>
+        </div>
+        <div class="actions">
+          <button class="black-button" onclick='showReport({
+            amount: "180 500 SEK",
+            status: "Genomförd",
+            date: "2025-06-18",
+            id: "UTXN-002"
+          })'>Visa detaljer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="receiptModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2>Utbetalningsdetaljer</h2>
+      <div id="modalDetails"></div>
+      <button class="black-button" onclick="exportPDF()">Exportera som PDF</button>
+    </div>
+  </div>
 
   <script>
-  function toggleMenu() {
-    document.getElementById("menuContent").classList.toggle("show");
-  }
+    let currentReport = {};
 
-  async function fetchAnalytics() {
-    const tbody = document.getElementById("analytics-body");
-
-    try {
-      const res = await fetch("/api/analytics");
-      const data = await res.json();
-
-      if (!data || data.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='2'>Inga rapportdata tillgängliga.</td></tr>";
-        return;
-      }
-
-      data.forEach(row => {
-        const html = `
-          <tr>
-            <td>${row.label}</td>
-            <td>${row.value}</td>
-          </tr>
-        `;
-        tbody.innerHTML += html;
-      });
-    } catch (err) {
-      console.error("🚫 Fel vid hämtning av rapporter", err);
-      tbody.innerHTML = "<tr><td colspan='2'>Kunde inte ladda rapporter.</td></tr>";
+    function showReport(report) {
+      currentReport = report;
+      document.getElementById("modalDetails").innerHTML = `
+        <p><strong>Belopp:</strong> ${report.amount}</p>
+        <p><strong>Status:</strong> ${report.status}</p>
+        <p><strong>Datum:</strong> ${report.date}</p>
+        <p><strong>Referens-ID:</strong> ${report.id}</p>
+      `;
+      document.getElementById("receiptModal").style.display = "block";
     }
-  }
 
-  window.onload = fetchAnalytics;
-</script>
+    function closeModal() {
+      document.getElementById("receiptModal").style.display = "none";
+    }
 
+    function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("Utbetalningsrapport", 20, 20);
+      doc.setFontSize(12);
+      doc.text(`Belopp: ${currentReport.amount}`, 20, 35);
+      doc.text(`Status: ${currentReport.status}`, 20, 45);
+      doc.text(`Datum: ${currentReport.date}`, 20, 55);
+      doc.text(`Referens-ID: ${currentReport.id}`, 20, 65);
+      doc.save(`Utbetalning_${currentReport.id}.pdf`);
+    }
+
+    function filterReports() {
+      alert("Filtreringslogik här");
+    }
+
+    function sortByDate() {
+      alert("Sortering implementeras här");
+    }
+
+    function exportReports() {
+      alert("Exportera till Excel implementeras här");
+    }
+  </script>
 </body>
 </html>

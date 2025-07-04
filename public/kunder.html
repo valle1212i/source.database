@@ -3,63 +3,202 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kundinkorg – Source Kundportal</title>
-  <link rel="stylesheet" href="kunder.css" />
+  <title>Kunder – Kundportal</title>
+  <link rel="stylesheet" href="CSS/kunder.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js" defer></script>
 </head>
 <body>
-
-  <header class="header">
-    <div class="logo-container">
-      <a href="customerportal.html">
-        <img src="Customerportalimage/Sesede.png" alt="Logotyp" />
-      </a>
+  <!-- SIDOMENY -->
+  <div class="sidebar">
+    <div class="logo">
+      <h2>Source</h2>
     </div>
-    <div class="menu-container">
-      <div class="menu-toggle" onclick="toggleMenu()">
-        <span></span><span></span><span></span>
-      </div>
-      <div class="menu-content" id="menuContent">
-        <a href="kontakt.html">📞 Kontakt</a>
-        <a href="rapporter.html">📊 Rapporter</a>
-        <a href="fakturor.html">📄 Fakturor</a>
-        <a href="kunder.html">💬 Kunder</a>
-        <a href="inventarier.html">📦 Inventarier</a>
-        <a href="installningar.html">⚙️ Inställningar</a>
-      </div>
+  <ul class="nav-menu">
+  <li>
+    <a href="customerportal.html"><i class="fas fa-home"></i> Hem</a>
+  </li>
+  <li>
+    <a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a>
+  </li>
+  <li>
+    <a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a>
+  </li>
+  <li>
+    <a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a>
+  </li>
+  <li>
+    <a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a>
+  </li>
+  <li class="active">
+    <a href="kunder.html" class="active"><i class="fas fa-users"></i> Kunder</a>
+  </li>
+  <li>
+    <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a>
+  </li>
+  <li>
+    <a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a>
+  </li>
+  <li>
+    <a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a>
+  </li>
+</ul>
+<div class="help">
+  <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
+</div>
+  </div>
+
+  <!-- HUVUDINNEHÅLL -->
+  <main class="main" style="margin-left: 240px; padding: 40px;">
+    <h1 class="header">Kundmeddelanden</h1>
+    <p class="subtitle">Här ser du alla inkommande kundärenden.</p>
+
+    <!-- Sök och meddelandeknapp -->
+    <div class="table-header" style="display: flex; gap: 10px; align-items: center;">
+      <input type="text" placeholder="🔍 Sök kundmeddelande..." />
+      <button class="message-btn" onclick="openMessageModal()"> Skriv meddelande</button>
     </div>
-  </header>
 
-  <main class="inbox-container">
-    <h1>Inkommande Kundmeddelanden</h1>
-    <p class="info">Den här vyn kommer att visa e-post och meddelanden från dina kunder så fort API-integrationen är klar.</p>
+    <!-- TABELL -->
+    <table class="customer-table">
+      <thead>
+        <tr>
+          <th>Kund</th>
+          <th>Ämne</th>
+          <th>Senaste meddelande</th>
+          <th>Datum</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tbody>
+  <tr class="unread" onclick="viewMessage('Anna Karlsson', 'Fråga om leveranstid', 'Hej, när kommer min beställning?', '13 maj')">
+    <td>Anna Karlsson</td>
+    <td>Fråga om leveranstid</td>
+    <td>Hej, när kommer min beställning?</td>
+    <td>13 maj</td>
+  </tr>
+  <tr onclick="viewMessage('Johan Eriksson', 'Supportärende: Betalning', 'Jag ser en dubbel transaktion', '12 maj')">
+    <td>Johan Eriksson</td>
+    <td>Supportärende: Betalning</td>
+    <td>Jag ser en dubbel transaktion</td>
+    <td>12 maj</td>
+  </tr>
+  <tr onclick="viewMessage('Sara Nilsson', 'Kvitto saknas', 'Kan jag få mitt kvitto igen?', '10 maj')">
+    <td>Sara Nilsson</td>
+    <td>Kvitto saknas</td>
+    <td>Kan jag få mitt kvitto igen?</td>
+    <td>10 maj</td>
+  </tr>
+  <tr class="unread" onclick="viewMessage('Peter Lund', 'Fel på produkt', 'Min tröja hade ett hål vid ankomst', '9 maj')">
+    <td>Peter Lund</td>
+    <td>Fel på produkt</td>
+    <td>Min tröja hade ett hål vid ankomst</td>
+    <td>9 maj</td>
+  </tr>
+  <tr onclick="viewMessage('Emma Svensson', 'Byte av storlek', 'Hur returnerar jag en vara?', '8 maj')">
+    <td>Emma Svensson</td>
+    <td>Byte av storlek</td>
+    <td>Hur returnerar jag en vara?</td>
+    <td>8 maj</td>
+  </tr>
+  <tr onclick="viewMessage('Oskar Holm', 'Orderbekräftelse saknas', 'Har inte fått någon bekräftelse', '7 maj')">
+    <td>Oskar Holm</td>
+    <td>Orderbekräftelse saknas</td>
+    <td>Har inte fått någon bekräftelse</td>
+    <td>7 maj</td>
+  </tr>
+  <tr class="unread" onclick="viewMessage('Maria Ek', 'Problem med betalning', 'Får ett felmeddelande vid checkout', '6 maj')">
+    <td>Maria Ek</td>
+    <td>Problem med betalning</td>
+    <td>Får ett felmeddelande vid checkout</td>
+    <td>6 maj</td>
+  </tr>
+  <tr onclick="viewMessage('David Persson', 'Felsänd vara', 'Fick fel färg på min beställning', '5 maj')">
+    <td>David Persson</td>
+    <td>Felsänd vara</td>
+    <td>Fick fel färg på min beställning</td>
+    <td>5 maj</td>
+  </tr>
+  <tr onclick="viewMessage('Lina Fredriksson', 'Rabattkod ej fungerat', 'Koden jag fick fungerade inte', '4 maj')">
+    <td>Lina Fredriksson</td>
+    <td>Rabattkod ej fungerat</td>
+    <td>Koden jag fick fungerade inte</td>
+    <td>4 maj</td>
+  </tr>
+  <tr class="unread" onclick="viewMessage('Kristoffer Jonsson', 'Feedback på kundservice', 'Tack för snabb hjälp!', '3 maj')">
+    <td>Kristoffer Jonsson</td>
+    <td>Feedback på kundservice</td>
+    <td>Tack för snabb hjälp!</td>
+    <td>3 maj</td>
+  </tr>
+  <tr onclick="viewMessage('Elin Berg', 'Leveransproblem', 'Paketet fastnat i leverans', '2 maj')">
+    <td>Elin Berg</td>
+    <td>Leveransproblem</td>
+    <td>Paketet fastnat i leverans</td>
+    <td>2 maj</td>
+  </tr>
+  <tr onclick="viewMessage('Mattias Gustafsson', 'Fråga om produktmaterial', 'Är tröjan gjord i ekologisk bomull?', '1 maj')">
+    <td>Mattias Gustafsson</td>
+    <td>Fråga om produktmaterial</td>
+    <td>Är tröjan gjord i ekologisk bomull?</td>
+    <td>1 maj</td>
+  </tr>
+</tbody>
 
-    <!-- Filter / Sortering -->
-    <div class="controls">
-      <select>
-        <option>Alla</option>
-        <option>Olästa</option>
-        <option>Lästa</option>
-      </select>
-      <input type="text" placeholder="Sök kundens namn eller e-post..." />
+
+  <!-- MODAL: Skicka meddelande -->
+  <div id="messageModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeMessageModal()">&times;</span>
+      <h2>Skicka meddelande till kund</h2>
+      <form onsubmit="sendMessage(event)">
+        <label for="customer">Kund:</label>
+        <input type="text" id="customer" required placeholder="Ex. Anna Karlsson" />
+
+        <label for="subject">Ämne:</label>
+        <input type="text" id="subject" required placeholder="Ämne..." />
+
+        <label for="message">Meddelande:</label>
+        <textarea id="message" required placeholder="Skriv ditt meddelande här..."></textarea>
+
+        <button type="submit" class="send-btn">Skicka</button>
+      </form>
     </div>
+  </div>
 
-    <!-- Placeholder innan integration -->
-    <div class="placeholder">
-      <p>🔄 Väntar på att ansluta till kundens inkorg via API...</p>
-      <p>Här kommer inkommande kundmejl visas och kunna hanteras.</p>
-    </div>
-
-    <!-- I framtiden: <div class="message-list"> … laddas dynamiskt här via JS/API … </div> -->
-  </main>
-
+  <!-- JS -->
   <script>
-    function toggleMenu() {
-      document.getElementById("menuContent").classList.toggle("show");
+    const savedTheme = localStorage.getItem("theme") || "light";
+    document.body.classList.add(`${savedTheme}-theme`);
+
+    function openMessageModal() {
+      document.getElementById("messageModal").style.display = "block";
     }
 
-    // I framtiden: fetch('/api/inbox') eller fetchGmail() osv.
-  </script>
+    function closeMessageModal() {
+      document.getElementById("messageModal").style.display = "none";
+    }
 
+    function sendMessage(e) {
+      e.preventDefault();
+      const name = document.getElementById("customer").value;
+      const subject = document.getElementById("subject").value;
+      const message = document.getElementById("message").value;
+
+      alert(`Meddelande till ${name} har skickats:\n\nÄmne: ${subject}\n\n${message}`);
+      closeMessageModal();
+    }
+  </script>
+  <script>
+function viewMessage(name, subject, content, date) {
+  const params = new URLSearchParams({
+    name,
+    subject,
+    content,
+    date
+  });
+  window.location.href = `kundmeddelande.html?${params.toString()}`;
+}
+</script>
 </body>
 </html>

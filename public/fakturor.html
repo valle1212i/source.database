@@ -3,99 +3,115 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fakturor – Kundportal</title>
-  <link rel="stylesheet" href="fakturor.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <title>Kundportal - Fakturor</title>
+  <link rel="stylesheet" href="CSS/fakturor.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 </head>
 <body>
-  <header class="header">
-    <div class="logo-container">
-      <a href="customerportal.html">
-        <img src="Customerportalimage/" alt="Logotyp" />
-      </a>
+  <div class="sidebar">
+    <div class="logo">
+      <h2>Source</h2>
     </div>
-    <div class="menu-container">
-      <div class="menu-toggle" onclick="toggleMenu()">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-      <div class="menu-content" id="menuContent">
-        <a href="kontakt.html">📞 Kontakt</a>
-        <a href="rapporter.html">📊 Rapporter</a>
-        <a href="fakturor.html">📄 Fakturor</a>
-        <a href="kunder.html">💬 Kunder</a>
-        <a href="inventarier.html">📦 Inventarier</a>
-        <a href="installningar.html">⚙️ Inställningar</a>
-      </div>
+    <ul class="nav-menu">
+  <li>
+    <a href="customerportal.html"><i class="fas fa-home"></i> Hem</a>
+  </li>
+  <li>
+    <a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a>
+  </li>
+  <li>
+    <a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a>
+  </li>
+  <li>
+    <a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a>
+  </li>
+  <li class="active">
+    <a href="fakturor.html" class="active"><i class="fas fa-file-invoice"></i> Fakturor</a>
+  </li>
+  <li>
+    <a href="kunder.html"><i class="fas fa-users"></i> Kunder</a>
+  </li>
+  <li>
+    <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a>
+  </li>
+  <li>
+    <a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a>
+  </li>
+  <li>
+    <a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a>
+  </li>
+</ul>
+    <div class="help">
+      <i class="fas fa-question-circle"></i> Hjälp
     </div>
-  </header>
+  </div>
 
-  <main class="invoice-dashboard">
-    <h1>Fakturor</h1>
-    <p class="subtitle">Här visas dina fakturor så snart systemet är kopplat till din kunddata.</p>
+  <div class="main">
+    <div class="header">Fakturor</div>
+    <p class="subtitle">Här hittar du alla dina fakturor, betalstatus och nedladdningar.</p>
 
-    <div class="loading-message">🔄 Väntar på fakturainformation från servern...</div>
+    <div class="tabs">
+      <button class="tab active" onclick="filterTable('all')">Alla</button>
+      <button class="tab" onclick="filterTable('paid')">Betalda</button>
+      <button class="tab" onclick="filterTable('overdue')">Förfallna</button>
+    </div>
 
     <table class="invoice-table">
       <thead>
-  <tr>
-    <th>Faktura</th>
-    <th>Utfärdad</th>
-    <th>Förfallodatum</th>
-    <th>Betaldatum</th>
-    <th>Belopp</th>
-    <th>Status</th>
-  </tr>
-</thead>
-
-      <tbody id="invoice-body">
-        <!-- Fakturor kommer att laddas här via API -->
+        <tr>
+          <th>Fakturanr</th>
+          <th>Datum</th>
+          <th>Belopp</th>
+          <th>Status</th>
+          <th>Åtgärder</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-status="paid">
+          <td>#1001</td>
+          <td>2025-06-12</td>
+          <td>2 300 kr</td>
+          <td class="status paid">Betald</td>
+          <td><a href="#">Ladda ner</a></td>
+        </tr>
+        <tr data-status="overdue">
+          <td>#1002</td>
+          <td>2025-06-05</td>
+          <td>3 500 kr</td>
+          <td class="status overdue">Förfallen</td>
+          <td><a href="#">Ladda ner</a></td>
+        </tr>
+        <tr data-status="overdue">
+          <td>#1003</td>
+          <td>2025-05-29</td>
+          <td>1 200 kr</td>
+          <td class="status overdue">Förfallen</td>
+          <td><a href="#">Ladda ner</a></td>
+        </tr>
       </tbody>
     </table>
-  </main>
+  </div>
 
   <script>
-    function toggleMenu() {
-      document.getElementById("menuContent").classList.toggle("show");
-    }
-
-    // 🔧 Exempel på framtida API-hämtning
-    async function fetchInvoices() {
-      const tbody = document.getElementById("invoice-body");
-      const loading = document.querySelector('.loading-message');
-
-      try {
-        const res = await fetch("/api/invoices"); // <-- Din API-endpoint här
-        const data = await res.json();
-
-        loading.style.display = "none";
-
-        if (data.length === 0) {
-          tbody.innerHTML = "<tr><td colspan='4'>Inga fakturor tillgängliga ännu.</td></tr>";
+    function filterTable(status) {
+      const rows = document.querySelectorAll("tbody tr");
+      rows.forEach(row => {
+        const rowStatus = row.getAttribute("data-status");
+        if (status === "all" || rowStatus === status) {
+          row.style.display = "";
         } else {
-          data.fakturor.forEach(inv => {
-            const row = `
-  <tr>
-    <td>${inv.id}</td>
-    <td>${inv.datum}</td>
-    <td>${inv.forfallodatum || '-'}</td>
-    <td>${inv.betaldatum || '-'}</td>
-    <td>${inv.belopp} kr</td>
-    <td><span class="status ${inv.status.toLowerCase()}">${inv.status}</span></td>
-  </tr>
-`;
-
-            tbody.innerHTML += row;
-          });
+          row.style.display = "none";
         }
-      } catch (err) {
-        loading.textContent = "🚫 Kunde inte hämta fakturadata. Kontrollera API-anslutningen.";
-      }
+      });
+
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
     }
 
-    // Kör när sidan laddats
-    window.onload = fetchInvoices;
+    // Valfri: spara tema i localStorage
+    const savedTheme = localStorage.getItem("theme") || "light";
+    document.body.classList.add(`${savedTheme}-theme`);
   </script>
 </body>
 </html>

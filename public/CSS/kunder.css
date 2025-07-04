@@ -1,0 +1,316 @@
+/* Reset och grundstil */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f4f5f7;
+  display: flex;
+  color: #333;
+}
+
+/* Sidopanel */
+.sidebar {
+  width: 240px;
+  background-color: #111827;
+  color: white;
+  height: 100vh;
+  padding: 30px 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo h2 {
+  font-size: 24px;
+  margin-bottom: 30px;
+}
+
+/* Navigationsmeny */
+.nav-menu {
+  list-style: none;
+  flex-grow: 1;
+  padding: 0;
+  margin: 0;
+}
+
+/* Om du använder <li><a></a></li> */
+.nav-menu li {
+  list-style: none;
+}
+
+/* Styling för länkar i menyn */
+.nav-menu a {
+  color: white;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 10px;
+  font-size: 16px;
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
+}
+
+/* Hover och aktiv */
+.nav-menu a:hover,
+.nav-menu .active a {
+  background-color: #1f2937;
+  border-left: 4px solid #3b82f6;
+  color: white;
+  font-weight: bold;
+}
+
+/* Hjälp-länken längst ner */
+.help {
+  margin-top: auto;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding-left: 10px;
+  padding-top: 20px;
+}
+
+/* =====================
+   HUVUDINNEHÅLL
+===================== */
+.main {
+  margin-left: 240px;
+  padding: 40px;
+  width: calc(100% - 240px); /* Gör så att innehållet fyller hela sidan bredvid sidomenyn */
+  max-width: 1400px; /* Valfritt: för att undvika för bred layout på stora skärmar */
+}
+
+.header {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: #555;
+  margin-bottom: 30px;
+}
+
+/* =====================
+   SÖKFÄLT
+===================== */
+.table-header {
+  margin-bottom: 20px;
+}
+
+.table-header input {
+  padding: 10px;
+  width: 300px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* =====================
+   TABELLER (KUNDER)
+===================== */
+.customer-table {
+  width: 100%;
+  max-width: 100%; /* Tar upp hela utrymmet */
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+
+.customer-table th,
+.customer-table td {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  font-size: 15px;
+}
+
+.customer-table th {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.customer-table tr:hover {
+  background-color: #f9f9f9;
+}
+
+.customer-table tr.unread {
+  background-color: #eef6ff;
+  font-weight: 600;
+}
+
+/* Punktindikator för oläst */
+.unread-dot {
+  height: 10px;
+  width: 10px;
+  background-color: #00c853;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* =====================
+   MÖRKT TEMA
+===================== */
+body.dark-theme {
+  background-color: #121212;
+  color: #f0f0f0;
+}
+
+body.dark-theme .main {
+  background-color: #121212;
+}
+
+body.dark-theme .customer-table {
+  background-color: #1c1c1c;
+  color: #f0f0f0;
+}
+
+body.dark-theme .customer-table th {
+  background-color: #2b2b2b;
+  color: #00bfa6;
+}
+
+body.dark-theme .customer-table td {
+  border-bottom: 1px solid #333;
+}
+
+body.dark-theme .table-header input {
+  background-color: #2a2a2a;
+  color: #f0f0f0;
+  border: 1px solid #444;
+}
+
+body.dark-theme .sidebar {
+  background-color: #1a1a1a;
+}
+
+body.dark-theme .nav-menu li:hover,
+body.dark-theme .nav-menu li.active {
+  background-color: #2a2a2a;
+  border-left: 4px solid #00bfa6;
+}
+
+body.dark-theme .help {
+  color: #ccc;
+}
+
+/* =====================
+   RESPONSIV DESIGN
+===================== */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+
+  .main {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .table-header input {
+    width: 100%;
+  }
+}
+.message-btn {
+  margin-left: 15px;
+  padding: 10px 16px;
+  background-color: #00bfa6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.message-btn:hover {
+  background-color: #009e89;
+}
+
+/* Modal-styling */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  background-color: white;
+  margin: 8% auto;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.modal-content h2 {
+  margin-bottom: 20px;
+}
+
+.modal-content label {
+  display: block;
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.modal-content input,
+.modal-content textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.modal-content textarea {
+  resize: vertical;
+  height: 120px;
+}
+
+.send-btn {
+  margin-top: 20px;
+  background-color: #00bfa6;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.send-btn:hover {
+  background-color: #009e89;
+}
+
+.close {
+  float: right;
+  font-size: 24px;
+  cursor: pointer;
+  color: #aaa;
+}
+
+.close:hover {
+  color: black;
+}

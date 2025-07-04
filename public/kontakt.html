@@ -3,73 +3,104 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kontakta oss – Kundportal</title>
-  <link rel="stylesheet" href="kontakt.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <title>Kontakta oss</title>
+  <link rel="stylesheet" href="CSS/kontakt.css" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+  />
 </head>
 <body>
-  <!-- Header med logotyp och hamburgermeny -->
-  <header class="header">
-    <div class="logo-container">
-      <a href="customerportal.html">
-        <img src="Customerportalimage/Sesede.png" alt="Logotyp" />
-      </a>
-    </div>
-    <div class="menu-container">
-      <div class="menu-toggle" onclick="toggleMenu()">
-        <span></span>
-        <span></span>
-        <span></span>
+   <div class="sidebar">
+  <div class="logo">
+    <h2>Source</h2>
+  </div>
+  <ul class="nav-menu">
+    <li>
+      <a href="customerportal.html"><i class="fas fa-home"></i> Hem</a>
+    </li>
+    <li>
+      <a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a>
+    </li>
+    <li class="active">
+      <a href="kontakt.html" class="active"><i class="fas fa-envelope"></i> Kontakt</a>
+    </li>
+    <li>
+      <a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a>
+    </li>
+    <li>
+      <a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a>
+    </li>
+    <li>
+      <a href="kunder.html"><i class="fas fa-users"></i> Kunder</a>
+    </li>
+    <li>
+      <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a>
+    </li>
+    <li>
+      <a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a>
+    </li>
+    <li>
+      <a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a>
+    </li>
+  </ul>
+  <div class="help">
+    <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
+  </div>
+</div>
+  </div>
+  <div class="main">
+    <div class="header">Kontakta oss</div>
+
+    <div class="card contact-section">
+      <i class="fas fa-comments icon"></i>
+      <div>
+        <h3>Chatta med oss</h3>
+        <p>Vi är tillgängliga måndag–fredag, 09:00–17:00.</p>
+        <p>Klicka på knappen nedan för att starta en chatt med vårt supportteam.</p>
+        <button class="black-button">Starta chatt</button>
       </div>
-      <div class="menu-content" id="menuContent">
-        <a href="kontakt.html">📞 Kontakta oss</a>
-        <a href="rapporter.html">📊 Rapporter</a>
-        <a href="fakturor.html">📄 Fakturor</a>
-        <a href="kunder.html">💬 Kunder</a>
-        <a href="inventarier.html">📦 Inventarier</a>
-        <a href="installningar.html">⚙️ Inställningar</a>
+    </div>
+
+    <div class="card contact-section">
+      <i class="fas fa-phone icon"></i>
+      <div>
+        <h3>Ring oss</h3>
+        <p>Behöver du prata med oss direkt?</p>
+        <p><i class="fas fa-phone"></i> +46 73 322 12 12</p>
       </div>
     </div>
-  </header>
 
-  <!-- Kontaktinnehåll -->
-  <main class="contact-page">
-    <h1>Kontakta oss</h1>
-
-    <section class="contact-section">
-      <h2>💬 Chatta med oss</h2>
-      <p>Vi är tillgängliga måndag–fredag, 09:00–17:00.<br>
-        Klicka på knappen nedan för att starta en chatt med vårt supportteam.</p>
-      <a href="chatt-redirect.html" class="btn">Starta chatt</a>
-    </section>
-
-    <section class="contact-section">
-      <h2>📞 Ring oss</h2>
-      <p>Behöver du prata med oss direkt?<br> Ring vår kundtjänst:</p>
-      <p class="phone-number"><a href="tel:+46733221212">📱 +46 73 322 12 12</a></p>
-    </section>
-
-    <section class="contact-section faq">
-      <h2>❓ Vanliga frågor</h2>
-      <details>
-        <summary>Hur snabbt får jag svar från supporten?</summary>
-        <p>Oftast inom 2 timmar under kontorstid.</p>
-      </details>
-      <details>
-        <summary>Vad kostar det att komma igång?</summary>
-        <p>Vi har olika paket – se vår <a href="pricing.html">prissida</a>.</p>
-      </details>
-      <details>
-        <summary>Kan ni hjälpa till med hela hemsidan?</summary>
-        <p>Ja! Vi tar hand om allt – design, funktion, betalning och drift.</p>
-      </details>
-    </section>
-  </main>
+    <!-- Vanliga frågor med klickbara svar -->
+    <div class="card contact-section">
+      <i class="fas fa-question-circle icon"></i>
+      <div>
+        <h3>Vanliga frågor</h3>
+        <ul class="faq-list">
+          <li>
+            <button class="faq-question">Hur snabbt får jag svar från supporten?</button>
+            <div class="faq-answer">Vi svarar vanligtvis inom 1–2 timmar under kontorstid.</div>
+          </li>
+          <li>
+            <button class="faq-question">Vad kostar det att komma igång?</button>
+            <div class="faq-answer">Det är helt kostnadsfritt att komma igång med vår basversion.</div>
+          </li>
+          <li>
+            <button class="faq-question">Kan ni hjälpa till med hela hemsidan?</button>
+            <div class="faq-answer">Ja, vårt team kan hjälpa till med både design, innehåll och funktioner.</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
 
   <script>
-    function toggleMenu() {
-      document.getElementById("menuContent").classList.toggle("show");
-    }
+    document.querySelectorAll('.faq-question').forEach((button) => {
+      button.addEventListener('click', () => {
+        const answer = button.nextElementSibling;
+        answer.style.display = answer.style.display === 'block' ? 'none' : 'block';
+      });
+    });
   </script>
 </body>
 </html>

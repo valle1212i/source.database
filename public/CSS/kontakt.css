@@ -1,0 +1,193 @@
+/* Reset och grundstil */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f4f5f7;
+  display: flex;
+  color: #333;
+}
+
+/* Sidopanel */
+.sidebar {
+  width: 240px;
+  background-color: #111827;
+  color: white;
+  height: 100vh;
+  padding: 30px 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo h2 {
+  font-size: 24px;
+  margin-bottom: 30px;
+}
+
+/* Navigationsmeny */
+.nav-menu {
+  list-style: none;
+  flex-grow: 1;
+  padding: 0;
+  margin: 0;
+}
+
+/* Om du använder <li><a></a></li> */
+.nav-menu li {
+  list-style: none;
+}
+
+/* Styling för länkar i menyn */
+.nav-menu a {
+  color: white;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 10px;
+  font-size: 16px;
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
+}
+
+/* Hover och aktiv */
+.nav-menu a:hover,
+.nav-menu .active a {
+  background-color: #1f2937;
+  border-left: 4px solid #3b82f6;
+  color: white;
+  font-weight: bold;
+}
+
+/* Hjälp-länken längst ner */
+.help {
+  margin-top: auto;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding-left: 10px;
+  padding-top: 20px;
+}
+
+/* Huvudinnehåll */
+.main {
+  margin-left: 240px;
+  flex-grow: 1;
+  padding: 40px;
+}
+
+.header {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 30px;
+}
+
+/* Kontaktkort */
+.card {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.card h3 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #111827;
+}
+
+.card p {
+  font-size: 14px;
+  color: #4b5563;
+  margin-bottom: 6px;
+}
+
+.icon {
+  font-size: 28px;
+  color: #3b82f6;
+  margin-top: 4px;
+}
+
+.black-button {
+  background-color: #111827;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.black-button:hover {
+  background-color: #374151;
+}
+
+/* FAQ */
+.faq-list {
+  list-style-type: disc;
+  padding-left: 20px;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.faq-list li {
+  margin-bottom: 8px;
+}
+
+/* Responsivt */
+@media (max-width: 768px) {
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+  }
+
+  .main {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+.faq-question {
+  background: none;
+  border: none;
+  color: #111827;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.faq-answer {
+  display: none;
+  padding: 8px 0 12px 0;
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.faq-list li {
+  margin-bottom: 10px;
+}

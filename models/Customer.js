@@ -18,9 +18,11 @@ const customerSchema = new mongoose.Schema({
 
   // Användarinställningar
   settings: {
-    language: { type: String, default: 'sv' },
-    theme: { type: String, default: 'light' }
-  }
+  language: { type: String, default: 'sv' },
+  theme: { type: String, default: 'light' },
+  aiLanguage: { type: String, default: 'sv' } // ← NYTT
+}
+
 });
 
 module.exports = mongoose.model('Customer', customerSchema);

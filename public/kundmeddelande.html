@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kundmeddelande</title>
+  <link rel="stylesheet" href="CSS/kundmeddelande.css" />
+</head>
+<body>
+  <div class="container">
+    <a href="kunder.html" class="back-link">← Tillbaka</a>
+    <h1 id="message-subject"></h1>
+    <p><strong>Från:</strong> <span id="message-name"></span></p>
+    <p><strong>Datum:</strong> <span id="message-date"></span></p>
+    <div class="message-box">
+      <p id="message-content"></p>
+    </div>
+    <button onclick="openMessageModal()" class="reply-btn">✉️ Svara på meddelande</button>
+  </div>
+
+  <!-- Återanvänd modal från tidigare -->
+  <div id="messageModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeMessageModal()">&times;</span>
+      <h2>Svara till kund</h2>
+      <form onsubmit="sendMessage(event)">
+        <input type="text" id="customer" placeholder="Kundnamn" required />
+        <input type="text" id="subject" placeholder="Ämne..." required />
+        <textarea id="message" placeholder="Skriv ditt meddelande..." required></textarea>
+        <button type="submit" class="send-btn">Skicka</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Hämta och visa info
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById("message-name").textContent = params.get("name");
+    document.getElementById("message-subject").textContent = params.get("subject");
+    document.getElementById("message-content").textContent = params.get("content");
+    document.getElementById("message-date").textContent = params.get("date");
+
+    // Modal
+    function openMessageModal() {
+      document.getElementById("customer").value = params.get("name");
+      document.getElementById("subject").value = "Svar: " + params.get("subject");
+      document.getElementById("messageModal").style.display = "block";
+    }
+
+    function closeMessageModal() {
+      document.getElementById("messageModal").style.display = "none";
+    }
+
+    function sendMessage(e) {
+      e.preventDefault();
+      alert("Meddelande skickat!");
+      closeMessageModal();
+    }
+  </script>
+</body>
+</html>

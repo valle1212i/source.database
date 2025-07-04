@@ -24,7 +24,7 @@ async function handleCustomerQuestion(user, message) {
     ${context}
 
     Fråga: ${message}
-    Svara tydligt och kortfattat på svenska.
+    Svara tydligt och kortfattat. Kunden kan skriva på vilket språk som helst – på det språket som frågan ställs på.
   `;
 
   const openai = new OpenAI();

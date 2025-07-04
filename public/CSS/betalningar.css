@@ -1,0 +1,349 @@
+/* Reset och grundstil */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f4f5f7;
+  display: flex;
+  color: #333;
+}
+
+/* Sidopanel */
+.sidebar {
+  width: 240px;
+  background-color: #111827;
+  color: white;
+  height: 100vh;
+  padding: 30px 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo h2 {
+  font-size: 24px;
+  margin-bottom: 30px;
+}
+
+/* Navigationsmeny */
+.nav-menu {
+  list-style: none;
+  flex-grow: 1;
+  padding: 0;
+  margin: 0;
+}
+
+/* Om du använder <li><a></a></li> */
+.nav-menu li {
+  list-style: none;
+}
+
+/* Styling för länkar i menyn */
+.nav-menu a {
+  color: white;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 10px;
+  font-size: 16px;
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
+}
+
+/* Hover och aktiv */
+.nav-menu a:hover,
+.nav-menu .active a {
+  background-color: #1f2937;
+  border-left: 4px solid #3b82f6;
+  color: white;
+  font-weight: bold;
+}
+
+/* Hjälp-länken längst ner */
+.help {
+  margin-top: auto;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding-left: 10px;
+  padding-top: 20px;
+}
+
+
+/* Huvudinnehåll */
+.main {
+  margin-left: 240px;
+  flex-grow: 1;
+  padding: 40px;
+}
+
+.header {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 30px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #111827;
+}
+
+.card p,
+.card ul {
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.card ul {
+  list-style: disc;
+  padding-left: 20px;
+  margin-top: 5px;
+}
+
+/* Widgetförsäljning */
+.circle-widget {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  grid-column: span 3;
+  min-height: 220px;
+  padding: 30px;
+}
+
+.chart-area {
+  width: 60%;
+}
+
+.sales-info {
+  width: 40%;
+  padding-left: 30px;
+  padding-top: 5px;
+}
+
+.sales-info h3 {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.title-underline,
+.amount-underline {
+  height: 3px;
+  border: none;
+  background-color: #3b82f6;
+  width: 100%;
+  max-width: 200px;
+  margin: 4px 0 12px 0;
+}
+
+.sales-info .amount {
+  font-size: 20px;
+  font-family: 'Segoe UI', sans-serif;
+  color: #111;
+  font-weight: bold;
+}
+
+.circle-widget canvas {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Live Chat Widget */
+.live-chat.dark {
+  background-color: #1f2937;
+  color: white;
+}
+
+.live-chat.dark h3 {
+  color: #6ee7b7;
+}
+
+/* Statusikoner */
+.status {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+}
+
+.status.open {
+  color: #3b82f6; /* Samma blå som title underline */
+}
+
+.status.progress {
+  color: #6ee7b7; /* Samma färg som live chat rubrik */
+}
+
+/* AI Assistant */
+.ai-assistant {
+  background-color: #e0f2fe;
+  border-left: 4px solid #3b82f6;
+}
+
+/* Anpassade storlekar för vissa widgets */
+.card.wide {
+  grid-column: span 2;
+}
+
+.card.large {
+  grid-column: span 2;
+  min-height: 300px;
+}
+
+.card.tall {
+  min-height: 350px;
+}
+
+.card.match-height {
+  min-height: 350px;
+}
+
+/* Filterfält */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.filters input,
+.filters select,
+.filters button {
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+}
+
+/* Svarta knappar */
+.black-button {
+  background-color: #111827;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.black-button:hover {
+  background-color: #374151;
+}
+
+/* Tillbaka-länk */
+.back-button {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: #111827;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* Modal för kvitto */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 90%;
+  max-width: 500px;
+  border-radius: 10px;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Responsivt */
+@media (max-width: 768px) {
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+  }
+
+  .main {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filters {
+    flex-direction: column;
+  }
+}
+h1 {
+  margin-bottom: 16px; /* eller 20px om du vill ha mer luft */
+}
+
+.back-button {
+  display: inline-block;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.back-button:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FAQ – Kundportal</title>
+  <link rel="stylesheet" href="CSS/faq.css" />
+</head>
+<body>
+
+  <header class="header">
+    <div class="logo-container">
+      <a href="customerportal.html">
+        <img src="Customerportalimage/Sesede.png" alt="Logotyp" />
+      </a>
+    </div>
+    <div class="menu-toggle" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="menu-content" id="menuContent">
+        <a href="betalningar.html">💳 Betalningar</a>
+        <a href="kontakt.html">📞 Kontakt med oss</a>
+        <a href="rapporter.html">📊 Rapporter</a>
+        <a href="Fakturor.html">📄 Fakturor</a>
+        <a href="kunder.html">💬 Kunder</a>
+        <a href="analytics.html">💡Analyser</a>
+        <a href="kampanjer.html">📣 Kampanj</a>
+        <a href="inventarier.html">📦 Inventarier</a>
+        <a href="faq.html">🗨️  Support 24/7</a>
+        <a href="installningar.html">⚙️ Inställningar</a>
+    </div>
+  </header>
+
+  <main class="faq-container">
+    <h1>❓ Vanliga frågor</h1>
+    <input type="text" id="faqSearch" placeholder="Sök i FAQ...">
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <h3>Hur lägger jag till en ny kund?</h3>
+        <p>Gå till Kunder → Lägg till ny och fyll i formuläret.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Hur byter jag språk i portalen?</h3>
+        <p>Gå till Inställningar → Språkval.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Hur fungerar Capture och Refund?</h3>
+        <p>Capture debiterar beloppet, Refund återbetalar kunden helt eller delvis.</p>
+      </div>
+    </div>
+  </main>
+
+  <div style="position: fixed; bottom: 20px; right: 20px;">
+    <a href="https://chat.openai.com/" target="_blank" class="chat-btn">💬 Fråga vår AI</a>
+  </div>
+  
+
+  <script>
+    function toggleMenu() {
+      document.getElementById("menuContent").classList.toggle("show");
+    }
+
+    document.getElementById("faqSearch").addEventListener("input", function () {
+      const value = this.value.toLowerCase();
+      const items = document.querySelectorAll(".faq-item");
+
+      items.forEach(item => {
+        const question = item.querySelector("h3").textContent.toLowerCase();
+        item.style.display = question.includes(value) ? "block" : "none";
+      });
+    });
+  </script>
+</body>
+</html>

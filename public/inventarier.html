@@ -2,66 +2,124 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Inventarier – Source Kundportal</title>
-  <link rel="stylesheet" href="inventarier.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inventarier – Kundportal</title>
+  <link rel="stylesheet" href="CSS/inventarier.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-  <!-- Header -->
-  <header class="header">
-    <div class="logo-container">
-      <a href="customerportal.html">
-        <img src="Customerportalimage/Sesede.png" alt="Logotyp" />
-      </a>
-    </div>
-    <div class="menu-container">
-      <div class="menu-toggle" onclick="toggleMenu()">
-        <span></span><span></span><span></span>
-      </div>
-      <div class="menu-content" id="menuContent">
-        <a href="kontakt.html">📞 Kontakt</a>
-        <a href="rapporter.html">📊 Rapporter</a>
-        <a href="fakturor.html">📄 Fakturor</a>
-        <a href="kunder.html">💬 Kunder</a>
-        <a href="inventarier.html">📦 Inventarier</a>
-        <a href="installningar.html">⚙️ Inställningar</a>
-      </div>
-    </div>
-  </header>
+  <!-- SIDOMENY -->
+  <div class="sidebar">
+    <div class="logo"><h2>Source</h2></div>
+    <ul class="nav-menu">
+      <li><i class="fas fa-home"></i> Hem</li>
+      <li><i class="fas fa-credit-card"></i> Betalningar</li>
+      <li><i class="fas fa-envelope"></i> Kontakt</li>
+      <li><i class="fas fa-chart-line"></i> Rapporter</li>
+      <li><i class="fas fa-file-invoice"></i> Fakturor</li>
+      <li><i class="fas fa-users"></i> Kunder</li>
+      <li><i class="fas fa-chart-pie"></i> Analyser</li>
+      <li class="active"><i class="fas fa-box"></i> Inventarier</li>
+      <li><i class="fas fa-cog"></i> Inställningar</li>
+    </ul>
+    <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
+  </div>
 
-  <main class="inventory-dashboard">
-    <h1>Dina Produkter</h1>
-    <p class="info-text">Här kommer dina produkter att visas. Systemet kopplas till din e-handel och uppdaterar automatiskt vid köp, retur eller lagerpåfyllning.</p>
+  <!-- HUVUDINNEHÅLL -->
+  <main class="main">
+    <h1>Inventarier</h1>
+    <p>Hantera dina produkter och lagersaldo. Få notiser när produkter är slutsålda.</p>
 
-    <table class="inventory-table">
-      <thead>
-        <tr>
-          <th>Produktnamn</th>
-          <th>Artikelnummer</th>
-          <th>Lagersaldo</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="inventory-body">
-        <tr>
-          <td colspan="4" class="placeholder">🔄 Väntar på data från lager-API...</td>
-        </tr>
-      </tbody>
-    </table>
+    <section class="card">
+      <!-- Sökfält -->
+      <input type="text" id="searchInput" placeholder="🔍 Sök produkt, artikelnummer eller status..." onkeyup="filterTable()" style="margin-bottom: 15px; padding: 10px; width: 100%; border-radius: 6px; border: 1px solid #ccc;">
 
-    <p class="note">Ex: Om en kund köper 1 vit t-shirt, dras den automatiskt från lagret. Vid retur läggs den tillbaka.</p>
+      <!-- Tabell -->
+      <table class="inventory-table" id="inventoryTable">
+        <thead>
+          <tr>
+            <th onclick="sortTable(0)">Produkt ⬍</th>
+            <th onclick="sortTable(1)">Artikelnummer ⬍</th>
+            <th onclick="sortTable(2)">Lagersaldo ⬍</th>
+            <th>Status</th>
+            <th>Redigera</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Vit T-shirt</td>
+            <td>TS1001</td>
+            <td contenteditable="true">0</td>
+            <td class="status-soldout">Slutsåld</td>
+            <td><i class="fas fa-edit" title="Redigera"></i></td>
+          </tr>
+          <tr>
+            <td>Svart Hoodie</td>
+            <td>HD1002</td>
+            <td contenteditable="true">12</td>
+            <td class="status-instock">I lager</td>
+            <td><i class="fas fa-edit" title="Redigera"></i></td>
+          </tr>
+          <tr>
+            <td>Blå Keps</td>
+            <td>KP1003</td>
+            <td contenteditable="true">3</td>
+            <td class="status-low">Lågt lager</td>
+            <td><i class="fas fa-edit" title="Redigera"></i></td>
+          </tr>
+          <tr>
+            <td>Grå Mössa</td>
+            <td>GM1004</td>
+            <td contenteditable="true">6</td>
+            <td class="status-instock">I lager</td>
+            <td><i class="fas fa-edit" title="Redigera"></i></td>
+          </tr>
+          <tr>
+            <td>Vita Sneakers</td>
+            <td>SN1005</td>
+            <td contenteditable="true">0</td>
+            <td class="status-soldout">Slutsåld</td>
+            <td><i class="fas fa-edit" title="Redigera"></i></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="notifications">
+      <h3>Notiser</h3>
+      <p>Produkten <strong>Vit T-shirt</strong> och <strong>Vita Sneakers</strong> är slutsålda. Uppdatera lagersaldo eller inaktivera produkterna i webbshopen.</p>
+    </section>
   </main>
 
+  <!-- Funktioner -->
   <script>
-    function toggleMenu() {
-      document.getElementById("menuContent").classList.toggle("show");
+    const savedTheme = localStorage.getItem("theme") || "light";
+    document.body.classList.add(`${savedTheme}-theme`);
+
+    function filterTable() {
+      const input = document.getElementById("searchInput").value.toLowerCase();
+      const rows = document.querySelectorAll("#inventoryTable tbody tr");
+      rows.forEach(row => {
+        row.style.display = Array.from(row.cells).some(td =>
+          td.textContent.toLowerCase().includes(input)) ? "" : "none";
+      });
     }
 
-    // Framtida fetch från backend
-    // fetch('/api/inventory').then(...);
-  </script>
+    function sortTable(colIndex) {
+      const table = document.getElementById("inventoryTable");
+      const tbody = table.tBodies[0];
+      const rows = Array.from(tbody.rows);
 
+      rows.sort((a, b) => {
+        const A = a.cells[colIndex].textContent.trim();
+        const B = b.cells[colIndex].textContent.trim();
+        return isNaN(A - B) ? A.localeCompare(B) : Number(A) - Number(B);
+      });
+
+      rows.forEach(row => tbody.appendChild(row));
+    }
+  </script>
 </body>
 </html>

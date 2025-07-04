@@ -1,0 +1,170 @@
+/* Reset och grundstil */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f4f5f7;
+  display: flex;
+  color: #333;
+}
+
+/* Sidopanel */
+.sidebar {
+  width: 240px;
+  background-color: #111827;
+  color: white;
+  height: 100vh;
+  padding: 30px 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo h2 {
+  font-size: 24px;
+  margin-bottom: 30px;
+}
+
+.nav-menu {
+  list-style: none;
+  flex-grow: 1;
+}
+
+.nav-menu li {
+  padding: 12px 10px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.nav-menu li:hover,
+.nav-menu li.active {
+  background-color: #1f2937;
+  border-left: 4px solid #3b82f6;
+}
+
+.help {
+  margin-top: auto;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding-left: 10px;
+  padding-top: 20px;
+}
+/* ==== Fixar lila länkar i ljus tema ==== */
+.sidebar a,
+.sidebar a:visited,
+.sidebar a:hover,
+.sidebar a:active {
+  color: white !important;
+  text-decoration: none;
+}
+
+/* ==== HUVUDINNEHÅLL ==== */
+.main {
+  margin-left: 240px;
+  padding: 40px;
+  width: 100%;
+}
+
+.main h1 {
+  font-size: 28px;
+  margin-bottom: 30px;
+}
+
+.card,
+.chart-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px 30px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 30px;
+}
+
+.big-number {
+  font-size: 26px;
+  font-weight: bold;
+  margin: 10px 0 20px;
+}
+
+.bestsellers {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 15px;
+}
+
+.bestsellers li {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+/* ==== DIAGRAMLAYOUT (2 per rad) ==== */
+.chart-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.chart-card {
+  flex: 1 1 calc(50% - 15px);
+}
+
+.chart-card h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.chart-card canvas {
+  width: 100% !important;
+  height: 300px !important;
+  max-height: 300px;
+}
+
+/* ==== MÖRKT TEMA ==== */
+body.dark-theme {
+  background-color: #121212;
+  color: #f0f0f0;
+}
+
+body.dark-theme .card,
+body.dark-theme .chart-card {
+  background-color: #1f1f1f;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+}
+
+/* Säkra vit färg för alla länkar i sidomenyn */
+body.dark-theme .nav-menu a,
+body.dark-theme .nav-menu a:visited,
+body.dark-theme .nav-menu a:hover,
+body.dark-theme .nav-menu a:focus,
+body.dark-theme .nav-menu a:active {
+  color: white !important;
+  text-decoration: none;
+}
+
+/* === Korrigerar färger för länkar i menyn vid dark-theme === */
+body.dark-theme .nav-menu a {
+  color: white;
+}
+
+body.dark-theme .nav-menu a:hover,
+body.dark-theme .nav-menu .active a {
+  color: white;
+  background-color: #2a2a2a;
+  border-left: 4px solid #00bfa6;
+  font-weight: bold;
+}

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analyser – Kundportal</title>
+  <link rel="stylesheet" href="CSS/analytics.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+<body>
+ <!-- SIDOMENY -->
+<div class="sidebar">
+  <div class="logo">
+    <h2>Source</h2>
+  </div>
+  <ul class="nav-menu">
+  <li>
+    <a href="customerportal.html"><i class="fas fa-home"></i> Hem</a>
+  </li>
+  <li>
+    <a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a>
+  </li>
+  <li>
+    <a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a>
+  </li>
+  <li>
+    <a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a>
+  </li>
+  <li>
+    <a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a>
+  </li>
+  <li>
+    <a href="kunder.html"><i class="fas fa-users"></i> Kunder</a>
+  </li>
+  <li class="active">
+    <a href="analytics.html" class="active"><i class="fas fa-chart-pie"></i> Analyser</a>
+  </li>
+  <li>
+    <a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a>
+  </li>
+  <li>
+    <a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a>
+  </li>
+</ul>
+<div class="help">
+  <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
+</div>
+</div>
+
+  <!-- HUVUDINNEHÅLL -->
+  <main class="main">
+    <h1>Analyser & Statistik</h1>
+
+    <div class="chart-row">
+      <div class="chart-card">
+        <h3>Totala intäkter – Juni</h3>
+        <p class="big-number">752 300 kr</p>
+        <canvas id="incomeChart"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <h3>Visningar på hemsidan</h3>
+        <p class="big-number">+12% senaste veckan<br>28 000 visningar idag</p>
+        <canvas id="viewsChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-card">
+        <h3>Antal ordrar denna månaden</h3>
+        <p class="big-number">105 st</p>
+        <canvas id="customerChart"></canvas>
+      </div>
+
+      <div class="chart-card">
+       <!-- Mest sålda -->
+<section class="card">
+  <h2>Mest sålda produkter</h2>
+  <canvas id="bestsellersChart"></canvas>
+</section>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Intäkter – Stapeldiagram
+    new Chart(document.getElementById('incomeChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Juni'],
+        datasets: [{
+          label: 'Intäkter (kr)',
+          data: [430000, 390000, 480000, 515000, 620000, 752300],
+          backgroundColor: '#00bfa6'
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+    // Visningar – Linjediagram
+    new Chart(document.getElementById('viewsChart'), {
+      type: 'line',
+      data: {
+        labels: ['Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör', 'Sön'],
+        datasets: [{
+          label: 'Visningar',
+          data: [17000, 18000, 20000, 22000, 24000, 26000, 28000],
+          fill: false,
+          borderColor: '#3b82f6',
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+    // Diagram: Åldersfördelning för nya kunder
+new Chart(document.getElementById('customerChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['15–24 år', '25–34 år', '35–44 år', '45+ år'],
+    datasets: [{
+      label: 'Nya kunder',
+      data: [20, 35, 30, 20],
+      backgroundColor: ['#38bdf8', '#2563eb', '#9333ea', '#f97316'], // nyanser: blå-lila-orange
+      borderWidth: 1
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          font: {
+            size: 14
+          }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            return `${context.label}: ${context.parsed} personer`;
+          }
+        }
+      }
+    }
+  }
+});
+
+
+    // TEMA
+    const savedTheme = localStorage.getItem("theme") || "light";
+    document.body.classList.add(`${savedTheme}-theme`);
+    // Diagram: Mest sålda produkter
+new Chart(document.getElementById('bestsellersChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Webbshop Premium', 'Startup Paket', 'UX Optimering', 'Social Boost', 'SEO Bas'],
+    datasets: [{
+      label: 'Antal sålda',
+      data: [120, 95, 83, 60, 48],
+      backgroundColor: '#3b82f6'
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 20
+        }
+      }
+    }
+  }
+});
+  </script>
+</body>
+</html>
