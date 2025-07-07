@@ -186,6 +186,22 @@ body {
 .live-chat.dark h3 {
   color: #6ee7b7;
 }
+.live-chat.dark button {
+  margin-top: 10px;
+  padding: 10px 16px;
+  background-color: #6ee7b7;
+  color: #1f2937;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.live-chat.dark button:hover {
+  background-color: #34d399;
+}
+
 
 .status {
   padding: 2px 6px;

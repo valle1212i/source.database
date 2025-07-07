@@ -192,8 +192,9 @@
       <div class="card live-chat dark">
         <h3>Live Chat</h3>
         <p>"Kan du skicka senaste rapporten?" - kund</p>
+        <button id="startChatBtn">Starta chatt med oss</button>
       </div>
-
+      
       <div class="card">
         <h3>Supportärenden</h3>
         <ul>
@@ -366,6 +367,53 @@
   });
 </script>
 
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const chatBtn = document.getElementById("startChatBtn");
+    const chatWindow = document.getElementById("chatWindow");
+    const chatInput = document.getElementById("chatInput");
+    const chatMessages = document.getElementById("chatMessages");
+  
+    if (chatBtn && chatWindow && chatInput && chatMessages) {
+      chatBtn.addEventListener("click", () => {
+        chatWindow.style.display = "block";
+      });
+  
+      chatInput.addEventListener("keypress", async function (e) {
+  if (e.key === "Enter" && chatInput.value.trim() !== "") {
+    const message = chatInput.value;
+
+    // Visa direkt i UI
+    const msg = document.createElement("div");
+    msg.textContent = "Du: " + message;
+    chatMessages.appendChild(msg);
+    chatInput.value = "";
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    // 🔁 Skicka till backend API
+    try {
+      await fetch("/api/chat/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerId: "placeholder", // byt till riktig ID om du har
+          message: message,
+          sender: "customer"
+        })
+      });
+    } catch (err) {
+      console.error("Kunde inte skicka meddelandet:", err);
+    }
+  }
+});
+}
+});
+  </script>  
+<div id="chatWindow" style="display:none; position:fixed; bottom:20px; right:20px; width:300px; height:400px; background:#fff; border:1px solid #ccc; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1); z-index:1000; padding:10px;">
+  <h4>Chatt med support</h4>
+  <div id="chatMessages" style="height:300px; overflow-y:auto; margin-bottom:10px;"></div>
+  <input type="text" id="chatInput" placeholder="Skriv ett meddelande..." style="width:100%; padding:5px;" />
+</div>
 </body>
 </html>
 <script>
