@@ -110,7 +110,9 @@ app.use('/api/analytics', analyticsRoutes);
 
 const chatRoutes = require('./routes/chatRoutes');
 app.use('/api/support', require('./routes/support'));
-app.use('/api/chat', require('./routes/chatRoutes')); // 👈 flyttad
+app.use('/api/chat', require('./routes/chatRoutes'));
+app.use('/api/email', require('./routes/emailRoutes'));
+
 
 
 

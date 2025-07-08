@@ -15,6 +15,7 @@
     "express-session": "^1.18.1",
     "franc": "^6.2.0",
     "langs": "^2.0.0",
-    "mongoose": "^8.14.3"
+    "mongoose": "^8.14.3",
+    "nodemailer": "^7.0.5"
   }
 }
