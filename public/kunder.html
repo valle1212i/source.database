@@ -179,15 +179,46 @@
       document.getElementById("messageModal").style.display = "none";
     }
 
-    function sendMessage(e) {
-      e.preventDefault();
-      const name = document.getElementById("customer").value;
-      const subject = document.getElementById("subject").value;
-      const message = document.getElementById("message").value;
+    async function sendMessage(e) {
+  e.preventDefault();
+  const name = document.getElementById("customer").value;
+  const subject = document.getElementById("subject").value;
+  const message = document.getElementById("message").value;
 
-      alert(`Meddelande till ${name} har skickats:\n\nÄmne: ${subject}\n\n${message}`);
+  // Testdata: Karta med namn till e-post (byt ut mot riktiga data senare)
+  const emailMap = {
+    "Anna Karlsson": "anna@example.com",
+    "Johan Eriksson": "johan@example.com",
+    "Sara Nilsson": "sara@example.com"
+    // Lägg till fler testkunder här
+  };
+
+  const to = emailMap[name];
+  if (!to) {
+    alert("⚠️ Kunde inte hitta e-postadress för kunden.");
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, message })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      alert(`✅ Meddelande till ${name} har skickats!`);
       closeMessageModal();
+    } else {
+      alert("❌ Det gick inte att skicka mejlet.");
     }
+  } catch (err) {
+    console.error('❌ Fel vid e-post:', err);
+    alert("❌ Något gick fel vid mejlskick.");
+  }
+}
+
   </script>
   <script>
 function viewMessage(name, subject, content, date) {
