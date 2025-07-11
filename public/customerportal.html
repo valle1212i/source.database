@@ -365,6 +365,20 @@
     }
   });
 </script>
+<script>
+  let customerId = null;
+
+  async function fetchCustomerId() {
+    try {
+      const res = await fetch("/api/customers/me", { credentials: "include" });
+      if (!res.ok) throw new Error("Ej inloggad");
+      const data = await res.json();
+      customerId = data._id;
+    } catch (err) {
+      console.error("❌ Kunde inte hämta kund-ID:", err);
+    }
+  }
+</script>
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
@@ -372,20 +386,48 @@
     const chatWindow = document.getElementById("chatWindow");
     const chatInput = document.getElementById("chatInput");
     const chatMessages = document.getElementById("chatMessages");
-  
+    let customerId = null;
+
+    // 🟢 Hämta inloggad kunds ID från backend
+    fetch("/api/customers/me", { credentials: "include" })
+      .then(res => res.json())
+      .then(data => {
+        customerId = data._id;
+      })
+      .catch(err => {
+        console.error("Kunde inte hämta kund-ID:", err);
+      });
+
     if (chatBtn && chatWindow && chatInput && chatMessages) {
       chatBtn.addEventListener("click", () => {
         chatWindow.style.display = "block";
       });
+
       chatInput.addEventListener("keypress", function (e) {
-  if (e.key === "Enter" && chatInput.value.trim() !== "") {
-    sendCustomerMessage();
-  }
-});
+        if (e.key === "Enter" && chatInput.value.trim() !== "") {
+          const message = chatInput.value;
+
+          // Visa direkt i UI
+          const msg = document.createElement("div");
+          msg.textContent = "Du: " + message;
+          chatMessages.appendChild(msg);
+          chatInput.value = "";
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+
+          // 🟢 Skicka till server via WebSocket med RIKTIGT kund-ID
+          socket.emit("sendMessage", {
+            customerId: customerId,
+            message: message,
+            sender: "customer"
+          });
+        }
+      });
     }
   });
+</script>
 
-  </script>  
+<!-- ... Resten av filen (chatWindow-div, scripts, avslutande taggar) ... -->
+
 <div id="chatWindow" style="display:none; position:fixed; bottom:20px; right:20px; width:300px; height:400px; background:#fff; border:1px solid #ccc; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1); z-index:1000; padding:10px;">
   <h4>Chatt med support</h4>
   <div id="chatMessages" style="height:300px; overflow-y:auto; margin-bottom:10px;"></div>
@@ -422,7 +464,8 @@
   });
 </script>
 
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/chat.js"></script>
 </body>
 </html>
-<script>
-  

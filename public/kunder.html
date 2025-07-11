@@ -61,89 +61,19 @@
 
     <!-- TABELL -->
     <table class="customer-table">
-      <thead>
-        <tr>
-          <th>Kund</th>
-          <th>Ämne</th>
-          <th>Senaste meddelande</th>
-          <th>Datum</th>
-        </tr>
-      </thead>
-      <tbody>
-      <tbody>
-  <tr class="unread" onclick="viewMessage('Anna Karlsson', 'Fråga om leveranstid', 'Hej, när kommer min beställning?', '13 maj')">
-    <td>Anna Karlsson</td>
-    <td>Fråga om leveranstid</td>
-    <td>Hej, när kommer min beställning?</td>
-    <td>13 maj</td>
-  </tr>
-  <tr onclick="viewMessage('Johan Eriksson', 'Supportärende: Betalning', 'Jag ser en dubbel transaktion', '12 maj')">
-    <td>Johan Eriksson</td>
-    <td>Supportärende: Betalning</td>
-    <td>Jag ser en dubbel transaktion</td>
-    <td>12 maj</td>
-  </tr>
-  <tr onclick="viewMessage('Sara Nilsson', 'Kvitto saknas', 'Kan jag få mitt kvitto igen?', '10 maj')">
-    <td>Sara Nilsson</td>
-    <td>Kvitto saknas</td>
-    <td>Kan jag få mitt kvitto igen?</td>
-    <td>10 maj</td>
-  </tr>
-  <tr class="unread" onclick="viewMessage('Peter Lund', 'Fel på produkt', 'Min tröja hade ett hål vid ankomst', '9 maj')">
-    <td>Peter Lund</td>
-    <td>Fel på produkt</td>
-    <td>Min tröja hade ett hål vid ankomst</td>
-    <td>9 maj</td>
-  </tr>
-  <tr onclick="viewMessage('Emma Svensson', 'Byte av storlek', 'Hur returnerar jag en vara?', '8 maj')">
-    <td>Emma Svensson</td>
-    <td>Byte av storlek</td>
-    <td>Hur returnerar jag en vara?</td>
-    <td>8 maj</td>
-  </tr>
-  <tr onclick="viewMessage('Oskar Holm', 'Orderbekräftelse saknas', 'Har inte fått någon bekräftelse', '7 maj')">
-    <td>Oskar Holm</td>
-    <td>Orderbekräftelse saknas</td>
-    <td>Har inte fått någon bekräftelse</td>
-    <td>7 maj</td>
-  </tr>
-  <tr class="unread" onclick="viewMessage('Maria Ek', 'Problem med betalning', 'Får ett felmeddelande vid checkout', '6 maj')">
-    <td>Maria Ek</td>
-    <td>Problem med betalning</td>
-    <td>Får ett felmeddelande vid checkout</td>
-    <td>6 maj</td>
-  </tr>
-  <tr onclick="viewMessage('David Persson', 'Felsänd vara', 'Fick fel färg på min beställning', '5 maj')">
-    <td>David Persson</td>
-    <td>Felsänd vara</td>
-    <td>Fick fel färg på min beställning</td>
-    <td>5 maj</td>
-  </tr>
-  <tr onclick="viewMessage('Lina Fredriksson', 'Rabattkod ej fungerat', 'Koden jag fick fungerade inte', '4 maj')">
-    <td>Lina Fredriksson</td>
-    <td>Rabattkod ej fungerat</td>
-    <td>Koden jag fick fungerade inte</td>
-    <td>4 maj</td>
-  </tr>
-  <tr class="unread" onclick="viewMessage('Kristoffer Jonsson', 'Feedback på kundservice', 'Tack för snabb hjälp!', '3 maj')">
-    <td>Kristoffer Jonsson</td>
-    <td>Feedback på kundservice</td>
-    <td>Tack för snabb hjälp!</td>
-    <td>3 maj</td>
-  </tr>
-  <tr onclick="viewMessage('Elin Berg', 'Leveransproblem', 'Paketet fastnat i leverans', '2 maj')">
-    <td>Elin Berg</td>
-    <td>Leveransproblem</td>
-    <td>Paketet fastnat i leverans</td>
-    <td>2 maj</td>
-  </tr>
-  <tr onclick="viewMessage('Mattias Gustafsson', 'Fråga om produktmaterial', 'Är tröjan gjord i ekologisk bomull?', '1 maj')">
-    <td>Mattias Gustafsson</td>
-    <td>Fråga om produktmaterial</td>
-    <td>Är tröjan gjord i ekologisk bomull?</td>
-    <td>1 maj</td>
-  </tr>
-</tbody>
+  <thead>
+    <tr>
+      <th>Kund</th>
+      <th>Ämne</th>
+      <th>Senaste meddelande</th>
+      <th>Datum</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- JS fyller detta -->
+  </tbody>
+</table>
+
 
 
   <!-- MODAL: Skicka meddelande -->
@@ -220,16 +150,35 @@
 }
 
   </script>
-  <script>
-function viewMessage(name, subject, content, date) {
-  const params = new URLSearchParams({
-    name,
-    subject,
-    content,
-    date
-  });
-  window.location.href = `kundmeddelande.html?${params.toString()}`;
-}
-</script>
+    <script>
+    function viewMessage(name, subject, content, date) {
+      const params = new URLSearchParams({ name, subject, content, date });
+      window.location.href = `kundmeddelande.html?${params.toString()}`;
+    }
+
+    window.onload = async () => {
+      try {
+        const res = await fetch('/api/messages/latest');
+        const data = await res.json();
+
+        const tbody = document.querySelector(".customer-table tbody");
+        tbody.innerHTML = "";
+
+        data.forEach(entry => {
+          const row = `
+            <tr onclick="viewMessage('${entry.customerName}', '${entry.subject}', '${entry.message}', '${new Date(entry.date).toLocaleDateString()}')">
+              <td>${entry.customerName}</td>
+              <td>${entry.subject}</td>
+              <td>${entry.message}</td>
+              <td>${new Date(entry.date).toLocaleDateString()}</td>
+            </tr>
+          `;
+          tbody.innerHTML += row;
+        });
+      } catch (err) {
+        console.error("Kunde inte ladda meddelanden:", err);
+      }
+    };
+  </script>
 </body>
 </html>
