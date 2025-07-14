@@ -1,7 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const { CohereClient } = require("cohere-ai");
-const franc = require("franc");
 const langs = require("langs");
 const Customer = require("../models/Customer");
 const Message = require("../models/Message");
@@ -20,6 +19,8 @@ router.post('/ask', async (req, res) => {
   }
 
   try {
+    const { default: franc } = await import("franc");
+
     const customer = await Customer.findOne({ email: sessionUser.email });
     if (!customer) {
       return res.status(404).json({ reply: '❌ Kunde inte hitta kunddata.' });
