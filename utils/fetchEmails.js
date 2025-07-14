@@ -9,39 +9,47 @@ const config = {
     user: process.env.IMAP_USER,
     password: process.env.IMAP_PASSWORD,
     host: process.env.IMAP_HOST,
-    port: 993,
-    tls: true,
-    authTimeout: 3000
+    port: Number(process.env.IMAP_PORT),
+    tls: process.env.IMAP_TLS === 'true',
+    authTimeout: 10000
   }
 };
+
+
 
 // 📨 Sparar meddelanden i databasen
 async function fetchEmailsAndSave() {
   const connection = await imaps.connect({ imap: config.imap });
-  await connection.openBox("INBOX");
+  try {
+    await connection.openBox("INBOX");
 
-  const searchCriteria = ["UNSEEN"]; // bara olästa
-  const fetchOptions = { bodies: ["HEADER", "TEXT"], markSeen: true };
+    const searchCriteria = ["UNSEEN"];
+    const fetchOptions = { bodies: ["HEADER", "TEXT"], markSeen: true };
 
-  const results = await connection.search(searchCriteria, fetchOptions);
+    const results = await connection.search(searchCriteria, fetchOptions);
 
-  for (let res of results) {
-    const all = res.parts.find(part => part.which === "TEXT");
-    const parsed = await simpleParser(all.body);
+    for (let res of results) {
+      if (!res.parts) continue;
+      const all = res.parts.find(part => part.which === "TEXT");
+      if (!all) continue;
 
-    const message = new Message({
-      customerId: process.env.IMAP_CUSTOMER_ID, // tillfälligt kopplat
-      sender: parsed.from.text,
-      message: parsed.text,
-      timestamp: parsed.date || new Date()
-    });
+      const parsed = await simpleParser(all.body);
 
-    await message.save();
-    console.log(`📥 Sparat e-post från ${parsed.from.text}`);
+      const message = new Message({
+        customerId: process.env.IMAP_CUSTOMER_ID,
+        sender: parsed.from.text,
+        message: parsed.text,
+        timestamp: parsed.date instanceof Date ? parsed.date : new Date()
+      });
+
+      await message.save();
+      console.log(`📥 Sparat e-post från ${parsed.from.text}`);
+    }
+  } finally {
+    connection.end(); // ← körs alltid, även vid fel
   }
-
-  connection.end();
 }
+
 
 // 📨 Returnerar meddelanden (för att visa i frontend)
 async function fetchEmails() {

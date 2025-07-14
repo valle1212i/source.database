@@ -9,33 +9,34 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
 </head>
 <body>
- 
+
   <!-- SIDOMENY -->
   <div class="sidebar">
-    <div class="logo"><h2>Source</h2></div>
-    <ul class="nav-menu">
-      <li><i class="fas fa-home"></i> Hem</li>
-      <li><i class="fas fa-credit-card"></i> Betalningar</li>
-      <li><i class="fas fa-envelope"></i> Kontakt</li>
-      <li><i class="fas fa-chart-line"></i> Rapporter</li>
-      <li><i class="fas fa-file-invoice"></i> Fakturor</li>
-      <li><i class="fas fa-users"></i> Kunder</li>
-      <li><i class="fas fa-chart-pie"></i> Analyser</li>
-      <li class="active"><i class="fas fa-box"></i> Inventarier</li>
-      <li><i class="fas fa-cog"></i> Inställningar</li>
-    </ul>
-    <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
-  </div>
- 
+  <div class="logo"><h2>Source</h2></div>
+  <ul class="nav-menu">
+    <li><a href="login.html"><i class="fas fa-home"></i> Hem</a></li>
+    <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+    <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+    <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+    <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+    <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+    <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+    <li class="active"><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+    <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+  </ul>
+  <div class="help"><a href="hjalp.html"><i class="fas fa-question-circle"></i> Hjälp</a></div>
+</div>
+
+
   <!-- HUVUDINNEHÅLL -->
   <main class="main">
     <h1>Inventarier</h1>
     <p>Hantera dina produkter och lagersaldo. Få notiser när produkter är slutsålda.</p>
- 
+
     <section class="card">
       <!-- Sökfält -->
       <input type="text" id="searchInput" placeholder="🔍 Sök produkt, artikelnummer eller status..." onkeyup="filterTable()" style="margin-bottom: 15px; padding: 10px; width: 100%; border-radius: 6px; border: 1px solid #ccc;">
- 
+
       <!-- Tabell -->
       <table class="inventory-table" id="inventoryTable">
         <thead>
@@ -48,168 +49,193 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>Vit T-shirt</td>
-            <td>TS1001</td>
-            <td contenteditable="true">0</td>
-            <td class="status-soldout">Slutsåld</td>
-            <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
-          </tr>
-          <tr>
-            <td>Svart Hoodie</td>
-            <td>HD1002</td>
-            <td contenteditable="true">12</td>
-            <td class="status-instock">I lager</td>
-            <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
-          </tr>
-          <tr>
-            <td>Blå Keps</td>
-            <td>KP1003</td>
-            <td contenteditable="true">3</td>
-            <td class="status-low">Lågt lager</td>
-            <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
-          </tr>
-          <tr>
-            <td>Grå Mössa</td>
-            <td>GM1004</td>
-            <td contenteditable="true">6</td>
-            <td class="status-instock">I lager</td>
-            <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
-          </tr>
-          <tr>
-            <td>Vita Sneakers</td>
-            <td>SN1005</td>
-            <td contenteditable="true">0</td>
-            <td class="status-soldout">Slutsåld</td>
-            <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
-          </tr>
-        </tbody>
+  <tr>
+    <td>Vit T-shirt</td>
+    <td>TS1001</td>
+    <td class="stock-cell">0</td>
+    <td class="status-soldout">Slutsåld</td>
+    <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
+  </tr>
+  <tr>
+    <td>Svart Hoodie</td>
+    <td>HD1002</td>
+    <td class="stock-cell">12</td>
+    <td class="status-instock">I lager</td>
+    <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
+  </tr>
+  <tr>
+    <td>Blå Keps</td>
+    <td>KP1003</td>
+    <td class="stock-cell">3</td>
+    <td class="status-low">Lågt lager</td>
+    <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
+  </tr>
+  <tr>
+    <td>Grå Mössa</td>
+    <td>GM1004</td>
+    <td class="stock-cell">6</td>
+    <td class="status-instock">I lager</td>
+    <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
+  </tr>
+  <tr>
+    <td>Vita Sneakers</td>
+    <td>SN1005</td>
+    <td class="stock-cell">0</td>
+    <td class="status-soldout">Slutsåld</td>
+    <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
+  </tr>
+</tbody>
       </table>
     </section>
- 
+
     <section class="notifications">
       <h3>Notiser</h3>
       <p>Produkten <strong>Vit T-shirt</strong> och <strong>Vita Sneakers</strong> är slutsålda. Uppdatera lagersaldo eller inaktivera produkterna i webbshopen.</p>
     </section>
   </main>
- 
-  <!-- JavaScript -->
+
   <script>
-    const savedTheme = localStorage.getItem("theme") || "light";
-    document.body.classList.add(`${savedTheme}-theme`);
- 
-    function filterTable() {
-      const input = document.getElementById("searchInput").value.toLowerCase();
-      const rows = document.querySelectorAll("#inventoryTable tbody tr");
-      rows.forEach(row => {
-        row.style.display = Array.from(row.cells).some(td =>
-          td.textContent.toLowerCase().includes(input)) ? "" : "none";
-      });
+  const savedTheme = localStorage.getItem("theme") || "light";
+  document.body.classList.add(`${savedTheme}-theme`);
+
+  function filterTable() {
+    const input = document.getElementById("searchInput").value.toLowerCase();
+    const rows = document.querySelectorAll("#inventoryTable tbody tr");
+    rows.forEach(row => {
+      row.style.display = Array.from(row.cells).some(td =>
+        td.textContent.toLowerCase().includes(input)) ? "" : "none";
+    });
+  }
+
+  function sortTable(colIndex) {
+    const table = document.getElementById("inventoryTable");
+    const tbody = table.tBodies[0];
+    const rows = Array.from(tbody.rows);
+
+    rows.sort((a, b) => {
+      const A = a.cells[colIndex].textContent.trim();
+      const B = b.cells[colIndex].textContent.trim();
+      return isNaN(A - B) ? A.localeCompare(B) : Number(A) - Number(B);
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+  }
+
+  function toggleEdit(icon) {
+    const td = icon.parentElement;
+    const row = td.parentElement;
+    const productId = row.cells[1].textContent.trim();
+    const stockCell = row.cells[2];
+    const statusCell = row.cells[3];
+
+    // Ta bort gamla kontroller om de finns
+    const existing = td.querySelector(".edit-controls");
+    if (existing) {
+      existing.remove();
+      stockCell.innerHTML = stockCell.dataset.originalText || stockCell.textContent;
+      stockCell.removeAttribute("contenteditable");
+      return;
     }
- 
-    function sortTable(colIndex) {
-      const table = document.getElementById("inventoryTable");
-      const tbody = table.tBodies[0];
-      const rows = Array.from(tbody.rows);
- 
-      rows.sort((a, b) => {
-        const A = a.cells[colIndex].textContent.trim();
-        const B = b.cells[colIndex].textContent.trim();
-        return isNaN(A - B) ? A.localeCompare(B) : Number(A) - Number(B);
-      });
- 
-      rows.forEach(row => tbody.appendChild(row));
-    }
- 
-    function toggleEdit(icon) {
-      const td = icon.parentElement;
-      const existing = td.querySelector(".edit-controls");
-      if (existing) {
-        existing.remove();
-        return;
-      }
- 
-      const row = td.parentElement;
-      const productId = row.cells[1].textContent.trim();
-      const stockCell = row.cells[2];
-      const statusCell = row.cells[3];
-      let stock = parseInt(stockCell.textContent.trim());
- 
-      const controlDiv = document.createElement("div");
-      controlDiv.className = "edit-controls";
- 
-      const minusBtn = document.createElement("button");
-      minusBtn.textContent = "➖";
-      minusBtn.onclick = () => {
-        if (stock > 0) {
-          stock--;
-          stockCell.textContent = stock;
-          updateStatus(stock, statusCell);
-          updateStockAPI(productId, -1);
-        }
-      };
- 
-      const plusBtn = document.createElement("button");
-      plusBtn.textContent = "➕";
-      plusBtn.onclick = () => {
-        stock++;
+
+    // Spara originaltext
+    stockCell.dataset.originalText = stockCell.textContent;
+    let stock = parseInt(stockCell.textContent.trim());
+
+    // Inputfält för manuellt lagersaldo
+    const input = document.createElement("input");
+    input.type = "number";
+    input.value = stock;
+    input.style.width = "50px";
+    input.style.marginRight = "6px";
+    input.onchange = () => {
+      const newStock = parseInt(input.value);
+      const diff = newStock - stock;
+      if (!isNaN(newStock) && diff !== 0) {
+        stock = newStock;
         stockCell.textContent = stock;
         updateStatus(stock, statusCell);
-        updateStockAPI(productId, 1);
-      };
- 
-      [minusBtn, plusBtn].forEach(btn => {
-        btn.style.marginLeft = "6px";
-        btn.style.padding = "2px 6px";
-        btn.style.fontSize = "12px";
-        btn.style.cursor = "pointer";
-      });
- 
-      controlDiv.appendChild(minusBtn);
-      controlDiv.appendChild(plusBtn);
-      td.appendChild(controlDiv);
-    }
- 
-    function updateStatus(stock, statusCell) {
-      if (stock === 0) {
-        statusCell.textContent = "Slutsåld";
-        statusCell.className = "status-soldout";
-      } else if (stock < 5) {
-        statusCell.textContent = "Lågt lager";
-        statusCell.className = "status-low";
-      } else {
-        statusCell.textContent = "I lager";
-        statusCell.className = "status-instock";
+        updateStockAPI(productId, diff);
       }
+    };
+    stockCell.innerHTML = '';
+    stockCell.appendChild(input);
+
+    // ➖ och ➕ knappar
+    const controlDiv = document.createElement("div");
+    controlDiv.className = "edit-controls";
+
+    const minusBtn = document.createElement("button");
+    minusBtn.textContent = "➖";
+    minusBtn.onclick = () => {
+      if (stock > 0) {
+        stock--;
+        input.value = stock;
+        stockCell.textContent = stock;
+        updateStatus(stock, statusCell);
+        updateStockAPI(productId, -1);
+      }
+    };
+
+    const plusBtn = document.createElement("button");
+    plusBtn.textContent = "➕";
+    plusBtn.onclick = () => {
+      stock++;
+      input.value = stock;
+      stockCell.textContent = stock;
+      updateStatus(stock, statusCell);
+      updateStockAPI(productId, 1);
+    };
+
+    [minusBtn, plusBtn].forEach(btn => {
+      btn.style.marginLeft = "6px";
+      btn.style.padding = "2px 6px";
+      btn.style.fontSize = "12px";
+      btn.style.cursor = "pointer";
+    });
+
+    controlDiv.appendChild(minusBtn);
+    controlDiv.appendChild(plusBtn);
+    td.appendChild(controlDiv);
+  }
+
+  function updateStatus(stock, statusCell) {
+    if (stock === 0) {
+      statusCell.textContent = "Slutsåld";
+      statusCell.className = "status-soldout";
+    } else if (stock < 5) {
+      statusCell.textContent = "Lågt lager";
+      statusCell.className = "status-low";
+    } else {
+      statusCell.textContent = "I lager";
+      statusCell.className = "status-instock";
     }
- 
-    function updateStockAPI(productId, quantityChange) {
-      const endpoint = quantityChange > 0
-        ? "/api/inventory/return"
-        : "/api/inventory/buy";
- 
-      fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          productId: productId,
-          quantity: Math.abs(quantityChange)
-        })
+  }
+
+  function updateStockAPI(productId, quantityChange) {
+    const endpoint = quantityChange > 0
+      ? "/api/inventory/return"
+      : "/api/inventory/buy";
+
+    fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        productId: productId,
+        quantity: Math.abs(quantityChange)
       })
-      .then(res => {
-        if (!res.ok) throw new Error("API-fel");
-        return res.json();
-      })
-      .then(data => {
-        console.log("Lager uppdaterat:", data);
-      })
-      .catch(err => {
-        console.error("Fel vid API-anrop:", err);
-        alert("Kunde inte uppdatera lagret mot servern.");
-      });
-    }
-  </script>
-</body>
-</html>
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("API-fel");
+      return res.json();
+    })
+    .then(data => {
+      console.log("Lager uppdaterat:", data);
+    })
+    .catch(err => {
+      console.error("Fel vid API-anrop:", err);
+      alert("Kunde inte uppdatera lagret mot servern.");
+    });
+  }
+</script>
