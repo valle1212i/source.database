@@ -1,10 +1,10 @@
-import express from "express";
-import dotenv from "dotenv";
-import { CohereClient } from "cohere-ai";
-import { franc } from "franc";
-import langs from "langs";
-import Customer from "../models/Customer.js";
-import Message from "../models/Message.js";
+const express = require("express");
+const dotenv = require("dotenv");
+const { CohereClient } = require("cohere-ai");
+const { franc } = require("franc");
+const langs = require("langs");
+const Customer = require("../models/Customer");
+const Message = require("../models/Message");
 
 dotenv.config();
 
@@ -87,4 +87,4 @@ router.get('/customer/:id', async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;
