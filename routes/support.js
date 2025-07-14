@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { handleCustomerQuestion } = require('../aisupport');
+const { handleCustomerQuestion } = require('../aiSupport');
 
 router.post('/ask', async (req, res) => {
   const { message } = req.body;
