@@ -105,6 +105,7 @@ app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/email', require('./routes/emailRoutes'));
 app.use('/api/messages', require('./routes/messagesRoutes'));
 app.use('/api/customers', require('./routes/customers'));
+app.use("/api/email", require("./routes/emails"));
 
 
 // 📦 Simulerat inventarielager
