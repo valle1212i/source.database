@@ -5,7 +5,7 @@ require('dotenv').config();
 const { CohereClient } = require('cohere-ai');
 const cohere = new CohereClient({ token: process.env.COHERE_API_KEY });
 
-const { franc } = await import("franc");
+const { franc } = require("franc");
 const langs = require('langs');     // Konverterar språk-kod till namn
 
 const Customer = require('../models/Customer');
