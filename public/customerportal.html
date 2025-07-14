@@ -434,38 +434,5 @@
   <input type="text" id="chatInput" placeholder="Skriv ett meddelande..." style="width:100%; padding:5px;" />
 
 </div>
-<script src="http://localhost:3000/socket.io/socket.io.js"></script>
-<script>
-  const socket = io("http://localhost:3000");
-
-  function sendCustomerMessage() {
-    const message = document.getElementById("chatInput").value;
-    if (!message) return;
-
-    socket.emit("sendMessage", {
-      customerId: "658ad3dcb1368ae62d8c3bcf", 
-      sender: "customer",
-      message,
-    });
-
-    const chatBox = document.getElementById("chatMessages");
-    const div = document.createElement("div");
-    div.textContent = "Du: " + message;
-    chatBox.appendChild(div);
-    document.getElementById("chatInput").value = "";
-  }
-
-  socket.on("newMessage", (msg) => {
-    const chatBox = document.getElementById("chatMessages");
-    const div = document.createElement("div");
-    div.innerHTML = `<strong>${msg.sender}:</strong> ${msg.message}`;
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  });
-</script>
-
-
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/chat.js"></script>
-</body>
-</html>

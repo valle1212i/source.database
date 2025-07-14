@@ -39,7 +39,6 @@ async function fetchMessages() {
   }
 }
 
-// 📤 Skicka meddelande
 function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
@@ -51,15 +50,11 @@ function sendMessage() {
     timestamp: new Date()
   };
 
-  // Live via Socket.IO
   socket.emit("sendMessage", msgObj);
 
-  // Visa direkt i gränssnitt
-  renderMessage(msgObj);
-
+  // ❌ Inte rendera direkt – vänta på socket.on("newMessage")
   input.value = "";
 
-  // Spara i databasen
   fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -68,6 +63,7 @@ function sendMessage() {
     console.error("❌ Kunde inte spara meddelande:", err);
   });
 }
+
 
 // 👂 Ta emot svar från admin
 socket.on("newMessage", (msg) => {
