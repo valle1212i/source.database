@@ -1,7 +1,7 @@
 {
   "name": "kundportal",
   "version": "1.0.0",
-  "type": "module",
+  "type": "commonjs",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -21,4 +21,3 @@
     "socket.io": "^4.8.1"
   }
 }
-
