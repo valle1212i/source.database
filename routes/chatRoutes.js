@@ -1,15 +1,15 @@
-const express = require('express');
+import express from "express";
+import dotenv from "dotenv";
+import { CohereClient } from "cohere-ai";
+import { franc } from "franc";
+import langs from "langs";
+import Customer from "../models/Customer.js";
+import Message from "../models/Message.js";
+
+dotenv.config();
+
 const router = express.Router();
-require('dotenv').config();
-
-const { CohereClient } = require('cohere-ai');
 const cohere = new CohereClient({ token: process.env.COHERE_API_KEY });
-
-const { franc } = require("franc");
-const langs = require('langs');     // Konverterar språk-kod till namn
-
-const Customer = require('../models/Customer');
-const Message = require('../models/Message'); // 📦 Viktig för meddelanden
 
 // 🔁 AI-endpoint: /api/chat/ask
 router.post('/ask', async (req, res) => {
@@ -87,4 +87,4 @@ router.get('/customer/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
