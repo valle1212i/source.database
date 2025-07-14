@@ -1,7 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const { CohereClient } = require("cohere-ai");
-const { franc } = require("franc");
+const franc = require("franc");
 const langs = require("langs");
 const Customer = require("../models/Customer");
 const Message = require("../models/Message");
@@ -11,7 +11,6 @@ dotenv.config();
 const router = express.Router();
 const cohere = new CohereClient({ token: process.env.COHERE_API_KEY });
 
-// 🔁 AI-endpoint: /api/chat/ask
 router.post('/ask', async (req, res) => {
   const { message } = req.body;
   const sessionUser = req.session.user;
@@ -27,7 +26,7 @@ router.post('/ask', async (req, res) => {
     }
 
     const langCode = franc(message);
-    let detectedLanguage = 'sv'; // fallback
+    let detectedLanguage = 'sv';
     if (langCode !== 'und') {
       const lang = langs.where('3', langCode);
       if (lang) detectedLanguage = lang.name.toLowerCase();
@@ -74,13 +73,11 @@ Användarens information:
   }
 });
 
-// 📨 Hämta meddelanden för en viss kund: GET /api/chat/customer/:id
 router.get('/customer/:id', async (req, res) => {
   try {
     const customerId = req.params.id;
     const messages = await Message.find({ customerId }).sort({ timestamp: 1 });
-
-    res.json(messages); // ✅ Returnerar JSON till frontend
+    res.json(messages);
   } catch (err) {
     console.error('❌ Kunde inte hämta meddelanden:', err);
     res.status(500).json({ error: 'Kunde inte hämta meddelanden' });
