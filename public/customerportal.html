@@ -52,7 +52,33 @@
   </div>
 
   <div class="main">
-    <div class="header">Välkommen tillbaka, Anna!</div>
+    <div class="header">Välkommen tillbaka!</div>
+
+    <script>
+  async function loadUserGreeting() {
+    try {
+      const res = await fetch('/api/user/profile', { credentials: 'include' });
+      if (!res.ok) throw new Error('Inte inloggad');
+
+      const data = await res.json();
+      const fullName = data.name || "användare";
+      const firstName = fullName.trim().split(" ")[0];
+
+      const header = document.querySelector(".header");
+      if (header) {
+        header.textContent = `Välkommen tillbaka, ${firstName}!`;
+      }
+    } catch (err) {
+      console.error("Kunde inte hämta användarinformation:", err);
+      const header = document.querySelector(".header");
+      if (header) {
+        header.textContent = "Välkommen tillbaka!";
+      }
+    }
+  }
+
+  window.addEventListener("DOMContentLoaded", loadUserGreeting);
+</script>
 
     <div class="grid">
       <!-- Försäljning med diagram och belopp -->
@@ -201,16 +227,22 @@
       </div>
 
       <div class="card ai-assistant">
-        <h3><i class="fas fa-robot"></i> AI Assistent</h3>
-        <p>Föreslår svar, ger analyser och hjälp i realtid.</p>
-
-        <textarea id="aiMessage" rows="3" placeholder="Ställ en fråga till AI..."></textarea><br>
-        <button onclick="askAI()">Skicka fråga</button>
-        <div id="aiResponse" style="margin-top: 10px; padding: 8px; background-color: #f5f5f5; border-radius: 4px;"></div>
-      </div>
-
+  <div class="ai-header">
+    <i class="fas fa-robot ai-icon"></i>
+    <div>
+      <h3>AI Assistent</h3>
+      <p class="ai-subtext">Föreslår svar, analyser och hjälp i realtid.</p>
     </div>
   </div>
+
+  <textarea id="aiMessage" rows="3" placeholder="Ställ en fråga till AI..."></textarea>
+  
+  <button class="ai-button" onclick="askAI()">Skicka fråga</button>
+  
+  <div id="aiResponse">
+  <div id="loadingAnimation" class="loader" style="display: none;"></div>
+</div>
+
 
   <!-- Chart.js -->
   <script>
@@ -317,11 +349,12 @@
     const message = document.getElementById("aiMessage").value;
     const responseDiv = document.getElementById("aiResponse");
     if (!message) {
+      document.getElementById("loadingAnimation")?.remove();
       responseDiv.textContent = "⚠️ Vänligen skriv en fråga först.";
       return;
     }
 
-    responseDiv.textContent = "🔄 AI tänker...";
+    responseDiv.innerHTML = '<div id="loadingAnimation" class="loader"></div>';
 
     try {
       const res = await fetch("/api/chat/ask", {
@@ -334,19 +367,23 @@
       const data = await res.json();
       const reply = data.reply || "❌ Inget svar från AI.";
 
-      responseDiv.textContent = "";
-      let i = 0;
-      const speed = 15;
+      responseDiv.innerHTML = "";
+const paragraphs = reply.split('\n\n'); // Dela upp i stycken
+let i = 0;
+const delay = 200; // Millisekunder mellan varje stycke
 
-      function typeChar() {
-        if (i < reply.length) {
-          responseDiv.textContent += reply.charAt(i);
-          i++;
-          setTimeout(typeChar, speed);
-        }
-      }
+function typeParagraph() {
+  if (i < paragraphs.length) {
+    const p = document.createElement('p');
+    p.textContent = paragraphs[i];
+    responseDiv.appendChild(p);
+    i++;
+    setTimeout(typeParagraph, delay);
+  }
+}
 
-      typeChar();
+typeParagraph();
+
 
     } catch (err) {
       responseDiv.textContent = "❌ Det gick inte att kontakta AI-agenten.";

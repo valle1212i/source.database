@@ -57,6 +57,9 @@ app.post('/login', async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).send('❌ Fel e-post eller lösenord');
+    
+    // Efter lyckad inloggning:
+    req.session.user = { name: user.name, email: user.email };
 
     req.session.user = user;
     res.redirect('/customerportal.html');
@@ -146,7 +149,20 @@ app.post("/api/inventory/return", (req, res) => {
   res.json({ success: true, productId, stock: product.stock });
 });
 
-// ... fler inventarierouter
+// Auth middleware – beroende på om du använder sessions eller JWT
+function requireAuth(req, res, next) {
+  if (req.session && req.session.user) {
+    next();
+  } else {
+    res.status(401).json({ error: "Inte inloggad" });
+  }
+}
+
+// Endpoint som returnerar användarens namn
+app.get('/api/user/profile', requireAuth, (req, res) => {
+  const { name, email } = req.session.user; // eller req.user beroende på din auth-lösning
+  res.json({ name, email });
+});
 
 // 🧠 === Socket.IO-anslutning ===
 io.on("connection", (socket) => {

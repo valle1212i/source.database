@@ -223,8 +223,117 @@ body {
 }
 
 .ai-assistant {
-  background-color: #e0f2fe;
+  background-color: #f0f9ff;
   border-left: 4px solid #3b82f6;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  font-family: 'Inter', sans-serif;
+}
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ai-icon {
+  font-size: 1.5rem;
+  color: #3b82f6;
+}
+
+.ai-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #1f2937;
+}
+
+.ai-subtext {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.ai-assistant textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  resize: vertical;
+  margin-top: 8px;
+}
+
+.ai-button {
+  margin-top: 10px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.ai-button:hover {
+  background-color: #2563eb;
+}
+
+.ai-response {
+  margin-top: 12px;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  color: #374151;
+  min-height: 40px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.loader {
+  width: 60px;
+  aspect-ratio: 1;
+  color: #3b82f6; /* matchar din blå accentfärg */
+  position: relative;
+  margin: 0 auto;
+}
+.loader::before,
+.loader::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(currentColor 0 0) 0 calc(var(--s,0)*-100%)/100% calc(100%/3),
+    repeating-linear-gradient(90deg,currentColor 0 25%,#0000 0 50%) calc(var(--s,0)*100%) 50%/calc(4*100%/3) calc(100%/3);
+  background-repeat: no-repeat;
+  animation: l26 2s infinite;
+}
+.loader::after {
+  --s:-1;
+}
+@keyframes l26 {
+  0%, 10%   {transform: translateY(calc(var(--s,1)*0)); background-position: 0 calc(var(--s,0)*-100%), calc(var(--s,0)*100%) 50%;}
+  33%       {transform: translateY(calc(var(--s,1)*-20%)); background-position: 0 calc(var(--s,0)*-100%), calc(var(--s,0)*100%) 50%;}
+  66%       {transform: translateY(calc(var(--s,1)*-20%)); background-position: 0 calc(var(--s,0)*-100%), calc(var(--s,0)*100% + 100%) 50%;}
+  90%, 100% {transform: translateY(calc(var(--s,1)*0)); background-position: 0 calc(var(--s,0)*-100%), calc(var(--s,0)*100% + 100%) 50%;}
+}
+
+#aiResponse h3 {
+  font-size: 1.1rem;
+  margin-top: 1em;
+  color: #1a73e8;
+}
+
+#aiResponse p {
+  margin: 0.5em 0;
+  line-height: 1.6;
+}
+
+#aiResponse ul {
+  padding-left: 1.2em;
+  list-style-type: disc;
 }
 
 /* Anpassade storlekar för vissa widgets */
