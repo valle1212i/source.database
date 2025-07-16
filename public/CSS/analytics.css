@@ -31,28 +31,42 @@ body {
   margin-bottom: 30px;
 }
 
+/* Navigationsmeny */
 .nav-menu {
   list-style: none;
   flex-grow: 1;
+  padding: 0;
+  margin: 0;
 }
 
+/* Om du använder <li><a></a></li> */
 .nav-menu li {
-  padding: 12px 10px;
-  font-size: 16px;
-  cursor: pointer;
+  list-style: none;
+}
+
+/* Styling för länkar i menyn */
+.nav-menu a {
+  color: white;
+  text-decoration: none;
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 12px 10px;
+  font-size: 16px;
   border-left: 4px solid transparent;
   transition: all 0.3s ease;
 }
 
-.nav-menu li:hover,
-.nav-menu li.active {
+/* Hover och aktiv */
+.nav-menu a:hover,
+.nav-menu .active a {
   background-color: #1f2937;
   border-left: 4px solid #3b82f6;
+  color: white;
+  font-weight: bold;
 }
 
+/* Hjälp-länken längst ner */
 .help {
   margin-top: auto;
   font-size: 16px;
@@ -63,14 +77,6 @@ body {
   cursor: pointer;
   padding-left: 10px;
   padding-top: 20px;
-}
-/* ==== Fixar lila länkar i ljus tema ==== */
-.sidebar a,
-.sidebar a:visited,
-.sidebar a:hover,
-.sidebar a:active {
-  color: white !important;
-  text-decoration: none;
 }
 
 /* ==== HUVUDINNEHÅLL ==== */
