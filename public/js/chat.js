@@ -1,5 +1,5 @@
 // 👇 Förutsätter att du har inkluderat Socket.IO-klienten i HTML innan denna fil laddas!
-const socket = io("https://admin-portal-production.up.railway.app"); // byt till din Railway URL
+const socket = io("https://source-database.onrender.com"); // <– din faktiska backend-URL
 
 const chatBox = document.getElementById("chatMessages");
 const input = document.getElementById("chatInput");
