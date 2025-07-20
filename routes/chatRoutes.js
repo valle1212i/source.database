@@ -28,12 +28,9 @@ router.post("/ask", async (req, res) => {
   try {
     const customer = await Customer.findOne({ email: sessionUser.email });
     if (!customer) {
-      return res
-        .status(404)
-        .json({ reply: "❌ Kunde inte hitta kunddata." });
+      return res.status(404).json({ reply: "❌ Kunde inte hitta kunddata." });
     }
 
-    // 🧠 Systemprompt med kundinfo
     const systemPrompt = `
 Du är en hjälpsam, tillmötesgående och vänlig AI-supportagent i en kundportal. Du svarar kortfattat men trevligt – på ett sätt som känns mänskligt och professionellt.
 
@@ -49,31 +46,46 @@ Användarens information:
 - Senast inloggad: ${customer.lastLogin?.toISOString().split("T")[0] || "Okänt"}
 - Plan: ${customer.plan || "Gratis"}
 - Anteckningar: ${customer.notes || "Inga"}
-`;
+    `;
 
-const completion = await openai.chat.completions.create({
-  model: "gpt-3.5-turbo",
-  messages: [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: message },
-  ],
-  temperature: 0.7,
-});
+    // 1. Flytta ut history
+    const history = req.session.aiHistory || [];
 
+    // 2. Bygg chatMessages korrekt
+    const chatMessages = [
+      { role: "system", content: systemPrompt },
+      ...history.flatMap(entry => [
+        { role: "user", content: entry.question },
+        { role: "assistant", content: entry.answer }
+      ]),
+      { role: "user", content: message }
+    ];
 
-if (!completion || !completion.choices || !completion.choices[0]) {
-  console.error("❌ OpenAI-svaret saknar choices:", completion);
-  return res.status(500).json({ reply: "❌ AI-svar saknas eller var ogiltigt." });
-}
+    // 3. Skicka med messages till OpenAI
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: chatMessages,
+      temperature: 0.7,
+    });
 
-const reply = completion.choices[0].message.content;
+    // 4. Svarshantering och historik
+    const reply = completion.choices?.[0]?.message?.content || "⚠️ Inget svar från AI.";
 
-    res.json({ reply: reply || "⚠️ Inget svar från AI." });
+    if (!req.session.aiHistory) {
+      req.session.aiHistory = [];
+    }
+
+    req.session.aiHistory.push({
+      question: message,
+      answer: reply,
+      timestamp: new Date()
+    });
+
+    res.json({ reply });
+
   } catch (err) {
     console.error("❌ Fel vid AI-anrop:", err);
-    res
-      .status(500)
-      .json({ reply: "❌ Ett fel uppstod vid kontakt med AI." });
+    res.status(500).json({ reply: "❌ Ett fel uppstod vid kontakt med AI." });
   }
 });
 

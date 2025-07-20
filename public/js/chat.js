@@ -1,10 +1,12 @@
-// 👇 Förutsätter att du har inkluderat Socket.IO-klienten i HTML innan denna fil laddas!
-const socket = io("https://source-database.onrender.com"); // <– din faktiska backend-URL
+// 👇 Förutsätter att Socket.IO-klienten är laddad
+const socket = io("https://source-database.onrender.com");
 
 const chatBox = document.getElementById("chatMessages");
 const input = document.getElementById("chatInput");
 
-// ✅ När sidan laddas – hämta inloggad användare och därefter meddelanden
+window.customerId = null;
+
+// ✅ Ladda inloggad användare och historik
 window.addEventListener("DOMContentLoaded", async () => {
   try {
     const res = await fetch("/api/customers/me", {
@@ -15,9 +17,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (!res.ok) throw new Error("Kunde inte hämta användare");
 
     const data = await res.json();
-    customerId = data._id;
+    window.customerId = data._id;
 
-    // 🚀 Hämta meddelanden nu när ID finns
+    // 🚀 Hämta meddelanden efter ID
     fetchMessages();
   } catch (err) {
     alert("❌ Kunde inte hämta inloggad användare. Är du inloggad?");
@@ -25,34 +27,31 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// 🔄 Hämta meddelandehistorik
+// 🔄 Hämta historiska meddelanden
 async function fetchMessages() {
   try {
-    const res = await fetch(`/api/chat/customer/${customerId}`);
+    const res = await fetch(`/api/chat/customer/${window.customerId}`);
     const messages = await res.json();
 
-    messages.forEach(msg => {
-      renderMessage(msg);
-    });
+    messages.forEach(renderMessage);
   } catch (err) {
     console.error("❌ Kunde inte hämta meddelanden:", err);
   }
 }
 
+// 📤 Skicka nytt meddelande
 function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
   const msgObj = {
-    customerId,
+    customerId: window.customerId,
     message: text,
     sender: "customer",
     timestamp: new Date()
   };
 
   socket.emit("sendMessage", msgObj);
-
-  // ❌ Inte rendera direkt – vänta på socket.on("newMessage")
   input.value = "";
 
   fetch("/api/chat", {
@@ -64,30 +63,39 @@ function sendMessage() {
   });
 }
 
-
-// 👂 Ta emot svar från admin
+// 👂 Lyssna på nya inkommande meddelanden
 socket.on("newMessage", (msg) => {
   renderMessage(msg);
 });
 
-// 🧱 Rendera meddelande
+// 🧱 Rendera meddelande (XSS-säkert)
 function renderMessage(msg) {
   const div = document.createElement("div");
+  div.className = msg.sender === "admin" ? "message admin" : "message customer";
 
-  let time = "Okänt datum";
+  const name = document.createElement("strong");
+  name.textContent = msg.sender === "admin" ? "Admin: " : "Du: ";
+
+  const content = document.createElement("span");
+  content.textContent = msg.message;
+
+  const br = document.createElement("br");
+
+  const time = document.createElement("small");
+  let formatted = "Okänt datum";
   if (msg.timestamp) {
     const parsedDate = new Date(msg.timestamp);
     if (!isNaN(parsedDate)) {
-      time = parsedDate.toLocaleString("sv-SE");
+      formatted = parsedDate.toLocaleString("sv-SE");
     }
   }
+  time.textContent = formatted;
 
-  div.innerHTML = `
-    <strong>${msg.sender === "admin" ? "Admin" : "Du"}:</strong> ${msg.message}<br>
-    <small>${time}</small>
-  `;
+  div.appendChild(name);
+  div.appendChild(content);
+  div.appendChild(br);
+  div.appendChild(time);
 
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
 }
-

@@ -405,9 +405,6 @@ body {
 .status-text.progress {
   color: #6ee7b7; /* Turkos */
 }
-#growth-list {
-  transition: all 0.3s ease;
-}
 .growth-list {
   font-size: 15px;        /* Gör texten större */
   line-height: 1.8;       /* Ökar radavståndet mellan punkterna */
