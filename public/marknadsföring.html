@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marknadsföring</title>
+  <link rel="stylesheet" href="CSS/marknadsföring.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">
+      <a href="customerportal.html">
+        <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+      </a>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+      <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+      <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+      <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+      <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+      <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+      <li class="active"><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+      <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+      <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+    </ul>
+    <div class="help">
+      <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
+    </div>
+  </div>
+
+  <main class="main">
+    <h1 class="page-title">Marknadsföring</h1>
+    <p class="subtitle">Utforska verktyg för annonsering, design och rådgivning.</p>
+
+    <section class="card">
+      <h2>Automatiska annonser</h2>
+      <p>Välj plattform för att skapa kampanjer:</p>
+      <div class="button-group">
+  <button class="ad-button" onclick="openTool('google')">
+    <img src="images/google-ads.png" alt="Google Ads"> Google Ads
+  </button>
+  <button class="ad-button" onclick="openTool('meta')">
+    <img src="images/meta.png" alt="Meta Ads"> Meta
+  </button>
+  <button class="ad-button" onclick="openTool('tiktok')">
+    <img src="images/tiktok.png" alt="TikTok Ads"> TikTok
+  </button>
+  <button class="ad-button" onclick="openTool('linkedin')">
+    <img src="images/linkedin.png" alt="LinkedIn Ads"> LinkedIn
+  </button>
+</div>
+    </section>
+
+    <section class="card">
+      <h2>Skapa bilder eller videor</h2>
+      <p>Ladda upp en bild eller skriv en beskrivning för att generera affischer, annonser eller videos med hjälp av AI.</p>
+      <button onclick="window.location.href='ai-marknadsstudio.html'">Starta AI-studiot</button>
+    </section>
+
+    <section class="card">
+      <h2>Rådgivning & Support</h2>
+      <p>Vill du ha hjälp av en designexpert? Kontakta vår marknadsrådgivare.</p>
+      <button onclick="window.location.href='bokning-marknadsradgivare.html'">Boka rådgivning</button>
+    </section>
+  </main>
+
+  <script>
+    function openTool(platform) {
+      alert("Öppnar " + platform + " verktyg...");
+      // Du kan ersätta med window.location.href = "verktyg-" + platform + ".html";
+    }
+  </script>
+  <script>
+  function openTool(platform) {
+    const button = event.target;
+    const originalText = button.innerText;
+    button.innerText = "Laddar...";
+    button.disabled = true;
+    button.style.opacity = 0.7;
+
+    setTimeout(() => {
+      alert("Öppnar " + platform + " verktyg...");
+      // Ersätt med window.location.href = "verktyg-" + platform + ".html";
+      button.innerText = originalText;
+      button.disabled = false;
+      button.style.opacity = 1;
+    }, 1000);
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Min Profil</title>
+  <link rel="stylesheet" href="CSS/profile.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Min profil</h1>
+    <form id="profileForm">
+      <label for="fullname">Namn:</label>
+      <input type="text" id="fullname" />
+
+      <label for="email">E-post:</label>
+      <input type="email" id="email" />
+
+      <label for="password">Nytt lösenord:</label>
+      <input type="password" id="password" placeholder="********" />
+
+      <label for="language">Språk:</label>
+      <select id="language">
+        <option value="sv">Svenska</option>
+        <option value="en">Engelska</option>
+      </select>
+
+      <label for="profilePic">Profilbild:</label>
+      <input type="file" id="profilePic" name="profilePic" accept="image/*" />
+
+      <div class="profile-pic-preview">
+        <img id="profilePicPreview" src="" alt="" />
+        <button type="button" id="removePicBtn" class="remove-btn">Ta bort bild</button>
+      </div>
+
+      <button type="submit">Spara ändringar</button>
+      <button type="button" class="back-btn" onclick="history.back()">← Tillbaka</button>
+    </form>
+    <p id="saveMessage"></p>
+  </div>
+
+  <script>
+    let removeImage = false;
+
+    async function loadProfile() {
+      try {
+        const res = await fetch('/api/profile/me');
+        if (!res.ok) throw new Error("Kunde inte hämta profil");
+
+        const user = await res.json();
+
+        document.getElementById('fullname').value = user.name || '';
+        document.getElementById('email').value = user.email || '';
+        document.getElementById('language').value = user.language || 'sv';
+
+        const preview = document.getElementById("profilePicPreview");
+        const removeBtn = document.getElementById("removePicBtn");
+
+        if (user.profileImage) {
+          preview.src = user.profileImage;
+          preview.style.display = "block";
+          removeBtn.style.display = "inline";
+        } else {
+          preview.style.display = "none";
+          removeBtn.style.display = "none";
+        }
+      } catch (err) {
+        console.error("❌ Fel vid inladdning av profil:", err);
+        document.getElementById('saveMessage').textContent = "❌ Kunde inte ladda profilen.";
+      }
+    }
+
+    document.getElementById("profilePic").addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      const preview = document.getElementById("profilePicPreview");
+      const removeBtn = document.getElementById("removePicBtn");
+
+      if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+        removeBtn.style.display = "inline";
+        removeImage = false;
+      }
+    });
+
+    document.getElementById("removePicBtn").addEventListener("click", () => {
+      if (confirm("Vill du ta bort din profilbild?")) {
+        document.getElementById("profilePicPreview").src = "";
+        document.getElementById("profilePicPreview").style.display = "none";
+        document.getElementById("profilePic").value = "";
+        document.getElementById("removePicBtn").style.display = "none";
+        removeImage = true;
+      }
+    });
+
+    document.getElementById("profileForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById('fullname').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const language = document.getElementById('language').value;
+      const profilePic = document.getElementById('profilePic').files[0];
+
+      const confirmed = confirm("Är du säker på att du vill spara dessa ändringar?");
+      if (!confirmed) return;
+
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("email", email);
+      formData.append("password", password);
+      formData.append("language", language);
+      formData.append("removeImage", removeImage);
+      if (profilePic) formData.append("profilePic", profilePic);
+
+      try {
+        const res = await fetch("/api/profile/update", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('saveMessage').textContent = "✅ Ändringar sparade!";
+        } else {
+          document.getElementById('saveMessage').textContent = "⚠️ Det gick inte att spara ändringarna.";
+        }
+      } catch (err) {
+        console.error("Något gick fel:", err);
+        document.getElementById('saveMessage').textContent = "❌ Fel vid uppdatering.";
+      }
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

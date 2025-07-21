@@ -11,9 +11,11 @@
   />
 </head>
 <body>
-   <div class="sidebar">
+  <div class="sidebar">
   <div class="logo">
-    <h2>Source</h2>
+    <a href="customerportal.html">
+      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+    </a>
   </div>
   <ul class="nav-menu">
     <li>
@@ -48,59 +50,181 @@
     <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
   </div>
 </div>
-  </div>
-  <div class="main">
-    <div class="header">Kontakta oss</div>
+ <div class="main">
+  <h2 class="page-title">Kontakta oss</h2>
 
-    <div class="card contact-section">
-      <i class="fas fa-comments icon"></i>
-      <div>
-        <h3>Chatta med oss</h3>
-        <p>Vi är tillgängliga 24/7</p>
-        <p>Klicka på knappen nedan för att starta en chatt med vårt supportteam.</p>
-        <button class="black-button">Starta chatt</button>
-      </div>
+  <!-- Chatta med oss: Större sektion -->
+  <div class="card contact-section chat-section">
+    <div class="icon-column">
+      <i class="fas fa-comments icon icon-circle"></i>
     </div>
-
-    <div class="card contact-section">
-      <i class="fas fa-phone icon"></i>
-      <div>
-        <h3>Ring oss</h3>
-        <p>Behöver du prata med oss direkt?</p>
-        <p><i class="fas fa-phone"></i> +46 73 322 12 12</p>
-      </div>
-    </div>
-
-    <!-- Vanliga frågor med klickbara svar -->
-    <div class="card contact-section">
-      <i class="fas fa-question-circle icon"></i>
-      <div>
-        <h3>Vanliga frågor</h3>
-        <ul class="faq-list">
-          <li>
-            <button class="faq-question">Hur snabbt får jag svar från supporten?</button>
-            <div class="faq-answer">Vi svarar vanligtvis inom 1–2 timmar under kontorstid.</div>
-          </li>
-          <li>
-            <button class="faq-question">Vad kostar det att komma igång?</button>
-            <div class="faq-answer">Det är helt kostnadsfritt att komma igång med vår basversion.</div>
-          </li>
-          <li>
-            <button class="faq-question">Kan ni hjälpa till med hela hemsidan?</button>
-            <div class="faq-answer">Ja, vårt team kan hjälpa till med både design, innehåll och funktioner.</div>
-          </li>
-        </ul>
-      </div>
+    <div class="content-column">
+      <h3>Chatta med oss</h3>
+      <p class="subtitle">Vi är tillgängliga <strong>24/7</strong></p>
+      <p>Klicka på knappen nedan för att starta en chatt med vårt supportteam.</p>
+      <button class="black-button">Starta chatt</button>
     </div>
   </div>
 
-  <script>
-    document.querySelectorAll('.faq-question').forEach((button) => {
-      button.addEventListener('click', () => {
-        const answer = button.nextElementSibling;
-        answer.style.display = answer.style.display === 'block' ? 'none' : 'block';
-      });
+  <!-- Ring oss -->
+  <div class="card contact-section">
+    <div class="icon-column">
+      <i class="fas fa-phone icon icon-circle"></i>
+    </div>
+    <div class="content-column">
+      <h3>Ring oss</h3>
+      <p class="subtitle">Behöver du prata med oss direkt?</p>
+      <p><i class="fas fa-phone"></i> +46 73 322 12 12</p>
+    </div>
+  </div>
+
+  <!-- Vanliga frågor -->
+  <div class="card contact-section">
+    <div class="icon-column">
+      <i class="fas fa-question-circle icon icon-circle"></i>
+    </div>
+    <div class="content-column">
+      <h3>Vanliga frågor</h3>
+      <ul class="faq-list">
+        <li>
+          <button class="faq-question">Hur snabbt får jag svar från supporten?</button>
+          <div class="faq-answer">Vi svarar vanligtvis inom 1–2 timmar under kontorstid.</div>
+        </li>
+        <li>
+          <button class="faq-question">Vad kostar det att komma igång?</button>
+          <div class="faq-answer">Det är helt kostnadsfritt att komma igång med vår basversion.</div>
+        </li>
+        <li>
+          <button class="faq-question">Kan ni hjälpa till med hela hemsidan?</button>
+          <div class="faq-answer">Ja, vårt team kan hjälpa till med både design, innehåll och funktioner.</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="profile-wrapper">
+  <div class="profile-icon" id="profileToggle">--</div>
+
+  <div class="profile-dropdown" id="profileMenu">
+    <div class="profile-email" id="userEmail">Laddar...</div>
+    <hr />
+    <a href="#" id="switchAccount">Byt konto</a>
+    <a href="#" id="openSettings">Profilinställningar</a>
+    <a href="login.html" id="logout">Logga ut</a>
+  </div>
+</div>
+
+
+</div>
+
+<script>
+  document.querySelectorAll('.faq-question').forEach((button) => {
+    button.addEventListener('click', () => {
+      const answer = button.nextElementSibling;
+      answer.style.display = answer.style.display === 'block' ? 'none' : 'block';
     });
-  </script>
-</body>
-</html>
+  });
+</script>
+<script>
+  const toggle = document.getElementById('profileToggle');
+  const menu = document.getElementById('profileMenu');
+
+ toggle.addEventListener('click', () => {
+  const isOpen = menu.style.display === 'flex';
+  menu.style.display = isOpen ? 'none' : 'flex';
+
+  // Lägg till / ta bort klassen 'open' för att trigga CSS-zoom
+  toggle.classList.toggle('open', !isOpen);
+});
+
+
+  // Klick utanför stänger menyn
+  window.addEventListener('click', function(e) {
+    if (!document.querySelector('.profile-wrapper').contains(e.target)) {
+      menu.style.display = 'none';
+    }
+  });
+</script>
+<script>
+  // Byt konto – Exempelvis redirect till inloggning
+  document.getElementById("switchAccount").addEventListener("click", function (e) {
+    e.preventDefault();
+    if (confirm("Vill du logga ut och byta konto?")) {
+      window.location.href = "login.html";
+    }
+  });
+
+  // Profilinställningar – Gå till profilsida
+  document.getElementById("openSettings").addEventListener("click", function (e) {
+    e.preventDefault();
+    window.location.href = "profile.html";
+  });
+
+  // Språk – Exempel-popup
+  document.getElementById("changeLanguage").addEventListener("click", function (e) {
+    e.preventDefault();
+    alert("Språkval kommer snart!");
+    // Alternativ: visa modal för språkval
+  });
+
+ document.getElementById("logout").addEventListener("click", function (e) {
+  e.preventDefault();
+  if (confirm("Är du säker på att du vill logga ut?")) {
+    fetch('/logout', {
+      method: 'GET',
+      credentials: 'include' // 🧠 Viktigt: skicka med cookies
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        localStorage.clear(); // om du använder det
+        window.location.href = "/login.html";
+      } else {
+        alert("Utloggning misslyckades.");
+      }
+    })
+    .catch(err => {
+      console.error("Fel vid utloggning:", err);
+      alert("Kunde inte logga ut.");
+    });
+  }
+});
+
+</script>
+<script>
+  async function loadUserProfile() {
+  try {
+    const res = await fetch("/api/profile/me");
+    const data = await res.json();
+
+    if (data.success) {
+      const name = data.name || '';
+      const email = data.email || '';
+      const image = data.profileImage;
+
+      // Visa bild om den finns, annars visa initialer
+      if (image) {
+        document.getElementById("profileToggle").innerHTML = `
+          <img src="${image}" alt="Profilbild" style="width: 32px; height: 32px; border-radius: 50%;" />
+        `;
+      } else {
+        const initials = name
+          .split(' ')
+          .map(part => part.charAt(0).toUpperCase())
+          .join('')
+          .substring(0, 2);
+        document.getElementById("profileToggle").textContent = initials;
+      }
+
+      document.getElementById("userEmail").textContent = email;
+    } else {
+      document.getElementById("profileToggle").textContent = "??";
+      document.getElementById("userEmail").textContent = "Ej inloggad";
+    }
+  } catch (err) {
+    console.error("Fel vid hämtning av användarprofil:", err);
+  }
+}
+
+  loadUserProfile();
+</script>
+
