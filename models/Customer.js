@@ -18,11 +18,16 @@ const customerSchema = new mongoose.Schema({
 
   // Användarinställningar
   settings: {
-  language: { type: String, default: 'sv' },
-  theme: { type: String, default: 'light' },
-  aiLanguage: { type: String, default: 'sv' } // ← NYTT
-}
+    language: { type: String, default: 'sv' },
+    theme: { type: String, default: 'light' },
+    aiLanguage: { type: String, default: 'sv' }
+  },
 
+  // 🔄 Profilbild (NYTT)
+  profileImage: {
+    type: String,
+    default: null
+  }
 });
 
 module.exports = mongoose.model('Customer', customerSchema);

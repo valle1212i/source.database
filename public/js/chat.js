@@ -1,3 +1,4 @@
+// 👇 Förutsätter att Socket.IO-klienten är laddad
 const socket = io("https://source-database.onrender.com");
 
 let customerId = null;
@@ -8,41 +9,37 @@ let sessionId = sessionStorage.getItem("activeChatSessionId") || Date.now().toSt
 sessionStorage.setItem("activeChatSessionId", sessionId);
 
 const questions = [
-  {
-    label: "Vad gäller ditt ärende?",
-    type: "text",
-    name: "subject",
-    placeholder: "Ex: Faktura, Leverans, Konto",
-  },
-  {
-    label: "Hur brådskande är det?",
-    type: "select",
-    name: "urgency",
-    options: ["Låg", "Medel", "Hög"],
-  },
-  {
-    label: "Vill du bli kontaktad via e-post eller telefon?",
-    type: "text",
-    name: "preferredContact",
-    placeholder: "Ex: Telefon, E-post",
-  },
+  { label: "Vad gäller ditt ärende?", type: "text", name: "subject", placeholder: "Ex: Faktura, Leverans, Konto" },
+  { label: "Hur brådskande är det?", type: "select", name: "urgency", options: ["Låg", "Medel", "Hög"] },
+  { label: "Vill du bli kontaktad via e-post eller telefon?", type: "text", name: "preferredContact", placeholder: "Ex: Telefon, E-post" }
 ];
 
 const answers = {};
 let currentQuestionIndex = 0;
 
-// Starta frågeflödet när sidan laddas
 window.addEventListener("DOMContentLoaded", async () => {
-  const form = document.getElementById("chatForm");
-  input = document.getElementById("chatInput");
-  chatBox = document.getElementById("chatMessages");
+  try {
+    const form = document.getElementById("chatForm");
+    input = document.getElementById("chatInput");
+    chatBox = document.getElementById("chatMessages");
 
-  if (!form || !input || !chatBox) {
-    console.error("❌ chatForm, chatInput eller chatMessages saknas i DOM.");
-    return;
+    if (!form || !input || !chatBox) {
+      console.error("❌ chatForm, chatInput eller chatMessages saknas i DOM.");
+      return;
+    }
+
+    const res = await fetch("/api/customers/me", { credentials: "include" });
+    if (!res.ok) throw new Error("Kunde inte hämta användare");
+    const data = await res.json();
+    window.customerId = data._id;
+
+    fetchMessages();
+  } catch (err) {
+    alert("❌ Kunde inte hämta inloggad användare. Är du inloggad?");
+    console.error(err);
   }
 
-  form.addEventListener("submit", function (e) {
+  document.getElementById("chatForm").addEventListener("submit", (e) => {
     e.preventDefault();
     sendMessage();
   });
@@ -119,7 +116,6 @@ function showNextQuestion() {
       });
       inputElement.appendChild(btn);
     });
-
   } else {
     inputElement = document.createElement("input");
     inputElement.type = "text";
@@ -158,7 +154,7 @@ function sendMessage() {
   if (!text) return;
 
   const msgObj = {
-    customerId,
+    customerId: window.customerId,
     message: text,
     sender: "customer",
     timestamp: new Date(),
@@ -167,7 +163,6 @@ function sendMessage() {
 
   renderMessage(msgObj);
   socket.emit("sendMessage", msgObj);
-
   input.value = "";
 
   fetch("/api/chat", {
@@ -184,22 +179,31 @@ socket.on("newMessage", (msg) => {
 });
 
 function renderMessage(msg) {
-  if (!chatBox) return;
-
   const div = document.createElement("div");
-  div.classList.add(msg.sender === "admin" ? "received" : "sent");
+  div.className = msg.sender === "admin" ? "message admin" : "message customer";
 
-  const time = msg.timestamp
-    ? new Date(msg.timestamp).toLocaleString("sv-SE")
-    : "Okänt datum";
+  const name = document.createElement("strong");
+  name.textContent = msg.sender === "admin" ? "Support: " : "Du: ";
 
-  const senderName = msg.sender === "admin" ? "Support" : customerName;
+  const content = document.createElement("span");
+  content.textContent = msg.message;
 
-  div.innerHTML = `
-    <strong>${senderName}:</strong><br>
-    ${msg.message}<br>
-    <small>${time}</small>
-  `;
+  const br = document.createElement("br");
+
+  const time = document.createElement("small");
+  let formatted = "Okänt datum";
+  if (msg.timestamp) {
+    const parsedDate = new Date(msg.timestamp);
+    if (!isNaN(parsedDate)) {
+      formatted = parsedDate.toLocaleString("sv-SE");
+    }
+  }
+  time.textContent = formatted;
+
+  div.appendChild(name);
+  div.appendChild(content);
+  div.appendChild(br);
+  div.appendChild(time);
 
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;
@@ -219,12 +223,22 @@ window.startChatSession = async function () {
     customerName = data.name?.split(" ")[0] || "Du";
 
     await fetchMessages();
-
   } catch (err) {
     alert("❌ Kunde inte hämta användardata vid sessionstart.");
     console.error(err);
   }
 };
+
+async function fetchMessages() {
+  try {
+    const res = await fetch(`/api/chat/customer/${window.customerId}`);
+    const messages = await res.json();
+
+    messages.forEach(renderMessage);
+  } catch (err) {
+    console.error("❌ Kunde inte hämta meddelanden:", err);
+  }
+}
 
 async function loadHistory() {
   try {
@@ -235,9 +249,7 @@ async function loadHistory() {
     const historyRes = await fetch(`/api/chat/customer/${customerId}`, { credentials: 'include' });
     const history = await historyRes.json();
 
-    history.forEach(msg => {
-      renderMessage(msg);
-    });
+    history.forEach(renderMessage);
   } catch (err) {
     console.error("❌ Kunde inte hämta meddelandehistorik:", err);
   }

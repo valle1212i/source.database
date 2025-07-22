@@ -8,6 +8,25 @@ const session = require('express-session');
 const bcrypt = require('bcrypt');
 const Customer = require('./models/Customer');
 
+const multer = require('multer');
+const fs = require('fs');
+
+// Konfigurera lagringsplats för profilbilder
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, 'public', 'uploads');
+    if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1e9) + ext;
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({ storage });
+
 dotenv.config();
 const app = express();
 const http = require('http').createServer(app);
@@ -41,8 +60,13 @@ app.use(express.json());
 app.use(session({
   secret: 'source_secret_key',
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: {
+    sameSite: 'lax',     // Viktigt för att skicka cookies via fetch
+    secure: false        // Sätt till true om du kör med HTTPS
+  }
 }));
+
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('🟢 Ansluten till MongoDB Atlas'))
@@ -107,10 +131,18 @@ app.get('/kunder.html', requireLogin, (req, res) => {
 });
 
 app.get('/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.redirect('/login.html');
+  req.session.destroy(err => {
+    if (err) {
+      console.error("Fel vid utloggning:", err);
+      return res.status(500).json({ success: false, message: "Kunde inte logga ut." });
+    }
+
+    res.clearCookie('connect.sid'); // 🧹 Viktigt!
+    res.json({ success: true });    // ✅ Fungerar med fetch()
   });
 });
+
+
 
 // 🔧 API-routes
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -189,6 +221,63 @@ io.on("connection", (socket) => {
     console.log("🔴 Användare frånkopplad");
   });
 });
+// === 🔧 Uppdatera användarprofil med bild (och stöd för borttagning) ===
+app.post("/api/profile/update", upload.single("profilePic"), async (req, res) => {
+  const { name, email, password, language, removeImage } = req.body;
+  const userId = req.session?.user?._id;
+
+  if (!userId) {
+    return res.status(401).json({ success: false, message: "Inte inloggad" });
+  }
+
+  try {
+    const user = await Customer.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: "Användare hittades inte" });
+
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (language) user.settings.language = language;
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user.password = hashedPassword;
+    }
+
+    // 🗑️ Om användaren vill ta bort befintlig profilbild
+    if (removeImage === "true" && user.profileImage) {
+      const oldPath = path.join(__dirname, 'public', user.profileImage);
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+      user.profileImage = undefined;
+    }
+
+    // 🖼️ Om ny bild laddas upp
+    if (req.file) {
+      user.profileImage = '/uploads/' + req.file.filename;
+    }
+
+    const updatedUser = await user.save();
+
+    req.session.user = updatedUser;
+
+    res.json({ success: true, user: updatedUser });
+  } catch (error) {
+    console.error("Fel vid profiluppdatering:", error);
+    res.status(500).json({ success: false, message: "Misslyckades att uppdatera profil" });
+  }
+});
+
+
+// === 🔍 Hämta aktuell inloggad användare med profilbild ===
+app.get("/api/profile/me", (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, message: "Inte inloggad" });
+  }
+
+  const { name, email, language, profileImage } = req.session.user;
+  res.json({ success: true, name, email, language, profileImage });
+});
+
 
 // 🚀 Starta server
 const PORT = process.env.PORT || 3000;

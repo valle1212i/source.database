@@ -10,9 +10,11 @@
 </head>
 <body>
   <div class="sidebar">
-    <div class="logo">
-      <h2>Source</h2>
-    </div>
+  <div class="logo">
+    <a href="customerportal.html">
+      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+    </a>
+  </div>
     <ul class="nav-menu">
   <li>
     <a href="customerportal.html"><i class="fas fa-home"></i> Hem</a>
@@ -48,6 +50,18 @@
   </div>
 
   <div class="main">
+    <div class="profile-wrapper">
+  <div class="profile-icon" id="profileToggle">--</div>
+
+  <div class="profile-dropdown" id="profileMenu">
+    <div class="profile-email" id="userEmail">Laddar...</div>
+    <hr />
+    <a href="#" id="switchAccount">Byt konto</a>
+    <a href="#" id="openSettings">Profilinställningar</a>
+    <a href="#" id="logout">Logga ut</a>
+  </div>
+</div>
+
     <div class="header">Fakturor</div>
     <p class="subtitle">Här hittar du alla dina fakturor, betalstatus och nedladdningar.</p>
 
@@ -113,5 +127,92 @@
     const savedTheme = localStorage.getItem("theme") || "light";
     document.body.classList.add(`${savedTheme}-theme`);
   </script>
+  <script>
+  const toggle = document.getElementById('profileToggle');
+  const menu = document.getElementById('profileMenu');
+
+  toggle.addEventListener('click', () => {
+    const isOpen = menu.style.display === 'flex';
+    menu.style.display = isOpen ? 'none' : 'flex';
+    toggle.classList.toggle('open', !isOpen);
+  });
+
+  window.addEventListener('click', function (e) {
+    if (!document.querySelector('.profile-wrapper').contains(e.target)) {
+      menu.style.display = 'none';
+      toggle.classList.remove('open');
+    }
+  });
+
+  document.getElementById("switchAccount").addEventListener("click", function (e) {
+    e.preventDefault();
+    if (confirm("Vill du logga ut och byta konto?")) {
+      window.location.href = "login.html";
+    }
+  });
+
+  document.getElementById("openSettings").addEventListener("click", function (e) {
+    e.preventDefault();
+    window.location.href = "profile.html";
+  });
+
+  document.getElementById("logout").addEventListener("click", function (e) {
+    e.preventDefault();
+    if (confirm("Är du säker på att du vill logga ut?")) {
+      fetch('/logout', {
+        method: 'GET',
+        credentials: 'include'
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            localStorage.clear();
+            window.location.href = "/login.html";
+          } else {
+            alert("Utloggning misslyckades.");
+          }
+        })
+        .catch(err => {
+          console.error("Fel vid utloggning:", err);
+          alert("Kunde inte logga ut.");
+        });
+    }
+  });
+
+  async function loadUserProfile() {
+    try {
+      const res = await fetch("/api/profile/me");
+      const data = await res.json();
+
+      if (data.success) {
+        const name = data.name || '';
+        const email = data.email || '';
+        const image = data.profileImage;
+
+        if (image) {
+          document.getElementById("profileToggle").innerHTML = `
+            <img src="${image}" alt="Profilbild" style="width: 32px; height: 32px; border-radius: 50%;" />
+          `;
+        } else {
+          const initials = name
+            .split(' ')
+            .map(part => part.charAt(0).toUpperCase())
+            .join('')
+            .substring(0, 2);
+          document.getElementById("profileToggle").textContent = initials;
+        }
+
+        document.getElementById("userEmail").textContent = email;
+      } else {
+        document.getElementById("profileToggle").textContent = "??";
+        document.getElementById("userEmail").textContent = "Ej inloggad";
+      }
+    } catch (err) {
+      console.error("Fel vid hämtning av användarprofil:", err);
+    }
+  }
+
+  loadUserProfile();
+</script>
 </body>
 </html>

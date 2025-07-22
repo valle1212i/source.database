@@ -5,17 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kundportal - Startsida</title>
   <link rel="stylesheet" href="CSS/customerportal.css" />
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-  />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="sidebar">
-    <div class="logo">
-      <h2>Source</h2>
-    </div>
+  <div class="logo">
+    <a href="customerportal.html">
+      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+    </a>
+  </div>
   <ul class="nav-menu">
     <li class="active">
       <a href="customerportal.html"><i class="fas fa-home"></i> Hem</a>
@@ -54,35 +53,45 @@
     <div class="header">Välkommen tillbaka!</div>
 
     <script>
-  async function loadUserGreeting() {
-    try {
-      const res = await fetch('/api/user/profile', { credentials: 'include' });
-      if (!res.ok) throw new Error('Inte inloggad');
+      async function loadUserGreeting() {
+        try {
+          const res = await fetch('/api/user/profile', { credentials: 'include' });
+          if (!res.ok) throw new Error('Inte inloggad');
 
       const data = await res.json();
-      console.log("AI-svar:", data);
       const fullName = data.name || "användare";
       const firstName = fullName.trim().split(" ")[0];
-      window.customerName = firstName;
 
-
-      const header = document.querySelector(".header");
-      if (header) {
-        header.textContent = `Välkommen tillbaka, ${firstName}!`;
+          const header = document.querySelector(".header");
+          if (header) {
+            header.textContent = `Välkommen tillbaka, ${firstName}!`;
+          }
+        } catch (err) {
+          console.error("Kunde inte hämta användarinformation:", err);
+          const header = document.querySelector(".header");
+          if (header) {
+            header.textContent = "Välkommen tillbaka!";
+          }
+        }
       }
-    } catch (err) {
-      console.error("Kunde inte hämta användarinformation:", err);
-      const header = document.querySelector(".header");
-      if (header) {
-        header.textContent = "Välkommen tillbaka!";
-      }
-    }
-  }
 
-  window.addEventListener("DOMContentLoaded", loadUserGreeting);
-</script>
+      window.addEventListener("DOMContentLoaded", loadUserGreeting);
+    </script>
 
     <div class="grid">
+
+      <div class="profile-wrapper">
+  <div class="profile-icon" id="profileToggle">--</div>
+
+  <div class="profile-dropdown" id="profileMenu">
+    <div class="profile-email" id="userEmail">Laddar...</div>
+    <hr />
+    <a href="#" id="switchAccount">Byt konto</a>
+    <a href="#" id="openSettings">Profilinställningar</a>
+    <a href="#" id="logout">Logga ut</a>
+  </div>
+</div>
+
       <!-- Försäljning med diagram och belopp -->
       <div class="card circle-widget">
         <div class="chart-area">
@@ -95,130 +104,83 @@
           <hr class="amount-underline" />
         </div>
       </div>
-<div class="card">
-  <h3>Tidigare ärenden via vår support</h3>
-  <div class="table-container">
-    <table class="support-table">
-      <thead>
-        <tr>
-          <th>Ärende-ID</th>
-          <th>Datum</th>
-          <th>Kundnamn</th>
-          <th>Ärende</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>#10234</td>
-          <td>2025-06-24</td>
-          <td>Anna Svensson</td>
-          <td>Problem med inloggning</td>
-          <td><span class="status-text closed">Avslutat</span></td>
-        </tr>
-        <tr>
-          <td>#10235</td>
-          <td>2025-06-24</td>
-          <td>Erik Johansson</td>
-          <td>Fakturafråga</td>
-          <td><span class="status-text closed">Avslutat</span></td>
-        </tr>
-        <tr>
-          <td>#10236</td>
-          <td>2025-06-25</td>
-          <td>Maria Nilsson</td>
-          <td>Buggrapport</td>
-          <td><span class="status-text progress">Pågående</span></td>
-        </tr>
-        <tr>
-          <td>#10237</td>
-          <td>2025-06-25</td>
-          <td>Jonas Berg</td>
-          <td>Uppdatering av konto</td>
-          <td><span class="status-text closed">Avslutat</span></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-  <div class="card">
-  <h3>AI rekommenderade växningsmöjligheter</h3>
-  <ul class="growth-list">
-    <li>Starta kampanj i ny kanal (t.ex. TikTok)</li>
-    <li>Skapa lojalitetsprogram</li>
-    <li>Optimera nyhetsbrev med segmenterade utskick</li>
-    <li>Förbättra SEO på produktsidor</li>
-    <li>Retargeting-kampanj för övergivna varukorgar</li>
-    <li>Lansera produktbundle-erbjudanden</li>
-    <li>Uppdatera startsidans design</li>
-    <li>Erbjud nya betalningsmetoder (Swish, Klarna)</li>
-  </ul>
-</div>
-<div class="card latest-message">
-  <div class="card-header aligned">
-    <i class="fas fa-comments chat-icon"></i>
-    <h3>Senaste meddelande från kund</h3>
-  </div>
-  <div class="chat-bubble">
-    Jag vill veta status på min order #10235.
-    <div class="message-meta">
-      <span class="customer-name">Anna Svensson</span> · 
-      <span class="timestamp">2025-06-30, kl. 14:12</span>
-    </div>
-  </div>
-</div> <!-- 🔧 DENNA saknades -->
 
-<div class="card">
-  <h3>Visningar på hemsidan</h3>
-  <div class="mini-chart-container">
-    <canvas id="websiteViewsMiniChart" height="60"></canvas>
-  </div>
-  <div class="chart-indicator-box">
-  <span class="change">+12% senaste veckan</span>
-  <span class="total"><strong>28 000 visningar idag</strong></span>
-</div>
-</div>
       <div class="card">
-        <h3>Mest köpt produkt</h3>
-        <p>Pro Plus-paketet</p>
+        <h3>Tidigare ärenden via vår support</h3>
+        <div class="table-container">
+          <table class="support-table">
+            <thead>
+              <tr>
+                <th>Ärende-ID</th>
+                <th>Datum</th>
+                <th>Kundnamn</th>
+                <th>Ärende</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>#10234</td><td>2025-06-24</td><td>Anna Svensson</td><td>Problem med inloggning</td><td><span class="status-text closed">Avslutat</span></td></tr>
+              <tr><td>#10235</td><td>2025-06-24</td><td>Erik Johansson</td><td>Fakturafråga</td><td><span class="status-text closed">Avslutat</span></td></tr>
+              <tr><td>#10236</td><td>2025-06-25</td><td>Maria Nilsson</td><td>Buggrapport</td><td><span class="status-text progress">Pågående</span></td></tr>
+              <tr><td>#10237</td><td>2025-06-25</td><td>Jonas Berg</td><td>Uppdatering av konto</td><td><span class="status-text closed">Avslutat</span></td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="card">
-        <h3>Totalt antal ordrar</h3>
-        <p>1 820 ordrar registrerade</p>
-      </div>
-
-      <div class="card">
-        <h3>Utbetalningar</h3>
-        <p>Senaste: 215 000 SEK den 20 juni</p>
-      </div>
-
-      <div class="card">
-        <h3>Senaste order</h3>
-        <p>Order #1820 - levererad 24 juni</p>
-      </div>
-
-      <div class="card">
-        <h3>AI Insights</h3>
-        <ul>
-          <li>Optimera onboardingflöde</li>
-          <li>Förbättra e-postkampanjer</li>
-          <li>Identifiera kundbortfall</li>
+        <h3>AI rekommenderade växningsmöjligheter</h3>
+        <ul class="growth-list">
+          <li>Starta kampanj i ny kanal (t.ex. TikTok)</li>
+          <li>Skapa lojalitetsprogram</li>
+          <li>Optimera nyhetsbrev med segmenterade utskick</li>
+          <li>Förbättra SEO på produktsidor</li>
+          <li>Retargeting-kampanj för övergivna varukorgar</li>
+          <li>Lansera produktbundle-erbjudanden</li>
+          <li>Uppdatera startsidans design</li>
+          <li>Erbjud nya betalningsmetoder (Swish, Klarna)</li>
         </ul>
       </div>
 
-      <div class="card">
-        <h3>Kommande möten</h3>
-        <p>Nästa möte: 27 juni kl. 14:00</p>
-        <p>Möte med marknadsteamet</p>
+      <div class="card latest-message">
+        <div class="card-header aligned">
+          <i class="fas fa-comments chat-icon"></i>
+          <h3>Senaste meddelande från kund</h3>
+        </div>
+        <div class="chat-bubble">
+          Jag vill veta status på min order #10235.
+          <div class="message-meta">
+            <span class="customer-name">Anna Svensson</span> · 
+            <span class="timestamp">2025-06-30, kl. 14:12</span>
+          </div>
+        </div>
       </div>
+
+      <div class="card">
+        <h3>Visningar på hemsidan</h3>
+        <div class="mini-chart-container">
+          <canvas id="websiteViewsMiniChart" height="60"></canvas>
+        </div>
+        <div class="chart-indicator-box">
+          <span class="change">+12% senaste veckan</span>
+          <span class="total"><strong>28 000 visningar idag</strong></span>
+        </div>
+      </div>
+
+      <div class="card"><h3>Mest köpt produkt</h3><p>Pro Plus-paketet</p></div>
+      <div class="card"><h3>Totalt antal ordrar</h3><p>1 820 ordrar registrerade</p></div>
+      <div class="card"><h3>Utbetalningar</h3><p>Senaste: 215 000 SEK den 20 juni</p></div>
+      <div class="card"><h3>Senaste order</h3><p>Order #1820 - levererad 24 juni</p></div>
+
+      <div class="card"><h3>AI Insights</h3><ul><li>Optimera onboardingflöde</li><li>Förbättra e-postkampanjer</li><li>Identifiera kundbortfall</li></ul></div>
+      <div class="card"><h3>Kommande möten</h3><p>Nästa möte: 27 juni kl. 14:00</p><p>Möte med marknadsteamet</p></div>
 
       <div class="card live-chat dark">
         <h3>Live Chat</h3>
         <p>"Kan du skicka senaste rapporten?" - kund</p>
         <button onclick="window.location.href='chatwindow.html'">Starta chatt med oss</button>
       </div>
-      
+
       <div class="card">
         <h3>Supportärenden</h3>
         <ul>
@@ -245,106 +207,107 @@
   <div id="loadingAnimation" class="loader" style="display: none;"></div>
 </div>
 
+
   <!-- Chart.js -->
- 
-
-<script>
-  // Försäljningsdiagram
-  const ctxSales = document.getElementById('salesChart').getContext('2d');
-  new Chart(ctxSales, {
-    type: 'bar',
-    data: {
-      labels: ['Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör', 'Sön'],
-      datasets: [{
-        label: 'Försäljning (SEK)',
-        data: [120000, 95000, 110000, 87000, 98000, 102000, 140000],
-        backgroundColor: '#111827'
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#6b7280' } },
-        y: {
-          beginAtZero: true,
-          ticks: { color: '#6b7280' }
-        }
-      }
-    }
-  });
-  </script>
- <script>
-  const miniCtx = document.getElementById('websiteViewsMiniChart').getContext('2d');
-
-  new Chart(miniCtx, {
-    type: 'line',
-    data: {
-      labels: ['Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör', 'Sön'],
-      datasets: [{
-        label: 'Visningar',
-        data: [13400, 19800, 22000, 18000, 24000, 19500, 26500],
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.08)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,           // Fortfarande osynliga
-        pointHitRadius: 10,       // Men tooltip fungerar!
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          enabled: true,
-          backgroundColor: '#111827',
-          titleColor: '#ffffff',
-          bodyColor: '#d1d5db',
-          callbacks: {
-            label: function (context) {
-              return context.parsed.y + ' visningar';
-            }
+  <script>
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör', 'Sön'],
+        datasets: [{
+          label: 'Försäljning (SEK)',
+          data: [120000, 95000, 110000, 87000, 98000, 102000, 140000],
+          backgroundColor: '#111827'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#6b7280' } },
+          y: {
+            beginAtZero: true,
+            ticks: { color: '#6b7280' }
           }
         }
+      }
+    });
+  </script>
+
+  <script>
+    const miniCtx = document.getElementById('websiteViewsMiniChart').getContext('2d');
+    new Chart(miniCtx, {
+      type: 'line',
+      data: {
+        labels: ['Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör', 'Sön'],
+        datasets: [{
+          label: 'Visningar',
+          data: [13400, 19800, 22000, 18000, 24000, 19500, 26500],
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.08)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHitRadius: 10,
+          borderWidth: 2
+        }]
       },
-      scales: {
-        x: {
-          display: false
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: true,
+            backgroundColor: '#111827',
+            titleColor: '#ffffff',
+            bodyColor: '#d1d5db',
+            callbacks: {
+              label: function (context) {
+                return context.parsed.y + ' visningar';
+              }
+            }
+          }
         },
-        y: {
-          display: false
+        scales: {
+          x: { display: false },
+          y: { display: false }
         }
       }
-    }
-  });
-</script>
-<script>
+    });
+  </script>
+
+  <script>
+  let isAsking = false;
+
   async function askAI() {
-    const message = document.getElementById("aiMessage").value;
-    const responseDiv = document.getElementById("aiResponse");
-    if (!message) {
-      document.getElementById("loadingAnimation")?.remove();
-      responseDiv.textContent = "⚠️ Vänligen skriv en fråga först.";
-      return;
-    }
+  if (isAsking) return;        // 🔒 Blockera om en fråga redan pågår
+  isAsking = true;
 
-    responseDiv.innerHTML = '<div id="loadingAnimation" class="loader"></div>';
+  const message = document.getElementById("aiMessage").value.trim();
+  const responseDiv = document.getElementById("aiResponse");
 
-    try {
-      const res = await fetch("/api/chat/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
-        credentials: "include"
-      });
+  if (!message) {
+    responseDiv.textContent = "⚠️ Vänligen skriv en fråga först.";
+    isAsking = false;
+    return;
+  }
 
-      const data = await res.json();
-      const reply = data.reply || "❌ Inget svar från AI.";
+  responseDiv.innerHTML = '<div id="loadingAnimation" class="loader"></div>';
 
-      responseDiv.textContent = ""; // Undvik att tolka ev. HTML/JS
+  try {
+    const res = await fetch("/api/chat/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+      credentials: "include"
+    });
+
+    const data = await res.json();
+    const reply = data.reply || "❌ Inget svar från AI.";
+
+      responseDiv.innerHTML = "";
 const paragraphs = reply.split('\n\n'); // Dela upp i stycken
 let i = 0;
 const delay = 200; // Millisekunder mellan varje stycke
@@ -379,23 +342,53 @@ typeParagraph();
 <script>
 window.customerId = null;
 
-async function fetchCustomerId() {
-  try {
-    const res = await fetch("/api/customers/me", { credentials: "include" });
-    if (!res.ok) throw new Error("Ej inloggad");
-    const data = await res.json();
-    window.customerId = data._id;
-  } catch (err) {
-    console.error("❌ Kunde inte hämta kund-ID:", err);
+  async function fetchCustomerId() {
+    try {
+      const res = await fetch("/api/customers/me", { credentials: "include" });
+      if (!res.ok) throw new Error("Ej inloggad");
+      const data = await res.json();
+      window.customerId = data._id;
+    } catch (err) {
+      console.error("❌ Kunde inte hämta kund-ID:", err);
+    }
   }
-}
-window.addEventListener("DOMContentLoaded", fetchCustomerId);
 </script>
-  </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const chatBtn = document.getElementById("startChatBtn");
+    const chatWindow = document.getElementById("chatWindow");
+
+    if (chatBtn && chatWindow) {
+      chatBtn.addEventListener("click", () => {
+        chatWindow.style.display = "block";
+      });
+    }
+  });
+</script>
+
+
+<!-- ... Resten av filen (chatWindow-div, scripts, avslutande taggar) ... -->
+
+<div id="chatWindow" style="display:none; position:fixed; bottom:20px; right:20px; width:300px; height:400px; background:#fff; border:1px solid #ccc; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1); z-index:1000; padding:10px;">
+  <h4>Chatt med support</h4>
+  <div id="chatMessages" style="height:300px; overflow-y:auto; margin-bottom:10px;"></div>
+  <form id="chatForm">
+    <input type="text" id="chatInput" placeholder="Skriv ett meddelande..." style="width:100%; padding:5px;" />
+  </form>  
+
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/chat.js"></script>
+<script>
+  document.getElementById("chatForm").addEventListener("submit", function (e) {
+    e.preventDefault(); // stoppar reload
+    sendMessage();      // från chat.js
+  });
+</script>
 </body>
 </html>
 
-</body>
-</html>
+
 
 
