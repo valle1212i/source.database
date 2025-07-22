@@ -110,7 +110,7 @@ router.get("/customer/:id", async (req, res) => {
 
 // POST /api/chat
 router.post("/", async (req, res) => {
-  const { customerId, message, sender, timestamp } = req.body;
+  const { customerId, message, sender, timestamp, sessionId } = req.body;
 
   if (!customerId || !message || !sender) {
     return res.status(400).json({ error: "Meddelande saknar information" });
@@ -121,7 +121,8 @@ router.post("/", async (req, res) => {
       customerId,
       message,
       sender,
-      timestamp: timestamp || new Date()
+      timestamp: timestamp || new Date(),
+      sessionId,
     });
 
     res.status(201).json(newMsg);

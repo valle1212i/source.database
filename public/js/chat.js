@@ -1,4 +1,3 @@
-// 👇 Förutsätter att Socket.IO-klienten är laddad
 const socket = io("https://source-database.onrender.com");
 
 let customerId = null;
@@ -7,6 +6,7 @@ let input, chatBox;
 let sessionStartTime = new Date();
 let sessionId = sessionStorage.getItem("activeChatSessionId") || Date.now().toString();
 sessionStorage.setItem("activeChatSessionId", sessionId);
+window.activeChatSessionId = sessionId;
 
 const questions = [
   { label: "Vad gäller ditt ärende?", type: "text", name: "subject", placeholder: "Ex: Faktura, Leverans, Konto" },
@@ -18,6 +18,19 @@ const answers = {};
 let currentQuestionIndex = 0;
 
 window.addEventListener("DOMContentLoaded", async () => {
+  const chatWrapper = document.querySelector(".chat-wrapper");
+
+  // 👇 Visa chatten om den inte har stängts manuellt
+  if (localStorage.getItem("chatHidden") !== "true") {
+    chatWrapper?.classList.remove("hidden");
+  }
+
+  // 👇 Stängknapp döljer chatten men tar inte bort den
+  document.querySelector(".close-chat")?.addEventListener("click", () => {
+    chatWrapper?.classList.add("hidden");
+    localStorage.setItem("chatHidden", "true");
+  });
+
   try {
     const form = document.getElementById("chatForm");
     input = document.getElementById("chatInput");
@@ -32,8 +45,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (!res.ok) throw new Error("Kunde inte hämta användare");
     const data = await res.json();
     window.customerId = data._id;
-
-    fetchMessages();
   } catch (err) {
     alert("❌ Kunde inte hämta inloggad användare. Är du inloggad?");
     console.error(err);
@@ -63,29 +74,37 @@ function showNextQuestion() {
     window.activeChatSessionId = Date.now().toString();
     localStorage.setItem("activeChatSessionId", window.activeChatSessionId);
 
-    startChatSession().then(() => {
-      loadHistory().then(() => {
+    startChatSession()
+      .then(() => loadHistory())
+      .then(() => {
         if (chatBox.children.length === 0 && customerId) {
-          const welcomeMessage = {
-            customerId,
-            message: "Hej och välkommen till Source livechat! Vi hjälper dig så snart vi kan 🙌",
-            sender: "admin",
-            timestamp: new Date(),
-            sessionId: window.activeChatSessionId
-          };
+          fetch(`/api/chat/customer/${customerId}?sessionId=${window.activeChatSessionId}`)
+            .then(res => res.json())
+            .then(existingMessages => {
+              const alreadyWelcomed = existingMessages.some(
+                msg => msg.sender === "admin" && msg.message.includes("välkommen")
+              );
 
-          socket.emit("sendMessage", welcomeMessage);
+              if (!alreadyWelcomed) {
+                const welcomeMessage = {
+                  customerId,
+                  message: "Hej och välkommen till Source livechat! Vi hjälper dig så snart vi kan 🙌",
+                  sender: "admin",
+                  timestamp: new Date(),
+                  sessionId: window.activeChatSessionId
+                };
 
-          fetch("/api/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(welcomeMessage)
-          });
+                socket.emit("sendMessage", welcomeMessage);
 
-          renderMessage(welcomeMessage);
+                fetch("/api/chat", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(welcomeMessage)
+                });
+              }
+            });
         }
       });
-    });
 
     return;
   }
@@ -158,10 +177,9 @@ function sendMessage() {
     message: text,
     sender: "customer",
     timestamp: new Date(),
-    sessionId
+    sessionId: window.activeChatSessionId
   };
 
-  renderMessage(msgObj);
   socket.emit("sendMessage", msgObj);
   input.value = "";
 
@@ -221,24 +239,11 @@ window.startChatSession = async function () {
     const data = await res.json();
     customerId = data._id;
     customerName = data.name?.split(" ")[0] || "Du";
-
-    await fetchMessages();
   } catch (err) {
     alert("❌ Kunde inte hämta användardata vid sessionstart.");
     console.error(err);
   }
 };
-
-async function fetchMessages() {
-  try {
-    const res = await fetch(`/api/chat/customer/${window.customerId}`);
-    const messages = await res.json();
-
-    messages.forEach(renderMessage);
-  } catch (err) {
-    console.error("❌ Kunde inte hämta meddelanden:", err);
-  }
-}
 
 async function loadHistory() {
   try {
@@ -246,7 +251,10 @@ async function loadHistory() {
     const userData = await res.json();
     customerId = userData._id;
 
-    const historyRes = await fetch(`/api/chat/customer/${customerId}`, { credentials: 'include' });
+    const historyRes = await fetch(
+      `/api/chat/customer/${customerId}?sessionId=${window.activeChatSessionId}`,
+      { credentials: 'include' }
+    );
     const history = await historyRes.json();
 
     history.forEach(renderMessage);

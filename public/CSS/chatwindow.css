@@ -290,3 +290,47 @@ select[name="urgency"] option[value="Hög"] {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+.message {
+  max-width: 70%;
+  padding: 10px;
+  margin: 8px;
+  border-radius: 12px;
+  word-wrap: break-word;
+  font-size: 14px;
+}
+
+.message.customer {
+  background-color: #0b1c33; /* Mörkblå – matchar header */
+  color: white;
+  align-self: flex-end;
+  text-align: right;
+  border-bottom-right-radius: 0;
+  margin-left: auto;
+}
+
+.message.admin {
+  background-color: #f1f1f1; /* Ljusgrå */
+  color: #333;
+  align-self: flex-start;
+  text-align: left;
+  border-bottom-left-radius: 0;
+  margin-right: auto;
+}
+.chat-bubble {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #004080;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  z-index: 999;
+  transition: all 0.3s ease;
+}
+
+.chat-bubble:hover {
+  background-color: #003366;
+}
+
