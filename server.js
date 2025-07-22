@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require("cors");
 const mongoose = require('mongoose');
 const path = require('path');
 const dotenv = require('dotenv');
@@ -6,23 +7,32 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const Customer = require('./models/Customer');
-const cors = require('cors');
 
 dotenv.config();
 const app = express();
 const http = require('http').createServer(app);
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://source-database.onrender.com"
+];
 const io = require('socket.io')(http, {
   cors: {
-    origin: 'https://customerportal-frontend.onrender.com',
+    origin: allowedOrigins,
     credentials: true
   }
 });
-// Socket.IO för realtidskommunikation
-
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Tillåt även requests utan origin (t.ex. curl eller mobilappar)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS-fel: Ursprung inte tillåtet"));
+    }
+  },
   credentials: true
 }));
+// Socket.IO för realtidskommunikation
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -44,6 +54,9 @@ function requireLogin(req, res, next) {
   }
   next();
 }
+app.get('/chatwindow.html', requireLogin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'chatwindow.html'));
+});
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
@@ -104,11 +117,10 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/invoices', require('./routes/invoiceRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/support', require('./routes/support'));
-app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/email', require('./routes/emailRoutes'));
 app.use('/api/messages', require('./routes/messagesRoutes'));
+app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/customers', require('./routes/customers'));
-app.use("/api/email", require("./routes/emails"));
 
 
 // 📦 Simulerat inventarielager

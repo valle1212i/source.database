@@ -49,7 +49,6 @@
     <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
   </div>
 </div>
-  </div>
 
   <div class="main">
     <div class="header">Välkommen tillbaka!</div>
@@ -61,8 +60,11 @@
       if (!res.ok) throw new Error('Inte inloggad');
 
       const data = await res.json();
+      console.log("AI-svar:", data);
       const fullName = data.name || "användare";
       const firstName = fullName.trim().split(" ")[0];
+      window.customerName = firstName;
+
 
       const header = document.querySelector(".header");
       if (header) {
@@ -214,7 +216,7 @@
       <div class="card live-chat dark">
         <h3>Live Chat</h3>
         <p>"Kan du skicka senaste rapporten?" - kund</p>
-        <button id="startChatBtn">Starta chatt med oss</button>
+        <button onclick="window.location.href='chatwindow.html'">Starta chatt med oss</button>
       </div>
       
       <div class="card">
@@ -243,33 +245,8 @@
   <div id="loadingAnimation" class="loader" style="display: none;"></div>
 </div>
 
-
   <!-- Chart.js -->
-  <script>
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör', 'Sön'],
-        datasets: [{
-          label: 'Försäljning (SEK)',
-          data: [120000, 95000, 110000, 87000, 98000, 102000, 140000],
-          backgroundColor: '#111827'
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color: '#6b7280' } },
-          y: {
-            beginAtZero: true,
-            ticks: { color: '#6b7280' }
-          }
-        }
-      }
-    });
-  </script>
+ 
 
 <script>
   // Försäljningsdiagram
@@ -367,7 +344,7 @@
       const data = await res.json();
       const reply = data.reply || "❌ Inget svar från AI.";
 
-      responseDiv.innerHTML = "";
+      responseDiv.textContent = ""; // Undvik att tolka ev. HTML/JS
 const paragraphs = reply.split('\n\n'); // Dela upp i stycken
 let i = 0;
 const delay = 200; // Millisekunder mellan varje stycke
@@ -402,50 +379,22 @@ typeParagraph();
 <script>
 window.customerId = null;
 
-  async function fetchCustomerId() {
-    try {
-      const res = await fetch("/api/customers/me", { credentials: "include" });
-      if (!res.ok) throw new Error("Ej inloggad");
-      const data = await res.json();
-      window.customerId = data._id;
-    } catch (err) {
-      console.error("❌ Kunde inte hämta kund-ID:", err);
-    }
+async function fetchCustomerId() {
+  try {
+    const res = await fetch("/api/customers/me", { credentials: "include" });
+    if (!res.ok) throw new Error("Ej inloggad");
+    const data = await res.json();
+    window.customerId = data._id;
+  } catch (err) {
+    console.error("❌ Kunde inte hämta kund-ID:", err);
   }
+}
+window.addEventListener("DOMContentLoaded", fetchCustomerId);
 </script>
+  </div>
+</body>
+</html>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const chatBtn = document.getElementById("startChatBtn");
-    const chatWindow = document.getElementById("chatWindow");
-
-    if (chatBtn && chatWindow) {
-      chatBtn.addEventListener("click", () => {
-        chatWindow.style.display = "block";
-      });
-    }
-  });
-</script>
-
-
-<!-- ... Resten av filen (chatWindow-div, scripts, avslutande taggar) ... -->
-
-<div id="chatWindow" style="display:none; position:fixed; bottom:20px; right:20px; width:300px; height:400px; background:#fff; border:1px solid #ccc; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1); z-index:1000; padding:10px;">
-  <h4>Chatt med support</h4>
-  <div id="chatMessages" style="height:300px; overflow-y:auto; margin-bottom:10px;"></div>
-  <form id="chatForm">
-    <input type="text" id="chatInput" placeholder="Skriv ett meddelande..." style="width:100%; padding:5px;" />
-  </form>  
-
-</div>
-<script src="/socket.io/socket.io.js"></script>
-<script src="/js/chat.js"></script>
-<script>
-  document.getElementById("chatForm").addEventListener("submit", function (e) {
-    e.preventDefault(); // stoppar reload
-    sendMessage();      // från chat.js
-  });
-</script>
 </body>
 </html>
 
