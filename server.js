@@ -100,6 +100,17 @@ app.post('/login', async (req, res) => {
     req.session.user = { name: user.name, email: user.email };
 
     req.session.user = user;
+    const LoginEvent = require('./models/LoginEvent'); // högst upp i filen
+
+// Logga IP och enhet
+const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+const device = req.headers['user-agent'] || '';
+
+await LoginEvent.create({
+  userId: user._id,
+  ip,
+  device
+});
     res.redirect('/customerportal.html');
   } catch (err) {
     console.error('❌ Fel vid inloggning:', err);
@@ -144,7 +155,6 @@ app.get('/logout', (req, res) => {
 });
 
 
-
 // 🔧 API-routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/invoices', require('./routes/invoiceRoutes'));
@@ -154,6 +164,7 @@ app.use('/api/email', require('./routes/emailRoutes'));
 app.use('/api/messages', require('./routes/messagesRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/customers', require('./routes/customers'));
+app.use("/api/security", require("./routes/security"));
 
 
 // 📦 Simulerat inventarielager
