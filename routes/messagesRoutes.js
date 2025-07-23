@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Message = require('../models/Message');
 const Customer = require('../models/Customer');
+const authenticate = require('../source.database/middleware/authenticate');
+
 
 // Hämta senaste meddelandet per kund
 router.get('/latest', async (req, res) => {

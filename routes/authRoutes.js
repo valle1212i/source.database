@@ -46,3 +46,23 @@ router.post('/login', async (req, res) => {
 });
 
 module.exports = router;
+
+router.get('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error("Utloggning misslyckades:", err);
+      return res.status(500).json({ success: false });
+    }
+    res.clearCookie("connect.sid");
+    res.json({ success: true });
+  });
+});
+
+router.get('/me', (req, res) => {
+  if (req.session && req.session.user) {
+    const { name, email, profileImage } = req.session.user;
+    res.json({ success: true, name, email, profileImage });
+  } else {
+    res.status(401).json({ success: false });
+  }
+});
