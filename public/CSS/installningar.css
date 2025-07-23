@@ -539,3 +539,30 @@ body.theme-contrast {
   --text-color: #fff;
   --card-bg: #111;
 }
+
+/* ===== SENASTE INLOGGNINGAR ===== */
+.login-history {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.login-row {
+  background-color: var(--card-bg);
+  border: 1px solid #e5e7eb;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 15px;
+  color: var(--text-color);
+}
+
+body.theme-dark .login-row {
+  border-color: #333;
+  background-color: #1f1f1f;
+}
+

@@ -108,6 +108,23 @@
       <p>Behöver du hjälp? <a href="kontakt.html">Kontakta oss här</a></p>
     </section>
 
+    <!-- SENASTE INLOGGNINGAR -->
+<section class="setting-group">
+  <h2>📍 Senaste inloggningar</h2>
+  <div class="login-history">
+    <div class="login-row">
+      <div><strong>Datum:</strong> 2025-07-22 13:05</div>
+      <div><strong>IP:</strong> 192.168.1.15</div>
+      <div><strong>Enhet:</strong> Chrome / Windows</div>
+    </div>
+    <div class="login-row">
+      <div><strong>Datum:</strong> 2025-07-20 08:45</div>
+      <div><strong>IP:</strong> 192.168.1.18</div>
+      <div><strong>Enhet:</strong> Safari / iPhone</div>
+    </div>
+  </div>
+</section>
+
     <!-- KOMMANDE -->
     <section class="setting-group">
       <h2>🛠 Kommande inställningar</h2>
@@ -280,6 +297,46 @@ document.body.classList.add(`theme-${selectedTheme}`);
   }
 
   loadUserProfile();
+</script>
+<script>
+  async function loadLoginHistory() {
+    const container = document.querySelector('.login-history');
+    container.innerHTML = "<p>Laddar inloggningar...</p>";
+
+    try {
+      const res = await fetch("/api/security/logins"); // <-- justera URL om du har annan
+      const data = await res.json();
+
+      if (!data.success || !Array.isArray(data.logins)) {
+        container.innerHTML = "<p>Kunde inte ladda inloggningshistorik.</p>";
+        return;
+      }
+
+      if (data.logins.length === 0) {
+        container.innerHTML = "<p>Inga tidigare inloggningar hittades.</p>";
+        return;
+      }
+
+      container.innerHTML = ""; // Töm innan vi lägger till
+
+      data.logins.forEach(login => {
+        const div = document.createElement('div');
+        div.className = "login-row";
+        div.innerHTML = `
+          <div><strong>Datum:</strong> ${login.timestamp}</div>
+          <div><strong>IP:</strong> ${login.ip}</div>
+          <div><strong>Enhet:</strong> ${login.device || 'Okänd'}</div>
+        `;
+        container.appendChild(div);
+      });
+
+    } catch (err) {
+      console.error("Fel vid inloggningshämtning:", err);
+      container.innerHTML = "<p>Något gick fel. Försök igen senare.</p>";
+    }
+  }
+
+  loadLoginHistory();
 </script>
 <script>
   function showToast(message) {
