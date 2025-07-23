@@ -1,7 +1,25 @@
+console.log("🔌 Försöker ansluta till Socket.IO...");
+
 const socket = io("https://admin-portal-production-a9a5.up.railway.app", {
   transports: ["websocket"],
   withCredentials: true
 });
+
+// Lyckad anslutning
+socket.on("connect", () => {
+  console.log("✅ Ansluten till Socket.IO som kund. Socket-ID:", socket.id);
+});
+
+// Anslutningsfel
+socket.on("connect_error", (err) => {
+  console.error("❌ Kunde inte ansluta till Socket.IO:", err.message || err);
+});
+
+// För debugging
+socket.on("disconnect", (reason) => {
+  console.warn("⚠️ Socket.IO frånkopplad:", reason);
+});
+
 
 let customerId = null;
 let customerName = "Du";
