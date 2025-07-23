@@ -97,15 +97,26 @@ app.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).send('❌ Fel e-post eller lösenord');
 
-    // ✅ Spara bara det du behöver i sessionen (inkl. role)
-    req.session.user = {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role || "user", // fallback om användaren saknar roll
-      profileImage: user.profileImage,
-      settings: user.settings || {},
-    };
+    // ✅ Spara bara det du behöver i sessionen
+req.session.user = {
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role || "user",
+  profileImage: user.profileImage,
+  settings: user.settings || {},
+};
+
+// ✅ Logga inloggning (IP + enhet)
+const LoginEvent = require('./models/LoginEvent'); // högst upp i filen
+const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+const device = req.headers['user-agent'] || '';
+
+await LoginEvent.create({
+  userId: user._id,
+  ip,
+  device,
+});
 
     res.redirect('/customerportal.html');
   } catch (err) {
