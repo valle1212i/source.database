@@ -1,4 +1,7 @@
-const socket = io("https://source-database.onrender.com");
+const socket = io("https://admin-portal-production-a9a5.up.railway.app", {
+  transports: ["websocket"],
+  withCredentials: true
+});
 
 let customerId = null;
 let customerName = "Du";
