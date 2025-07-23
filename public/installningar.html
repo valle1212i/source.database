@@ -91,6 +91,13 @@
       </div>
     </section>
 
+    <!-- VISA ENDAST FÖR ADMIN -->
+<section class="setting-group" id="admin-login-link" style="display: none;">
+  <h2>🕵️‍♂️ Admin: Inloggningshistorik</h2>
+  <p>Visa senaste IP-adresser och enheter.</p>
+  <a href="admin-logins.html">➡ Öppna loggar</a>
+</section>
+
     <!-- TEMA -->
     <section class="setting-group">
       <h2>🎨 Tema</h2>
@@ -371,6 +378,20 @@ document.body.classList.add(`theme-${selectedTheme}`);
       sidebar.classList.remove('active');
     }
   });
+
+  // Visa admin-länk om du är admin
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const res = await fetch("/api/profile/me");
+    const data = await res.json();
+
+    if (data.success && data.role === "admin") {
+      document.getElementById("admin-login-link").style.display = "block";
+    }
+  } catch (err) {
+    console.warn("Kunde inte hämta admin-status");
+  }
+})
 </script>
 <!-- Toast-container (dold tills något visas) -->
 <div id="toast-container" aria-live="polite" aria-atomic="true"></div>

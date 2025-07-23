@@ -91,26 +91,22 @@ app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await Customer.findOne({ email });
+
     if (!user) return res.status(401).send('❌ Fel e-post eller lösenord');
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).send('❌ Fel e-post eller lösenord');
-    
-    // Efter lyckad inloggning:
-    req.session.user = { name: user.name, email: user.email };
 
-    req.session.user = user;
-    const LoginEvent = require('./models/LoginEvent'); // högst upp i filen
+    // ✅ Spara bara det du behöver i sessionen (inkl. role)
+    req.session.user = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role || "user", // fallback om användaren saknar roll
+      profileImage: user.profileImage,
+      settings: user.settings || {},
+    };
 
-// Logga IP och enhet
-const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-const device = req.headers['user-agent'] || '';
-
-await LoginEvent.create({
-  userId: user._id,
-  ip,
-  device
-});
     res.redirect('/customerportal.html');
   } catch (err) {
     console.error('❌ Fel vid inloggning:', err);
@@ -290,6 +286,16 @@ app.get("/api/profile/me", (req, res) => {
   res.json({ success: true, name, email, language, profileImage });
 });
 
+// Route till admin-logins.html
+app.get('/admin-logins.html', requireLogin, (req, res) => {
+  const user = req.session?.user;
+
+  if (!user || user.role !== "admin") {
+    return res.status(403).send("Åtkomst nekad");
+  }
+
+  res.sendFile(path.join(__dirname, 'public', 'admin-logins.html'));
+});
 
 // 🚀 Starta server
 const PORT = process.env.PORT || 3000;
