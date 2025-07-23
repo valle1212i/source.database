@@ -32,7 +32,8 @@ const app = express();
 const http = require('http').createServer(app);
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://source-database.onrender.com"
+  "https://source-database.onrender.com",
+  "https://admin-portal-production-a9a5.up.railway.app",
 ];
 const io = require('socket.io')(http, {
   cors: {

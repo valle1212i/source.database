@@ -20,15 +20,36 @@ const questions = [
 const answers = {};
 let currentQuestionIndex = 0;
 
+// 🟢 Notifiera admin om ny session
+function notifyAdminOfNewSession(customerId, sessionId) {
+  const systemMsg = {
+    customerId,
+    sessionId,
+    message: "🔔 Ny chatt startad",
+    sender: "system",
+    timestamp: new Date()
+  };
+
+  console.log("📤 Skickar systemmeddelande:", systemMsg);
+
+  socket.emit("sendMessage", systemMsg);
+
+  fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(systemMsg)
+  }).catch(err => {
+    console.error("❌ Kunde inte skicka systemmeddelande:", err);
+  });
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
   const chatWrapper = document.querySelector(".chat-wrapper");
 
-  // 👇 Visa chatten om den inte har stängts manuellt
   if (localStorage.getItem("chatHidden") !== "true") {
     chatWrapper?.classList.remove("hidden");
   }
 
-  // 👇 Stängknapp döljer chatten men tar inte bort den
   document.querySelector(".close-chat")?.addEventListener("click", () => {
     chatWrapper?.classList.add("hidden");
     localStorage.setItem("chatHidden", "true");
@@ -78,7 +99,13 @@ function showNextQuestion() {
     localStorage.setItem("activeChatSessionId", window.activeChatSessionId);
 
     startChatSession()
-      .then(() => loadHistory())
+      .then(() => {
+        if (customerId && !sessionStorage.getItem("notifiedAdmin")) {
+          notifyAdminOfNewSession(customerId, window.activeChatSessionId);
+          sessionStorage.setItem("notifiedAdmin", "true");
+        }
+        return loadHistory();
+      })
       .then(() => {
         if (chatBox.children.length === 0 && customerId) {
           fetch(`/api/chat/customer/${customerId}?sessionId=${window.activeChatSessionId}`)
