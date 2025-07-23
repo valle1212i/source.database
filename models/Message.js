@@ -8,7 +8,7 @@ const messageSchema = new mongoose.Schema({
   },
   sender: {
     type: String,
-    enum: ['admin', 'customer'],
+    enum: ['admin', 'customer', 'system'], // 🛠️ Här är fixen
     required: true
   },
   message: {
@@ -19,7 +19,7 @@ const messageSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  sessionId: { // 🆕 Lägg till detta
+  sessionId: {
     type: String,
     required: true
   }
