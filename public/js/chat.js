@@ -210,6 +210,8 @@ function sendMessage() {
     sessionId: window.activeChatSessionId
   };
 
+  console.log("📤 Skickar meddelande till servern:", msgObj); // 🆕 LOGG
+
   socket.emit("sendMessage", msgObj);
   input.value = "";
 
