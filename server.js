@@ -33,17 +33,10 @@ const http = require('http').createServer(app);
 const allowedOrigins = [
   "http://localhost:3000",
   "https://source-database.onrender.com",
-  "https://admin-portal-production-a9a5.up.railway.app",
+ "https://admin-portal-rn5z.onrender.com",
 ];
-const io = require('socket.io')(http, {
-  cors: {
-    origin: allowedOrigins,
-    credentials: true
-  }
-});
 app.use(cors({
   origin: function (origin, callback) {
-    // Tillåt även requests utan origin (t.ex. curl eller mobilappar)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -52,6 +45,13 @@ app.use(cors({
   },
   credentials: true
 }));
+
+const io = require('socket.io')(http, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true
+  }
+});
 // Socket.IO för realtidskommunikation
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -63,9 +63,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    sameSite: 'lax',     // Viktigt för att skicka cookies via fetch
-    secure: false        // Sätt till true om du kör med HTTPS
-  }
+    sameSite: 'lax',
+    secure: true
+  }  
 }));
 
 

@@ -1,6 +1,6 @@
 console.log("🔌 Försöker ansluta till Socket.IO...");
 
-const socket = io("https://admin-portal-production-a9a5.up.railway.app", {
+const socket = io("https://admin-portal-rn5z.onrender.com", {
   transports: ["websocket"],
   withCredentials: true
 });
