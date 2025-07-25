@@ -1,25 +1,27 @@
 console.log("🔌 Försöker ansluta till Socket.IO...");
 
-const socket = io("https://admin-portal-rn5z.onrender.com", {
+// 🌐 Dynamisk BASE_URL beroende på om det körs lokalt eller i produktion
+const BASE_URL = window.location.hostname.includes("localhost")
+  ? "http://localhost:3001"
+  : "https://admin-portal-rn5z.onrender.com";
+
+const socket = io(BASE_URL, {
   transports: ["websocket"],
   withCredentials: true
 });
 
-// Lyckad anslutning
+// Socket.io-händelser
 socket.on("connect", () => {
   console.log("✅ Ansluten till Socket.IO som kund. Socket-ID:", socket.id);
 });
 
-// Anslutningsfel
 socket.on("connect_error", (err) => {
   console.error("❌ Kunde inte ansluta till Socket.IO:", err.message || err);
 });
 
-// För debugging
 socket.on("disconnect", (reason) => {
   console.warn("⚠️ Socket.IO frånkopplad:", reason);
 });
-
 
 let customerId = null;
 let customerName = "Du";
@@ -38,7 +40,6 @@ const questions = [
 const answers = {};
 let currentQuestionIndex = 0;
 
-// 🟢 Notifiera admin om ny session
 function notifyAdminOfNewSession(customerId, sessionId) {
   const systemMsg = {
     customerId,
@@ -49,10 +50,9 @@ function notifyAdminOfNewSession(customerId, sessionId) {
   };
 
   console.log("📤 Skickar systemmeddelande:", systemMsg);
-
   socket.emit("sendMessage", systemMsg);
 
-  fetch("/api/chat", {
+  fetch(`${BASE_URL}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(systemMsg)
@@ -83,7 +83,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    const res = await fetch("/api/customers/me", { credentials: "include" });
+    const res = await fetch(`${BASE_URL}/api/customers/me`, { credentials: "include" });
     if (!res.ok) throw new Error("Kunde inte hämta användare");
     const data = await res.json();
     window.customerId = data._id;
@@ -126,7 +126,7 @@ function showNextQuestion() {
       })
       .then(() => {
         if (chatBox.children.length === 0 && customerId) {
-          fetch(`/api/chat/customer/${customerId}?sessionId=${window.activeChatSessionId}`)
+          fetch(`${BASE_URL}/api/chat/customer/${customerId}?sessionId=${window.activeChatSessionId}`)
             .then(res => res.json())
             .then(existingMessages => {
               const alreadyWelcomed = existingMessages.some(
@@ -144,7 +144,7 @@ function showNextQuestion() {
 
                 socket.emit("sendMessage", welcomeMessage);
 
-                fetch("/api/chat", {
+                fetch(`${BASE_URL}/api/chat`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify(welcomeMessage)
@@ -228,12 +228,12 @@ function sendMessage() {
     sessionId: window.activeChatSessionId
   };
 
-  console.log("📤 Skickar meddelande till servern:", msgObj); // 🆕 LOGG
+  console.log("📤 Skickar meddelande till servern:", msgObj);
 
   socket.emit("sendMessage", msgObj);
   input.value = "";
 
-  fetch("/api/chat", {
+  fetch(`${BASE_URL}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(msgObj)
@@ -279,7 +279,7 @@ function renderMessage(msg) {
 
 window.startChatSession = async function () {
   try {
-    const res = await fetch("/api/customers/me", {
+    const res = await fetch(`${BASE_URL}/api/customers/me`, {
       method: "GET",
       credentials: "include"
     });
@@ -297,12 +297,12 @@ window.startChatSession = async function () {
 
 async function loadHistory() {
   try {
-    const res = await fetch('/api/customers/me', { credentials: 'include' });
+    const res = await fetch(`${BASE_URL}/api/customers/me`, { credentials: 'include' });
     const userData = await res.json();
     customerId = userData._id;
 
     const historyRes = await fetch(
-      `/api/chat/customer/${customerId}?sessionId=${window.activeChatSessionId}`,
+      `${BASE_URL}/api/chat/customer/${customerId}?sessionId=${window.activeChatSessionId}`,
       { credentials: 'include' }
     );
     const history = await historyRes.json();
