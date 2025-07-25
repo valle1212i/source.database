@@ -55,13 +55,13 @@
     <script>
       async function loadUserGreeting() {
         try {
-          const res = await fetch('/api/user/profile', { credentials: 'include' });
+          const res = await fetch('/api/auth/me', { credentials: 'include' });
           if (!res.ok) throw new Error('Inte inloggad');
-
-      const data = await res.json();
-      const fullName = data.name || "användare";
-      const firstName = fullName.trim().split(" ")[0];
-
+    
+          const data = await res.json();
+          const fullName = data.name || "användare";
+          const firstName = fullName.trim().split(" ")[0];
+    
           const header = document.querySelector(".header");
           if (header) {
             header.textContent = `Välkommen tillbaka, ${firstName}!`;
@@ -74,9 +74,10 @@
           }
         }
       }
-
-      window.addEventListener("DOMContentLoaded", loadUserGreeting);
+    
+      document.addEventListener("DOMContentLoaded", loadUserGreeting);
     </script>
+    
 
     <div class="grid">
 
@@ -344,14 +345,17 @@ window.customerId = null;
 
   async function fetchCustomerId() {
     try {
-      const res = await fetch("/api/customers/me", { credentials: "include" });
+      const res = await fetch("/api/auth/me", { credentials: "include" });
       if (!res.ok) throw new Error("Ej inloggad");
       const data = await res.json();
-      window.customerId = data._id;
+      window.customerId = data._id || null;
+      console.log("🆔 Kund-ID:", window.customerId);
     } catch (err) {
-      console.error("❌ Kunde inte hämta kund-ID:", err);
+      console.warn("❌ Kunde inte hämta kund-ID:", err.message);
     }
   }
+
+  window.addEventListener("DOMContentLoaded", fetchCustomerId);
 </script>
 
 <script>
@@ -440,7 +444,7 @@ window.customerId = null;
 
   async function loadUserProfile() {
     try {
-      const res = await fetch("/api/profile/me");
+      const res = await fetch("/api/auth/me", { credentials: "include" });
       const data = await res.json();
 
       if (data.success) {
