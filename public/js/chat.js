@@ -83,7 +83,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    const res = await fetch(`${BASE_URL}/api/auth/me`, { credentials: "include" });
+    const res = await fetch(`${BASE_URL}/api/profile/me`, { credentials: "include" });
     if (!res.ok) throw new Error("Kunde inte hämta användare");
     const data = await res.json();
     window.customerId = data._id;
