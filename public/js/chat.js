@@ -3,7 +3,7 @@ console.log("🔌 Försöker ansluta till Socket.IO...");
 // 🌐 Dynamisk BASE_URL beroende på om det körs lokalt eller i produktion
 const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
-  : "https://admin-portal-rn5z.onrender.com";
+  : "https://source-database.onrender.com";
 
 const socket = io(BASE_URL, {
   transports: ["websocket"],
