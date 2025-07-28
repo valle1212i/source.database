@@ -49,99 +49,109 @@
   </div>
 </div>
 
-  <div class="main">
-    <div class="header">Välkommen tillbaka!</div>
+<!-- Hamburger-meny (visas bara på små skärmar) -->
+<button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">
+  &#9776;
+</button>
 
-    <script>
-      async function loadUserGreeting() {
-        try {
-          const res = await fetch('/api/auth/me', { credentials: 'include' });
-          if (!res.ok) throw new Error('Inte inloggad');
-    
-          const data = await res.json();
-          const fullName = data.name || "användare";
-          const firstName = fullName.trim().split(" ")[0];
-    
-          const header = document.querySelector(".header");
-          if (header) {
-            header.textContent = `Välkommen tillbaka, ${firstName}!`;
-          }
-        } catch (err) {
-          console.error("Kunde inte hämta användarinformation:", err);
-          const header = document.querySelector(".header");
-          if (header) {
-            header.textContent = "Välkommen tillbaka!";
-          }
+  <div class="main">
+  <div class="header">Välkommen tillbaka!</div>
+
+  <script>
+    async function loadUserGreeting() {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!res.ok) throw new Error('Inte inloggad');
+
+        const data = await res.json();
+        const fullName = data.name || "användare";
+        const firstName = fullName.trim().split(" ")[0];
+
+        const header = document.querySelector(".header");
+        if (header) {
+          header.textContent = `Välkommen tillbaka, ${firstName}!`;
+        }
+      } catch (err) {
+        console.error("Kunde inte hämta användarinformation:", err);
+        const header = document.querySelector(".header");
+        if (header) {
+          header.textContent = "Välkommen tillbaka!";
         }
       }
-    
-      document.addEventListener("DOMContentLoaded", loadUserGreeting);
-    </script>
-    
+    }
 
-    <div class="grid">
+    document.addEventListener("DOMContentLoaded", loadUserGreeting);
+  </script>
 
-      <div class="profile-wrapper">
-  <div class="profile-icon" id="profileToggle"></div>
+  <!-- Profilikonen ska ligga utanför grid -->
+  <div class="profile-wrapper">
+    <div class="profile-icon" id="profileToggle"></div>
+    <div class="profile-dropdown" id="profileMenu">
+      <div class="profile-email" id="userEmail">Laddar...</div>
+      <hr />
+      <a href="#" id="switchAccount">Byt konto</a>
+      <a href="#" id="openSettings">Profilinställningar</a>
+      <a href="#" id="logout">Logga ut</a>
+    </div>
+  </div>
 
-  <div class="profile-dropdown" id="profileMenu">
-    <div class="profile-email" id="userEmail">Laddar...</div>
-    <hr />
-    <a href="#" id="switchAccount">Byt konto</a>
-    <a href="#" id="openSettings">Profilinställningar</a>
-    <a href="#" id="logout">Logga ut</a>
+  <!-- Huvudinnehåll -->
+  <div class="dashboard-container">
+
+   <!-- Diagramkort -->
+<div class="card sales-card wide-3">
+  <div class="circle-widget">
+    <div class="chart-area">
+      <canvas id="salesChart" height="140"></canvas>
+    </div>
+    <div class="sales-info">
+      <h3>Försäljning senaste 7 dagarna</h3>
+      <hr class="title-underline">
+      <div class="amount">752,000 SEK</div>
+      <hr class="amount-underline">
+    </div>
   </div>
 </div>
 
-      <!-- Försäljning med diagram och belopp -->
-      <div class="card circle-widget">
-        <div class="chart-area">
-          <canvas id="salesChart"></canvas>
-        </div>
-        <div class="sales-info">
-          <h3>Försäljning senaste 7 dagarna</h3>
-          <hr class="title-underline" />
-          <div class="amount">752,000 SEK</div>
-          <hr class="amount-underline" />
-        </div>
-      </div>
 
-      <div class="card">
-        <h3>Tidigare ärenden via vår support</h3>
-        <div class="table-container">
-          <table class="support-table">
-            <thead>
-              <tr>
-                <th>Ärende-ID</th>
-                <th>Datum</th>
-                <th>Kundnamn</th>
-                <th>Ärende</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>#10234</td><td>2025-06-24</td><td>Anna Svensson</td><td>Problem med inloggning</td><td><span class="status-text closed">Avslutat</span></td></tr>
-              <tr><td>#10235</td><td>2025-06-24</td><td>Erik Johansson</td><td>Fakturafråga</td><td><span class="status-text closed">Avslutat</span></td></tr>
-              <tr><td>#10236</td><td>2025-06-25</td><td>Maria Nilsson</td><td>Buggrapport</td><td><span class="status-text progress">Pågående</span></td></tr>
-              <tr><td>#10237</td><td>2025-06-25</td><td>Jonas Berg</td><td>Uppdatering av konto</td><td><span class="status-text closed">Avslutat</span></td></tr>
-            </tbody>
-          </table>
-        </div>
+    <!-- Supportärenden -->
+    <div class="card">
+      <h3>Tidigare äreden via vår support</h3>
+      <div class="table-container">
+        <table class="support-table">
+          <thead>
+            <tr>
+              <th>Ärende-ID</th>
+              <th>Datum</th>
+              <th>Kundnamn</th>
+              <th>Ärende</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>#10234</td><td>2025-06-24</td><td>Anna Svensson</td><td>Problem med inloggning</td><td><span class="status-text closed">Avslutat</span></td></tr>
+            <tr><td>#10235</td><td>2025-06-24</td><td>Erik Johansson</td><td>Fakturafråga</td><td><span class="status-text closed">Avslutat</span></td></tr>
+            <tr><td>#10236</td><td>2025-06-25</td><td>Maria Nilsson</td><td>Buggrapport</td><td><span class="status-text progress">Pågående</span></td></tr>
+            <tr><td>#10237</td><td>2025-06-25</td><td>Jonas Berg</td><td>Uppdatering av konto</td><td><span class="status-text closed">Avslutat</span></td></tr>
+          </tbody>
+        </table>
       </div>
+    </div>
 
-      <div class="card">
-        <h3>AI rekommenderade växningsmöjligheter</h3>
-        <ul class="growth-list">
-          <li>Starta kampanj i ny kanal (t.ex. TikTok)</li>
-          <li>Skapa lojalitetsprogram</li>
-          <li>Optimera nyhetsbrev med segmenterade utskick</li>
-          <li>Förbättra SEO på produktsidor</li>
-          <li>Retargeting-kampanj för övergivna varukorgar</li>
-          <li>Lansera produktbundle-erbjudanden</li>
-          <li>Uppdatera startsidans design</li>
-          <li>Erbjud nya betalningsmetoder (Swish, Klarna)</li>
-        </ul>
-      </div>
+    <!-- AI-förslag -->
+    <div class="card">
+      <h3>AI rekommenderade växningsmöjligheter</h3>
+      <ul class="growth-list">
+        <li>Starta kampanj i ny kanal (t.ex. TikTok)</li>
+        <li>Skapa lojalitetsprogram</li>
+        <li>Optimera nyhetsbrev med segmenterade utskick</li>
+        <li>Förbättra SEO på produktsidor</li>
+        <li>Retargeting-kampanj för övergivna varukorgar</li>
+        <li>Lansera produktbundle-erbjudanden</li>
+        <li>Uppdatera startsidans design</li>
+        <li>Erbjud nya betalningsmetoder (Swish, Klarna)</li>
+      </ul>
+    </div>
 
       <div class="card latest-message">
         <div class="card-header aligned">
@@ -158,16 +168,15 @@
       </div>
 
       <div class="card">
-        <h3>Visningar på hemsidan</h3>
-        <div class="mini-chart-container">
-          <canvas id="websiteViewsMiniChart" height="60"></canvas>
-        </div>
-        <div class="chart-indicator-box">
-          <span class="change">+12% senaste veckan</span>
-          <span class="total"><strong>28 000 visningar idag</strong></span>
-        </div>
-      </div>
-
+  <h3>Visningar på hemsidan</h3>
+  <div class="mini-chart-container">
+    <canvas id="websiteViewsMiniChart" height="60"></canvas>
+  </div>
+  <div class="chart-indicator-box">
+    <span id="change" class="change">Laddar...</span>
+    <span id="todayCount" class="total"><strong>...</strong></span>
+  </div>
+</div>
       <div class="card"><h3>Mest köpt produkt</h3><p>Pro Plus-paketet</p></div>
       <div class="card"><h3>Totalt antal ordrar</h3><p>1 820 ordrar registrerade</p></div>
       <div class="card"><h3>Utbetalningar</h3><p>Senaste: 215 000 SEK den 20 juni</p></div>
@@ -211,30 +220,58 @@
 
   <!-- Chart.js -->
   <script>
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör', 'Sön'],
-        datasets: [{
-          label: 'Försäljning (SEK)',
-          data: [120000, 95000, 110000, 87000, 98000, 102000, 140000],
-          backgroundColor: '#111827'
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color: '#6b7280' } },
-          y: {
-            beginAtZero: true,
-            ticks: { color: '#6b7280' }
+  async function renderPageViewChart() {
+    try {
+      const res = await fetch("/api/pageviews/summary");
+      const data = await res.json();
+
+      const ctx = document.getElementById("websiteViewsMiniChart").getContext("2d");
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: data.labels.map(date => new Date(date).toLocaleDateString("sv-SE", { weekday: "short" })),
+          datasets: [{
+            label: "Visningar",
+            data: data.counts,
+            borderColor: "#3b82f6",
+            backgroundColor: "rgba(59, 130, 246, 0.08)",
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHitRadius: 10,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              enabled: true,
+              backgroundColor: '#111827',
+              titleColor: '#ffffff',
+              bodyColor: '#d1d5db',
+              callbacks: {
+                label: function (context) {
+                  return context.parsed.y + " visningar";
+                }
+              }
+            }
+          },
+          scales: {
+            x: { display: false },
+            y: { display: false }
           }
         }
-      }
-    });
-  </script>
+      });
+    } catch (err) {
+      console.warn("Kunde inte ladda visningsdiagram:", err.message);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", renderPageViewChart);
+</script>
 
   <script>
     const miniCtx = document.getElementById('websiteViewsMiniChart').getContext('2d');
@@ -320,6 +357,7 @@ function typeParagraph() {
     responseDiv.appendChild(p);
     i++;
     setTimeout(typeParagraph, delay);
+    isAsking = false;
   }
 }
 
@@ -384,6 +422,55 @@ window.customerId = null;
 </div>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/chat.js"></script>
+
+<!-- Andra scripts -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/chat.js"></script>
+
+<!-- Din hamburgermenyfunktion (redan inlagd) -->
+<script>
+  const menuBtn = document.getElementById('menuToggle');
+  const sidebar = document.querySelector('.sidebar');
+
+  menuBtn.addEventListener('click', () => {
+    const isActive = sidebar.classList.toggle('active');
+    document.body.classList.toggle('menu-open', isActive);
+  });
+
+  window.addEventListener('click', (e) => {
+    const isClickInsideMenu = sidebar.contains(e.target);
+    const isClickOnToggle = menuBtn.contains(e.target);
+    const isMobile = window.innerWidth <= 768;
+
+    if (!isClickInsideMenu && !isClickOnToggle && isMobile) {
+      sidebar.classList.remove('active');
+      document.body.classList.remove('menu-open');
+    }
+  });
+</script>
+
+<!-- 🔧 LÄGG IN showToast HÄR -->
+<script>
+  function showToast(message) {
+    const container = document.getElementById("toast-container");
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.textContent = message;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
+  }
+</script>
+
+<!-- Toast-container -->
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+</body>
+</html>
+
 <script>
   document.getElementById("chatForm").addEventListener("submit", function (e) {
     e.preventDefault(); // stoppar reload
@@ -476,6 +563,68 @@ window.customerId = null;
   }
 
   loadUserProfile();
+</script>
+
+<!-- Toast-container (dold tills något visas) -->
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+  async function fetchInsights() {
+    try {
+      const res = await fetch("/api/pageviews/insights");
+      const data = await res.json();
+
+      if (data.error) throw new Error(data.error);
+
+      // Uppdatera text
+      document.getElementById("todayCount").textContent = `${data.todayCount.toLocaleString()} visningar idag`;
+
+      if (data.percentChange === null) {
+        document.getElementById("change").textContent = "Ingen jämförelsedata ännu";
+      } else {
+        const sign = data.percentChange >= 0 ? "+" : "";
+        const color = data.percentChange >= 0 ? "green" : "red";
+
+        const changeElem = document.getElementById("change");
+        changeElem.textContent = `${sign}${data.percentChange}% senaste veckan`;
+        changeElem.style.color = color;
+      }
+
+    } catch (err) {
+      console.warn("Kunde inte hämta sidvisningar:", err.message);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", fetchInsights);
+</script>
+<script>
+  const ctx = document.getElementById('salesChart')?.getContext('2d');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör', 'Sön'],
+        datasets: [{
+          label: 'Försäljning (SEK)',
+          data: [120000, 95000, 110000, 87000, 98000, 102000, 140000],
+          backgroundColor: '#111827'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#6b7280' } },
+          y: {
+            beginAtZero: true,
+            ticks: { color: '#6b7280' }
+          }
+        }
+      }
+    });
+  } else {
+    console.error("🛑 Kunde inte hitta elementet #salesChart");
+  }
 </script>
 </body>
 </html>

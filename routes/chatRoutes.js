@@ -1,4 +1,3 @@
-console.log("🔐 API-nyckel som används:", process.env.OPENAI_API_KEY);
 const express = require("express");
 const dotenv = require("dotenv");
 const { Configuration, OpenAIApi } = require("openai");
@@ -6,17 +5,15 @@ const Customer = require("../models/Customer");
 const Message = require("../models/Message");
 
 dotenv.config();
-
 const router = express.Router();
 
-// 🔑 OpenAI-setup
+// 🔑 OpenAI setup
 const OpenAI = require("openai");
-
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-
+// POST /api/chat/ask
 router.post("/ask", async (req, res) => {
   const { message } = req.body;
   const sessionUser = req.session.user;
@@ -31,12 +28,15 @@ router.post("/ask", async (req, res) => {
       return res.status(404).json({ reply: "❌ Kunde inte hitta kunddata." });
     }
 
+    // 🌍 Språkneutral systemprompt (AI svarar på samma språk som frågan)
     const systemPrompt = `
-Du är en hjälpsam, tillmötesgående och vänlig AI-supportagent i en kundportal. Du svarar kortfattat men trevligt – på ett sätt som känns mänskligt och professionellt.
+You are a helpful, professional and friendly AI assistant inside a customer portal. 
+Always answer in the same language the user used in their message (e.g. Swedish, English, Spanish, German, etc.).
 
-Du ska aldrig svara på frågor om lösenord, PIN-koder eller annan känslig data. Be istället kunden kontakta en riktig supportperson vid sådana frågor.
+Never provide or guess passwords, PINs or sensitive data. If the user asks for such information, tell them to contact human support instead.
 
-Användarens information:
+Here is the user's profile information (in Swedish – do not translate it):
+
 - Namn: ${customer.name}
 - E-post: ${customer.email}
 - Kampanjer: ${customer.campaigns?.join(", ") || "Ingen information"}
@@ -46,12 +46,10 @@ Användarens information:
 - Senast inloggad: ${customer.lastLogin?.toISOString().split("T")[0] || "Okänt"}
 - Plan: ${customer.plan || "Gratis"}
 - Anteckningar: ${customer.notes || "Inga"}
-    `;
+`;
 
-    // 1. Flytta ut history
+    // 💬 Bygg chathistorik från sessionen
     const history = req.session.aiHistory || [];
-
-    // 2. Bygg chatMessages korrekt
     const chatMessages = [
       { role: "system", content: systemPrompt },
       ...history.flatMap(entry => [
@@ -61,20 +59,16 @@ Användarens information:
       { role: "user", content: message }
     ];
 
-    // 3. Skicka med messages till OpenAI
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: chatMessages,
       temperature: 0.7,
     });
 
-    // 4. Svarshantering och historik
     const reply = completion.choices?.[0]?.message?.content || "⚠️ Inget svar från AI.";
 
-    if (!req.session.aiHistory) {
-      req.session.aiHistory = [];
-    }
-
+    // 🧠 Spara till session
+    if (!req.session.aiHistory) req.session.aiHistory = [];
     req.session.aiHistory.push({
       question: message,
       answer: reply,
@@ -89,14 +83,13 @@ Användarens information:
   }
 });
 
+// GET /api/chat/customer/:id
 router.get("/customer/:id", async (req, res) => {
   const { id } = req.params;
   const { sessionId } = req.query;
 
   const query = { customerId: id };
-  if (sessionId) {
-    query.sessionId = sessionId;
-  }
+  if (sessionId) query.sessionId = sessionId;
 
   try {
     const messages = await Message.find(query).sort({ timestamp: 1 });
@@ -106,7 +99,6 @@ router.get("/customer/:id", async (req, res) => {
     res.status(500).json({ error: "Kunde inte hämta meddelanden" });
   }
 });
-
 
 // POST /api/chat
 router.post("/", async (req, res) => {
@@ -132,6 +124,7 @@ router.post("/", async (req, res) => {
   }
 });
 
+// GET /api/chat/me
 router.get("/me", async (req, res) => {
   if (!req.session || !req.session.user || !req.session.user.email) {
     return res.status(401).json({ error: "Inte inloggad" });
@@ -139,7 +132,6 @@ router.get("/me", async (req, res) => {
 
   try {
     const customer = await Customer.findOne({ email: req.session.user.email });
-
     if (!customer) {
       return res.status(404).json({ error: "Kund hittades inte" });
     }
