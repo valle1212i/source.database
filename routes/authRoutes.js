@@ -21,6 +21,7 @@ router.post('/register', async (req, res) => {
 });
     await newUser.save();
 
+    console.log("✅ Ny användare registrerad:", newUser.email);
     res.status(201).json({ success: true, message: '✅ Användare skapad!' });
   } catch (err) {
     console.error('❌ Fel vid registrering:', err);
@@ -34,23 +35,33 @@ router.post('/login', async (req, res) => {
   try {
     const user = await Customer.findOne({ email });
     if (!user) {
+      console.warn("❌ Inloggning: användare ej hittad:", email);
       return res.status(401).json({ success: false, message: '❌ Fel e-post eller lösenord' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.warn("❌ Inloggning: lösenord matchar ej för:", email);
       return res.status(401).json({ success: false, message: '❌ Fel e-post eller lösenord' });
     }
 
-    req.session.user = user;
+    // ✅ Spara endast det som behövs i sessionen
+    req.session.user = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role || "user",
+      profileImage: user.profileImage,
+      settings: user.settings || {}
+    };
+
+    console.log("✅ Inloggad:", email);
     res.status(200).json({ success: true, message: '✅ Inloggning lyckades!' });
   } catch (err) {
     console.error('❌ Fel vid inloggning:', err);
     res.status(500).json({ success: false, message: '❌ Serverfel vid inloggning.' });
   }
 });
-
-module.exports = router;
 
 router.get('/logout', (req, res) => {
   req.session.destroy(err => {
@@ -71,3 +82,5 @@ router.get('/me', (req, res) => {
     res.status(401).json({ success: false });
   }
 });
+
+module.exports = router;
