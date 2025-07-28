@@ -13,7 +13,12 @@ router.post('/register', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new Customer({ name, email, password: hashedPassword });
+    const newUser = new Customer({
+      name,
+      email,
+      password: hashedPassword,
+      role: "admin" // 🔐 Alla som registrerar sig via formulär blir admin
+});
     await newUser.save();
 
     res.status(201).json({ success: true, message: '✅ Användare skapad!' });

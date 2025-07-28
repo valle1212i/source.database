@@ -17,7 +17,20 @@
         <h1>Logga in</h1>
         <form id="loginForm">
           <input type="email" name="email" placeholder="E-post" required />
-          <input type="password" name="password" placeholder="Lösenord" required />
+          
+          <!-- 👇 Lösenordsfält med öga-ikon 👇 -->
+          <div class="password-container">
+            <input type="password" name="password" id="password" placeholder="Lösenord" required />
+            <span class="toggle-password" onclick="togglePasswordVisibility()" aria-label="Visa/dölj lösenord">
+             <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffffaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+               <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+                 <circle cx="12" cy="12" r="3"/>
+               </svg>
+            </span>
+          </div>
+
+          <!-- ☝️ Slut på öga-ikon-lösning ☝️ -->
+
           <button type="submit">Logga in</button>
         </form>
         <p class="register-link">
@@ -54,6 +67,67 @@
         console.error(err);
       }
     });
+
+    // 👇 JavaScript för att visa/dölja lösenord (läggs till CSS och funktion snart)
   </script>
+</body>
+</html>
+
+
+  <script>
+  document.querySelector("#loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password })
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        window.location.href = "/customerportal.html";
+      } else {
+        alert("❌ Inloggning misslyckades: " + result.message);
+      }
+    } catch (err) {
+      alert("❌ Ett fel uppstod. Kunde inte kontakta servern.");
+      console.error(err);
+    }
+  });
+
+  // 👁️ Visa/dölj lösenord
+  function togglePasswordVisibility() {
+  const passwordInput = document.getElementById("password");
+  const eyeIcon = document.getElementById("eyeIcon");
+
+  const showIcon = `
+    <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffffaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>`;
+
+  const hideIcon = `
+<svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffffaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+  <circle cx="12" cy="12" r="3"/>
+  <line x1="3" y1="3" x2="21" y2="21"/>
+</svg>`;
+
+  if (passwordInput.type === "password") {
+    passwordInput.type = "text";
+    eyeIcon.parentElement.innerHTML = hideIcon;
+  } else {
+    passwordInput.type = "password";
+    eyeIcon.parentElement.innerHTML = showIcon;
+  }
+}
+</script>
+
 </body>
 </html>
