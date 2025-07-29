@@ -79,7 +79,7 @@ router.get('/me', (req, res) => {
     const { name, email, profileImage } = req.session.user;
     res.json({ success: true, name, email, profileImage });
   } else {
-    res.status(401).json({ success: false });
+    res.status(401).json({ success: false, message: "Inte inloggad" });
   }
 });
 

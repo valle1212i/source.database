@@ -12,11 +12,13 @@
     <img src="/Customerportalimage (kopia)/Source (kopia).png" alt="Source logotyp" class="logo" />
   </div>
 
+  <!-- 🟡 Frågeflöde visas först -->
   <div class="chat-intro">
     <h2>Hej! Innan vi börjar:</h2>
-    <div id="questionFlow"></div>
+    <div id="questionFlow" class="chat-messages"></div>
   </div>
 
+  <!-- 🟢 Chattfönstret visas först när frågorna är klara -->
   <div id="chatArea" class="hidden">
     <div id="chatMessages" class="chat-messages"></div>
     <div id="typingIndicator" class="typing hidden">
@@ -31,21 +33,22 @@
   <!-- Socket.io först -->
   <script src="/socket.io/socket.io.js"></script>
 
-  <!-- Din logik: chat.js (där startChatSession, socket, showNextQuestion m.m. finns) -->
+  <!-- Din chatlogik -->
   <script src="/js/chat.js"></script>
 
-  <!-- Kör frågeflödet efter att allt är laddat -->
+  <!-- Kör frågeflödet om funktionen finns -->
   <script>
     window.addEventListener("DOMContentLoaded", () => {
       if (typeof showNextQuestion === "function") {
         showNextQuestion();
       } else {
-        console.error("❌ showNextQuestion saknas – är chat.js korrekt laddad?");
+        console.warn("⚠️ showNextQuestion() finns ej – ingen frågeloggik körs.");
       }
     });
   </script>
+
   <div id="chatBubble" class="chat-bubble hidden">
     💬 Öppna chatt
-  </div>  
+  </div>
 </body>
 </html>
