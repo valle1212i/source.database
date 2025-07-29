@@ -41,7 +41,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   });
 
   try {
-    const res = await fetch(`${BASE_URL}/api/profile/me`, { credentials: "include" });
+    const res = await fetch(`${BASE_URL}/api/chat/me`, { credentials: "include" });
     if (!res.ok) throw new Error("Ej inloggad");
 
     const customer = await res.json();
