@@ -122,7 +122,16 @@ router.get("/insights", async (req, res) => {
       counts.push(countsMap[label] || 0);
     }
 
-    res.json({ labels, counts });
+// Räkna hur många visningar som skett idag från 00:00
+const startOfToday = new Date();
+startOfToday.setUTCHours(0, 0, 0, 0);
+
+const todaysCount = await PageView.countDocuments({
+  customerId: customer._id,
+  timestamp: { $gte: startOfToday }
+});
+
+    res.json({ labels, counts, todaysCount });
 
   } catch (err) {
     console.error("❌ Fel vid hämtning av pageviews:", err);

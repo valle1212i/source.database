@@ -229,7 +229,13 @@
       new Chart(ctx, {
         type: "line",
         data: {
-          labels: data.labels.map(date => new Date(date).toLocaleDateString("sv-SE", { weekday: "short" })),
+          labels: data.labels.map(date =>
+  new Date(date).toLocaleDateString("sv-SE", {
+    weekday: "short",
+    day: "numeric",
+    month: "short"
+  })
+),
           datasets: [{
             label: "Visningar",
             data: data.counts,
@@ -272,49 +278,6 @@
 
   document.addEventListener("DOMContentLoaded", renderPageViewChart);
 </script>
-
-  <script>
-    const miniCtx = document.getElementById('websiteViewsMiniChart').getContext('2d');
-    new Chart(miniCtx, {
-      type: 'line',
-      data: {
-        labels: ['Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör', 'Sön'],
-        datasets: [{
-          label: 'Visningar',
-          data: [13400, 19800, 22000, 18000, 24000, 19500, 26500],
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.08)',
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0,
-          pointHitRadius: 10,
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            enabled: true,
-            backgroundColor: '#111827',
-            titleColor: '#ffffff',
-            bodyColor: '#d1d5db',
-            callbacks: {
-              label: function (context) {
-                return context.parsed.y + ' visningar';
-              }
-            }
-          }
-        },
-        scales: {
-          x: { display: false },
-          y: { display: false }
-        }
-      }
-    });
-  </script>
 
   <script>
   let isAsking = false;
@@ -569,33 +532,32 @@ window.customerId = null;
 <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
 <script>
-  async function fetchInsights() {
+  async function fetchPageViewInsights() {
     try {
-      const res = await fetch("/api/pageviews/insights");
+      const res = await fetch("/api/pageviews/summary", { credentials: "include" });
       const data = await res.json();
 
-      if (data.error) throw new Error(data.error);
+      const today = data.todaysCount || 0;
+      const weekBefore = data.counts[0] || 0;
+      const percent = weekBefore > 0 ? Math.round(((today - weekBefore) / weekBefore) * 100) : null;
 
-      // Uppdatera text
-      document.getElementById("todayCount").textContent = `${data.todayCount.toLocaleString()} visningar idag`;
+      document.getElementById("todayCount").innerHTML = `<strong>${today} visningar idag</strong>`;
 
-      if (data.percentChange === null) {
-        document.getElementById("change").textContent = "Ingen jämförelsedata ännu";
+      const changeElem = document.getElementById("change");
+      if (percent === null) {
+        changeElem.textContent = "Ingen jämförelsedata ännu";
+        changeElem.style.color = "#10b981"; // grön
       } else {
-        const sign = data.percentChange >= 0 ? "+" : "";
-        const color = data.percentChange >= 0 ? "green" : "red";
-
-        const changeElem = document.getElementById("change");
-        changeElem.textContent = `${sign}${data.percentChange}% senaste veckan`;
-        changeElem.style.color = color;
+        const sign = percent >= 0 ? "+" : "";
+        changeElem.textContent = `${sign}${percent}% senaste veckan`;
+        changeElem.style.color = percent >= 0 ? "#10b981" : "#ef4444"; // grön eller röd
       }
-
     } catch (err) {
-      console.warn("Kunde inte hämta sidvisningar:", err.message);
+      console.warn("Kunde inte hämta sidvisningsdata:", err.message);
     }
   }
 
-  document.addEventListener("DOMContentLoaded", fetchInsights);
+  document.addEventListener("DOMContentLoaded", fetchPageViewInsights);
 </script>
 <script>
   const ctx = document.getElementById('salesChart')?.getContext('2d');
