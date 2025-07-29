@@ -26,6 +26,17 @@ const sessionId = sessionStorage.getItem("activeChatSessionId") || Date.now().to
 sessionStorage.setItem("activeChatSessionId", sessionId);
 window.activeChatSessionId = sessionId;
 
+let customerData = {
+  name: "",
+  topic: "",
+};
+
+const questions = [
+  { key: "name", text: "Vad heter du?" },
+  { key: "topic", text: "Vad gäller ditt ärende?" }
+];
+let currentQuestionIndex = 0;
+
 window.addEventListener("DOMContentLoaded", async () => {
   input = document.getElementById("chatInput");
   chatBox = document.getElementById("chatMessages");
@@ -37,9 +48,37 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("chatForm")?.addEventListener("submit", (e) => {
     e.preventDefault();
-    sendMessage();
+    const userInput = input.value.trim();
+    if (!userInput) return;
+
+    if (currentQuestionIndex < questions.length) {
+      const key = questions[currentQuestionIndex].key;
+      customerData[key] = userInput;
+
+      renderMessage({ sender: "customer", message: userInput, timestamp: new Date() });
+      currentQuestionIndex++;
+      input.value = "";
+      showNextQuestion();
+    } else {
+      sendMessage(userInput);
+    }
   });
 
+  showNextQuestion(); // 👉 startar frågeflödet
+});
+
+function showNextQuestion() {
+  if (currentQuestionIndex < questions.length) {
+    const q = questions[currentQuestionIndex];
+    renderMessage({ sender: "system", message: q.text, timestamp: new Date() });
+  } else {
+    document.querySelector(".chat-intro").classList.add("hidden");
+    document.getElementById("chatArea").classList.remove("hidden");
+    initChat(); // startar socket, hämtar historik, osv.
+  }
+}
+
+async function initChat() {
   try {
     const res = await fetch(`${BASE_URL}/api/chat/me`, { credentials: "include" });
     if (!res.ok) throw new Error("Ej inloggad");
@@ -50,15 +89,13 @@ window.addEventListener("DOMContentLoaded", async () => {
     await startChatSession();
     await loadHistory();
     await maybeSendWelcomeMessage();
-
   } catch (err) {
     console.error("❌ Fel vid initiering:", err.message);
     alert("❌ Du måste vara inloggad för att använda chatten.");
   }
-});
+}
 
-function sendMessage() {
-  const text = input.value.trim();
+function sendMessage(text) {
   if (!text || !window.customerId) return;
 
   const msg = {
@@ -70,6 +107,7 @@ function sendMessage() {
   };
 
   socket.emit("sendMessage", msg);
+  renderMessage(msg);
   input.value = "";
 
   fetch(`${BASE_URL}/api/chat`, {
@@ -88,10 +126,12 @@ socket.on("newMessage", (msg) => {
 
 function renderMessage(msg) {
   const div = document.createElement("div");
-  div.className = msg.sender === "admin" ? "message admin" : "message customer";
+  div.className = msg.sender === "admin" ? "message admin" : msg.sender === "system" ? "message system" : "message customer";
 
   const name = document.createElement("strong");
-  name.textContent = msg.sender === "admin" ? "Support: " : "Du: ";
+  name.textContent =
+    msg.sender === "admin" ? "Support: " :
+    msg.sender === "system" ? "System: " : "Du: ";
 
   const content = document.createElement("span");
   content.textContent = msg.message;
