@@ -22,7 +22,7 @@ socket.on("disconnect", (reason) => {
 });
 
 let input, chatBox;
-let sessionId = sessionStorage.getItem("activeChatSessionId") || Date.now().toString();
+const sessionId = sessionStorage.getItem("activeChatSessionId") || Date.now().toString();
 sessionStorage.setItem("activeChatSessionId", sessionId);
 window.activeChatSessionId = sessionId;
 
@@ -45,7 +45,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (!res.ok) throw new Error("Ej inloggad");
 
     const customer = await res.json();
-    window.customerId = customer._id; // 🟢 Sparar kundens ID för meddelanden
+    window.customerId = customer._id;
 
     await startChatSession();
     await loadHistory();
@@ -66,7 +66,7 @@ function sendMessage() {
     sender: "customer",
     timestamp: new Date(),
     sessionId: window.activeChatSessionId,
-    customerId: window.customerId // 🔐 Detta krävs för adminpanelen
+    customerId: window.customerId
   };
 
   socket.emit("sendMessage", msg);
@@ -139,7 +139,7 @@ async function maybeSendWelcomeMessage() {
         sender: "admin",
         timestamp: new Date(),
         sessionId: window.activeChatSessionId,
-        customerId: window.customerId // 🟢 Lägg till även här
+        customerId: window.customerId
       };
 
       socket.emit("sendMessage", welcome);

@@ -8,43 +8,28 @@ dotenv.config();
 const router = express.Router();
 
 // 🔑 OpenAI setup
-const OpenAI = require("openai");
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = new OpenAIApi(new Configuration({ apiKey: process.env.OPENAI_API_KEY }));
 
-// POST /api/chat/ask
+// 🧠 POST /api/chat/ask — AI-fråga
 router.post("/ask", async (req, res) => {
   const { message } = req.body;
   const sessionUser = req.session?.user;
 
-  if (!sessionUser?.email) {
-    return res.status(401).json({ reply: "❌ Du är inte inloggad." });
-  }
+  if (!sessionUser?.email) return res.status(401).json({ reply: "❌ Du är inte inloggad." });
 
   try {
     const customer = await Customer.findOne({ email: sessionUser.email });
-    if (!customer) {
-      return res.status(404).json({ reply: "❌ Kunde inte hitta kunddata." });
-    }
+    if (!customer) return res.status(404).json({ reply: "❌ Kunde inte hitta kunddata." });
 
     const systemPrompt = `
-You are a helpful, professional and friendly AI assistant inside a customer portal. 
-Always answer in the same language the user used in their message (e.g. Swedish, English, Spanish, German, etc.).
+Du är en hjälpsam AI-assistent. Svara alltid på samma språk som användarens meddelande. 
+Gissa aldrig känslig information. Vid sådana frågor, be användaren kontakta support.
 
-Never provide or guess passwords, PINs or sensitive data. If the user asks for such information, tell them to contact human support instead.
-
-Here is the user's profile information (in Swedish – do not translate it):
-
+Profilinfo:
 - Namn: ${customer.name}
 - E-post: ${customer.email}
-- Kampanjer: ${customer.campaigns?.join(", ") || "Ingen information"}
-- Bransch: ${customer.industry || "Ej angivet"}
-- Webbplats: ${customer.website || "Ej angiven"}
-- Skapad: ${customer.createdAt?.toISOString().split("T")[0] || "Okänt"}
-- Senast inloggad: ${customer.lastLogin?.toISOString().split("T")[0] || "Okänt"}
+- Kampanjer: ${customer.campaigns?.join(", ") || "Ingen info"}
 - Plan: ${customer.plan || "Gratis"}
-- Anteckningar: ${customer.notes || "Inga"}
 `;
 
     const history = req.session.aiHistory || [];
@@ -57,20 +42,15 @@ Here is the user's profile information (in Swedish – do not translate it):
       { role: "user", content: message }
     ];
 
-    const completion = await openai.chat.completions.create({
+    const completion = await openai.createChatCompletion({
       model: "gpt-3.5-turbo",
       messages: chatMessages,
       temperature: 0.7,
     });
 
-    const reply = completion.choices?.[0]?.message?.content || "⚠️ Inget svar från AI.";
+    const reply = completion.data.choices?.[0]?.message?.content || "⚠️ Inget svar från AI.";
 
-    if (!req.session.aiHistory) req.session.aiHistory = [];
-    req.session.aiHistory.push({
-      question: message,
-      answer: reply,
-      timestamp: new Date()
-    });
+    req.session.aiHistory = [...(req.session.aiHistory || []), { question: message, answer: reply }];
 
     res.json({ reply });
   } catch (err) {
@@ -79,18 +59,21 @@ Here is the user's profile information (in Swedish – do not translate it):
   }
 });
 
-// POST /api/chat
+
+// ✉️ POST /api/chat — Spara meddelande
 router.post("/", async (req, res) => {
-  const { message, sender = "customer", sessionId } = req.body;
+  const { message, sender = "customer", sessionId, customerId } = req.body;
   const user = req.session?.user;
 
-  if (!user?. _id || !message || !sender) {
-    return res.status(400).json({ error: "Saknar obligatorisk information eller ej inloggad" });
+  const finalCustomerId = customerId || user?._id;
+
+  if (!finalCustomerId || !message || !sender || !sessionId) {
+    return res.status(400).json({ error: "Saknar obligatorisk data" });
   }
 
   try {
     const newMsg = await Message.create({
-      customerId: user._id,
+      customerId: finalCustomerId,
       message,
       sender,
       timestamp: new Date(),
@@ -104,14 +87,12 @@ router.post("/", async (req, res) => {
   }
 });
 
-// GET /api/chat/customer/me?sessionId=abc123
+// 💬 GET /api/chat/customer/me?sessionId=
 router.get("/customer/me", async (req, res) => {
   const user = req.session?.user;
   const sessionId = req.query.sessionId;
 
-  if (!user?. _id) {
-    return res.status(401).json({ error: "Inte inloggad" });
-  }
+  if (!user?._id) return res.status(401).json({ error: "Inte inloggad" });
 
   const query = { customerId: user._id };
   if (sessionId) query.sessionId = sessionId;
@@ -121,11 +102,11 @@ router.get("/customer/me", async (req, res) => {
     res.json(messages);
   } catch (err) {
     console.error("❌ Kunde inte hämta meddelanden:", err);
-    res.status(500).json({ error: "Serverfel vid meddelandehämtning" });
+    res.status(500).json({ error: "Serverfel vid hämtning" });
   }
 });
 
-// (Valfritt: ta bort denna när du bytt till /customer/me överallt)
+// 🧾 GET /api/chat/customer/:id?sessionId=
 router.get("/customer/:id", async (req, res) => {
   const { id } = req.params;
   const { sessionId } = req.query;
@@ -138,27 +119,23 @@ router.get("/customer/:id", async (req, res) => {
     res.json(messages);
   } catch (err) {
     console.error("❌ Kunde inte hämta meddelanden:", err);
-    res.status(500).json({ error: "Kunde inte hämta meddelanden" });
+    res.status(500).json({ error: "Fel vid meddelandehämtning" });
   }
 });
 
-// GET /api/chat/me – Returnera inloggad användare (för ev. frontend)
+// 🙋‍♀️ GET /api/chat/me — Returnera kundobjekt
 router.get("/me", async (req, res) => {
   const user = req.session?.user;
 
-  if (!user?.email) {
-    return res.status(401).json({ error: "Inte inloggad" });
-  }
+  if (!user?.email) return res.status(401).json({ error: "Inte inloggad" });
 
   try {
     const customer = await Customer.findOne({ email: user.email });
-    if (!customer) {
-      return res.status(404).json({ error: "Kund hittades inte" });
-    }
+    if (!customer) return res.status(404).json({ error: "Kund hittades inte" });
 
     res.json(customer);
   } catch (err) {
-    console.error("❌ Fel vid hämtning av kunddata:", err);
+    console.error("❌ Fel vid kundhämtning:", err);
     res.status(500).json({ error: "Serverfel vid kundhämtning" });
   }
 });

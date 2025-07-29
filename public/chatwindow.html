@@ -31,30 +31,22 @@
   <!-- Socket.io först -->
   <script src="/socket.io/socket.io.js"></script>
 
-  <!-- Initiera sessionId innan chat.js laddas -->
-  <script>
-    // 🔑 Generera och lagra sessionId (om det inte redan finns)
-    const existingSessionId = sessionStorage.getItem("sessionId");
-    const sessionId = existingSessionId || crypto.randomUUID();
-    sessionStorage.setItem("sessionId", sessionId);
-  </script>
-
-  <!-- Din logik: chat.js (där startChatSession, socket, showNextQuestion m.m. finns) -->
+  <!-- Din logik: chat.js hanterar sessionId och chatlogik -->
   <script src="/js/chat.js"></script>
 
-  <!-- Kör frågeflödet efter att allt är laddat -->
+  <!-- Kör frågeflödet om showNextQuestion används -->
   <script>
     window.addEventListener("DOMContentLoaded", () => {
       if (typeof showNextQuestion === "function") {
         showNextQuestion();
       } else {
-        console.error("❌ showNextQuestion saknas – är chat.js korrekt laddad?");
+        console.warn("⚠️ showNextQuestion() finns ej – ingen frågeloggik körs.");
       }
     });
   </script>
 
   <div id="chatBubble" class="chat-bubble hidden">
     💬 Öppna chatt
-  </div>  
+  </div>
 </body>
 </html>
