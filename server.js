@@ -16,6 +16,7 @@ const fs = require('fs');
 
 dotenv.config();
 const app = express();
+app.set('trust proxy', 1); // ⬅️ KRÄVS på Render för att secure cookies ska funka
 const http = require('http').createServer(app);
 
 // 🖼️ Profilbild-lagring
@@ -108,10 +109,10 @@ app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await Customer.findOne({ email });
-    if (!user) return res.status(401).send('❌ Fel e-post eller lösenord');
+    if (!user) return res.status(401).json({ success: false, message: 'Fel e-post eller lösenord' });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).send('❌ Fel e-post eller lösenord');
+    if (!isMatch) return res.status(401).json({ success: false, message: 'Fel e-post eller lösenord' });
 
     req.session.user = {
       _id: user._id,
@@ -128,12 +129,13 @@ app.post('/login', async (req, res) => {
     const device = req.headers['user-agent'] || '';
     await LoginEvent.create({ userId: user._id, ip, device });
 
-    res.redirect('/customerportal.html');
+    res.status(200).json({ success: true });
   } catch (err) {
     console.error('❌ Fel vid inloggning:', err);
-    res.status(500).send('Ett fel uppstod vid inloggning.');
+    res.status(500).json({ success: false, message: 'Serverfel vid inloggning' });
   }
 });
+
 
 // 🚪 Utloggning
 app.get('/logout', (req, res) => {

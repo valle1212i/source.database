@@ -16,9 +16,9 @@ const openai = new OpenAI({
 // POST /api/chat/ask
 router.post("/ask", async (req, res) => {
   const { message } = req.body;
-  const sessionUser = req.session.user;
+  const sessionUser = req.session?.user;
 
-  if (!sessionUser || !sessionUser.email) {
+  if (!sessionUser?.email) {
     return res.status(401).json({ reply: "❌ Du är inte inloggad." });
   }
 
@@ -28,7 +28,6 @@ router.post("/ask", async (req, res) => {
       return res.status(404).json({ reply: "❌ Kunde inte hitta kunddata." });
     }
 
-    // 🌍 Språkneutral systemprompt (AI svarar på samma språk som frågan)
     const systemPrompt = `
 You are a helpful, professional and friendly AI assistant inside a customer portal. 
 Always answer in the same language the user used in their message (e.g. Swedish, English, Spanish, German, etc.).
@@ -48,7 +47,6 @@ Here is the user's profile information (in Swedish – do not translate it):
 - Anteckningar: ${customer.notes || "Inga"}
 `;
 
-    // 💬 Bygg chathistorik från sessionen
     const history = req.session.aiHistory || [];
     const chatMessages = [
       { role: "system", content: systemPrompt },
@@ -67,7 +65,6 @@ Here is the user's profile information (in Swedish – do not translate it):
 
     const reply = completion.choices?.[0]?.message?.content || "⚠️ Inget svar från AI.";
 
-    // 🧠 Spara till session
     if (!req.session.aiHistory) req.session.aiHistory = [];
     req.session.aiHistory.push({
       question: message,
@@ -76,14 +73,59 @@ Here is the user's profile information (in Swedish – do not translate it):
     });
 
     res.json({ reply });
-
   } catch (err) {
     console.error("❌ Fel vid AI-anrop:", err);
     res.status(500).json({ reply: "❌ Ett fel uppstod vid kontakt med AI." });
   }
 });
 
-// GET /api/chat/customer/:id
+// POST /api/chat
+router.post("/", async (req, res) => {
+  const { message, sender = "customer", sessionId } = req.body;
+  const user = req.session?.user;
+
+  if (!user?. _id || !message || !sender) {
+    return res.status(400).json({ error: "Saknar obligatorisk information eller ej inloggad" });
+  }
+
+  try {
+    const newMsg = await Message.create({
+      customerId: user._id,
+      message,
+      sender,
+      timestamp: new Date(),
+      sessionId
+    });
+
+    res.status(201).json(newMsg);
+  } catch (err) {
+    console.error("❌ Kunde inte spara meddelande:", err);
+    res.status(500).json({ error: "Serverfel vid sparning" });
+  }
+});
+
+// GET /api/chat/customer/me?sessionId=abc123
+router.get("/customer/me", async (req, res) => {
+  const user = req.session?.user;
+  const sessionId = req.query.sessionId;
+
+  if (!user?. _id) {
+    return res.status(401).json({ error: "Inte inloggad" });
+  }
+
+  const query = { customerId: user._id };
+  if (sessionId) query.sessionId = sessionId;
+
+  try {
+    const messages = await Message.find(query).sort({ timestamp: 1 });
+    res.json(messages);
+  } catch (err) {
+    console.error("❌ Kunde inte hämta meddelanden:", err);
+    res.status(500).json({ error: "Serverfel vid meddelandehämtning" });
+  }
+});
+
+// (Valfritt: ta bort denna när du bytt till /customer/me överallt)
 router.get("/customer/:id", async (req, res) => {
   const { id } = req.params;
   const { sessionId } = req.query;
@@ -100,38 +142,16 @@ router.get("/customer/:id", async (req, res) => {
   }
 });
 
-// POST /api/chat
-router.post("/", async (req, res) => {
-  const { customerId, message, sender, timestamp, sessionId } = req.body;
-
-  if (!customerId || !message || !sender) {
-    return res.status(400).json({ error: "Meddelande saknar information" });
-  }
-
-  try {
-    const newMsg = await Message.create({
-      customerId,
-      message,
-      sender,
-      timestamp: timestamp || new Date(),
-      sessionId,
-    });
-
-    res.status(201).json(newMsg);
-  } catch (err) {
-    console.error("❌ Kunde inte spara meddelande:", err);
-    res.status(500).json({ error: "Serverfel" });
-  }
-});
-
-// GET /api/chat/me
+// GET /api/chat/me – Returnera inloggad användare (för ev. frontend)
 router.get("/me", async (req, res) => {
-  if (!req.session || !req.session.user || !req.session.user.email) {
+  const user = req.session?.user;
+
+  if (!user?.email) {
     return res.status(401).json({ error: "Inte inloggad" });
   }
 
   try {
-    const customer = await Customer.findOne({ email: req.session.user.email });
+    const customer = await Customer.findOne({ email: user.email });
     if (!customer) {
       return res.status(404).json({ error: "Kund hittades inte" });
     }
