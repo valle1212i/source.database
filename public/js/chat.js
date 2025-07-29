@@ -44,6 +44,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     const res = await fetch(`${BASE_URL}/api/profile/me`, { credentials: "include" });
     if (!res.ok) throw new Error("Ej inloggad");
 
+    const customer = await res.json();
+    window.customerId = customer._id; // 🟢 Sparar kundens ID för meddelanden
+
     await startChatSession();
     await loadHistory();
     await maybeSendWelcomeMessage();
@@ -56,13 +59,14 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 function sendMessage() {
   const text = input.value.trim();
-  if (!text) return;
+  if (!text || !window.customerId) return;
 
   const msg = {
     message: text,
     sender: "customer",
     timestamp: new Date(),
-    sessionId: window.activeChatSessionId
+    sessionId: window.activeChatSessionId,
+    customerId: window.customerId // 🔐 Detta krävs för adminpanelen
   };
 
   socket.emit("sendMessage", msg);
@@ -102,8 +106,7 @@ function renderMessage(msg) {
 }
 
 async function startChatSession() {
-  // Kan lägga till annan sessionlogik här om du önskar
-  console.log("🟢 Chattsession initierad:", window.activeChatSessionId);
+  console.log("🟢 Chattsession initierad:", window.activeChatSessionId, "för kund:", window.customerId);
 }
 
 async function loadHistory() {
@@ -135,7 +138,8 @@ async function maybeSendWelcomeMessage() {
         message: "Hej och välkommen till Source livechat! Vi hjälper dig så snart vi kan 🙌",
         sender: "admin",
         timestamp: new Date(),
-        sessionId: window.activeChatSessionId
+        sessionId: window.activeChatSessionId,
+        customerId: window.customerId // 🟢 Lägg till även här
       };
 
       socket.emit("sendMessage", welcome);
