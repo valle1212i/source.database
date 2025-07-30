@@ -203,8 +203,23 @@ function renderMessage(msg) {
 }
 
 async function startChatSession() {
-  console.log("\ud83d\udfe2 Chattsession startad:", window.activeChatSessionId);
+  console.log("🟢 Chattsession startad:", window.activeChatSessionId);
+
+  const sessionPayload = {
+    sessionId: window.activeChatSessionId,
+    customerId: window.customerId,
+    topic: customerData.topic?.trim() || "Ej angivet",
+    description: customerData.description?.trim() || "Ej angivet"
+  };
+
+  // ✅ Skicka till adminportalen (via Socket.IO)
+  socket.emit("newSession", sessionPayload);
+
+  // ✅ Logga för felsökning
+  console.log("📤 newSession skickad till adminportalen:", sessionPayload);
 }
+
+
 
 async function maybeSendWelcomeMessage() {
   const welcome = {
