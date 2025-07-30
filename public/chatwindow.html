@@ -7,36 +7,53 @@
   <link rel="stylesheet" href="CSS/chatwindow.css" />
 </head>
 <body>
-  <div class="chat-header">
-    <button class="close-btn" onclick="window.location.href='customerportal.html'">&#x2715;</button>
-    <img src="/Customerportalimage (kopia)/Source (kopia).png" alt="Source logotyp" class="logo" />
-  </div>
-
-  <!-- 🟡 Frågeflöde visas först -->
-  <div class="chat-intro">
-    <h2>Hej! Innan vi börjar:</h2>
-    <div id="questionFlow" class="chat-messages"></div>
-  </div>
-
-  <!-- 🟢 Chattfönstret visas först när frågorna är klara -->
-  <div id="chatArea" class="hidden">
-    <div id="chatMessages" class="chat-messages"></div>
-    <div id="typingIndicator" class="typing hidden">
-      <span></span><span></span><span></span>
+  <div class="chat-wrapper">
+    
+    <!-- 🟦 Header -->
+    <div class="chat-header">
+      <button class="close-btn" onclick="window.location.href='customerportal.html'">&#x2715;</button>
+      <img src="/Customerportalimage (kopia)/Source (kopia).png" alt="Source logotyp" class="logo" />
     </div>
-    <form id="chatForm">
-      <input type="text" id="chatInput" placeholder="Skriv ditt meddelande..." autocomplete="off" />
-      <button type="submit">Skicka</button>
-    </form>
+
+    <!-- 🟡 Frågeflöde -->
+    <div class="chat-intro">
+      <h2>Hej! Innan vi börjar:</h2>
+      <div id="questionFlow" class="chat-messages"></div>
+    </div>
+
+    <!-- 🟢 Chattområde (dyker upp efter frågorna) -->
+    <div id="chatArea" class="chat-main hidden">
+      
+      <!-- 💬 Meddelanden och skrivindikator -->
+      <div class="chat-container" id="chatContainer">
+        <div id="chatMessages" class="chat-messages"></div>
+
+        <div id="typingIndicator" class="typing hidden">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <!-- 📝 Inputfält längst ner -->
+      <form id="chatForm" class="chat-form hidden">
+        <input
+          type="text"
+          id="chatInput"
+          placeholder="Skriv ditt meddelande..."
+          autocomplete="off"
+          maxlength="1000"
+        />
+        <button type="submit">Skicka</button>
+      </form>
+    </div>
   </div>
 
-  <!-- Socket.io först -->
+  <!-- 🔌 Socket.io -->
   <script src="/socket.io/socket.io.js"></script>
 
-  <!-- Din chatlogik -->
+  <!-- 🧠 Chatlogik -->
   <script src="/js/chat.js"></script>
 
-  <!-- Kör frågeflödet om funktionen finns -->
+  <!-- 🚀 Initiera frågeflöde -->
   <script>
     window.addEventListener("DOMContentLoaded", () => {
       if (typeof showNextQuestion === "function") {
@@ -47,8 +64,7 @@
     });
   </script>
 
-  <div id="chatBubble" class="chat-bubble hidden">
-    💬 Öppna chatt
-  </div>
+  <!-- 💬 Chattbubbla -->
+  <div id="chatBubble" class="chat-bubble hidden">💬 Öppna chatt</div>
 </body>
 </html>
