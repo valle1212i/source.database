@@ -7,9 +7,19 @@
 
 body {
   font-family: 'Segoe UI', sans-serif;
-  background-color: #f4f5f7;
+  background-color: var(--bg-color);
   display: flex;
-  color: #333;
+  color: var(--text-color);
+}
+
+/* ===== GRUNDVARIABLER ===== */
+:root {
+  --accent-color: #3b82f6; /* Standard blå */
+  --bg-color: #f4f5f7;
+  --text-color: #333;
+  --card-bg: #fff;
+  --button-bg: var(--accent-color);
+  --button-text: #fff;
 }
 
 /* Sidopanel */
@@ -89,9 +99,14 @@ body {
 
 /* ===== HUVUDINNEHÅLL ===== */
 .main {
-  margin-left: 240px;
   padding: 40px;
   width: 100%;
+}
+
+@media (min-width: 769px) {
+  .main {
+    margin-left: 240px;
+  }
 }
 
 .main h1 {
@@ -171,7 +186,8 @@ body {
 
 /* ===== INSTÄLLNINGSGRUPPER ===== */
 .setting-group {
-  background: #ffffff;
+  background: var(--card-bg);
+  color: var(--text-color);
   padding: 25px 30px;
   margin-bottom: 25px;
   border-radius: 12px;
@@ -225,8 +241,8 @@ body {
 .save-btn {
   padding: 12px 22px;
   font-size: 16px;
-  background-color: #3b82f6;
-  color: white;
+  background-color: var(--accent-color);
+  color: var(--button-text);
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -234,7 +250,7 @@ body {
 }
 
 .save-btn:hover {
-  background-color: #2563eb;
+  opacity: 0.9;
 }
 
 /* ===== MÖRKT TEMA ===== */
@@ -275,6 +291,56 @@ body.dark-theme .save-btn:hover {
   background-color: #009e89;
 }
 
+/* ===== RESPONSIV LAYOUT ===== */
+
+/* Desktop-läge (från 1025px och uppåt) */
+.settings-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+/* Surfplatta (768px–1024px) – en kolumn */
+@media (max-width: 1024px) {
+  .settings-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .main {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  .main {
+    margin-left: 0;
+  }
+}
+
+/* Mobil (mindre än 768px) – fullbredd + bättre marginaler */
+@media (max-width: 768px) {
+  .main {
+    margin-left: 0; /* eftersom sidomenyn är för stor på mobil */
+    padding: 16px;
+  }
+
+  .profile-wrapper {
+    top: 10px;
+    right: 16px;
+  }
+
+  .save-btn {
+    width: 100%;
+    font-size: 18px;
+    padding: 14px;
+  }
+}
+
 /* Fix dark theme nav-menu selectors for consistency */
 body.dark-theme .nav-menu a:hover,
 body.dark-theme .nav-menu a.active,
@@ -286,3 +352,217 @@ body.dark-theme .nav-menu li.active a {
 body.dark-theme .help {
   color: #aaa;
 }
+
+/* ===== HAMBURGER-MENY & MOBILSIDOPANEL ===== */
+
+/* Döljs på desktop */
+.hamburger-menu {
+  display: none;
+}
+
+/* Syns bara på mobilskärmar */
+@media (max-width: 768px) {
+  .hamburger-menu {
+  display: block;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1001; /* över sidebar */
+  font-size: 28px;
+  background: none;
+  border: none;
+  color: white; /* vit mot mörk meny */
+  cursor: pointer;
+}
+
+  /* Sidomenyn döljs initialt med -100% */
+  .sidebar {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: -240px;
+  width: 240px;
+  height: 100%;
+  background-color: #111827;
+  color: white;
+  transition: left 0.3s ease, opacity 0.3s ease;
+  z-index: 998;
+
+  /* NYTT: Dölj visuellt */
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+  .sidebar.active {
+  left: 0;
+
+  /* NYTT: Gör synlig igen */
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+  /* För att .main inte ska ha förskjutning */
+  .main {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .main h1 {
+    margin-left: 48px; /* skjuter rubriken åt höger från hamburgermenyn */
+  }
+}
+
+/* Färg när menyn är stängd */
+.hamburger-menu {
+  color: #1f2937; /* blå */
+}
+
+/* När meny är öppen – vit ikon */
+body.menu-open .hamburger-menu {
+  color: white;
+}
+
+/* ===== TOAST / SNACKBAR ===== */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none; /* så att det inte blockerar klick */
+}
+
+.toast {
+  background-color: #333;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  opacity: 0;
+  animation: fadeInOut 3s ease forwards;
+}
+
+/* Animation för toast */
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  10%, 90% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+}
+
+/* ===== KNAPPGRUPP: SPARA + ÅNGRA ===== */
+.settings-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap; /* för bättre mobilanpassning */
+}
+
+.save-btn {
+  padding: 12px 22px;
+  font-size: 16px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.save-btn:hover {
+  background-color: #2563eb;
+}
+
+.undo-btn {
+  padding: 12px 22px;
+  font-size: 16px;
+  background-color: #e5e7eb;
+  color: #111827;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.undo-btn:hover {
+  background-color: #d1d5db;
+}
+
+/* ===== TEMADEFINITIONER ===== */
+body.theme-light {
+  --accent-color: #3b82f6;
+  --bg-color: #f4f5f7;
+  --text-color: #333;
+  --card-bg: #fff;
+}
+
+body.theme-dark {
+  --accent-color: #00bfa6;
+  --bg-color: #121212;
+  --text-color: #f0f0f0;
+  --card-bg: #1f1f1f;
+}
+
+body.theme-green {
+  --accent-color: #10b981;
+  --bg-color: #f0fdf4;
+  --text-color: #1e3a1e;
+  --card-bg: #ffffff;
+}
+
+body.theme-indigo {
+  --accent-color: #6366f1;
+  --bg-color: #eef2ff;
+  --text-color: #1e1b4b;
+  --card-bg: #ffffff;
+}
+
+body.theme-contrast {
+  --accent-color: #ff0055;
+  --bg-color: #000;
+  --text-color: #fff;
+  --card-bg: #111;
+}
+
+/* ===== SENASTE INLOGGNINGAR ===== */
+.login-history {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.login-row {
+  background-color: var(--card-bg);
+  border: 1px solid #e5e7eb;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 15px;
+  color: var(--text-color);
+}
+
+body.theme-dark .login-row {
+  border-color: #333;
+  background-color: #1f1f1f;
+}
+

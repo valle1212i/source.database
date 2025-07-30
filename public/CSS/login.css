@@ -184,3 +184,35 @@ input:-webkit-autofill:focus {
     0 0 0 1000px #1a1d25 inset !important;
 }
 
+/* 👁️ Stil för lösenordsfält med öga-ikon */
+.password-container {
+  position: relative;
+}
+
+.password-container input {
+  padding-right: 45px;
+}
+
+.toggle-password {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%) translateY(-8px); /* 👈 som du sa tidigare, rätt höjd */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-password svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+  overflow: visible;
+  stroke: rgba(255, 255, 255, 0.6);
+  transition: stroke 0.3s ease;
+}
+
+.toggle-password:hover svg {
+  stroke: #ffffff;
+}

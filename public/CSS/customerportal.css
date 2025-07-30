@@ -64,14 +64,6 @@ body {
   transition: all 0.3s ease;
 }
 
-/* Hover och aktiv */
-.nav-menu a:hover,
-.nav-menu .active a {
-  background-color: #1f2937;
-  border-left: 4px solid #3b82f6;
-  color: white;
-  font-weight: bold;
-}
 
 /* Hjälp-länken längst ner */
 .help {
@@ -96,12 +88,6 @@ body {
   font-size: 28px;
   font-weight: bold;
   margin-bottom: 30px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
 }
 /* Profilwrapper och ikon */
 .profile-wrapper {
@@ -177,14 +163,19 @@ body {
 .card {
   background-color: white;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);  /* tydligare grundskugga */
   padding: 20px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #e5e7eb;  /* tunn ljusgrå border för tydligare kant */
+}
+
+.card.wide {
+  flex: 2 1 640px;
 }
 
 .card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
 }
 
 .card h3 {
@@ -205,13 +196,49 @@ body {
   margin-top: 5px;
 }
 
-.circle-widget {
+.chart-area {
+  width: 60%;
+}
+
+.sales-info {
+  width: 40%;
+  padding-left: 30px;
+  padding-top: 5px;
+}
+
+.card.sales-overview {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  grid-column: span 3;
-  min-height: 220px;
-  padding: 30px;
+  flex-wrap: wrap;
+  grid-column: span 2; /* ev. span 3 om du vill ha ännu bredare */
+  min-height: 260px;
+}
+
+.sales-overview .chart-area {
+  flex: 1 1 60%;
+  max-width: 60%;
+}
+
+.sales-overview .sales-info {
+  flex: 1 1 40%;
+  max-width: 40%;
+  padding-left: 24px;
+}
+
+
+@media (max-width: 768px) {
+  .card.sales-overview {
+    flex-direction: column;
+    grid-column: span 1;
+  }
+
+  .sales-overview .chart-area,
+  .sales-overview .sales-info {
+    max-width: 100%;
+    flex: 1 1 100%;
+    padding-left: 0;
+  }
 }
 
 .chart-area {
@@ -363,7 +390,6 @@ body {
   padding: 10px 12px;
   font-size: 0.9rem;
   color: #374151;
-  min-height: 40px;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
@@ -414,19 +440,6 @@ body {
 /* Anpassade storlekar för vissa widgets */
 .card.wide {
   grid-column: span 2;
-}
-
-.card.large {
-  grid-column: span 2;
-  min-height: 300px;
-}
-
-.card.tall {
-  min-height: 350px;
-}
-
-.card.match-height {
-  min-height: 350px;
 }
 
 @media (max-width: 768px) {
@@ -571,4 +584,279 @@ body {
 
 .stat-total {
   color: #4b5563;
+}
+#chatWindow {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 350px;
+  height: 450px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  z-index: 9999;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  will-change: transform, opacity;
+}
+
+#chatWindow.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Header */
+.chat-header {
+  background-color: #111827;
+  color: white;
+  padding: 12px 16px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Meddelanden */
+#chatMessages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Om inga meddelanden finns */
+#chatMessages:empty::before {
+  content: "Inga meddelanden ännu.";
+  color: #999;
+  font-style: italic;
+  display: block;
+  padding-top: 20px;
+  text-align: center;
+}
+
+/* Formulär */
+#chatForm {
+  display: flex;
+  border-top: 1px solid #eee;
+  padding: 10px;
+  background-color: #fff;
+  box-sizing: border-box;
+}
+
+/* Input */
+#chatInput {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  outline: none;
+}
+
+/* Knapp */
+#chatForm button {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  margin-left: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.chat-message.user {
+  text-align: right;
+  background-color: #e0f2fe;
+  padding: 8px;
+  border-radius: 8px;
+  margin: 4px;
+}
+
+.chat-message.support {
+  text-align: left;
+  background-color: #f3f4f6;
+  padding: 8px;
+  border-radius: 8px;
+  margin: 4px;
+}
+
+/* ===== HAMBURGERMENY ===== */
+
+/* Dold på desktop */
+.hamburger-menu {
+  display: none;
+  color: #111827; /* mörk ikon på ljus bakgrund */
+}
+
+/* När meny är öppen – gör ikonen vit */
+body.menu-open .hamburger-menu {
+  color: white;
+}
+
+/* ===== SIDOMENY – synlig alltid på desktop ===== */
+.sidebar {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 100%;
+  background-color: #111827;
+  color: white;
+  z-index: 998;
+}
+
+/* ===== MOBILANPASSNING ===== */
+@media (max-width: 768px) {
+  /* Visa hamburgaren */
+  .hamburger-menu {
+    display: block;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    font-size: 28px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* Dölj sidomenyn initialt på mobil */
+  .sidebar {
+    left: -240px;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: left 0.3s ease, opacity 0.3s ease;
+  }
+
+  /* Visa när aktiv */
+  .sidebar.active {
+    left: 0;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Flytta in huvudinnehållet */
+  .main {
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  /* Skjut rubrik åt höger så den inte krockar med hamburgaren */
+  .main h1,
+  .main .header {
+    margin-left: 48px;
+  }
+}
+
+.dashboard-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+/* ============================== */
+/* SÄKER FLEX-LAYOUT FÖR STOR SKÄRM */
+/* ============================== */
+
+.sales-card {
+  grid-column: span 3;
+  display: flex;
+  flex-direction: column;
+}
+
+.circle-widget {
+  display: flex;
+  flex-direction: row; /* horisontellt layout */
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 30px;
+}
+
+.chart-area {
+  flex: 2;
+  min-width: 0;
+}
+
+.sales-info {
+  flex: 1;
+  padding-top: 10px;
+}
+
+.sales-info h3 {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.sales-info .amount {
+  font-size: 22px;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.title-underline,
+.amount-underline {
+  height: 3px;
+  border: none;
+  background-color: #3b82f6;
+  max-width: 200px;
+  margin: 4px 0 10px 0;
+}
+
+@media (max-width: 768px) {
+  .circle-widget {
+    flex-direction: column;
+  }
+
+  .chart-area, .sales-info {
+    width: 100%;
+  }
+}
+
+/* ============================== */
+/* MOBILANPASSNING FÖR CIRCLE-WIDGET */
+/* ============================== */
+@media (max-width: 768px) {
+  .dashboard-container {
+    grid-template-columns: 1fr;
+  }
+
+  @media (max-width: 768px) {
+  .sales-card {
+    grid-column: span 2;
+}
+
+.circle-widget {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.chart-area canvas {
+  height: 220px; /* mindre höjd på mobil */
+}
+
+.sales-info {
+  width: 100%;
+  padding-top: 10px;
+}
+}
+
+.wide-3 {
+  grid-column: span 3;
+}
+
+/* Mobil: mindre spann på liten skärm */
+@media (max-width: 768px) {
+  .wide-3 {
+    grid-column: span 1;
+  }
+}
 }

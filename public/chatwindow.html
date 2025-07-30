@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Support</title>
+  <link rel="stylesheet" href="CSS/chatwindow.css" />
+</head>
+<body>
+  <div class="chat-header">
+    <button class="close-btn" onclick="window.location.href='customerportal.html'">&#x2715;</button>
+    <img src="/Customerportalimage (kopia)/Source (kopia).png" alt="Source logotyp" class="logo" />
+  </div>
+
+  <!-- 🟡 Frågeflöde visas först -->
+  <div class="chat-intro">
+    <h2>Hej! Innan vi börjar:</h2>
+    <div id="questionFlow" class="chat-messages"></div>
+  </div>
+
+  <!-- 🟢 Chattfönstret visas först när frågorna är klara -->
+  <div id="chatArea" class="hidden">
+    <div id="chatMessages" class="chat-messages"></div>
+    <div id="typingIndicator" class="typing hidden">
+      <span></span><span></span><span></span>
+    </div>
+    <form id="chatForm">
+      <input type="text" id="chatInput" placeholder="Skriv ditt meddelande..." autocomplete="off" />
+      <button type="submit">Skicka</button>
+    </form>
+  </div>
+
+  <!-- Socket.io först -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <!-- Din chatlogik -->
+  <script src="/js/chat.js"></script>
+
+  <!-- Kör frågeflödet om funktionen finns -->
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      if (typeof showNextQuestion === "function") {
+        showNextQuestion();
+      } else {
+        console.warn("⚠️ showNextQuestion() finns ej – ingen frågeloggik körs.");
+      }
+    });
+  </script>
+
+  <div id="chatBubble" class="chat-bubble hidden">
+    💬 Öppna chatt
+  </div>
+</body>
+</html>

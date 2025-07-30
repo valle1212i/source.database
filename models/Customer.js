@@ -12,6 +12,12 @@ const customerSchema = new mongoose.Schema({
   plan: { type: String, default: 'Gratis' },
   notes: { type: String, default: '' },
 
+  role: {
+  type: String,
+  enum: ['admin', 'user'],
+  default: 'user'
+},
+
   // Automatiska datumfält
   createdAt: { type: Date, default: Date.now },
   lastLogin: { type: Date, default: null },
