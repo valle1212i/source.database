@@ -35,61 +35,65 @@
     <h1 class="page-title">Marknadsföring</h1>
     <p class="subtitle">Utforska verktyg för annonsering, design och rådgivning.</p>
 
-    <section class="card">
-      <h2>Automatiska annonser</h2>
-      <p>Välj plattform för att skapa kampanjer:</p>
-      <div class="button-group">
-  <button class="ad-button" onclick="openTool('google')">
-    <img src="images/google-ads.png" alt="Google Ads"> Google Ads
-  </button>
-  <button class="ad-button" onclick="openTool('meta')">
-    <img src="images/meta.png" alt="Meta Ads"> Meta
-  </button>
-  <button class="ad-button" onclick="openTool('tiktok')">
-    <img src="images/tiktok.png" alt="TikTok Ads"> TikTok
-  </button>
-  <button class="ad-button" onclick="openTool('linkedin')">
-    <img src="images/linkedin.png" alt="LinkedIn Ads"> LinkedIn
-  </button>
-</div>
+   <section class="card automatiska-annonser">
+  <h2><i class="fas fa-robot"></i> Automatiska annonser</h2>
+  <p>Välj plattform för att skapa kampanjer:</p>
+  
+  <div class="button-group">
+    <a href="googleads.html" class="ad-button google" title="Skapa Google Ads-kampanj">
+      <img src="images/Google_transparent (2).png" alt="Google Ads" />
+    </a>
+
+    <a href="metaads.html" class="ad-button meta" title="Skapa Meta Ads-kampanj">
+      <img src="images/Meta_transparent.png" alt="Meta Ads" />
+    </a>
+
+    <a href="tiktokads.html" class="ad-button tiktok" title="Skapa TikTok Ads-kampanj">
+      <img src="images/Tiktok_transparent.png" alt="TikTok Ads" />
+    </a>
+
+    <a href="linkedin.html" class="ad-button linkedin" title="Skapa LinkedIn Ads-kampanj">
+      <img src="images/Linked in.webp" alt="LinkedIn Ads" />
+    </a>
+  </div>
+</section>
+
+
+    <section class="card ai-background ai-card">
+      <div>
+       <h2><i class="fas fa-image"></i> Skapa bilder eller videor</h2>
+        <p>Ladda upp en bild eller skriv en beskrivning för att generera affischer, annonser eller videos med hjälp av AI.</p>
+        <button class="ai-button" onclick="window.location.href='ai-marknadsstudio.html'" title="Starta AI-studion">
+          Starta AI-studiot
+        </button>
+      </div>
+      <img src="images/abstract-ai.svg" alt="AI grafik" />
     </section>
 
-    <section class="card">
-      <h2>Skapa bilder eller videor</h2>
-      <p>Ladda upp en bild eller skriv en beskrivning för att generera affischer, annonser eller videos med hjälp av AI.</p>
-      <button onclick="window.location.href='ai-marknadsstudio.html'">Starta AI-studiot</button>
-    </section>
+   <section class="card support-highlight">
+  <h2><i class="fas fa-users"></i> Rådgivning & Support</h2>
+  <p>Vill du ha hjälp av en designexpert? Kontakta vår marknadsrådgivare.</p>
+  <button onclick="window.location.href='bokning-marknadsradgivare.html'" title="Boka rådgivning med expert">
+    Boka rådgivning
+  </button>
+</section>
 
-    <section class="card">
-      <h2>Rådgivning & Support</h2>
-      <p>Vill du ha hjälp av en designexpert? Kontakta vår marknadsrådgivare.</p>
-      <button onclick="window.location.href='bokning-marknadsradgivare.html'">Boka rådgivning</button>
-    </section>
-  </main>
 
   <script>
-    function openTool(platform) {
-      alert("Öppnar " + platform + " verktyg...");
-      // Du kan ersätta med window.location.href = "verktyg-" + platform + ".html";
+    function openTool(button, platform) {
+      const originalContent = button.innerHTML;
+
+      button.innerHTML += `<span class="spinner"></span>`;
+      button.disabled = true;
+      button.style.opacity = 0.7;
+
+      setTimeout(() => {
+        alert("Öppnar " + platform + " verktyg...");
+        button.innerHTML = originalContent;
+        button.disabled = false;
+        button.style.opacity = 1;
+      }, 1000);
     }
   </script>
-  <script>
-  function openTool(platform) {
-    const button = event.target;
-    const originalText = button.innerText;
-    button.innerText = "Laddar...";
-    button.disabled = true;
-    button.style.opacity = 0.7;
-
-    setTimeout(() => {
-      alert("Öppnar " + platform + " verktyg...");
-      // Ersätt med window.location.href = "verktyg-" + platform + ".html";
-      button.innerText = originalText;
-      button.disabled = false;
-      button.style.opacity = 1;
-    }, 1000);
-  }
-</script>
-
 </body>
 </html>

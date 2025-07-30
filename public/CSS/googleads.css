@@ -1,0 +1,315 @@
+/* === Reset och grundstil === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  color: #333;
+  background-image: url('../images/AIbakgrundbild2.0.png'), url('../images/AIbakgrundbild4.0.png');
+  background-repeat: no-repeat, no-repeat;
+  background-position: 120% -60px, -60% -70px;
+  background-size: 54%, 78%;
+  background-attachment: fixed, fixed;
+  background-color: #f9fafb;
+}
+
+.form-step {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+}
+
+/* === Sidopanel === */
+.sidebar {
+  width: 240px;
+  background-color: #111827;
+  color: white;
+  height: 100vh;
+  padding: 30px 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.logo {
+  margin-bottom: -10px;
+  text-align: center;
+}
+
+.logo-img {
+  max-width: 120px;
+  margin-top: -35px;
+}
+
+/* === Meny === */
+.nav-menu {
+  list-style: none;
+  flex-grow: 1;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-menu li {
+  list-style: none;
+}
+
+.nav-menu li:nth-child(2) {
+  background-color: #1f2937;
+  border-left: 4px solid #ec4899;
+  font-weight: bold;
+}
+
+.nav-menu a {
+  color: white;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 10px;
+  font-size: 16px;
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.nav-menu a:hover {
+  background-color: #1f2937;
+  border-left: 4px solid #ec4899;
+  font-weight: bold;
+}
+
+/* === Hjälp längst ner === */
+.help {
+  margin-top: auto;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding-left: 10px;
+  padding-top: 20px;
+}
+
+/* === Innehåll bredvid meny === */
+.main-content {
+  margin-left: 240px;
+  padding: 40px 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* === Steg-för-steg-formulär === */
+form {
+  width: 100%;
+  max-width: 600px;
+}
+
+.form-step {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  padding: 40px 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.4s ease;
+  width: 100%;
+}
+
+.form-step.active {
+  display: flex;
+}
+
+h2 {
+  font-size: 22px;
+  margin-bottom: 24px;
+  text-align: center;
+  color: #1f2937;
+}
+
+/* === Alternativ === */
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+label {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f9fafb;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+label:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+input[type="radio"] {
+  accent-color: #2563eb;
+}
+
+/* === Textfält === */
+textarea {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  resize: vertical;
+  min-height: 120px;
+  margin-bottom: 24px;
+}
+
+/* === Knappar === */
+button {
+  background: linear-gradient(to right, #2563eb, #4f46e5);
+  color: white;
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  margin: 0 8px;
+}
+
+button:hover {
+  background: linear-gradient(to right, #1d4ed8, #4338ca);
+  transform: translateY(-2px);
+}
+
+/* === Tillbaka-länk uppe till höger === */
+.back-link {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-weight: 600;
+  text-decoration: none;
+  color: #1f2937;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background-color: #f3f4f6;
+  transition: background 0.2s ease;
+  z-index: 10;
+}
+
+.back-link:hover {
+  background: #e5e7eb;
+}
+
+/* === Progressbar === */
+.progress-container {
+  width: 100%;
+  max-width: 600px;
+  height: 8px;
+  background-color: #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 30px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(to right, #2563eb, #4f46e5);
+  width: 0%;
+  transition: width 0.4s ease-in-out;
+}
+
+.progress-text {
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #1f2937;
+}
+
+/* === Tack-sida === */
+#thankYouStep p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-top: 16px;
+  text-align: center;
+}
+
+/* === Animation === */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* === Animationer för stegövergångar === */
+.slide-up {
+  animation: slideUp 0.5s ease forwards;
+}
+
+.slide-down {
+  animation: slideDown 0.5s ease forwards;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(50px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-50px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === Responsivt === */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding: 20px 10px;
+    flex-direction: column;
+  }
+
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .form-step {
+    padding: 30px 20px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  label {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .back-link {
+    left: 10px;
+    top: 10px;
+    right: auto;
+  }
+}

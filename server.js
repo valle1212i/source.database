@@ -266,6 +266,9 @@ app.get("/api/profile/me", (req, res) => {
   res.json({ success: true, name, email, language, profileImage });
 });
 
+// ⬇️ Lägg till denna rad innan serverstart
+app.use('/api/ads', require('./routes/adsRoutes'));
+
 
 // 🚀 Starta server
 const PORT = process.env.PORT || 3000;

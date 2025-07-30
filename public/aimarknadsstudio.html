@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Marknadsstudio</title>
+  <link rel="stylesheet" href="css/aimarknadsstudio.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+<body>
+
+  <!-- SIDOPANEL -->
+  <div class="sidebar">
+    <div class="logo">
+      <img src="images/logo.png" alt="Logotyp" class="logo-img"/>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="googleads.html"><i class="fab fa-google"></i> Google Ads</a></li>
+      <li><a href="metaads.html"><i class="fab fa-facebook"></i> Meta Ads</a></li>
+      <li><a href="tiktokads.html"><i class="fab fa-tiktok"></i> TikTok Ads</a></li>
+      <li><a href="linkedin.html"><i class="fab fa-linkedin"></i> LinkedIn Ads</a></li>
+      <li><a href="ai-marknadsstudio.html" class="active"><i class="fas fa-magic"></i> AI Studio</a></li>
+    </ul>
+    <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
+  </div>
+
+  <!-- INNEHÅLL -->
+  <div class="main-content">
+    <h1 class="page-title">🎨 AI Marknadsstudio</h1>
+    <p class="subtitle">Skapa affischer, annonser eller videos med hjälp av AI. Ladda upp en bild eller skriv en beskrivning så skapar vi något unikt för dig.</p>
+
+    <form id="studioForm" enctype="multipart/form-data">
+      <label for="prompt">Beskrivning (valfri):</label>
+      <textarea id="prompt" name="prompt" placeholder="Ex: Skapa en modern affisch för en sommarkampanj..." rows="4"></textarea>
+
+      <label for="image">Ladda upp en bild (valfri):</label>
+      <input type="file" id="image" name="image" accept="image/*" />
+
+      <button type="submit">Starta AI-studion</button>
+    </form>
+
+    <div id="result" class="result-area">
+      <!-- Resultat visas här -->
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    document.getElementById("studioForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const resultArea = document.getElementById("result");
+      resultArea.innerHTML = "🧠 Bearbetar...";
+
+      const formData = new FormData(this);
+
+      try {
+        const response = await fetch("/api/ai-marknadsstudio", {
+          method: "POST",
+          body: formData
+        });
+
+        if (!response.ok) throw new Error("Fel vid kommunikation med AI-servern.");
+
+        const data = await response.json();
+
+        if (data.imageUrl) {
+          resultArea.innerHTML = `<img src="${data.imageUrl}" alt="AI-resultat" class="ai-result" />`;
+        } else if (data.message) {
+          resultArea.innerHTML = `<p>${data.message}</p>`;
+        } else {
+          resultArea.innerHTML = "❗ Inget resultat kunde genereras.";
+        }
+      } catch (err) {
+        console.error(err);
+        resultArea.innerHTML = "❌ Något gick fel. Försök igen.";
+      }
+    });
+  </script>
+
+</body>
+</html>

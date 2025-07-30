@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Ads – Stegvis</title>
+  <link rel="stylesheet" href="css/googleads.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+<body>
+  <!-- SIDOPANEL -->
+  <div class="sidebar">
+    <div class="logo">
+      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+    </div>
+    <ul class="nav-menu">
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li class="active"><a href="googleads.html"><i class="fab fa-google"></i> Google Ads</a></li>
+      <li><a href="metaads.html"><i class="fab fa-facebook"></i> Meta Ads</a></li>
+      <li><a href="tiktokads.html"><i class="fab fa-tiktok"></i> TikTok Ads</a></li>
+      <li><a href="linkedin.html"><i class="fab fa-linkedin"></i> Linkedin Ads</a></li>
+    </ul>
+    <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
+  </div>
+
+  <!-- INNEHÅLLSRUTA -->
+  <div class="main-content">
+
+    <!-- TILLBAKA-LÄNK -->
+    <a href="marknadsföring.html" class="back-link">&larr; Tillbaka</a>
+
+    <!-- FORMULÄR -->
+    <form id="stepForm">
+      <div class="progress-text" id="progressText">Steg 1 av 7</div>
+      <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <!-- Steg 1 -->
+      <div class="form-step active">
+        <h2>1. Vad vill du marknadsföra?</h2>
+        <div class="options">
+          <label><input type="radio" name="q1" value="Produkt" required> Produkt</label>
+          <label><input type="radio" name="q1" value="Tjänst"> Tjänst</label>
+        </div>
+        <button type="button" onclick="nextStep()">Nästa</button>
+      </div>
+
+      <!-- Steg 2 -->
+      <div class="form-step">
+        <h2>2. Vad är målet med annonserna?</h2>
+        <div class="options">
+          <label><input type="radio" name="q2" value="Försäljning" required> Försäljning</label>
+          <label><input type="radio" name="q2" value="Kännedom"> Varumärkeskännedom</label>
+        </div>
+        <div class="button-group">
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
+        </div>
+      </div>
+
+      <!-- Steg 3 -->
+      <div class="form-step">
+        <h2>3. Vilken typ av Google-annons vill du skapa?</h2>
+        <div class="options">
+          <label><input type="radio" name="q3" value="Sökannons" required> Sökannons</label>
+          <label><input type="radio" name="q3" value="Display"> Display</label>
+          <label><input type="radio" name="q3" value="Video"> Video</label>
+          <label><input type="radio" name="q3" value="Shopping"> Shopping</label>
+        </div>
+        <div class="button-group">
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
+        </div>
+      </div>
+
+      <!-- Steg 4 -->
+      <div class="form-step">
+        <h2>4. Vill du annonsera lokalt eller nationellt?</h2>
+        <div class="options">
+          <label><input type="radio" name="q4" value="Lokalt" required> Lokalt</label>
+          <label><input type="radio" name="q4" value="Nationellt"> Nationellt</label>
+        </div>
+        <div class="button-group">
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
+        </div>
+      </div>
+
+      <!-- Steg 5 -->
+      <div class="form-step">
+        <h2>5. Vill du använda bilder i annonserna?</h2>
+        <div class="options">
+          <label><input type="radio" name="q5" value="Ja" required> Ja</label>
+          <label><input type="radio" name="q5" value="Nej"> Nej</label>
+        </div>
+        <div class="button-group">
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
+        </div>
+      </div>
+
+      <!-- Steg 6 -->
+      <div class="form-step">
+        <h2>6. Beskriv kort vad du vill annonsera:</h2>
+        <textarea name="q6" required placeholder="T.ex. PT-tjänst för kvinnor 30–50 år i Stockholm..."></textarea>
+        <button type="button" onclick="nextStep()">Nästa</button>
+      </div>
+
+      <!-- Steg 7 -->
+      <div class="form-step">
+        <h2>7. Något erbjudande eller deadline?</h2>
+        <textarea name="q7" required placeholder="T.ex. 20% rabatt t.o.m. 1 september..."></textarea>
+        <button type="submit">Skicka in</button>
+      </div>
+
+      <!-- Steg 8 – Tack -->
+      <div class="form-step" id="thankYouStep">
+        <h2>Tack för din förfrågan! 🎉</h2>
+        <p style="margin-top: 16px; font-size: 16px; line-height: 1.6; text-align: center;">
+          Dina svar har skickats till våra marknadsföringsspecialister. <br />
+          Utifrån din information kommer ett kampanjförslag att skapas. <br />
+          Du hittar dina marknadsföringsförfrågningar under <strong>Analyser</strong>.
+        </p>
+      </div>
+    </form>
+  </div>
+
+  <!-- JS -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    let currentStep = 0;
+    const steps = document.querySelectorAll(".form-step");
+    const progressText = document.getElementById("progressText");
+
+    function updateProgressBar() {
+      const totalSteps = steps.length - 1;
+      const percentage = Math.min((currentStep / totalSteps) * 100, 100);
+      document.getElementById("progressBar").style.width = percentage + "%";
+      progressText.textContent = `Steg ${Math.min(currentStep + 1, totalSteps)} av ${totalSteps}`;
+    }
+
+    function nextStep() {
+      const current = steps[currentStep];
+      const inputs = current.querySelectorAll("input, textarea");
+
+      for (const input of inputs) {
+        if (input.type === "radio") {
+          const name = input.name;
+          const group = current.querySelectorAll(`input[name="${name}"]`);
+          if (![...group].some(i => i.checked)) {
+            alert("Välj ett alternativ innan du går vidare.");
+            return;
+          }
+        } else if (input.tagName === "TEXTAREA" && input.required && input.value.trim() === "") {
+          alert("Fyll i ett svar innan du går vidare.");
+          return;
+        }
+      }
+
+      steps[currentStep].classList.remove("active");
+      currentStep++;
+      if (steps[currentStep]) {
+        steps[currentStep].classList.add("active");
+        updateProgressBar();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 0) {
+        steps[currentStep].classList.remove("active");
+        currentStep--;
+        steps[currentStep].classList.add("active");
+        updateProgressBar();
+      }
+    }
+
+    document.getElementById("stepForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData.entries());
+
+      fetch("/api/ads/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Något gick fel vid skick till servern.");
+        return res.json();
+      })
+      .then(() => {
+        steps[currentStep].classList.remove("active");
+        currentStep++;
+        if (steps[currentStep]) {
+          steps[currentStep].classList.add("active");
+          updateProgressBar();
+        }
+      })
+      .catch(err => {
+        console.error("Fel:", err);
+        alert("❌ Kunde inte skicka in formuläret. Försök igen.");
+      });
+    });
+
+    // Tillgängliggör i global scope
+    window.nextStep = nextStep;
+    window.prevStep = prevStep;
+    updateProgressBar();
+  });
+</script>
+</body>
+</html>
+

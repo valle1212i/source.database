@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LinkedIn Ads – Stegvis</title>
+ <link rel="stylesheet" href="css/linkedin.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+<body>
+  <!-- SIDOPANEL -->
+  <div class="sidebar">
+    <div class="logo">
+      <img src="images/logo.png" alt="Logotyp" class="logo-img"/>
+    </div>
+    <ul class="nav-menu">
+         <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="googleads.html"><i class="fab fa-google"></i> Google Ads</a></li>
+      <li><a href="metaads.html"><i class="fab fa-facebook"></i> Meta Ads</a></li>
+      <li><a href="tiktokads.html"><i class="fab fa-tiktok"></i> TikTok Ads</a></li>
+    <li><a href="linkedin.html" class="active"><i class="fab fa-linkedin"></i> LinkedIn Ads</a></li>
+     </ul>
+    <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
+  </div>
+
+  <!-- INNEHÅLL -->
+  <div class="main-content">
+    <a href="marknadsföring.html" class="back-link">&larr; Tillbaka</a>
+    <form id="stepForm">
+      <div class="progress-text" id="progressText">Steg 1 av 6</div>
+      <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <!-- Steg 1 -->
+      <div class="form-step active">
+        <h2>1. Vad är syftet med din LinkedIn-kampanj?</h2>
+        <div class="options">
+          <label><input type="radio" name="q1" value="Leads" required> Generera leads</label>
+          <label><input type="radio" name="q1" value="Varumärke"> Bygga varumärke</label>
+          <label><input type="radio" name="q1" value="Rekrytering"> Rekrytering</label>
+          <label><input type="radio" name="q1" value="Trafik"> Webbplatstrafik</label>
+        </div>
+        <button type="button" onclick="nextStep()">Nästa</button>
+      </div>
+
+      <!-- Steg 2 -->
+      <div class="form-step">
+        <h2>2. Vilken yrkesgrupp vill du nå?</h2>
+        <textarea name="q2" required placeholder="T.ex. HR-chefer, marknadsansvariga, VD:ar..."></textarea>
+        <button type="button" onclick="nextStep()">Nästa</button>
+      </div>
+
+      <!-- Steg 3 -->
+      <div class="form-step">
+        <h2>3. Vad erbjuder du?</h2>
+        <textarea name="q3" required placeholder="Produkt, tjänst eller lösning du vill marknadsföra"></textarea>
+        <button type="button" onclick="nextStep()">Nästa</button>
+      </div>
+
+      <!-- Steg 4 -->
+      <div class="form-step">
+        <h2>4. Vilken tonalitet ska annonsen ha?</h2>
+        <div class="options">
+          <label><input type="radio" name="q4" value="Professionell" required> Professionell</label>
+          <label><input type="radio" name="q4" value="Informativ"> Informativ</label>
+          <label><input type="radio" name="q4" value="Inspirerande"> Inspirerande</label>
+          <label><input type="radio" name="q4" value="Teknisk"> Teknisk & saklig</label>
+        </div>
+        <button type="button" onclick="nextStep()">Nästa</button>
+      </div>
+
+      <!-- Steg 5 -->
+      <div class="form-step">
+        <h2>5. Vilken call-to-action vill du ha?</h2>
+        <div class="options">
+          <label><input type="radio" name="q5" value="Boka demo" required> Boka demo</label>
+          <label><input type="radio" name="q5" value="Kontakta oss"> Kontakta oss</label>
+          <label><input type="radio" name="q5" value="Läs mer"> Läs mer</label>
+          <label><input type="radio" name="q5" value="Ladda ner"> Ladda ner guide/rapport</label>
+        </div>
+        <button type="button" onclick="nextStep()">Nästa</button>
+      </div>
+
+      <!-- Steg 6 -->
+      <div class="form-step">
+        <h2>6. Något mer vi bör veta?</h2>
+        <textarea name="q6" placeholder="T.ex. specifik länk, rabattkod, uppladdad PDF..."></textarea>
+        <button type="submit">Skicka</button>
+      </div>
+
+      <!-- Tack -->
+      <div class="form-step" id="thankYouStep">
+        <h2>Tack för din förfrågan! 🎉</h2>
+        <p style="margin-top: 16px; font-size: 16px; line-height: 1.6; text-align: center;">
+          Din kampanjinfo har skickats till våra experter.<br />
+          Vi återkommer med ett LinkedIn-förslag inom kort.<br />
+          Du hittar förfrågan under <strong>Analyser</strong>.
+        </p>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      let currentStep = 0;
+      const steps = document.querySelectorAll(".form-step");
+      const progressText = document.getElementById("progressText");
+
+      function updateProgressBar() {
+        const totalSteps = steps.length - 1;
+        const percentage = Math.min((currentStep / totalSteps) * 100, 100);
+        document.getElementById("progressBar").style.width = percentage + "%";
+        progressText.textContent = `Steg ${Math.min(currentStep + 1, totalSteps)} av ${totalSteps}`;
+      }
+
+      function nextStep() {
+        const current = steps[currentStep];
+        const inputs = current.querySelectorAll("input, textarea");
+
+        for (const input of inputs) {
+          if (input.type === "radio") {
+            const name = input.name;
+            const group = current.querySelectorAll(`input[name="${name}"]`);
+            if (![...group].some(i => i.checked)) {
+              alert("Välj ett alternativ innan du går vidare.");
+              return;
+            }
+          } else if (input.tagName === "TEXTAREA" && input.required && input.value.trim() === "") {
+            alert("Fyll i ett svar innan du går vidare.");
+            return;
+          }
+        }
+
+        steps[currentStep].classList.remove("active");
+        currentStep++;
+        if (steps[currentStep]) {
+          steps[currentStep].classList.add("active");
+          updateProgressBar();
+        }
+      }
+
+      document.getElementById("stepForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+
+        fetch("/api/linkedin-ads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        })
+        .then(res => {
+          if (!res.ok) throw new Error("Något gick fel vid skick till servern.");
+          return res.json();
+        })
+        .then(() => {
+          steps[currentStep].classList.remove("active");
+          currentStep++;
+          if (steps[currentStep]) {
+            steps[currentStep].classList.add("active");
+            updateProgressBar();
+          }
+        })
+        .catch(err => {
+          console.error("Fel:", err);
+          alert("❌ Kunde inte skicka in formuläret. Försök igen.");
+        });
+      });
+
+      window.nextStep = nextStep;
+      updateProgressBar();
+    });
+  </script>
+</body>
+</html>

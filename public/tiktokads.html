@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TikTok Ads – Stegvis</title>
+  <link rel="stylesheet" href="css/tiktokads.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">
+      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+    </div>
+    <ul class="nav-menu">
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="googleads.html"><i class="fab fa-google"></i> Google Ads</a></li>
+      <li><a href="metaads.html"><i class="fab fa-facebook"></i> Meta Ads</a></li>
+      <li class="active"><a href="tiktokads.html"><i class="fab fa-tiktok"></i> TikTok Ads</a></li>
+      <li><a href="linkedin.html"><i class="fab fa-linkedin"></i> Linkedin Ads</a></li>
+    </ul>
+    <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
+  </div>
+
+  <div class="main-content">
+    <a href="marknadsföring.html" class="back-link">&larr; Tillbaka</a>
+
+    <form id="stepForm">
+  <div class="progress-text" id="progressText">Steg 1 av 4</div>
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+      <div class="form-step active">
+    <h2>Vad är målet med kampanjen?</h2>
+    <div class="options">
+      <label><input type="radio" name="objective" value="awareness" required /> Varumärkesmedvetenhet</label>
+      <label><input type="radio" name="objective" value="traffic" /> Webbplatstrafik</label>
+      <label><input type="radio" name="objective" value="conversions" /> Konverteringar</label>
+      <label><input type="radio" name="objective" value="followers" /> Fler följare</label>
+    </div>
+    <div class="form-buttons">
+      <button type="button" onclick="nextStep()">Nästa</button>
+    </div>
+  </div>
+
+
+      <!-- Steg 2 -->
+      <div class="form-step">
+        <h2>Beskriv din målgrupp</h2>
+        <textarea name="target" rows="3" placeholder="Ålder, intressen, plats" required></textarea>
+        <div class="form-buttons">
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
+        </div>
+      </div>
+
+      <!-- Steg 3 -->
+      <div class="form-step">
+        <h2>Vad vill du kommunicera?</h2>
+        <textarea name="message" rows="3" placeholder="Skriv ditt budskap" required></textarea>
+        <div class="form-buttons">
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
+        </div>
+      </div>
+
+      <!-- Steg 4 -->
+      <div class="form-step">
+        <h2>Vilken stil vill du ha?</h2>
+        <select name="style">
+          <option value="">Välj stil</option>
+          <option value="trendig">Trendig & ungdomlig</option>
+          <option value="professionell">Professionell & tydlig</option>
+          <option value="humor">Humoristisk</option>
+          <option value="storytelling">Berättande/storytelling</option>
+        </select>
+        <label for="hashtag">Föreslagna hashtags (valfritt):</label>
+        <input type="text" name="hashtag" placeholder="#dinhashtag"/>
+
+        <label for="cta">Call-to-action:</label>
+        <select name="cta">
+          <option value="">Välj CTA</option>
+          <option value="shop">Köp nu</option>
+          <option value="read">Läs mer</option>
+          <option value="signup">Registrera dig</option>
+          <option value="visit">Besök webbplats</option>
+        </select>
+
+        <div class="form-buttons">
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="submit">Skicka</button>
+        </div>
+      </div>
+
+      <!-- Tack-sidan -->
+      <div class="form-step" id="thankYouStep">
+        <h2>Tack för din förfrågan!</h2>
+        <p>Vi har tagit emot dina uppgifter och kommer skapa ett förslag för TikTok Ads.</p>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      let currentStep = 0;
+      const steps = document.querySelectorAll(".form-step");
+
+      function nextStep() {
+        const current = steps[currentStep];
+        const inputs = current.querySelectorAll("input, textarea, select");
+
+        for (const input of inputs) {
+          if (input.hasAttribute("required") && !input.value.trim()) {
+            alert("Vänligen fyll i fältet innan du går vidare.");
+            return;
+          }
+        }
+
+        steps[currentStep].classList.remove("active");
+        currentStep++;
+        if (steps[currentStep]) {
+          steps[currentStep].classList.add("active");
+          updateProgressBar();
+        }
+      }
+
+      function prevStep() {
+        if (currentStep > 0) {
+          steps[currentStep].classList.remove("active");
+          currentStep--;
+          steps[currentStep].classList.add("active");
+          updateProgressBar();
+        }
+      }
+
+      window.nextStep = nextStep;
+      window.prevStep = prevStep;
+
+      function updateProgressBar() {
+        const total = steps.length - 1; // exclude thank you
+        const percent = (currentStep / total) * 100;
+        document.getElementById("progressBar").style.width = percent + "%";
+        document.getElementById("progressText").innerText = `Steg ${currentStep + 1} av ${total}`;
+      }
+
+      document.getElementById("stepForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        steps[currentStep].classList.remove("active");
+        currentStep++;
+        steps[currentStep].classList.add("active");
+      });
+    });
+  </script>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    let currentStep = 0;
+    const steps = document.querySelectorAll(".form-step");
+
+    function showStep(index, direction) {
+      steps[currentStep].classList.remove("active", "slide-up", "slide-down");
+      if (direction === "next") {
+        steps[index].classList.add("slide-up");
+      } else {
+        steps[index].classList.add("slide-down");
+      }
+      steps[index].classList.add("active");
+      currentStep = index;
+      updateProgressBar();
+    }
+
+    function nextStep() {
+      const current = steps[currentStep];
+      const inputs = current.querySelectorAll("input, textarea, select");
+      for (const input of inputs) {
+        if (input.hasAttribute("required") && !input.checked && !input.value.trim()) {
+          alert("Vänligen fyll i fältet innan du går vidare.");
+          return;
+        }
+      }
+      if (currentStep < steps.length - 2) showStep(currentStep + 1, "next");
+    }
+
+    function prevStep() {
+      if (currentStep > 0) showStep(currentStep - 1, "prev");
+    }
+
+    window.nextStep = nextStep;
+    window.prevStep = prevStep;
+
+    function updateProgressBar() {
+      const total = steps.length - 1;
+      const percent = (currentStep / total) * 100;
+      document.getElementById("progressBar").style.width = percent + "%";
+      document.getElementById("progressText").innerText = `Steg ${currentStep + 1} av ${total}`;
+    }
+
+    document.getElementById("stepForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      showStep(currentStep + 1, "next");
+    });
+  });
+</script>
+</body>
+</html>
