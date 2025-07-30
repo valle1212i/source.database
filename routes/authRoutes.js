@@ -77,9 +77,10 @@ router.get('/logout', (req, res) => {
 router.get('/me', (req, res) => {
   if (req.session && req.session.user) {
     const { name, email, profileImage } = req.session.user;
-    res.json({ success: true, name, email, profileImage });
+    return res.json({ success: true, name, email, profileImage });
   } else {
-    res.status(401).json({ success: false, message: "Inte inloggad" });
+    console.warn("⚠️ Ingen användare inloggad – session saknas");
+    return res.status(401).json({ success: false, message: "Inte inloggad" });
   }
 });
 

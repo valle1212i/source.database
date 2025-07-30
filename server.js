@@ -4,8 +4,6 @@ const mongoose = require('mongoose');
 const path = require('path');
 const dotenv = require('dotenv');
 const result = dotenv.config();
-console.log("🔍 .env load result:", result);
-console.log("🌐 MONGO_URI som används:", process.env.MONGO_URI);
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const MongoStore = require("connect-mongo");
@@ -61,11 +59,12 @@ app.use(session({
     dbName: "adminportal"
   }),
   cookie: {
-    secure: process.env.NODE_ENV === "production", // endast HTTPS på Render
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 2 // 2 timmar
-  }
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+  httpOnly: true,
+  maxAge: 1000 * 60 * 60 * 2
+}
+
 }));
 
 // 🧱 Middleware
