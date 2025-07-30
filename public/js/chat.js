@@ -2,10 +2,11 @@ console.log("🔌 Försöker ansluta till Socket.IO...");
 
 const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
-  : "https://admin-portal-rn5z.onrender.com"; // Viktigt: pekar på ADMINPORTALEN, inte kund
+  : "https://admin-portal-rn5z.onrender.com";
 
+// ✅ Socket.IO med fallback: websocket + polling
 const socket = io(BASE_URL, {
-  transports: ["websocket"],
+  transports: ["websocket", "polling"],
   withCredentials: true
 });
 
@@ -21,6 +22,7 @@ socket.on("disconnect", (reason) => {
   console.warn("⚠️ Frånkopplad:", reason);
 });
 
+// 🧠 Session-ID
 let input, chatBox;
 const sessionId = sessionStorage.getItem("activeChatSessionId") || Date.now().toString();
 sessionStorage.setItem("activeChatSessionId", sessionId);
