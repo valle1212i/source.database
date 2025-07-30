@@ -1,8 +1,8 @@
-console.log("\ud83d\udd0c F\u00f6rs\u00f6ker ansluta till Socket.IO...");
+console.log("🔌 Försöker ansluta till Socket.IO...");
 
 const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
-  : "https://source-database.onrender.com";
+  : "https://admin-portal-rn5z.onrender.com"; // Viktigt: pekar på ADMINPORTALEN, inte kund
 
 const socket = io(BASE_URL, {
   transports: ["websocket"],
@@ -10,15 +10,15 @@ const socket = io(BASE_URL, {
 });
 
 socket.on("connect", () => {
-  console.log("\u2705 Ansluten till Socket.IO:", socket.id);
+  console.log("✅ Ansluten till Socket.IO:", socket.id);
 });
 
 socket.on("connect_error", (err) => {
-  console.error("\u274c Socket.IO-fel:", err.message || err);
+  console.error("❌ Socket.IO-fel:", err.message || err);
 });
 
 socket.on("disconnect", (reason) => {
-  console.warn("\u26a0\ufe0f Fr\u00e5nkopplad:", reason);
+  console.warn("⚠️ Frånkopplad:", reason);
 });
 
 let input, chatBox;
@@ -34,12 +34,12 @@ let customerData = {
 const questions = [
   {
     key: "topic",
-    text: "Vad g\u00e4ller \u00e4rendet?",
+    text: "Vad gäller ärendet?",
     type: "text"
   },
   {
     key: "description",
-    text: "Ge en kort beskrivning om problemet s\u00e5 kommer vi snart att assistera dig:",
+    text: "Ge en kort beskrivning om problemet så kommer vi snart att assistera dig:",
     type: "textarea",
     maxLength: 300
   }
@@ -53,7 +53,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   chatBox = document.getElementById("chatMessages");
 
   if (!input || !chatBox) {
-    console.error("\u274c Saknar chatInput eller chatMessages i DOM.");
+    console.error("❌ Saknar chatInput eller chatMessages i DOM.");
     return;
   }
 
@@ -86,11 +86,11 @@ function showNextQuestion() {
     } else {
       inputElement = document.createElement("input");
       inputElement.type = "text";
-      inputElement.placeholder = "Skriv h\u00e4r...";
+      inputElement.placeholder = "Skriv här...";
     }
 
     const nextBtn = document.createElement("button");
-    nextBtn.textContent = "N\u00e4sta";
+    nextBtn.textContent = "Nästa";
     nextBtn.type = "button";
 
     nextBtn.addEventListener("click", () => {
@@ -130,7 +130,7 @@ function showNextQuestion() {
 
 async function initChat() {
   try {
-    const res = await fetch(`${BASE_URL}/api/customers/me`, { credentials: "include" });
+    const res = await fetch("/api/customers/me", { credentials: "include" });
     if (!res.ok) throw new Error("Ej inloggad");
 
     const customer = await res.json();
@@ -139,8 +139,8 @@ async function initChat() {
     await startChatSession();
     await maybeSendWelcomeMessage();
   } catch (err) {
-    console.error("\u274c Fel vid initiering:", err.message);
-    alert("\u274c Du m\u00e5ste vara inloggad f\u00f6r att anv\u00e4nda chatten.");
+    console.error("❌ Fel vid initiering:", err.message);
+    alert("❌ Du måste vara inloggad för att använda chatten.");
   }
 }
 
@@ -155,24 +155,23 @@ function sendMessage(text) {
     customerId: window.customerId
   };
 
-  // ❌ TA BORT detta — vi ska inte rendera direkt längre:
-  // renderMessage(msg);
-
   input.value = "";
 
-  // Emit & spara
   socket.emit("sendMessage", msg);
+  console.log("📤 Meddelande skickat via Socket.IO:", msg);
 
   fetch(`${BASE_URL}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(msg),
     credentials: "include"
-  }).catch(err => {
-    console.error("❌ Kunde inte spara meddelande:", err);
-  });
+  })
+    .then(res => res.json())
+    .then(data => console.log("✅ Sparat till /api/chat:", data))
+    .catch(err => {
+      console.error("❌ Kunde inte spara meddelande:", err);
+    });
 }
-
 
 socket.on("newMessage", (msg) => {
   renderMessage(msg);
@@ -195,7 +194,7 @@ function renderMessage(msg) {
 
   const time = document.createElement("small");
   const t = new Date(msg.timestamp);
-  time.textContent = isNaN(t) ? "Ok\u00e4nt datum" : t.toLocaleString("sv-SE");
+  time.textContent = isNaN(t) ? "Okänt datum" : t.toLocaleString("sv-SE");
 
   div.append(name, content, document.createElement("br"), time);
   chatBox.appendChild(div);
@@ -212,18 +211,13 @@ async function startChatSession() {
     description: customerData.description?.trim() || "Ej angivet"
   };
 
-  // ✅ Skicka till adminportalen (via Socket.IO)
   socket.emit("newSession", sessionPayload);
-
-  // ✅ Logga för felsökning
   console.log("📤 newSession skickad till adminportalen:", sessionPayload);
 }
 
-
-
 async function maybeSendWelcomeMessage() {
   const welcome = {
-    message: "Hej och v\u00e4lkommen till Source livechat! Vi hj\u00e4lper dig s\u00e5 snart vi kan \ud83d\ude4c",
+    message: "Hej och välkommen till Source livechat! Vi hjälper dig så snart vi kan 🙌",
     sender: "admin",
     timestamp: new Date(),
     sessionId: window.activeChatSessionId,
@@ -237,5 +231,10 @@ async function maybeSendWelcomeMessage() {
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify(welcome)
-  });
+  })
+    .then(res => res.json())
+    .then(data => console.log("✅ Välkomstmeddelande sparat:", data))
+    .catch(err => {
+      console.error("❌ Kunde inte spara välkomstmeddelande:", err);
+    });
 }
