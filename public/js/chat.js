@@ -4,7 +4,6 @@ const BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:3000"
   : "https://admin-portal-rn5z.onrender.com";
 
-// ✅ Socket.IO med fallback: websocket + polling
 const socket = io(BASE_URL, {
   transports: ["websocket", "polling"],
   withCredentials: true
@@ -66,6 +65,36 @@ window.addEventListener("DOMContentLoaded", async () => {
     sendMessage(userInput);
   });
 
+  document.getElementById("endChatBtn")?.addEventListener("click", () => {
+    const confirmEnd = confirm("Är du säker på att du vill avsluta chatten?");
+    if (!confirmEnd) return;
+
+    const systemMsg = {
+      message: "🚪 Kunden har avslutat chatten.",
+      sender: "system",
+      timestamp: new Date(),
+      sessionId: window.activeChatSessionId,
+      customerId: window.customerId
+    };
+
+    socket.emit("sendMessage", systemMsg);
+
+    fetch(`${BASE_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(systemMsg)
+    });
+
+    document.getElementById("chatForm").style.display = "none";
+
+    const div = document.createElement("div");
+    div.className = "message system";
+    div.innerHTML = "<strong>System:</strong> Chatten har avslutats.";
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  });
+
   showNextQuestion();
 });
 
@@ -124,6 +153,7 @@ function showNextQuestion() {
     document.querySelector(".chat-intro").classList.add("hidden");
     document.getElementById("chatArea").classList.remove("hidden");
     document.getElementById("chatForm").classList.remove("hidden");
+    document.getElementById("endChatBtn")?.classList.remove("hidden"); // ⬅️ Visa avsluta-knapp
     input.value = "";
     questionPhaseComplete = true;
     initChat();
