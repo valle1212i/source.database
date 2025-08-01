@@ -79,18 +79,43 @@ const io = require('socket.io')(http, {
     credentials: true
   }
 });
+const axios = require('axios'); // ⬅️ LÄGG TILL ÖVERST om inte finns
+
 io.on("connection", (socket) => {
   console.log("🟢 En användare anslöt via Socket.IO");
 
+  // 🆕 När ny session startar (efter frågor)
+  socket.on("startSession", (sessionData) => {
+    console.log("🟡 Ny sessionsstart:", sessionData);
+    
+    // Broadcast till alla (inkl. adminportalen)
+    io.emit("newSession", sessionData);
+  });
+
+  // 📨 När kunden skickar meddelande
   socket.on("sendMessage", (msg) => {
     console.log("✉️ Meddelande mottaget:", msg);
-    io.emit("newMessage", msg);
+    io.emit("newMessage", msg); // Broadcast till alla
+  });
+
+  // ✅ När kunden avslutar chatten – skicka till adminportalens case-API
+  socket.on("endSession", async (fullSession) => {
+    try {
+      const response = await axios.post(
+        "https://admin-portal-rn5z.onrender.com/api/cases",
+        fullSession
+      );
+      console.log("💾 Chatten sparad till adminportal ✅", response.status);
+    } catch (err) {
+      console.error("❌ Kunde inte spara chatten till adminportal:", err.message);
+    }
   });
 
   socket.on("disconnect", () => {
     console.log("🔴 Användare frånkopplad");
   });
 });
+
 
 // 🛢️ MongoDB-anslutning
 mongoose.connect(process.env.MONGO_URI)

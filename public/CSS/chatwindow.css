@@ -51,9 +51,9 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: center;
-  padding: 24px;
+  padding: 32px 24px;
 }
 
 .chat-intro h2 {
@@ -62,26 +62,75 @@ body {
   font-weight: 600;
 }
 
+/* Förbättrad fråga-design */
 #questionFlow {
   width: 100%;
-  max-width: 400px;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: stretch;
 }
+
+#questionFlow label {
+  font-size: 16px;
+  font-weight: 600;
+  text-align: left;
+}
+
+#questionFlow input,
+#questionFlow textarea {
+  padding: 14px 16px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e0;
+  background-color: #fff;
+  outline: none;
+  resize: vertical;
+}
+
+#questionFlow input:focus,
+#questionFlow textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+#questionFlow button {
+  align-self: flex-end;
+  background-color: #2563eb;
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#questionFlow button:hover {
+  background-color: #1e40af;
+}
+
 
 .question-wrapper {
   display: flex;
   flex-direction: column;
   gap: 12px;
   animation: fadeIn 0.5s ease;
-  align-items: center;
+  align-items: stretch;
+  margin-bottom: 20px;
 }
 
 .question-wrapper label {
   font-size: 16px;
   font-weight: 600;
+  text-align: left;
 }
 
 .question-input,
-select {
+textarea {
+  font-family: 'Inter', 'Segoe UI', sans-serif; /* lägg till denna rad */
   padding: 12px;
   width: 100%;
   font-size: 16px;
@@ -89,44 +138,33 @@ select {
   border: 1px solid #cbd5e0;
   outline: none;
   background-color: white;
-  transition: border 0.2s ease;
+  resize: vertical;
+  min-height: 100px;
+  max-height: 300px;
 }
 
 .question-input:focus,
-select:focus {
+textarea:focus {
   border-color: #2563eb;
 }
 
 .next-btn {
-  margin-top: 12px;
   background-color: #2563eb;
   color: white;
-  padding: 12px 20px;
+  padding: 12px 24px;
   font-size: 16px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s ease;
+  margin: 16px auto 0 auto; /* centrera horisontellt */
+  display: block; /* krävs för att margin auto ska fungera */
 }
+
+
 
 .next-btn:hover {
   background-color: #1e40af;
-}
-
-/* Färgkodning för brådska */
-select[name="urgency"] option[value="Låg"] {
-  background-color: #c6f6d5; /* grön */
-  color: #22543d;
-}
-
-select[name="urgency"] option[value="Medel"] {
-  background-color: #fefcbf; /* gul */
-  color: #744210;
-}
-
-select[name="urgency"] option[value="Hög"] {
-  background-color: #fed7d7; /* röd */
-  color: #742a2a;
 }
 
 /* Chatgränssnitt */
@@ -146,75 +184,85 @@ select[name="urgency"] option[value="Hög"] {
 }
 
 .message {
-  max-width: 80%;
+  max-width: 70%;
   padding: 10px 14px;
   border-radius: 16px;
   font-size: 15px;
   position: relative;
   line-height: 1.4;
+  word-wrap: break-word;
 }
 
-.message.user {
-  background-color: #2d3748;
+.message.customer {
+  background-color: #0b1c33;
   color: white;
   align-self: flex-end;
+  text-align: right;
   border-bottom-right-radius: 0;
+  margin-left: auto;
 }
 
 .message.admin {
-  background-color: #edf2f7;
-  color: #2d3748;
+  background-color: #f1f1f1;
+  color: #333;
   align-self: flex-start;
+  text-align: left;
   border-bottom-left-radius: 0;
+  margin-right: auto;
 }
+
+.message.system {
+  background-color: #e0f2fe;
+  color: #0c4a6e;
+  align-self: center;
+  text-align: center;
+  font-style: italic;
+  font-size: 14px;
+  padding: 10px;
+  border-radius: 12px;
+  max-width: 90%;
+}
+
 .message-time {
-    font-size: 11px;
-    color: #a0aec0;
-    margin-top: 4px;
-    text-align: right;
-  }
-  .urgency-options {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
-    margin-top: 12px;
-  }
-  
-  .urgency-btn {
-    flex: 1;
-    min-width: 80px;
-    text-align: center;
-    padding: 12px 0;
-    border: none;
-    border-radius: 8px;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 16px;
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
-  }
-  
-  .urgency-btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .urgency-låg {
-    background-color: #38a169; /* grön */
-  }
-  
-  .urgency-medel {
-    background-color: #ed8936; /* orange */
-  }
-  
-  .urgency-hög {
-    background-color: #e53e3e; /* röd */
-  }
-  .urgency-btn {
-    width: 100px;
-  }
-    
+  font-size: 11px;
+  color: #a0aec0;
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* Chattfält */
+#chatForm {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  padding: 12px;
+  background-color: white;
+  border-top: 1px solid #e2e8f0;
+}
+#chatInput {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+#chatForm button {
+  margin-left: 8px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#chatForm button:hover {
+  background-color: #1e40af;
+}
 
 /* Skrivanimation */
 .typing {
@@ -244,42 +292,9 @@ select[name="urgency"] option[value="Hög"] {
   40% { transform: scale(1); }
 }
 
-/* Chattfält */
-#chatForm {
-  display: flex;
-  padding: 12px;
-  background-color: white;
-  border-top: 1px solid #e2e8f0;
-  position: sticky;
-  bottom: 0;
-}
-
-#chatInput {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid #cbd5e0;
-  border-radius: 8px;
-  font-size: 15px;
-}
-
-#chatForm button {
-  margin-left: 8px;
-  background-color: #2563eb;
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-#chatForm button:hover {
-  background-color: #1e40af;
-}
-
 /* Hjälpklasser */
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .input-error {
@@ -290,32 +305,8 @@ select[name="urgency"] option[value="Hög"] {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.message {
-  max-width: 70%;
-  padding: 10px;
-  margin: 8px;
-  border-radius: 12px;
-  word-wrap: break-word;
-  font-size: 14px;
-}
 
-.message.customer {
-  background-color: #0b1c33; /* Mörkblå – matchar header */
-  color: white;
-  align-self: flex-end;
-  text-align: right;
-  border-bottom-right-radius: 0;
-  margin-left: auto;
-}
-
-.message.admin {
-  background-color: #f1f1f1; /* Ljusgrå */
-  color: #333;
-  align-self: flex-start;
-  text-align: left;
-  border-bottom-left-radius: 0;
-  margin-right: auto;
-}
+/* Chattbubbla */
 .chat-bubble {
   position: fixed;
   bottom: 20px;
@@ -333,4 +324,9 @@ select[name="urgency"] option[value="Hög"] {
 .chat-bubble:hover {
   background-color: #003366;
 }
-
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
