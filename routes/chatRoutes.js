@@ -31,6 +31,7 @@ Gissa aldrig känslig information. Vid sådana frågor, be användaren kontakta 
 Profilinfo:
 - Namn: ${customer.name}
 - E-post: ${customer.email}
+- Domän: ${customer.website || "Ingen angiven"}
 - Kampanjer: ${customer.campaigns?.join(", ") || "Ingen info"}
 - Plan: ${customer.plan || "Gratis"}
 `;
@@ -45,13 +46,14 @@ Profilinfo:
       { role: "user", content: message }
     ];
 
-    const completion = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: chatMessages,
-      temperature: 0.7,
-    });
+  const completion = await openai.chat.completions.create({
+  model: "gpt-3.5-turbo",
+  messages: chatMessages,
+  temperature: 0.7,
+});
 
-    const reply = completion.data.choices?.[0]?.message?.content || "⚠️ Inget svar från AI.";
+  const reply = completion?.choices?.[0]?.message?.content || "⚠️ Inget svar från AI.";
+
 
     req.session.aiHistory = [...(req.session.aiHistory || []), { question: message, answer: reply }];
 

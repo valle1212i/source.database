@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registrering via inbjudan – Source</title>
+  <link rel="stylesheet" href="CSS/invite-register.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <div class="container">
+    <div class="left-side">
+      <img src="/Customerportalimage%20(kopia)/Source_Cropped.png" alt="Source Logo" class="logo" />
+    </div>
+
+    <div class="right-side">
+      <div class="form-card">
+        <h1>Slutför din registrering</h1>
+
+        <form id="inviteForm" autocomplete="off">
+          <div>
+            <label for="name">Namn</label>
+            <input type="text" id="name" name="name" readonly />
+          </div>
+
+          <div>
+            <label for="email">E-postadress</label>
+            <input type="email" id="email" name="email" readonly />
+          </div>
+
+          <div>
+            <label for="password">Lösenord</label>
+            <input type="password" id="password" name="password" required placeholder="Välj ett lösenord" />
+          </div>
+
+          <button type="submit">Skapa konto</button>
+        </form>
+
+        <p>Har du redan ett konto? <a href="/login.html">Logga in här</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+
+    async function loadInviteData() {
+      if (!token) {
+        alert("❌ Ogiltig eller saknad inbjudningslänk.");
+        window.location.href = "/login.html";
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/invites/verify?token=${token}`);
+        const data = await res.json();
+
+        if (!data.success) {
+          alert("❌ Länken är ogiltig eller har gått ut.");
+          window.location.href = "/login.html";
+        } else {
+          // Förifyll namn och e-post
+          document.getElementById("name").value = data.name;
+          document.getElementById("email").value = data.email;
+        }
+      } catch (err) {
+        console.error("Fel vid verifiering:", err);
+        alert("❌ Ett fel uppstod.");
+        window.location.href = "/login.html";
+      }
+    }
+
+    document.getElementById("inviteForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const password = document.getElementById("password").value;
+
+      try {
+        const res = await fetch("/api/invites/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, password })
+        });
+
+        const result = await res.json();
+        if (result.success) {
+          alert("✅ Konto skapat! Du kan nu logga in.");
+          window.location.href = "/customerportal.html";
+        } else {
+          alert("❌ " + (result.message || "Kunde inte skapa konto."));
+        }
+      } catch (err) {
+        console.error(err);
+        alert("❌ Serverfel.");
+      }
+    });
+
+    loadInviteData();
+  </script>
+
+</body>
+</html>

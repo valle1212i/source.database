@@ -18,6 +18,11 @@ const customerSchema = new mongoose.Schema({
   default: 'user'
 },
 
+groupId: {
+  type: mongoose.Schema.Types.ObjectId,
+  required: true
+},
+
   // Automatiska datumfält
   createdAt: { type: Date, default: Date.now },
   lastLogin: { type: Date, default: null },

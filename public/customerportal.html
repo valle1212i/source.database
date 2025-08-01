@@ -15,21 +15,21 @@
       <img src="images/logo.png" alt="Logotyp" class="logo-img" />
     </a>
   </div>
-  <ul class="nav-menu">
-    <li class="active"><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
-    <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
-    <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
-    <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
-    <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
-    <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
-    <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
-    <li><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
-    <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
-    <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
-  </ul>
-  <div class="help">
-    <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
-  </div>
+<ul class="nav-menu">
+  <li class="active"><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+  <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+  <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+  <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+  <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+  <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+  <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+  <li><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+  <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+  <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+</ul>
+<div class="help">
+  <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
+</div>
 </div>
 
 <!-- Hamburger-meny (visas bara på små skärmar) -->
@@ -249,9 +249,20 @@
             }
           },
           scales: {
-            x: { display: false },
+            x: {
+              ticks: {
+                color: "#6b7280",  // Tailwind text-gray-500
+                maxRotation: 0,
+                autoSkip: true,
+                callback: function (val, index, ticks) {
+                  const label = this.getLabelForValue(val);
+                  return label; // redan formaterat som "Tis 29 juli"
+                }
+              },
+              grid: { display: false }
+            },
             y: { display: false }
-          }
+        }
         }
       });
     } catch (err) {

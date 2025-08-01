@@ -1,0 +1,135 @@
+/* ==== Reset ==== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ==== Body ==== */
+body {
+  font-family: 'Manrope', sans-serif;
+  background: radial-gradient(circle at center, #052826, #0b0d12);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+/* ==== Layout Split ==== */
+.container {
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  min-height: 600px;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.left-side, .right-side {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==== Logo ==== */
+.logo {
+  width: 250px;
+  max-width: 90%;
+}
+
+/* ==== Form Card ==== */
+.form-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  padding: 50px 40px;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ==== Headline ==== */
+.form-card h1 {
+  font-size: 1.9rem;
+  margin-bottom: 30px;
+  font-weight: 700;
+}
+
+/* ==== Inputs ==== */
+.form-card input {
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  border-radius: 10px;
+  background-color: #141318;
+  border: 1px solid #2c2c34;
+  color: #fff;
+  font-size: 1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* 🔒 Läsbara fält */
+.form-card input[readonly] {
+  color: #aaa;
+  background-color: #1e1d23;
+  cursor: not-allowed;
+}
+
+/* ==== Placeholder ==== */
+.form-card input::placeholder {
+  color: #777;
+}
+
+/* ==== Fokus ==== */
+.form-card input:focus {
+  border-color: #00e6c3;
+  outline: none;
+  box-shadow: 0 0 6px 2px rgba(0, 230, 195, 0.4);
+}
+
+/* ==== Button ==== */
+.form-card button {
+  width: 100%;
+  background-color: #00e6c3;
+  border: none;
+  color: #000;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.form-card button:hover {
+  background-color: #00bfa6;
+}
+
+/* ==== Text under form ==== */
+.form-card p {
+  margin-top: 20px;
+  font-size: 0.95rem;
+  color: #ccc;
+}
+
+.form-card a {
+  color: #a68cff;
+  text-decoration: none;
+}
+
+.form-card a:hover {
+  text-decoration: underline;
+}
+
+/* ==== Autofill fix ==== */
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+  transition: background-color 9999s ease-out, color 9999s ease-out;
+  transition-delay: 9999s;
+}

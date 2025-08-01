@@ -17,34 +17,17 @@
       </a>
     </div>
     <ul class="nav-menu">
-      <li>
-        <a href="customerportal.html"><i class="fas fa-home"></i> Hem</a>
-      </li>
-      <li>
-        <a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a>
-      </li>
-      <li>
-        <a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a>
-      </li>
-      <li>
-        <a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a>
-      </li>
-      <li>
-        <a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a>
-      </li>
-      <li>
-        <a href="kunder.html"><i class="fas fa-users"></i> Kunder</a>
-      </li>
-      <li>
-        <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a>
-      </li>
-      <li>
-        <a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a>
-      </li>
-      <li class="active">
-        <a href="installningar.html" class="active"><i class="fas fa-cog"></i> Inställningar</a>
-      </li>
-    </ul>
+  <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+  <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+  <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+  <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+  <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+  <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+  <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+  <li><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+  <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+  <li class="active"><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+</ul>
     <div class="help">
       <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
     </div>
@@ -83,13 +66,14 @@
     </section>
 
     <!-- ANVÄNDARE -->
-    <section class="setting-group">
-      <h2>👥 Användare & Roller</h2>
-      <div class="user-list">
-        <p><strong>Du:</strong> Admin</p>
-        <p>+ Fler användare kommer kunna läggas till via API i framtiden.</p>
-      </div>
-    </section>
+<section class="setting-group">
+  <h2>👥 Användare & Roller</h2>
+    <div class="user-list" id="userList">
+      <p>Laddar användare...</p>
+    </div>
+  <button class="invite-user-btn" id="openInviteModal">➕ Bjud in användare</button>
+</section>
+
 
     <!-- VISA ENDAST FÖR ADMIN -->
 <section class="setting-group" id="admin-login-link" style="display: none;">
@@ -393,7 +377,131 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 })
 </script>
+
+<script>
+  async function loadUserList() {
+    const container = document.getElementById("userList");
+    container.innerHTML = "<p>Laddar användare...</p>";
+
+    try {
+      const res = await fetch("/api/invites/users", {
+        credentials: "include"
+      });
+
+      const data = await res.json();
+
+      if (!data.success || !Array.isArray(data.users)) {
+        container.innerHTML = "<p>Kunde inte hämta användarlista.</p>";
+        return;
+      }
+
+      if (data.users.length === 0) {
+        container.innerHTML = "<p>Inga användare hittades.</p>";
+        return;
+      }
+
+      // Bygg lista
+      container.innerHTML = "";
+      const ul = document.createElement("ul");
+
+      data.users.forEach(user => {
+        const li = document.createElement("li");
+        li.textContent = `${user.name} (${user.email}) – ${user.role === "admin" ? "Administratör" : "Användare"}`;
+        ul.appendChild(li);
+      });
+
+      container.appendChild(ul);
+    } catch (err) {
+      console.error("Fel vid hämtning av användare:", err);
+      container.innerHTML = "<p>Ett fel uppstod.</p>";
+    }
+  }
+
+  // Anropa direkt när sidan laddats
+  document.addEventListener("DOMContentLoaded", loadUserList);
+</script>
+
 <!-- Toast-container (dold tills något visas) -->
 <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+<div class="modal-overlay" id="inviteModalOverlay">
+  <div class="modal" id="inviteModal">
+    <button class="close-modal" id="closeInviteModal">&times;</button>
+    <h3>Bjud in användare</h3>
+    <form id="inviteUserForm">
+      <label for="inviteName">Namn</label>
+      <input type="text" id="inviteName" required placeholder="Förnamn Efternamn" />
+
+      <label for="inviteEmail">E-postadress</label>
+      <input type="email" id="inviteEmail" required placeholder="anvandare@exempel.se" />
+
+      <button type="submit" class="black-button">Skicka inbjudan</button>
+    </form>
+  </div>
+</div>
+<script>
+  // MODAL: öppna/stäng
+  document.addEventListener("DOMContentLoaded", () => {
+    const openBtn = document.getElementById("openInviteModal");
+    const modalOverlay = document.getElementById("inviteModalOverlay");
+    const closeBtn = document.getElementById("closeInviteModal");
+
+    // Öppna modal
+    openBtn.addEventListener("click", () => {
+      modalOverlay.style.display = "flex";
+    });
+
+    // Stäng modal med X
+    closeBtn.addEventListener("click", () => {
+      modalOverlay.style.display = "none";
+    });
+
+    // Klick utanför modalen stänger den
+    window.addEventListener("click", (e) => {
+      if (e.target === modalOverlay) {
+        modalOverlay.style.display = "none";
+      }
+    });
+  });
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("inviteUserForm");
+    const modalOverlay = document.getElementById("inviteModalOverlay");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById("inviteName").value.trim();
+      const email = document.getElementById("inviteEmail").value.trim();
+
+      if (!name || !email) {
+        showToast("⚠️ Fyll i namn och e-post.");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/invites/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email }),
+          credentials: "include" // Viktigt för sessionshantering
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          showToast("✅ Inbjudan skickad!");
+          form.reset();
+          modalOverlay.style.display = "none";
+        } else {
+          showToast("❌ " + (data.message || "Fel vid inbjudan."));
+        }
+      } catch (err) {
+        console.error("Fel vid inbjudan:", err);
+        showToast("❌ Något gick fel.");
+      }
+    });
+  });
+</script>
 </body>
 </html>

@@ -114,13 +114,14 @@ app.post('/login', async (req, res) => {
     if (!isMatch) return res.status(401).json({ success: false, message: 'Fel e-post eller lösenord' });
 
     req.session.user = {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role || "user",
-      profileImage: user.profileImage,
-      settings: user.settings || {},
-    };
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role || "user",
+  profileImage: user.profileImage,
+  groupId: user.groupId,
+  settings: user.settings || {}
+};
 
     // 📊 Logga enhet
     const LoginEvent = require('./models/LoginEvent');
@@ -240,6 +241,7 @@ app.get('/api/user/profile', requireAuth, (req, res) => {
 
 // 🔧 API-routes
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use("/api/invites", require("./routes/inviteRoutes"));
 app.use('/api/invoices', require('./routes/invoiceRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/support', require('./routes/support'));
