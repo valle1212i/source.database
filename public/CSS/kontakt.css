@@ -307,3 +307,65 @@ body {
   font-size: 13px;
   margin-bottom: 6px;
 }
+
+/* ===== HAMBURGER-MENY & MOBILSIDOPANEL ===== */
+
+/* Döljs på desktop */
+.hamburger-menu {
+  display: none;
+}
+
+/* Syns bara på mobilskärmar */
+@media (max-width: 768px) {
+  .hamburger-menu {
+    display: block;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    font-size: 28px;
+    background: none;
+    border: none;
+    color: #1f2937;
+    cursor: pointer;
+  }
+
+  .sidebar {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: -240px;
+    width: 240px;
+    height: 100%;
+    background-color: #111827;
+    color: white;
+    transition: left 0.3s ease, opacity 0.3s ease;
+    z-index: 998;
+
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sidebar.active {
+    left: 0;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .main {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .main h1,
+  .main h2 {
+    margin-left: 48px; /* rubriker skjuts undan från hamburgermenyn */
+  }
+
+  body.menu-open .hamburger-menu {
+    color: white;
+  }
+}
+

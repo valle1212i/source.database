@@ -11,6 +11,10 @@
   />
 </head>
 <body>
+  <!-- Hamburgermeny för mobil -->
+<button class="hamburger-menu" onclick="toggleSidebar()">☰</button>
+
+
   <div class="sidebar">
   <div class="logo">
     <a href="customerportal.html">
@@ -210,4 +214,13 @@
 
   loadUserProfile();
 </script>
+<script>
+  function toggleSidebar() {
+    const sidebar = document.querySelector(".sidebar");
+    const isActive = sidebar.classList.contains("active");
 
+    sidebar.classList.toggle("active", !isActive);
+    document.body.classList.toggle("menu-open", !isActive);
+  }
+</script>
+</body>
