@@ -378,7 +378,7 @@ window.customerId = null;
       });
 
       tr.innerHTML = `
-        <td>-</td>
+       <td>${item.caseId || "-"}</td>
         <td>${formattedDate}</td>
         <td>${data.name || "Okänd"}</td>
         <td>${item.topic}</td>
