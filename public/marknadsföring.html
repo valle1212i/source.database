@@ -31,9 +31,38 @@
     </div>
   </div>
 
+  
   <main class="main">
     <h1 class="page-title">Marknadsföring</h1>
     <p class="subtitle">Utforska verktyg för annonsering, design och rådgivning.</p>
+
+    <section class="card">
+      <h2><i class="fas fa-edit"></i> Dina marknadsföringsval</h2>
+      <form id="marketingForm">
+        <label>
+          📢 Plattformar:
+          <select name="platforms" multiple>
+            <option value="Google Ads">Google Ads</option>
+            <option value="Meta Ads">Meta Ads</option>
+            <option value="TikTok Ads">TikTok Ads</option>
+            <option value="LinkedIn Ads">LinkedIn Ads</option>
+          </select>
+        </label>
+        <br /><br />
+        <label>
+          🎯 Mål:
+          <input type="text" name="goals" placeholder="Ex: Fler leads, mer trafik..." />
+        </label>
+        <br /><br />
+        <label>
+          💬 Kommentar:
+          <textarea name="comment" rows="3" placeholder="Berätta mer om vad du önskar..."></textarea>
+        </label>
+        <br /><br />
+        <button type="submit">💾 Spara inställningar</button>
+        <div id="saveStatus" style="margin-top: 10px;"></div>
+      </form>
+    </section>
 
    <section class="card automatiska-annonser">
   <h2><i class="fas fa-robot"></i> Automatiska annonser</h2>
@@ -95,5 +124,42 @@
       }, 1000);
     }
   </script>
+  <script>
+    document.getElementById("marketingForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+  
+      const status = document.getElementById("saveStatus");
+      status.textContent = "⏳ Sparar...";
+  
+      try {
+        const res = await fetch("/api/customers/me");
+        const customer = await res.json();
+        if (!customer._id) throw new Error("Kund saknas");
+  
+        const form = e.target;
+        const platforms = Array.from(form.platforms.selectedOptions).map(opt => opt.value);
+  
+        const payload = {
+          platforms,
+          goals: form.goals.value,
+          comment: form.comment.value
+        };
+  
+        const putRes = await fetch(`/api/customers/${customer._id}/marketing`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+  
+        const result = await putRes.json();
+        status.textContent = result.success ? "✅ Sparat!" : "❌ Kunde inte spara.";
+      } catch (err) {
+        console.error("❌ Fel vid sparande:", err);
+        status.textContent = "❌ Tekniskt fel, försök igen.";
+      }
+    });
+  </script>  
 </body>
 </html>
