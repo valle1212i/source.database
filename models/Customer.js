@@ -12,16 +12,41 @@ const customerSchema = new mongoose.Schema({
   plan: { type: String, default: 'Gratis' },
   notes: { type: String, default: '' },
 
-  role: {
-  type: String,
-  enum: ['admin', 'user'],
-  default: 'user'
-},
+  // ✅ MARKNADSFÖRING
+  marketing: {
+    googleAds: {
+      selected: { type: Boolean, default: false },
+      budget: { type: String, default: '' },
+      goals: { type: String, default: '' }
+    },
+    metaAds: {
+      selected: { type: Boolean, default: false },
+      budget: { type: String, default: '' },
+      goals: { type: String, default: '' }
+    },
+    tiktokAds: {
+      selected: { type: Boolean, default: false },
+      budget: { type: String, default: '' },
+      goals: { type: String, default: '' }
+    },
+    linkedinAds: {
+      selected: { type: Boolean, default: false },
+      budget: { type: String, default: '' },
+      goals: { type: String, default: '' }
+    },
+    otherNotes: { type: String, default: '' }
+  },
 
-groupId: {
-  type: mongoose.Schema.Types.ObjectId,
-  required: true
-},
+  role: {
+    type: String,
+    enum: ['admin', 'user'],
+    default: 'user'
+  },
+
+  groupId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true
+  },
 
   // Automatiska datumfält
   createdAt: { type: Date, default: Date.now },
