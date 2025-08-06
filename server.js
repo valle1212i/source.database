@@ -190,6 +190,9 @@ app.get('/admin-logins.html', requireLogin, (req, res) => {
   const user = req.session?.user;
   if (!user || user.role !== "admin") return res.status(403).send("Åtkomst nekad");
   res.sendFile(path.join(__dirname, 'public', 'admin-logins.html'));
+  const profileRoutes = require('./routes/profile');
+app.use('/api/profile', profileRoutes);
+
 });
 
 // 📦 Dummy-inventarielager
