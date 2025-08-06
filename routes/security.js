@@ -61,4 +61,8 @@ router.get("/all-logins", requireAuth, async (req, res) => {
   }
 });
 
-module.exports = router;
+// ✅ Endast EN export:
+module.exports = {
+  router,
+  requireAuth
+};

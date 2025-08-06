@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { verifyToken } = require('./security'); // eller din auth-middleware
-const Customer = require('../models/Customer'); // justera om din modell heter något annat
+const { requireAuth } = require('./security'); // byt från verifyToken till requireAuth
+const Customer = require('../models/Customer');
 
 // GET /api/profile/me
-router.get('/me', verifyToken, async (req, res) => {
+router.get('/me', requireAuth, async (req, res) => {
   try {
-    const customer = await Customer.findById(req.user.id); // eller req.user._id
+    const customer = await Customer.findById(req.session.user._id); // använd session-data
     if (!customer) {
       return res.status(404).json({ success: false, message: "Kund hittades inte" });
     }
@@ -16,7 +16,7 @@ router.get('/me', verifyToken, async (req, res) => {
       _id: customer._id,
       name: customer.name,
       email: customer.email,
-      supportHistory: customer.supportHistory || [] // om du har det lagrat i kundmodellen
+      supportHistory: customer.supportHistory || []
     });
   } catch (err) {
     console.error("❌ Fel i /profile/me:", err);

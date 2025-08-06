@@ -72,6 +72,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
+const { router: securityRouter, requireAuth } = require("./routes/security");
+
 // 🧭 Routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/chatwindow.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'chatwindow.html')));
@@ -283,11 +285,6 @@ app.get("/api/profile/me", async (req, res) => {
 app.use('/api/ads', require('./routes/adsRoutes'));
 
 
-// 🧠 Skyddad användarprofil (namn, e-post)
-function requireAuth(req, res, next) {
-  if (req.session && req.session.user) next();
-  else res.status(401).json({ error: "Inte inloggad" });
-}
 app.get('/api/user/profile', requireAuth, (req, res) => {
   const { name, email } = req.session.user;
   res.json({ name, email });
@@ -303,7 +300,7 @@ app.use('/api/email', require('./routes/emailRoutes'));
 app.use('/api/messages', require('./routes/messagesRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/customers', require('./routes/customers'));
-app.use("/api/security", require("./routes/security"));
+app.use("/api/security", securityRouter);
 app.use("/api/pageviews", require("./routes/pageviews"));
 app.use("/api/pageviews", require("./routes/trackRoutes"));
 const insightsRoutes = require('./routes/insights');
