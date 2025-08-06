@@ -19,7 +19,43 @@ router.get('/me', async (req, res) => {
   }
 });
 
-// 💾 PUT /api/customers/:id/marketing – Spara marknadsföringsval
+// 💾 PUT /api/customers/marketing/:platform – Spara formulärsvar för t.ex. Google Ads
+router.put('/marketing/:platform', async (req, res) => {
+  if (!req.session.user || !req.session.user.email) {
+    return res.status(401).json({ error: "Inte inloggad" });
+  }
+
+  const { platform } = req.params; // "google", "meta", etc.
+  const { answers } = req.body;
+
+  if (!answers || typeof answers !== 'object') {
+    return res.status(400).json({ error: "Ogiltiga data" });
+  }
+
+  try {
+    const updated = await Customer.findOneAndUpdate(
+      { email: req.session.user.email },
+      {
+        $set: {
+          [`marketing.${platform}`]: answers,
+          'marketing.updatedAt': new Date()
+        }
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: "Kund hittades inte" });
+    }
+
+    res.json({ success: true, data: updated.marketing[platform] });
+  } catch (err) {
+    console.error("❌ Fel vid sparande av formulärsvar:", err);
+    res.status(500).json({ error: "Serverfel vid sparande" });
+  }
+});
+
+// 💾 PUT /api/customers/:id/marketing – Spara all marknadsföringsdata (admin)
 router.put('/:id/marketing', async (req, res) => {
   const { id } = req.params;
   const marketingData = req.body;
