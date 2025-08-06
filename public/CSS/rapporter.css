@@ -102,20 +102,6 @@ body {
   gap: 20px;
 }
 
-.hamburger-menu {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  margin-right: 5px;
-  color: #111827;
-}
-
-.hamburger-menu i {
-  font-size: 28px;
-  padding: 4px 8px 4px 4px;
-}
-
 @media (max-width: 768px) {
   .header,
   h1, h2 {
@@ -330,20 +316,6 @@ h1, h2 {
   cursor: pointer;
 }
 
-/* ========== HAMBURGERMENY-KNAPP ========== */
-.hamburger-menu {
-  display: none;
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  background: transparent;
-  border: none;
-  font-size: 24px;
-  color: #111827;
-  z-index: 1001;
-  cursor: pointer;
-}
-
 /* ========== RESPONSIVT LÄGE ========== */
 @media (max-width: 768px) {
   .sidebar {
@@ -370,24 +342,34 @@ h1, h2 {
     flex-direction: column;
   }
 
-  .hamburger-menu {
-    display: block;
-  }
-
   body.menu-open {
     overflow: hidden;
   }
 }
 
+/* ===== HAMBURGER-MENY & MOBILSIDOPANEL ===== */
+
+/* Döljs på desktop */
 .hamburger-menu {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #111827;
-  transition: color 0.3s;
+  display: none;
 }
 
-body.menu-open .hamburger-menu {
-  color: white;
+/* Syns bara på mobilskärmar */
+@media (max-width: 768px) {
+  .hamburger-menu {
+    display: block;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    font-size: 28px;
+    background: none;
+    border: none;
+    color: #1f2937;
+    cursor: pointer;
+  }
+
+  body.menu-open .hamburger-menu {
+    color: white;
+  }
 }

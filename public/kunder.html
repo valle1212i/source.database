@@ -9,6 +9,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js" defer></script>
 </head>
 <body>
+  <!-- Hamburgermeny för mobil -->
+<button class="hamburger-menu" onclick="toggleSidebar()">☰</button>
   <!-- SIDOMENY -->
   <div class="sidebar">
   <div class="logo">
@@ -35,7 +37,7 @@
 
 
   <!-- HUVUDINNEHÅLL -->
-  <main class="main" style="margin-left: 240px; padding: 40px;">
+  <main class="main">
     <div class="profile-wrapper">
   <div class="profile-icon" id="profileToggle">--</div>
 
@@ -263,6 +265,15 @@
   }
 
   loadUserProfile();
+</script>
+<script>
+  function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const body = document.body;
+
+    sidebar.classList.toggle('active');
+    body.classList.toggle('menu-open');
+  }
 </script>
 </body>
 </html>

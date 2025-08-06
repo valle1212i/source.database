@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 </head>
 <body>
+  <!-- Hamburgermeny för mobil -->
+<button class="hamburger-menu" onclick="toggleSidebar()">☰</button>
   <div class="sidebar">
   <div class="logo">
     <a href="customerportal.html">
@@ -196,6 +198,13 @@
   }
 
   loadUserProfile();
+</script>
+<script>
+  // Hantera hamburgermeny-klick
+  function toggleSidebar() {
+    document.querySelector(".sidebar").classList.toggle("active");
+    document.body.classList.toggle("menu-open");
+  }
 </script>
 </body>
 </html>
