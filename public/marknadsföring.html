@@ -31,9 +31,11 @@
     </div>
   </div>
 
+  
   <main class="main">
     <h1 class="page-title">Marknadsföring</h1>
     <p class="subtitle">Utforska verktyg för annonsering, design och rådgivning.</p>
+
 
    <section class="card automatiska-annonser">
   <h2><i class="fas fa-robot"></i> Automatiska annonser</h2>
@@ -95,5 +97,42 @@
       }, 1000);
     }
   </script>
+  <script>
+    document.getElementById("marketingForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+  
+      const status = document.getElementById("saveStatus");
+      status.textContent = "⏳ Sparar...";
+  
+      try {
+        const res = await fetch("/api/customers/me");
+        const customer = await res.json();
+        if (!customer._id) throw new Error("Kund saknas");
+  
+        const form = e.target;
+        const platforms = Array.from(form.platforms.selectedOptions).map(opt => opt.value);
+  
+        const payload = {
+          platforms,
+          goals: form.goals.value,
+          comment: form.comment.value
+        };
+  
+        const putRes = await fetch(`/api/customers/${customer._id}/marketing`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+  
+        const result = await putRes.json();
+        status.textContent = result.success ? "✅ Sparat!" : "❌ Kunde inte spara.";
+      } catch (err) {
+        console.error("❌ Fel vid sparande:", err);
+        status.textContent = "❌ Tekniskt fel, försök igen.";
+      }
+    });
+  </script>  
 </body>
 </html>

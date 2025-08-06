@@ -243,12 +243,31 @@ app.post("/api/profile/update", upload.single("profilePic"), async (req, res) =>
   }
 });
 
-// 👤 Hämta inloggad användare
-app.get("/api/profile/me", (req, res) => {
+// 👤 Hämta inloggad användare + supporthistorik
+app.get("/api/profile/me", async (req, res) => {
   if (!req.session.user) return res.status(401).json({ success: false, message: "Inte inloggad" });
-  const { name, email, language, profileImage } = req.session.user;
-  res.json({ success: true, name, email, language, profileImage });
+
+  try {
+    const user = await Customer.findById(req.session.user._id).lean();
+    if (!user) return res.status(404).json({ success: false, message: "Användare hittades inte" });
+
+    const { _id, name, email, language, profileImage, supportHistory = [] } = user;
+
+    res.json({
+      success: true,
+      _id,
+      name,
+      email,
+      language,
+      profileImage,
+      supportHistory
+    });
+  } catch (err) {
+    console.error("❌ Fel vid hämtning av kundprofil:", err);
+    res.status(500).json({ success: false, message: "Serverfel vid hämtning av profil" });
+  }
 });
+
 
 // ⬇️ Lägg till denna rad innan serverstart
 app.use('/api/ads', require('./routes/adsRoutes'));

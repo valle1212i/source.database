@@ -111,12 +111,7 @@
               <th>Status</th>
             </tr>
           </thead>
-          <tbody>
-            <tr><td>#10234</td><td>2025-06-24</td><td>Anna Svensson</td><td>Problem med inloggning</td><td><span class="status-text closed">Avslutat</span></td></tr>
-            <tr><td>#10235</td><td>2025-06-24</td><td>Erik Johansson</td><td>Fakturafråga</td><td><span class="status-text closed">Avslutat</span></td></tr>
-            <tr><td>#10236</td><td>2025-06-25</td><td>Maria Nilsson</td><td>Buggrapport</td><td><span class="status-text progress">Pågående</span></td></tr>
-            <tr><td>#10237</td><td>2025-06-25</td><td>Jonas Berg</td><td>Uppdatering av konto</td><td><span class="status-text closed">Avslutat</span></td></tr>
-          </tbody>
+          <tbody></tbody>
         </table>
       </div>
     </div>
@@ -350,7 +345,60 @@ window.customerId = null;
     }
   }
 
-  window.addEventListener("DOMContentLoaded", fetchCustomerId);
+  async function loadSupportHistory() {
+  try {
+    const res = await fetch("/api/profile/me", { credentials: "include" });
+    const data = await res.json();
+
+    const tbody = document.querySelector(".support-table tbody");
+    if (!tbody) return;
+
+    const history = data.supportHistory || [];
+
+    if (history.length === 0) {
+      tbody.innerHTML = `
+        <tr><td colspan="5">Inga tidigare ärenden hittades.</td></tr>
+      `;
+      return;
+    }
+
+    // Rensa gammal data
+    tbody.innerHTML = "";
+
+    // Sortera nyast först
+    history.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    for (const item of history) {
+      const tr = document.createElement("tr");
+
+      const formattedDate = new Date(item.date).toLocaleDateString("sv-SE", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      });
+
+      tr.innerHTML = `
+       <td>${item.caseId || "-"}</td>
+        <td>${formattedDate}</td>
+        <td>${data.name || "Okänd"}</td>
+        <td>${item.topic}</td>
+        <td><span class="status-text ${item.status.toLowerCase().replace(/\s/g, '')}">${item.status}</span></td>
+      `;
+
+      tbody.appendChild(tr);
+    }
+  } catch (err) {
+    console.error("❌ Kunde inte hämta supporthistorik:", err);
+  }
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  fetchCustomerId();
+  loadSupportHistory();
+});
+
+
 </script>
 
 <script>
