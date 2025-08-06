@@ -116,10 +116,13 @@
       </div>
     </div>
 
-    <!-- AI-förslag -->
-    <ul class="growth-list" id="aiInsightsList">
-      <li>Laddar AI-insikter...</li>
-    </ul>    
+  
+  <!-- AI Insights (ny version) -->
+<div class="card" id="aiInsightsCard">
+  <h3>📈 AI Insights</h3>
+  <div id="aiInsightsContent">Laddar AI-insikter...</div>
+</div>
+
 
 
       <div class="card latest-message">
@@ -151,12 +154,6 @@
       <div class="card"><h3>Utbetalningar</h3><p>Senaste: 215 000 SEK den 20 juni</p></div>
       <div class="card"><h3>Senaste order</h3><p>Order #1820 - levererad 24 juni</p></div>
 
-      <div class="card">
-        <h3>AI rekommenderade växningsmöjligheter</h3>
-        <ul class="growth-list" id="aiInsightsList">
-          <li>Laddar AI-insikter...</li>
-        </ul>
-      </div>
       
       
       <div class="card"><h3>Kommande möten</h3><p>Nästa möte: 27 juni kl. 14:00</p><p>Möte med marknadsteamet</p></div>
@@ -426,9 +423,6 @@ document.addEventListener("DOMContentLoaded", () => {
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/chat.js"></script>
 
-<!-- Andra scripts -->
-<script src="/socket.io/socket.io.js"></script>
-<script src="/js/chat.js"></script>
 
 <!-- Din hamburgermenyfunktion (redan inlagd) -->
 <script>
@@ -569,8 +563,6 @@ document.addEventListener("DOMContentLoaded", () => {
   loadUserProfile();
 </script>
 
-<!-- Toast-container (dold tills något visas) -->
-<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
 <script>
   async function fetchPageViewInsights() {
