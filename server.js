@@ -296,6 +296,10 @@ app.use('/api/customers', require('./routes/customers'));
 app.use("/api/security", require("./routes/security"));
 app.use("/api/pageviews", require("./routes/pageviews"));
 app.use("/api/pageviews", require("./routes/trackRoutes"));
+const insightsRoutes = require('./routes/insights');
+app.use('/api/insights', insightsRoutes);
+
+
 
 // 🚀 Starta servern
 const PORT = process.env.PORT || 3000;

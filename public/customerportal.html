@@ -160,7 +160,11 @@
       <div class="card"><h3>Utbetalningar</h3><p>Senaste: 215 000 SEK den 20 juni</p></div>
       <div class="card"><h3>Senaste order</h3><p>Order #1820 - levererad 24 juni</p></div>
 
-      <div class="card"><h3>AI Insights</h3><ul><li>Optimera onboardingflöde</li><li>Förbättra e-postkampanjer</li><li>Identifiera kundbortfall</li></ul></div>
+      <div class="card" id="aiInsightsCard">
+        <h3>📈 AI Insights</h3>
+        <div id="aiInsightsContent">Laddar personliga insikter...</div>
+      </div>
+      
       <div class="card"><h3>Kommande möten</h3><p>Nästa möte: 27 juni kl. 14:00</p><p>Möte med marknadsteamet</p></div>
 
       <div class="card live-chat dark">
@@ -631,5 +635,53 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("🛑 Kunde inte hitta elementet #salesChart");
   }
 </script>
+<script>
+  async function loadAIInsights() {
+    const container = document.getElementById("aiInsightsContent");
+    if (!window.customerId) {
+      container.textContent = "Kunde inte ladda kunddata.";
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/customers/${window.customerId}/insights`, {
+        credentials: "include"
+      });
+
+      if (!res.ok) throw new Error("Fel vid hämtning av AI-insikter");
+
+      const data = await res.json();
+
+      if (!data.insights || data.insights.length === 0) {
+        container.innerHTML = "<p>Inga insikter tillgängliga just nu.</p>";
+        return;
+      }
+
+      container.innerHTML = "";
+
+      for (const tip of data.insights) {
+        const card = document.createElement("div");
+        card.className = "ai-tip-card " + tip.category.toLowerCase();
+
+        const priorityFlag = tip.priority ? '<span class="priority-flag">🔥 Prioriterad</span>' : "";
+
+        card.innerHTML = `
+          <h4>${tip.title} ${priorityFlag}</h4>
+          <p><strong>Kategori:</strong> ${tip.category}</p>
+          <p><strong>Varför:</strong> ${tip.reason}</p>
+          <p><strong>Åtgärd:</strong> ${tip.action}</p>
+        `;
+
+        container.appendChild(card);
+      }
+    } catch (err) {
+      console.error("❌ Fel vid laddning av AI-insikter:", err);
+      container.innerHTML = "<p>❌ Kunde inte hämta AI-insikter just nu.</p>";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", loadAIInsights);
+</script>
+
 </body>
 </html>
