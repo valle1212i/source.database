@@ -72,6 +72,24 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
+// 🧭 Routes
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/chatwindow.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'chatwindow.html')));
+app.get('/customerportal.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'customerportal.html')));
+app.get('/fakturor.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'fakturor.html')));
+app.get('/rapporter.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'rapporter.html')));
+app.get('/inventarier.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'inventarier.html')));
+app.get('/kontakt.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'kontakt.html')));
+app.get('/kunder.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'kunder.html')));
+app.use('/api/profile', require('./routes/profile'));
+app.get('/admin-logins.html', requireLogin, (req, res) => {
+  const user = req.session?.user;
+  if (!user || user.role !== "admin") return res.status(403).send("Åtkomst nekad");
+  res.sendFile(path.join(__dirname, 'public', 'admin-logins.html'));
+});
+
+
+
 // 🔌 Socket.IO
 const io = require('socket.io')(http, {
   cors: {
@@ -177,23 +195,6 @@ app.get('/logout', (req, res) => {
   });
 });
 
-// 🧭 Routes
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-app.get('/chatwindow.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'chatwindow.html')));
-app.get('/customerportal.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'customerportal.html')));
-app.get('/fakturor.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'fakturor.html')));
-app.get('/rapporter.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'rapporter.html')));
-app.get('/inventarier.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'inventarier.html')));
-app.get('/kontakt.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'kontakt.html')));
-app.get('/kunder.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'kunder.html')));
-app.get('/admin-logins.html', requireLogin, (req, res) => {
-  const user = req.session?.user;
-  if (!user || user.role !== "admin") return res.status(403).send("Åtkomst nekad");
-  res.sendFile(path.join(__dirname, 'public', 'admin-logins.html'));
-  const profileRoutes = require('./routes/profile');
-app.use('/api/profile', profileRoutes);
-
-});
 
 // 📦 Dummy-inventarielager
 let inventory = {
