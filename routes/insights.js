@@ -2,10 +2,24 @@ const express = require('express');
 const router = express.Router();
 const { OpenAI } = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const Customer = require('../models/Customer');
-const Insight = require('../models/Insight'); // ✅ Modell för sparade insikter
 
-// GET /api/insights/:customerId → Generera & spara AI-insikter
+const Customer = require('../models/Customer');
+const Insight = require('../models/Insight'); // Modell för AI-insikter
+
+// ✅ HÄMTA SPARADE INSIKTER FÖRST – viktigt att denna ligger före customerId-route!
+router.get('/by-customer/:id', async (req, res) => {
+  const customerId = req.params.id;
+
+  try {
+    const insights = await Insight.find({ customerId }).sort({ generatedAt: -1 });
+    res.json({ success: true, insights });
+  } catch (err) {
+    console.error("❌ Fel vid hämtning av insikter:", err);
+    res.status(500).json({ success: false, message: "Serverfel vid hämtning av insikter" });
+  }
+});
+
+// ✅ GENERERA & SPARA NYA AI-INSIKTER
 router.get('/:customerId', async (req, res) => {
   try {
     const customer = await Customer.findById(req.params.customerId).lean();
@@ -57,12 +71,13 @@ Tipsen ska vara:
       return res.status(500).json({ error: "Ogiltigt AI-svar", raw: insightsRaw });
     }
 
-    // 💾 Spara i databasen
-    await Insight.deleteMany({ customerId: customer._id }); // Rensa gamla
+    // 💾 Spara i databasen (rensa gamla först)
+    await Insight.deleteMany({ customerId: customer._id });
     for (const tip of insights) {
       await Insight.create({
         customerId: customer._id,
-        ...tip
+        ...tip,
+        generatedAt: new Date() // Viktigt för sortering
       });
     }
 
@@ -71,19 +86,6 @@ Tipsen ska vara:
   } catch (err) {
     console.error("❌ Fel i AI-insights:", err);
     res.status(500).json({ error: "Serverfel vid AI-generering" });
-  }
-});
-
-// ✅ GET /api/insights/by-customer/:id → Hämta sparade insikter
-router.get('/by-customer/:id', async (req, res) => {
-  const customerId = req.params.id;
-
-  try {
-    const insights = await Insight.find({ customerId }).sort({ generatedAt: -1 });
-    res.json({ success: true, insights });
-  } catch (err) {
-    console.error("❌ Fel vid hämtning av insikter:", err);
-    res.status(500).json({ success: false, message: "Serverfel vid hämtning av insikter" });
   }
 });
 
