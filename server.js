@@ -119,8 +119,14 @@ io.on("connection", (socket) => {
 
 // 🛢️ MongoDB-anslutning
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('🟢 Ansluten till MongoDB Atlas'))
+  .then(() => {
+    console.log('🟢 Ansluten till MongoDB Atlas');
+
+    // ✅ Lägg till detta här
+    require('./cron/insightCron');
+  })
   .catch(err => console.error('🔴 Fel vid MongoDB:', err));
+
 
 // 🛡️ Skyddad route
 function requireLogin(req, res, next) {
