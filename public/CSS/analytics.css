@@ -63,7 +63,7 @@ body {
   }
 
   .main {
-    margin-left: 0;
+     margin-left: 0px;
   }
 
   .main h1 {
@@ -138,6 +138,7 @@ body {
   padding: 40px;
   width: 100%;
   transition: all 0.3s ease;
+  margin-left: 240px; /* Nytt: så sidomenyn inte täcker */
 }
 
 .main h1 {
