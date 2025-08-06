@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const { OpenAI } = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const Customer = require('../models/Customer');
+const Insight = require('../models/Insight'); // ✅ Lägg till detta
 
 function generatePrompt(customer) {
   return [
@@ -39,14 +40,22 @@ async function generateInsightsForAllCustomers() {
       try {
         insights = JSON.parse(insightsRaw);
       } catch (err) {
-        console.warn(`⚠️ Kunde inte tolka AI-svar för ${customer.name}`);
+        console.warn(`⚠️ Kunde inte tolka AI-svar för ${customer.name}:`, insightsRaw);
         continue;
       }
 
-      // 💾 Här kan du spara till en ny "insights" collection, t.ex.:
-      // InsightModel.create({ customerId: customer._id, insights, generatedAt: new Date() });
+      // 💾 Rensa gamla insikter först (om du vill)
+      await Insight.deleteMany({ customerId: customer._id });
 
-      console.log(`✅ Genererade AI-insikter för ${customer.name}`);
+      // 💾 Spara nya insikter
+      for (const tip of insights) {
+        await Insight.create({
+          customerId: customer._id,
+          ...tip
+        });
+      }
+
+      console.log(`✅ Sparade ${insights.length} insikter för ${customer.name}`);
     }
   } catch (err) {
     console.error("❌ Cron-fel:", err);
