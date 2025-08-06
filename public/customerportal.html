@@ -117,19 +117,8 @@
     </div>
 
     <!-- AI-förslag -->
-    <div class="card">
-      <h3>AI rekommenderade växningsmöjligheter</h3>
-      <ul class="growth-list">
-        <li>Starta kampanj i ny kanal (t.ex. TikTok)</li>
-        <li>Skapa lojalitetsprogram</li>
-        <li>Optimera nyhetsbrev med segmenterade utskick</li>
-        <li>Förbättra SEO på produktsidor</li>
-        <li>Retargeting-kampanj för övergivna varukorgar</li>
-        <li>Lansera produktbundle-erbjudanden</li>
-        <li>Uppdatera startsidans design</li>
-        <li>Erbjud nya betalningsmetoder (Swish, Klarna)</li>
-      </ul>
-    </div>
+    <div id="aiInsightsContent">Laddar personliga insikter...</div>
+
 
       <div class="card latest-message">
         <div class="card-header aligned">
@@ -636,49 +625,54 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 </script>
 <script>
-  async function loadAIInsights() {
-    const container = document.getElementById("aiInsightsContent");
-    if (!window.customerId) {
-      container.textContent = "Kunde inte ladda kunddata.";
+ async function loadAIInsights() {
+  const container = document.getElementById("aiInsightsContent");
+  if (!window.customerId) {
+    container.textContent = "Kunde inte ladda kunddata.";
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/insights/by-customer/${window.customerId}`, {
+      credentials: "include"
+    });
+
+    const data = await res.json();
+    if (!data.success || !data.insights.length) {
+      container.innerHTML = "<p>Inga AI-insikter ännu.</p>";
       return;
     }
 
-    try {
-      const res = await fetch(`/api/customers/${window.customerId}/insights`, {
-        credentials: "include"
-      });
+    const colors = {
+      "Annonsering": "#E3F2FD",
+      "Konvertering": "#FCE4EC",
+      "Strategi": "#E8F5E9",
+      "Engagemang": "#FFF8E1"
+    };
 
-      if (!res.ok) throw new Error("Fel vid hämtning av AI-insikter");
+    container.innerHTML = "";
+    data.insights.forEach(tip => {
+      const card = document.createElement("div");
+      card.style.border = "1px solid #ccc";
+      card.style.borderRadius = "1rem";
+      card.style.padding = "1rem";
+      card.style.marginBottom = "1rem";
+      card.style.backgroundColor = colors[tip.category] || "#f4f4f4";
 
-      const data = await res.json();
+      card.innerHTML = `
+        <h4>${tip.title} ${tip.priority ? "🔥" : ""}</h4>
+        <p><strong>Kategori:</strong> ${tip.category}</p>
+        <p><strong>Varför:</strong> ${tip.reason}</p>
+        <p><strong>Åtgärd:</strong> ${tip.action}</p>
+      `;
+      container.appendChild(card);
+    });
 
-      if (!data.insights || data.insights.length === 0) {
-        container.innerHTML = "<p>Inga insikter tillgängliga just nu.</p>";
-        return;
-      }
-
-      container.innerHTML = "";
-
-      for (const tip of data.insights) {
-        const card = document.createElement("div");
-        card.className = "ai-tip-card " + tip.category.toLowerCase();
-
-        const priorityFlag = tip.priority ? '<span class="priority-flag">🔥 Prioriterad</span>' : "";
-
-        card.innerHTML = `
-          <h4>${tip.title} ${priorityFlag}</h4>
-          <p><strong>Kategori:</strong> ${tip.category}</p>
-          <p><strong>Varför:</strong> ${tip.reason}</p>
-          <p><strong>Åtgärd:</strong> ${tip.action}</p>
-        `;
-
-        container.appendChild(card);
-      }
-    } catch (err) {
-      console.error("❌ Fel vid laddning av AI-insikter:", err);
-      container.innerHTML = "<p>❌ Kunde inte hämta AI-insikter just nu.</p>";
-    }
+  } catch (err) {
+    console.error("❌ Kunde inte ladda AI-insikter:", err);
+    container.innerHTML = "<p>Fel vid hämtning av insikter.</p>";
   }
+}
 
   document.addEventListener("DOMContentLoaded", loadAIInsights);
 </script>
