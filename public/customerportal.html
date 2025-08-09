@@ -328,17 +328,27 @@ typeParagraph();
 <script>
 window.customerId = null;
 
-  async function fetchCustomerId() {
-    try {
-      const res = await fetch("/api/profile/me", { credentials: "include" });
-      if (!res.ok) throw new Error("Ej inloggad");
-      const data = await res.json();
-      window.customerId = data._id || null;
-      console.log("🆔 Kund-ID:", window.customerId);
-    } catch (err) {
-      console.warn("❌ Kunde inte hämta kund-ID:", err.message);
+async function fetchCustomerId() {
+  try {
+    const res = await fetch("/api/profile/me", { credentials: "include" });
+    const data = await res.json();
+    console.log("👤 /api/profile/me svar:", data); // DEBUG
+
+    if (!res.ok || !data.success || !data._id) {
+      console.warn("❌ Kunde inte hämta kund-ID");
+      window.customerId = null;
+      return null;
     }
+
+    window.customerId = data._id;
+    return data._id;
+  } catch (err) {
+    console.warn("❌ Kunde inte hämta kund-ID:", err.message);
+    window.customerId = null;
+    return null;
   }
+}
+
 
   async function loadSupportHistory() {
   try {
@@ -388,10 +398,14 @@ window.customerId = null;
 }
 
 
-document.addEventListener("DOMContentLoaded", () => {
-  fetchCustomerId();
-  loadSupportHistory();
+document.addEventListener("DOMContentLoaded", async () => {
+  const id = await fetchCustomerId(); // vänta tills ID finns
+  loadSupportHistory();               // kan köras oavsett
+  if (id) {
+    loadAIInsights();                 // körs bara om vi fick ID
+  }
 });
+
 
 
 </script>
@@ -670,8 +684,6 @@ document.addEventListener("DOMContentLoaded", () => {
     container.innerHTML = "<p>Fel vid hämtning av insikter.</p>";
   }
 }
-
-  document.addEventListener("DOMContentLoaded", loadAIInsights);
 </script>
 
 </body>
