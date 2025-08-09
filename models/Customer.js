@@ -1,16 +1,3 @@
-const mongoose = require('mongoose');
-
-// Separat sub-schema för formulärsvar per plattform
-const platformFormSchema = new mongoose.Schema({
-  q1: String,
-  q2: String,
-  q3: String,
-  q4: String,
-  q5: String,
-  q6: String,
-  q7: String
-}, { _id: false });
-
 const customerSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
@@ -25,18 +12,14 @@ const customerSchema = new mongoose.Schema({
 
   // ✅ MARKNADSFÖRING
   marketing: {
-    platforms: [String],             // Från övergripande formulär (dropdowns)
-    goals: String,                   // Från övergripande formulär
-    comment: String,                 // Från övergripande formulär
-    updatedAt: Date,                 // Datum då något sparades
-
-    // ✅ Detaljerade svar från stegvisa formulär
+    platforms: [String],
+    goals: String,
+    comment: String,
+    updatedAt: Date,
     google: platformFormSchema,
     meta: platformFormSchema,
     tiktok: platformFormSchema,
     linkedin: platformFormSchema,
-
-    // Fortsätt stödja gamla strukturen om ni redan använt den
     googleAds: {
       selected: { type: Boolean, default: false },
       budget: { type: String, default: '' },
@@ -58,6 +41,23 @@ const customerSchema = new mongoose.Schema({
       goals: { type: String, default: '' }
     },
     otherNotes: { type: String, default: '' }
+  },
+
+  // ✅ LÄGG TILL DETTA
+  supportHistory: {
+    type: [
+      {
+        caseId: { type: String, default: "-" },
+        date: { type: Date, default: Date.now },
+        topic: { type: String, default: "" },
+        status: {
+          type: String,
+          enum: ['Öppen', 'Pågår', 'Stängd'],
+          default: 'Öppen'
+        }
+      }
+    ],
+    default: []
   },
 
   role: {
@@ -85,5 +85,3 @@ const customerSchema = new mongoose.Schema({
     default: null
   }
 });
-
-module.exports = mongoose.model('Customer', customerSchema);
