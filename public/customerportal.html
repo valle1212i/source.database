@@ -636,55 +636,70 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 </script>
 <script>
- async function loadAIInsights() {
-  const container = document.getElementById("aiInsightsContent");
-  if (!window.customerId) {
-    container.textContent = "Kunde inte ladda kunddata.";
-    return;
-  }
-
-  try {
-    const res = await fetch(`/api/insights/by-customer/${window.customerId}`, {
-      credentials: "include"
-    });
-
-    const data = await res.json();
-    if (!data.success || !data.insights.length) {
-      container.innerHTML = "<p>Inga AI-insikter ännu.</p>";
+  async function loadAIInsights() {
+    const container = document.getElementById("aiInsightsContent");
+    if (!window.customerId) {
+      container.textContent = "Kunde inte ladda kunddata.";
       return;
     }
-
-    const colors = {
-      "Annonsering": "#E3F2FD",
-      "Konvertering": "#FCE4EC",
-      "Strategi": "#E8F5E9",
-      "Engagemang": "#FFF8E1"
-    };
-
-    container.innerHTML = "";
-    data.insights.forEach(tip => {
-      const card = document.createElement("div");
-      card.style.border = "1px solid #ccc";
-      card.style.borderRadius = "1rem";
-      card.style.padding = "1rem";
-      card.style.marginBottom = "1rem";
-      card.style.backgroundColor = colors[tip.category] || "#f4f4f4";
-
-      card.innerHTML = `
-        <h4>${tip.title} ${tip.priority ? "🔥" : ""}</h4>
-        <p><strong>Kategori:</strong> ${tip.category}</p>
-        <p><strong>Varför:</strong> ${tip.reason}</p>
-        <p><strong>Åtgärd:</strong> ${tip.action}</p>
-      `;
-      container.appendChild(card);
-    });
-
-  } catch (err) {
-    console.error("❌ Kunde inte ladda AI-insikter:", err);
-    container.innerHTML = "<p>Fel vid hämtning av insikter.</p>";
+  
+    try {
+      // 1) Försök hämta sparade insikter
+      let res = await fetch(`/api/insights/by-customer/${window.customerId}`, {
+        credentials: "include"
+      });
+      let data = await res.json();
+  
+      // 2) Om det inte finns några: trigga generering och hämta resultatet
+      if (!data?.success || !Array.isArray(data.insights) || data.insights.length === 0) {
+        container.innerHTML = "<p>Genererar AI-insikter…</p>";
+  
+        const genRes = await fetch(`/api/insights/${window.customerId}`, {
+          credentials: "include"
+        });
+        const genData = await genRes.json();
+  
+        if (Array.isArray(genData.insights) && genData.insights.length > 0) {
+          data = { success: true, insights: genData.insights };
+        } else {
+          container.innerHTML = "<p>Inga AI-insikter ännu.</p>";
+          return;
+        }
+      }
+  
+      // 3) Rendera insikter
+      const colors = {
+        "Annonsering": "#E3F2FD",
+        "Konvertering": "#FCE4EC",
+        "Strategi": "#E8F5E9",
+        "Engagemang": "#FFF8E1"
+      };
+  
+      container.innerHTML = "";
+      data.insights.forEach(tip => {
+        const card = document.createElement("div");
+        card.style.border = "1px solid #ccc";
+        card.style.borderRadius = "1rem";
+        card.style.padding = "1rem";
+        card.style.marginBottom = "1rem";
+        card.style.backgroundColor = colors[tip.category] || "#f4f4f4";
+  
+        card.innerHTML = `
+          <h4>${tip.title ?? ""} ${tip.priority ? "🔥" : ""}</h4>
+          <p><strong>Kategori:</strong> ${tip.category ?? "-"}</p>
+          <p><strong>Varför:</strong> ${tip.reason ?? "-"}</p>
+          <p><strong>Åtgärd:</strong> ${tip.action ?? "-"}</p>
+        `;
+        container.appendChild(card);
+      });
+  
+    } catch (err) {
+      console.error("❌ Kunde inte ladda/generera AI-insikter:", err);
+      container.innerHTML = "<p>Fel vid hämtning av insikter.</p>";
+    }
   }
-}
-</script>
+  </script>
+  
 
 </body>
 </html>

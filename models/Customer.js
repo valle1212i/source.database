@@ -1,3 +1,4 @@
+// models/Customer.js
 const mongoose = require('mongoose');
 
 // Separat sub-schema för formulärsvar per plattform
@@ -25,18 +26,18 @@ const customerSchema = new mongoose.Schema({
 
   // ✅ MARKNADSFÖRING
   marketing: {
-    platforms: [String],             // Från övergripande formulär (dropdowns)
-    goals: String,                   // Från övergripande formulär
-    comment: String,                 // Från övergripande formulär
-    updatedAt: Date,                 // Datum då något sparades
+    platforms: [String],
+    goals: String,
+    comment: String,
+    updatedAt: Date,
 
-    // ✅ Detaljerade svar från stegvisa formulär
+    // Detaljerade svar
     google: platformFormSchema,
     meta: platformFormSchema,
     tiktok: platformFormSchema,
     linkedin: platformFormSchema,
 
-    // Fortsätt stödja gamla strukturen om ni redan använt den
+    // Bakåtkompabilitet
     googleAds: {
       selected: { type: Boolean, default: false },
       budget: { type: String, default: '' },
@@ -58,6 +59,21 @@ const customerSchema = new mongoose.Schema({
       goals: { type: String, default: '' }
     },
     otherNotes: { type: String, default: '' }
+  },
+
+  // ✅ SUPPORTHISTORIK
+  supportHistory: {
+    type: [{
+      caseId: { type: String, default: "-" },
+      date: { type: Date, default: Date.now },
+      topic: { type: String, default: "" },
+      status: {
+        type: String,
+        enum: ['Öppen', 'Pågår', 'Stängd'],
+        default: 'Öppen'
+      }
+    }],
+    default: []
   },
 
   role: {
