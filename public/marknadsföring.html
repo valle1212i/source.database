@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 </head>
 <body>
+  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny" onclick="toggleSidebar()">☰</button>
   <div class="sidebar">
     <div class="logo">
       <a href="customerportal.html">
@@ -22,7 +23,7 @@
       <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
       <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
       <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
-      <li class="active"><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+      <li class="active"><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
       <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
       <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
     </ul>
@@ -133,6 +134,12 @@
         status.textContent = "❌ Tekniskt fel, försök igen.";
       }
     });
-  </script>  
+  </script>
+  <script>
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('active');
+  document.body.classList.toggle('menu-open');
+}
+</script>
 </body>
 </html>

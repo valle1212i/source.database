@@ -67,8 +67,9 @@ body {
   }
 
   .main h1 {
-    margin-left: 48px; /* så texten inte hamnar under hamburgermenyn */
-  }
+  margin-left: 48px;   /* som tidigare */
+  margin-top: -32px;    /* ny: lyfter rubriken lite så den linjerar med hamburgaren */
+}
 
   body.menu-open .hamburger-menu {
     color: white;
@@ -268,6 +269,13 @@ body {
   max-height: 300px;
 }
 
+/* Rubrikrad med hamburgermeny och titel */
+.header-row {
+  display: flex;
+  align-items: center; /* vertikal centrering */
+  gap: 12px;           /* mellanrum mellan ikon och text */
+}
+
 /* Mörkt tema */
 body.dark-theme {
   background-color: #121212;
@@ -296,4 +304,31 @@ body.dark-theme .nav-menu li.active a {
   background-color: #2a2a2a;
   border-left: 4px solid #00bfa6;
   font-weight: bold;
+}
+
+/* --- MOBIL-OVERRIDE, måste ligga sist --- */
+@media (max-width: 768px) {
+  /* Sidoinnehåll ska inte tryckas åt höger på mobil */
+  .main { margin-left: 0 !important; }
+
+  /* Rubrikrad: placera hamburgare och titel i samma rad och centrera vertikalt */
+  .header-row {
+    display: flex;
+    align-items: center;  /* vertikal centrering */
+    gap: 12px;
+    padding: 12px 16px 0;
+  }
+
+  /* Viktigt: gör hamburgaren "inline" inne i header-row (inte fixed) */
+  .header-row .hamburger-menu {
+    position: static;     /* tar bort position: fixed från globala regeln */
+    margin: 0;
+    z-index: auto;
+  }
+
+  /* Eftersom hamburgaren nu ligger i flödet behöver h1 ingen extra vänstermarginal */
+  .main h1 { margin-left: 0; }
+
+  /* Behåll färgbyte om menyn är öppen */
+  body.menu-open .hamburger-menu { color: white; }
 }

@@ -24,6 +24,7 @@ body {
   left: 0;
   display: flex;
   flex-direction: column;
+  z-index: 2500;
 }
 
 .logo {
@@ -310,8 +311,10 @@ body {
   }
 
   .button-group {
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: flex-start;
   }
 
   .card.ai-card {
@@ -382,3 +385,55 @@ body {
   100% { background-position: 0% 50%; }
 }
 
+.hamburger-menu {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .hamburger-menu {
+        display: block;
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 3000;
+        font-size: 28px;         /* samma som analytics */
+        background: none;
+        border: none;
+        color: #1f2937;          /* blir vit när body.menu-open är aktiv */
+        cursor: pointer;
+    }
+    
+    body.menu-open .hamburger-menu {
+        color: white;
+    }
+
+    .sidebar {
+        left: -240px;
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+        transition: left 0.3s ease, opacity 0.3s ease;
+    }
+
+    .sidebar.active {
+        left: 0;
+        visibility: visible;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .main {
+        margin-left: 0;
+        padding: 20px;
+    }
+
+    .main h1,
+    .main .page-title {
+        margin-left: 48px;
+        margin-top: -12px;
+    }
+    .subtitle {
+        margin-left: 48px;
+        margin-top: 4px;
+    }
+}
