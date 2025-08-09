@@ -18,6 +18,8 @@
       <li><a href="metaads.html"><i class="fab fa-facebook"></i> Meta Ads</a></li>
       <li class="active"><a href="tiktokads.html"><i class="fab fa-tiktok"></i> TikTok Ads</a></li>
       <li><a href="linkedin.html"><i class="fab fa-linkedin"></i> Linkedin Ads</a></li>
+      <li><a href="aimarknadsstudio.html"><i class="fas fa-magic"></i> AI Studio</a></li>
+      <li><a href="radgivning.html"><i class="fas fa-headset"></i> Rådgivning</a></li>
     </ul>
     <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
   </div>
@@ -93,113 +95,90 @@
         </div>
       </div>
 
-      <!-- Tack-sidan -->
+     <!-- Tack -->
       <div class="form-step" id="thankYouStep">
-        <h2>Tack för din förfrågan!</h2>
-        <p>Vi har tagit emot dina uppgifter och kommer skapa ett förslag för TikTok Ads.</p>
+        <h2>Tack för din förfrågan! 🎉</h2>
+        <p style="margin-top: 16px; font-size: 16px; line-height: 1.6; text-align: center;">
+          Din kampanjinfo har skickats till våra experter.<br />
+          Vi återkommer med ett TikTok-förslag inom kort.<br />
+          Du hittar förfrågan under <strong>Analyser</strong>.
+        </p>
       </div>
     </form>
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      let currentStep = 0;
-      const steps = document.querySelectorAll(".form-step");
+document.addEventListener("DOMContentLoaded", () => {
+  let currentStep = 0;
+  const steps = document.querySelectorAll(".form-step");
 
-      function nextStep() {
-        const current = steps[currentStep];
-        const inputs = current.querySelectorAll("input, textarea, select");
+  function showStep(index, direction) {
+    steps[currentStep].classList.remove("active", "slide-up", "slide-down");
+    if (direction === "next") {
+      steps[index].classList.add("slide-up");
+    } else {
+      steps[index].classList.add("slide-down");
+    }
+    steps[index].classList.add("active");
+    currentStep = index;
+    updateProgressBar();
+  }
 
-        for (const input of inputs) {
-          if (input.hasAttribute("required") && !input.value.trim()) {
-            alert("Vänligen fyll i fältet innan du går vidare.");
-            return;
-          }
-        }
+  function nextStep() {
+    const current = steps[currentStep];
+    const inputs = current.querySelectorAll("input, textarea, select");
 
-        steps[currentStep].classList.remove("active");
-        currentStep++;
-        if (steps[currentStep]) {
-          steps[currentStep].classList.add("active");
-          updateProgressBar();
-        }
+    for (const input of inputs) {
+      if (input.hasAttribute("required") && !input.value.trim() && !input.checked) {
+        alert("Vänligen fyll i fältet innan du går vidare.");
+        return;
       }
-
-      function prevStep() {
-        if (currentStep > 0) {
-          steps[currentStep].classList.remove("active");
-          currentStep--;
-          steps[currentStep].classList.add("active");
-          updateProgressBar();
-        }
-      }
-
-      window.nextStep = nextStep;
-      window.prevStep = prevStep;
-
-      function updateProgressBar() {
-        const total = steps.length - 1; // exclude thank you
-        const percent = (currentStep / total) * 100;
-        document.getElementById("progressBar").style.width = percent + "%";
-        document.getElementById("progressText").innerText = `Steg ${currentStep + 1} av ${total}`;
-      }
-
-      document.getElementById("stepForm").addEventListener("submit", function(e) {
-        e.preventDefault();
-        steps[currentStep].classList.remove("active");
-        currentStep++;
-        steps[currentStep].classList.add("active");
-      });
-    });
-  </script>
-  <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    let currentStep = 0;
-    const steps = document.querySelectorAll(".form-step");
-
-    function showStep(index, direction) {
-      steps[currentStep].classList.remove("active", "slide-up", "slide-down");
-      if (direction === "next") {
-        steps[index].classList.add("slide-up");
-      } else {
-        steps[index].classList.add("slide-down");
-      }
-      steps[index].classList.add("active");
-      currentStep = index;
-      updateProgressBar();
     }
 
-    function nextStep() {
-      const current = steps[currentStep];
-      const inputs = current.querySelectorAll("input, textarea, select");
-      for (const input of inputs) {
-        if (input.hasAttribute("required") && !input.checked && !input.value.trim()) {
-          alert("Vänligen fyll i fältet innan du går vidare.");
-          return;
-        }
-      }
-      if (currentStep < steps.length - 2) showStep(currentStep + 1, "next");
-    }
-
-    function prevStep() {
-      if (currentStep > 0) showStep(currentStep - 1, "prev");
-    }
-
-    window.nextStep = nextStep;
-    window.prevStep = prevStep;
-
-    function updateProgressBar() {
-      const total = steps.length - 1;
-      const percent = (currentStep / total) * 100;
-      document.getElementById("progressBar").style.width = percent + "%";
-      document.getElementById("progressText").innerText = `Steg ${currentStep + 1} av ${total}`;
-    }
-
-    document.getElementById("stepForm").addEventListener("submit", function (e) {
-      e.preventDefault();
+    if (currentStep < steps.length - 2) {
       showStep(currentStep + 1, "next");
+    }
+  }
+
+  function prevStep() {
+    if (currentStep > 0) {
+      showStep(currentStep - 1, "prev");
+    }
+  }
+
+  function updateProgressBar() {
+    const total = steps.length - 1;
+    const percent = (currentStep / total) * 100;
+    document.getElementById("progressBar").style.width = percent + "%";
+    document.getElementById("progressText").innerText = `Steg ${currentStep + 1} av ${total}`;
+  }
+
+  // 🟢 Skicka till servern
+  document.getElementById("stepForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const data = Object.fromEntries(new FormData(this).entries());
+
+    fetch("/api/ads/tiktok", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    })
+    .then(res => res.ok ? res.json() : Promise.reject("Serverfel"))
+    .then(() => {
+      showStep(currentStep + 1, "next"); // visa tack-sidan
+    })
+    .catch(err => {
+      alert("❌ Kunde inte skicka formuläret. Försök igen.");
+      console.error(err);
     });
   });
+
+  window.nextStep = nextStep;
+  window.prevStep = prevStep;
+
+  updateProgressBar();
+});
 </script>
 </body>
 </html>

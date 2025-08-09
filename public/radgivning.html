@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rådgivning & Support</title>
+  <link rel="stylesheet" href="css/radgivning.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+</head>
+<body>
+
+  <!-- SIDOPANEL -->
+  <div class="sidebar">
+    <div class="logo">
+      <img src="images/logo.png" alt="Logotyp" class="logo-img"/>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="googleads.html"><i class="fab fa-google"></i> Google Ads</a></li>
+      <li><a href="metaads.html"><i class="fab fa-facebook"></i> Meta Ads</a></li>
+      <li><a href="tiktokads.html"><i class="fab fa-tiktok"></i> TikTok Ads</a></li>
+      <li><a href="linkedin.html"><i class="fab fa-linkedin"></i> LinkedIn Ads</a></li>
+      <li><a href="aimarknadsstudio.html"><i class="fas fa-magic"></i> AI Studio</a></li>
+      <li><a href="radgivning.html" class="active"><i class="fas fa-headset"></i> Rådgivning</a></li>
+    </ul>
+    <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
+  </div>
+
+  <!-- INNEHÅLL -->
+  <div class="main-content">
+    <h1 class="page-title"><i class="fas fa-brain"></i> Rådgivning & Support</h1>
+    <p class="subtitle">
+      Vill du ha hjälp av en designexpert? Kontakta våra marknadsrådgivare för personlig vägledning kring annonser, kampanjer eller visuellt material.
+    </p>
+
+    <div class="advice-section">
+      <div class="advice-card">
+        <div class="advice-text">
+          <h2>Boka ett kostnadsfritt möte</h2>
+          <p>Vi hjälper dig att ta fram professionellt innehåll, AI-strategier och kampanjdesign. Klicka nedan för att skicka in ett ärende eller boka ett samtal!</p>
+          <button class="ai-button" id="toggleFormBtn"><i class="fas fa-envelope-open-text"></i> Skicka in ärende</button>
+        </div>
+        <div class="advice-image">
+          <img src="uploads/ff071c5e-045a-44e0-87b2-e6a0187e5113.png" alt="AI rådgivning" />
+        </div>
+      </div>
+    </div>
+
+    <form id="contactForm" class="contact-form" style="display: none;">
+  <h3>📬 Kontakta rådgivningsteamet</h3>
+
+  <div class="form-group">
+    <label for="name">Namn</label>
+    <input type="text" id="name" name="name" required />
+  </div>
+
+  <div class="form-group">
+    <label for="email">E-post</label>
+    <input type="email" id="email" name="email" required />
+  </div>
+
+  <div class="form-group">
+    <label for="company">Företag (valfritt)</label>
+    <input type="text" id="company" name="company" />
+  </div>
+
+  <div class="form-group">
+    <label for="phone">Telefonnummer</label>
+    <input type="tel" id="phone" name="phone" />
+  </div>
+
+  <div class="form-group">
+    <label for="message">Beskriv kort vad du behöver hjälp med</label>
+    <textarea id="message" name="message" rows="4" placeholder="Ex: Jag vill ha hjälp att skapa annonser för min nya produkt..."></textarea>
+  </div>
+
+  <div class="form-group">
+    <p><strong>Hur kan vi hjälpa dig?</strong></p>
+
+    <label>Behöver du hjälp att ta fram en designstrategi?</label>
+    <div class="radio-group">
+      <label><input type="radio" name="designStrategy" value="Ja" required /> Ja</label>
+      <label><input type="radio" name="designStrategy" value="Nej" /> Nej</label>
+    </div>
+
+    <label>Vill du ha löpande rådgivning under din kampanj?</label>
+    <div class="radio-group">
+      <label><input type="radio" name="ongoingSupport" value="Ja" required /> Ja</label>
+      <label><input type="radio" name="ongoingSupport" value="Nej" /> Nej</label>
+    </div>
+
+    <label>Behöver du hjälp med AI-baserad bild- eller videoproduktion?</label>
+    <div class="radio-group">
+      <label><input type="radio" name="aiMediaHelp" value="Ja" required /> Ja</label>
+      <label><input type="radio" name="aiMediaHelp" value="Nej" /> Nej</label>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="extra">Övriga kommentarer eller behov</label>
+    <textarea id="extra" name="extra" rows="3" placeholder="T.ex. jag vill boka ett Zoom-möte en torsdag..."></textarea>
+  </div>
+
+  <button type="submit" class="ai-button"><i class="fas fa-paper-plane"></i> Skicka meddelande</button>
+</form>
+
+
+    <!-- FAQ-SEKTION -->
+<div class="faq-section">
+  <h3><i class="fas fa-question-circle"></i> Vanliga frågor</h3>
+  <ul>
+    <li><strong>💰 Vad kostar rådgivningen?</strong><br>Det är kostnadsfritt att boka första mötet.</li>
+    <li><strong>⏱ Hur lång tid tar ett möte?</strong><br>Ca 15–30 minuter beroende på ditt behov.</li>
+    <li><strong>📂 Behöver jag ha något färdigt?</strong><br>Nej, vi hjälper dig från grunden!</li>
+  </ul>
+</div>
+
+
+  <script>
+    document.getElementById("toggleFormBtn").addEventListener("click", () => {
+      const form = document.getElementById("contactForm");
+      form.style.display = form.style.display === "none" ? "block" : "none";
+    });
+
+    document.getElementById("contactForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      alert("Tack för ditt meddelande! Vi kontaktar dig snart.");
+      e.target.reset();
+    });
+  </script>
+
+</body>
+</html>

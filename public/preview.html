@@ -1,0 +1,68 @@
+<!-- public/preview.html -->
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Förhandsvisning</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    img {
+      max-width: 90%;
+      max-height: 80vh;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+    button {
+      margin-top: 2rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #ffffff;
+      color: #000000;
+      cursor: pointer;
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <img id="previewImg" src="" alt="Förhandsgranskning" />
+  <button id="saveBtn">Spara som PDF</button>
+
+ <script> 
+  const urlParams = new URLSearchParams(window.location.search);
+  const imageUrl = urlParams.get('imageUrl'); // ✅ rätt parameter
+
+  const img = document.getElementById("previewImg");
+  img.src = imageUrl;
+
+  document.getElementById("saveBtn").addEventListener("click", async () => {
+    try {
+      const response = await fetch(`/api/ai-marknadsstudio/pdf?imageUrl=${encodeURIComponent(imageUrl)}`); // ✅ rätt parameter
+      if (!response.ok) throw new Error("Kunde inte hämta PDF.");
+
+      const blob = await response.blob();
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      link.download = "poster.pdf";
+      link.click();
+    } catch (error) {
+      console.error("Fel vid PDF-nedladdning:", error);
+      alert("Något gick fel när PDF skulle sparas.");
+    }
+  });
+</script>
+
+</body>
+</html>

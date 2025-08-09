@@ -19,6 +19,8 @@
       <li><a href="metaads.html"><i class="fab fa-facebook"></i> Meta Ads</a></li>
       <li><a href="tiktokads.html"><i class="fab fa-tiktok"></i> TikTok Ads</a></li>
     <li><a href="linkedin.html" class="active"><i class="fab fa-linkedin"></i> LinkedIn Ads</a></li>
+    <li><a href="aimarknadsstudio.html"><i class="fas fa-magic"></i> AI Studio</a></li>
+    <li><a href="radgivning.html"><i class="fas fa-headset"></i> Rådgivning</a></li>
      </ul>
     <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
   </div>
@@ -27,7 +29,7 @@
   <div class="main-content">
     <a href="marknadsföring.html" class="back-link">&larr; Tillbaka</a>
     <form id="stepForm">
-      <div class="progress-text" id="progressText">Steg 1 av 6</div>
+      <div class="progress-text" id="progressText">Steg 1 av 7</div>
       <div class="progress-container">
         <div class="progress-bar" id="progressBar"></div>
       </div>
@@ -102,75 +104,84 @@
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      let currentStep = 0;
-      const steps = document.querySelectorAll(".form-step");
-      const progressText = document.getElementById("progressText");
+document.addEventListener("DOMContentLoaded", () => {
+  let currentStep = 0;
+  const steps = document.querySelectorAll(".form-step");
+  const progressText = document.getElementById("progressText");
 
-      function updateProgressBar() {
-        const totalSteps = steps.length - 1;
-        const percentage = Math.min((currentStep / totalSteps) * 100, 100);
-        document.getElementById("progressBar").style.width = percentage + "%";
-        progressText.textContent = `Steg ${Math.min(currentStep + 1, totalSteps)} av ${totalSteps}`;
-      }
+  function updateProgressBar() {
+    const totalSteps = steps.length - 1; // exkludera tack-sidan
+    const percentage = (currentStep / totalSteps) * 100;
+    document.getElementById("progressBar").style.width = percentage + "%";
+    progressText.textContent = `Steg ${currentStep + 1} av ${totalSteps}`;
+  }
 
-      function nextStep() {
-        const current = steps[currentStep];
-        const inputs = current.querySelectorAll("input, textarea");
+  function nextStep() {
+    const current = steps[currentStep];
+    const inputs = current.querySelectorAll("input, textarea");
 
-        for (const input of inputs) {
-          if (input.type === "radio") {
-            const name = input.name;
-            const group = current.querySelectorAll(`input[name="${name}"]`);
-            if (![...group].some(i => i.checked)) {
-              alert("Välj ett alternativ innan du går vidare.");
-              return;
-            }
-          } else if (input.tagName === "TEXTAREA" && input.required && input.value.trim() === "") {
-            alert("Fyll i ett svar innan du går vidare.");
-            return;
-          }
+    for (const input of inputs) {
+      if (input.type === "radio") {
+        const name = input.name;
+        const group = current.querySelectorAll(`input[name="${name}"]`);
+        if (![...group].some(i => i.checked)) {
+          alert("Välj ett alternativ innan du går vidare.");
+          return;
         }
-
-        steps[currentStep].classList.remove("active");
-        currentStep++;
-        if (steps[currentStep]) {
-          steps[currentStep].classList.add("active");
-          updateProgressBar();
-        }
+      } else if (input.tagName === "TEXTAREA" && input.required && input.value.trim() === "") {
+        alert("Fyll i ett svar innan du går vidare.");
+        return;
       }
+    }
 
-      document.getElementById("stepForm").addEventListener("submit", function (e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData.entries());
-
-        fetch("/api/linkedin-ads", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        })
-        .then(res => {
-          if (!res.ok) throw new Error("Något gick fel vid skick till servern.");
-          return res.json();
-        })
-        .then(() => {
-          steps[currentStep].classList.remove("active");
-          currentStep++;
-          if (steps[currentStep]) {
-            steps[currentStep].classList.add("active");
-            updateProgressBar();
-          }
-        })
-        .catch(err => {
-          console.error("Fel:", err);
-          alert("❌ Kunde inte skicka in formuläret. Försök igen.");
-        });
-      });
-
-      window.nextStep = nextStep;
+    steps[currentStep].classList.remove("active");
+    currentStep++;
+    if (steps[currentStep]) {
+      steps[currentStep].classList.add("active");
       updateProgressBar();
+    }
+  }
+
+  function prevStep() {
+    if (currentStep > 0) {
+      steps[currentStep].classList.remove("active");
+      currentStep--;
+      steps[currentStep].classList.add("active");
+      updateProgressBar();
+    }
+  }
+
+  document.getElementById("stepForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+
+    fetch("/api/ads/linkedin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("Något gick fel vid skick till servern.");
+      return res.json();
+    })
+    .then(() => {
+      steps[currentStep].classList.remove("active");
+      currentStep++;
+      steps[currentStep].classList.add("active"); // visa tack-sidan
+      updateProgressBar();
+    })
+    .catch(err => {
+      console.error("Fel:", err);
+      alert("❌ Kunde inte skicka in formuläret. Försök igen.");
     });
-  </script>
+  });
+
+  window.nextStep = nextStep;
+  window.prevStep = prevStep;
+
+  updateProgressBar();
+});
+</script>
 </body>
 </html>

@@ -18,6 +18,8 @@
     <li class="active"><a href="metaads.html"><i class="fab fa-facebook"></i> Meta Ads</a></li>
     <li><a href="tiktokads.html"><i class="fab fa-tiktok"></i> TikTok Ads</a></li>
     <li><a href="linkedin.html"><i class="fab fa-linkedin"></i> Linkedin Ads</a></li>
+    <li><a href="aimarknadsstudio.html"><i class="fas fa-magic"></i> AI Studio</a></li>
+    <li><a href="radgivning.html"><i class="fas fa-headset"></i> Rådgivning</a></li>
   </ul>
   <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
 </div>
@@ -104,7 +106,7 @@
 <!-- STEG 6 -->
 <div class="form-step">
   <h2>6. Beskriv kort din verksamhet:</h2>
-  <textarea name="verksamhet" required></textarea>
+  <textarea name="verksamhet" required placeholder="T.ex. Vi säljer ekologiska hudvårdsprodukter för känslig hy."></textarea>
   <div class="form-buttons">
     <button type="button" onclick="prevStep()">Föregående</button>
     <button type="button" onclick="nextStep()">Nästa</button>
@@ -114,7 +116,7 @@
 <!-- STEG 7 -->
 <div class="form-step">
   <h2>7. Vad vill du att AI:n ska förmedla i din annons?</h2>
-  <textarea name="budskap" required></textarea>
+  <textarea name="budskap" required placeholder="T.ex. Visa att vi är ett hållbart alternativ med snabb leverans."></textarea>
   <div class="form-buttons">
     <button type="button" onclick="prevStep()">Föregående</button>
     <button type="submit">Skicka in</button>
@@ -122,9 +124,14 @@
 </div>
 
 
+     <!-- Tack -->
       <div class="form-step" id="thankYouStep">
         <h2>Tack för din förfrågan! 🎉</h2>
-        <p>Dina svar har skickats till AI:n för bearbetning och kampanjskiss.</p>
+        <p style="margin-top: 16px; font-size: 16px; line-height: 1.6; text-align: center;">
+          Din kampanjinfo har skickats till våra experter.<br />
+          Vi återkommer med ett Meta-förslag inom kort.<br />
+          Du hittar förfrågan under <strong>Analyser</strong>.
+        </p>
       </div>
     </form>
   </div>
@@ -172,7 +179,7 @@ window.prevStep = prevStep;
         e.preventDefault();
         const data = Object.fromEntries(new FormData(this).entries());
 
-        fetch("/api/meta-ads", {
+        fetch("/api/ads/meta", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)

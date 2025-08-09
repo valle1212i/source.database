@@ -6,6 +6,7 @@
   <title>AI Marknadsstudio</title>
   <link rel="stylesheet" href="css/aimarknadsstudio.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="icon" href="images/favicon.png" type="image/png" />
 </head>
 <body>
 
@@ -21,6 +22,7 @@
       <li><a href="tiktokads.html"><i class="fab fa-tiktok"></i> TikTok Ads</a></li>
       <li><a href="linkedin.html"><i class="fab fa-linkedin"></i> LinkedIn Ads</a></li>
       <li><a href="ai-marknadsstudio.html" class="active"><i class="fas fa-magic"></i> AI Studio</a></li>
+      <li><a href="radgivning.html"><i class="fas fa-headset"></i> Rådgivning</a></li>
     </ul>
     <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
   </div>
@@ -28,16 +30,37 @@
   <!-- INNEHÅLL -->
   <div class="main-content">
     <h1 class="page-title">🎨 AI Marknadsstudio</h1>
-    <p class="subtitle">Skapa affischer, annonser eller videos med hjälp av AI. Ladda upp en bild eller skriv en beskrivning så skapar vi något unikt för dig.</p>
+    <p class="subtitle">
+      Skapa affischer, annonser eller videos med hjälp av AI.<br />
+      Ladda upp en bild eller skriv en beskrivning – vi skapar något unikt för dig.
+    </p>
 
-    <form id="studioForm" enctype="multipart/form-data">
-      <label for="prompt">Beskrivning (valfri):</label>
-      <textarea id="prompt" name="prompt" placeholder="Ex: Skapa en modern affisch för en sommarkampanj..." rows="4"></textarea>
+    <form id="studioForm" enctype="multipart/form-data" class="studio-form">
+      <!-- Progressbar -->
+      <div id="loadingBar" class="loading-bar" style="display: none;">
+        <div class="loading-progress"></div>
+      </div>
 
-      <label for="image">Ladda upp en bild (valfri):</label>
-      <input type="file" id="image" name="image" accept="image/*" />
+      <!-- Beskrivning -->
+      <label for="prompt">Beskrivning <span class="optional">(valfri)</span></label>
+      <textarea
+        id="prompt"
+        name="prompt"
+        placeholder="Ex: Skapa en modern affisch för en sommarkampanj..."
+        rows="4"
+      ></textarea>
 
-      <button type="submit">Starta AI-studion</button>
+      <!-- Dra och släpp område -->
+      <label for="image">Ladda upp en bild <span class="optional">(valfri)</span></label>
+      <div class="drop-zone" id="dropZone">
+        <p><i class="fas fa-cloud-upload-alt"></i> Släpp en bild här eller klicka för att välja</p>
+        <input type="file" id="image" name="image" accept="image/*" />
+      </div>
+
+      <!-- Startknapp -->
+      <button type="submit" class="ai-button">
+        <i class="fas fa-rocket"></i> Starta AI-studion
+      </button>
     </form>
 
     <div id="result" class="result-area">
@@ -45,38 +68,80 @@
     </div>
   </div>
 
-  <!-- SCRIPT -->
   <script>
-    document.getElementById("studioForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
+  const form = document.getElementById("studioForm");
+  const resultArea = document.getElementById("result");
+  const loadingBar = document.getElementById("loadingBar");
+  const dropZone = document.getElementById("dropZone");
+  const fileInput = document.getElementById("image");
 
-      const resultArea = document.getElementById("result");
-      resultArea.innerHTML = "🧠 Bearbetar...";
+  dropZone.addEventListener("click", () => fileInput.click());
+  dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropZone.classList.add("dragover");
+  });
+  dropZone.addEventListener("dragleave", () => {
+    dropZone.classList.remove("dragover");
+  });
+  dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropZone.classList.remove("dragover");
+    fileInput.files = e.dataTransfer.files;
+  });
 
-      const formData = new FormData(this);
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    loadingBar.style.display = "block";
 
-      try {
-        const response = await fetch("/api/ai-marknadsstudio", {
-          method: "POST",
-          body: formData
-        });
+    const description = document.getElementById("prompt").value;
+    const imageFile = fileInput.files[0];
+    const formData = new FormData();
+    formData.append("description", description);
+    if (imageFile) {
+      formData.append("image", imageFile);
+    }
 
-        if (!response.ok) throw new Error("Fel vid kommunikation med AI-servern.");
+    try {
+      const response = await fetch("/api/ai-marknadsstudio", {
+        method: "POST",
+        body: formData,
+      });
 
-        const data = await response.json();
+      loadingBar.style.display = "none";
 
-        if (data.imageUrl) {
-          resultArea.innerHTML = `<img src="${data.imageUrl}" alt="AI-resultat" class="ai-result" />`;
-        } else if (data.message) {
-          resultArea.innerHTML = `<p>${data.message}</p>`;
-        } else {
-          resultArea.innerHTML = "❗ Inget resultat kunde genereras.";
+      if (!response.ok) throw new Error("Fel vid kommunikation med AI-servern.");
+      const data = await response.json();
+
+      if (data.imageUrl) {
+        const card = document.createElement("div");
+        card.className = "ai-result-card";
+
+        const img = document.createElement("img");
+        img.src = data.imageUrl;
+        img.alt = "AI-resultat";
+        img.className = "ai-result-img";
+        img.addEventListener("click", () => {
+  window.open(`/preview.html?imageUrl=${encodeURIComponent(data.imageUrl)}`, "_blank");
+});
+
+        card.appendChild(img);
+        resultArea.prepend(card);
+
+        const cards = resultArea.querySelectorAll(".ai-result-card");
+        if (cards.length > 3) {
+          cards[3].remove();
         }
-      } catch (err) {
-        console.error(err);
-        resultArea.innerHTML = "❌ Något gick fel. Försök igen.";
+      } else if (data.message) {
+        resultArea.innerHTML = `<p>${data.message}</p>`;
+      } else {
+        resultArea.innerHTML = "❗ Inget resultat kunde genereras.";
       }
-    });
+    } catch (err) {
+      loadingBar.style.display = "none";
+      console.error(err);
+      resultArea.innerHTML = "❌ Något gick fel. Försök igen.";
+    }
+  });
   </script>
 
 </body>

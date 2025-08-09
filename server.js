@@ -250,6 +250,7 @@ app.use('/api/customers', require('./routes/customers'));
 app.use("/api/security", require("./routes/security"));
 app.use("/api/pageviews", require("./routes/pageviews"));
 app.use("/api/pageviews", require("./routes/trackRoutes"));
+app.use('/api/ai-marknadsstudio', require('./routes/aiMarknadsstudio'));
 
 // 🚀 Starta servern
 const PORT = process.env.PORT || 3000;
