@@ -102,4 +102,6 @@ const customerSchema = new mongoose.Schema({
   }
 });
 
+customerSchema.index({ groupId: 1, role: 1 }, { unique: true, partialFilterExpression: { role: 'admin' } });
+
 module.exports = mongoose.model('Customer', customerSchema);

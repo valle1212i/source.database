@@ -11,6 +11,8 @@ const bcrypt = require('bcrypt');
 const Customer = require('./models/Customer');
 const multer = require('multer');
 const fs = require('fs');
+const inviteRoutes = require('./routes/inviteRoutes');
+const insightsRoutes = require('./routes/insights');
 
 dotenv.config();
 const app = express();
@@ -303,8 +305,8 @@ app.use('/api/customers', require('./routes/customers'));
 app.use("/api/security", securityRouter);
 app.use("/api/pageviews", require("./routes/pageviews"));
 app.use("/api/pageviews", require("./routes/trackRoutes"));
-const insightsRoutes = require('./routes/insights');
 app.use('/api/insights', insightsRoutes);
+app.use('/api/invites', inviteRoutes);
 
 
 

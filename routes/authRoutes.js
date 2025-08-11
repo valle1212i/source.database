@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 
 // 📝 Registrera ny användare
 router.post('/register', async (req, res) => {
+  return res.status(403).json({ success: false, message: 'Registrering är avstängd. Använd inbjudningslänk.' });
   const { name, email, password } = req.body;
   try {
     const existingUser = await Customer.findOne({ email });
