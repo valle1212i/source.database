@@ -1,4 +1,3 @@
 // middleware/requireAuth.js
-module.exports = (req, res, next) => {
-  next(); // gör ingenting
-};
+// Återanvänd central autentisering för konsekvent skydd
+module.exports = require('./authenticate');

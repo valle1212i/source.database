@@ -13,16 +13,26 @@ const multer = require('multer');
 const fs = require('fs');
 const inviteRoutes = require('./routes/inviteRoutes');
 const insightsRoutes = require('./routes/insights');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const csrf = require('csurf');
+const cookieParser = require('cookie-parser');
+
 
 dotenv.config();
 const app = express();
 app.set('trust proxy', 1); // ⬅️ KRÄVS på Render för att secure cookies ska funka
 const http = require('http').createServer(app);
 
+// CSRF-skydd via cookies
+const csrfProtection = csrf({ cookie: true });
+
+
+
 // 🖼️ Profilbild-lagring
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, 'public', 'uploads');
+    const uploadPath = path.join(__dirname, 'uploads');
     if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);
   },
@@ -32,7 +42,18 @@ const storage = multer.diskStorage({
     cb(null, uniqueName);
   }
 });
-const upload = multer({ storage });
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Max 5 MB
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/jfif'];
+    if (allowedMimes.includes(file.mimetype.toLowerCase())) {
+      cb(null, true);
+    } else {
+      cb(new Error('Ogiltig filtyp. Endast bilder tillåtna.'));
+    }
+  }
+});
 
 // 🌍 CORS – tillåtna domäner
 const allowedOrigins = [
@@ -73,8 +94,58 @@ app.use(session({
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+  }));
+  // Grundläggande Content Security Policy i report-only-läge
+app.use(helmet.contentSecurityPolicy({
+  useDefaults: true,
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "https://apis.google.com", "https://cdn.jsdelivr.net"],
+    styleSrc: ["'self'", "https://fonts.googleapis.com"],
+    fontSrc: ["'self'", "https://fonts.gstatic.com"],
+    imgSrc: ["'self'", "data:", "https://*"],
+    connectSrc: ["'self'"],
+    objectSrc: ["'none'"],
+    upgradeInsecureRequests: [],
+  },
+  reportOnly: true
+  }));
+app.use(helmet.referrerPolicy({ policy: 'no-referrer' })); // läck inte referers
+  if (process.env.NODE_ENV === 'production') {
+  app.use(helmet.hsts({ maxAge: 15552000 })); // ~180 dagar, endast i prod/HTTPS
+  }
+
+  const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,      // 15 minuter
+  max: 10,                       // max 10 försök/IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'För många inloggningsförsök. Försök igen senare.' }
+});
 
 const { router: securityRouter, requireAuth } = require("./routes/security");
+
+// Efter cookieParser
+app.use(cookieParser());
+
+// Aktivera CSRF-skydd (måste ligga efter cookieParser och före routes)
+app.use(csrfProtection);
+
+// Ge klienten ett sätt att hämta token
+app.get('/csrf-token', (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
+// Fångar ogiltig/saknad CSRF-token
+app.use((err, req, res, next) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    return res.status(403).json({ success: false, message: 'Ogiltig eller saknad CSRF-token' });
+  }
+  next(err);
+});
 
 // 🧭 Routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
@@ -157,7 +228,7 @@ function requireLogin(req, res, next) {
 }
 
 // 🔐 Inloggning
-app.post('/login', async (req, res) => {
+app.post('/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await Customer.findOne({ email });
@@ -189,17 +260,6 @@ app.post('/login', async (req, res) => {
   }
 });
 
-
-// 🚪 Utloggning
-app.get('/logout', (req, res) => {
-  req.session.destroy(err => {
-    if (err) return res.status(500).json({ success: false, message: "Kunde inte logga ut." });
-    res.clearCookie('connect.sid');
-    res.json({ success: true });
-  });
-});
-
-
 // 📦 Dummy-inventarielager
 let inventory = {
   TS1001: { name: "Vit T-shirt", stock: 0 },
@@ -229,6 +289,21 @@ app.post("/api/inventory/return", (req, res) => {
   res.json({ success: true, productId, stock: product.stock });
 });
 
+// Säker leverans av uppladdade bilder
+const ALLOWED_IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.jfif']);
+app.get('/uploads/:filename', requireLogin, (req, res) => {
+  const filename = path.basename(req.params.filename);
+  const ext = path.extname(filename).toLowerCase();
+  if (!ALLOWED_IMAGE_EXT.has(ext)) return res.status(400).send('Ogiltig filtyp');
+
+  const filePath = path.join(__dirname, 'uploads', filename);
+  if (!fs.existsSync(filePath)) return res.status(404).send('Filen finns inte');
+
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.type(filename);
+  res.sendFile(filePath);
+});
+
 // 📤 Uppdatera profil
 app.post("/api/profile/update", upload.single("profilePic"), async (req, res) => {
   const { name, email, password, language, removeImage } = req.body;
@@ -241,13 +316,34 @@ app.post("/api/profile/update", upload.single("profilePic"), async (req, res) =>
     if (name) user.name = name;
     if (email) user.email = email;
     if (language) user.settings.language = language;
-    if (password) user.password = await bcrypt.hash(password, 10);
-    if (removeImage === "true" && user.profileImage) {
-      const oldPath = path.join(__dirname, 'public', user.profileImage);
-      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-      user.profileImage = undefined;
+        if (password) {
+      const isValid = typeof password === 'string'
+        && password.length >= 8
+        && /[A-Z]/.test(password)     // minst en stor bokstav
+        && /[a-z]/.test(password)     // minst en liten bokstav
+        && /\d/.test(password)        // minst en siffra
+        && /[^A-Za-z0-9]/.test(password); // minst ett specialtecken
+
+      if (!isValid) {
+        return res.status(400).json({
+          success: false,
+          message: "Lösenordet måste vara minst 8 tecken och innehålla stora och små bokstäver, siffror och specialtecken."
+        });
+      }
+
+      user.password = await bcrypt.hash(password, 10);
     }
+    if (removeImage === "true" && user.profileImage) {
+    // Stöder både "/uploads/fil.png" och "fil.png"
+      const filename = path.basename(user.profileImage);
+      const oldPath = path.join(__dirname, 'uploads', filename);
+    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      user.profileImage = undefined;
+}
+    // Behåll lagrat värde som "/uploads/<fil>" för kompatibilitet.
+    // Vi serverar detta via en kontrollerad GET-route i nästa steg.
     if (req.file) user.profileImage = '/uploads/' + req.file.filename;
+
     const updatedUser = await user.save();
     req.session.user = updatedUser;
     res.json({ success: true, user: updatedUser });

@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const Message = require('../models/Message');
 const Customer = require('../models/Customer');
-const authenticate = require('../middleware/authenticate');
+const requireAuth = require('../middleware/requireAuth');
 
+router.get('/latest', requireAuth, async (req, res) => {
+  if (req.session.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Åtkomst nekad' });
+  }
 
-
-
-// Hämta senaste meddelandet per kund
-router.get('/latest', async (req, res) => {
   try {
     const messages = await Message.aggregate([
       { $sort: { timestamp: -1 } },

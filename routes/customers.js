@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Customer = require('../models/Customer');
+const requireAuth = require('../middleware/requireAuth');
 
 // 🔐 GET /api/customers/me – Hämta nuvarande inloggade kund
 router.get('/me', async (req, res) => {
@@ -20,7 +21,10 @@ router.get('/me', async (req, res) => {
 });
 
 // 💾 PUT /api/customers/marketing/:platform – Spara formulärsvar för t.ex. Google Ads
-router.put('/marketing/:platform', async (req, res) => {
+router.put('/:id/marketing', requireAuth, async (req, res) => {
+  if (req.session.user?.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Åtkomst nekad' });
+  }
   if (!req.session.user || !req.session.user.email) {
     return res.status(401).json({ error: "Inte inloggad" });
   }

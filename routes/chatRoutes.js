@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const OpenAI = require("openai");
 const Customer = require("../models/Customer");
 const Message = require("../models/Message");
+const requireAuth = require('../middleware/requireAuth');
 
 dotenv.config();
 const router = express.Router();
@@ -66,11 +67,13 @@ Profilinfo:
 
 
 // ✉️ POST /api/chat — Spara meddelande
-router.post("/", async (req, res) => {
+router.post("/", requireAuth, async (req, res) => {
   const { message, sender = "customer", sessionId, customerId } = req.body;
-  const user = req.session?.user;
+  const user = req.session.user;
+  const isAdmin = user?.role === 'admin';
 
-  const finalCustomerId = customerId || user?._id;
+  // Endast admin får ange customerId; övriga tvingas till sitt eget
+  const finalCustomerId = isAdmin ? (customerId || user._id) : user._id;
 
   if (!finalCustomerId || !message || !sender || !sessionId) {
     return res.status(400).json({ error: "Saknar obligatorisk data" });
@@ -93,7 +96,8 @@ router.post("/", async (req, res) => {
 });
 
 // 💬 GET /api/chat/customer/me?sessionId=
-router.get("/customer/me", async (req, res) => {
+router.get("/customer/me", requireAuth, async (req, res) => {
+  
   const user = req.session?.user;
   const sessionId = req.query.sessionId;
 
@@ -104,7 +108,12 @@ router.get("/customer/me", async (req, res) => {
 
   try {
     const messages = await Message.find(query).sort({ timestamp: 1 });
-    res.json(messages);
+    res.json(messages.map(m => ({
+  message: m.message,
+  sender: m.sender,
+  timestamp: m.timestamp,
+  sessionId: m.sessionId
+})));
   } catch (err) {
     console.error("❌ Kunde inte hämta meddelanden:", err);
     res.status(500).json({ error: "Serverfel vid hämtning" });
@@ -112,20 +121,30 @@ router.get("/customer/me", async (req, res) => {
 });
 
 // 🧾 GET /api/chat/customer/:id?sessionId=
-router.get("/customer/:id", async (req, res) => {
+router.get("/customer/:id", requireAuth, async (req, res) => {
+  const isAdmin = req.session.user?.role === 'admin';
+  const isOwner = req.session.user?._id?.toString() === req.params.id;
+  if (!isAdmin && !isOwner) {
+    return res.status(403).json({ error: 'Åtkomst nekad' });
+  }
   const { id } = req.params;
   const { sessionId } = req.query;
 
   const query = { customerId: id };
   if (sessionId) query.sessionId = sessionId;
 
-  try {
-    const messages = await Message.find(query).sort({ timestamp: 1 });
-    res.json(messages);
-  } catch (err) {
-    console.error("❌ Kunde inte hämta meddelanden:", err);
-    res.status(500).json({ error: "Fel vid meddelandehämtning" });
-  }
+try {
+  const messages = await Message.find(query).sort({ timestamp: 1 });
+  res.json(messages.map(m => ({
+    message: m.message,
+    sender: m.sender,
+    timestamp: m.timestamp,
+    sessionId: m.sessionId
+  })));
+} catch (err) {
+  console.error("❌ Kunde inte hämta meddelanden:", err);
+  res.status(500).json({ error: "Fel vid meddelandehämtning" });
+}
 });
 
 // 🙋‍♀️ GET /api/chat/me — Returnera kundobjekt
@@ -138,7 +157,12 @@ router.get("/me", async (req, res) => {
     const customer = await Customer.findOne({ email: user.email });
     if (!customer) return res.status(404).json({ error: "Kund hittades inte" });
 
-    res.json(customer);
+    res.json({
+  _id: customer._id,
+  name: customer.name,
+  email: customer.email,
+  profileImage: customer.profileImage
+});
   } catch (err) {
     console.error("❌ Fel vid kundhämtning:", err);
     res.status(500).json({ error: "Serverfel vid kundhämtning" });

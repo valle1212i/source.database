@@ -3,6 +3,8 @@ const router = express.Router();
 const Pageview = require("../models/PageView");
 const Customer = require("../models/Customer");
 const { URL } = require("url");
+const requireAuth = require('../middleware/requireAuth');
+
 
 router.post("/track", async (req, res) => {
   try {
