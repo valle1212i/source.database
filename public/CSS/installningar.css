@@ -566,3 +566,76 @@ body.theme-dark .login-row {
   background-color: #1f1f1f;
 }
 
+/* === Modal overlay (bakgrund) === */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: none; /* dold tills man klickar på knappen */
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+/* === Själva modalrutan === */
+.modal {
+  background: #fff;
+  padding: 24px 32px;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+/* === Stängknapp (X) === */
+.close-modal {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #555;
+  cursor: pointer;
+}
+
+/* === Fält & knappar === */
+.modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.modal label {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.modal input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* === Inbjudningsknapp-stil (utanför modalen) === */
+.invite-user-btn {
+  margin-top: 16px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.invite-user-btn:hover {
+  background-color: #2563eb;
+}

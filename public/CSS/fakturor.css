@@ -366,9 +366,27 @@ body.dark-theme .tab.active {
 /* ====== RESPONSIVE ====== */
 @media (max-width: 768px) {
   .sidebar {
-    position: relative;
-    width: 100%;
-    height: auto;
+    display: block;
+    position: fixed;
+    top: 0;
+    left: -240px;
+    width: 240px;
+    height: 100%;
+    background-color: #111827;
+    color: white;
+    transition: left 0.3s ease, opacity 0.3s ease;
+    z-index: 998;
+
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sidebar.active {
+    left: 0;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .main {
@@ -376,14 +394,43 @@ body.dark-theme .tab.active {
     padding: 20px;
   }
 
-  .invoice-table th,
-  .invoice-table td {
-    padding: 12px;
-    font-size: 14px;
+  body.menu-open .hamburger-menu {
+    color: white;
+  }
+}
+
+/* ===== HAMBURGER-MENY & MOBILSIDOPANEL ===== */
+
+/* Döljs på desktop */
+.hamburger-menu {
+  display: none;
+}
+
+/* Syns bara på mobilskärmar */
+@media (max-width: 768px) {
+  .hamburger-menu {
+    display: block;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    font-size: 28px;
+    background: none;
+    border: none;
+    color: #1f2937;
+    cursor: pointer;
   }
 
-  .tab {
-    padding: 8px 14px;
-    font-size: 14px;
+  .main h1,
+  .main h2 {
+    margin-left: 0px; /* justeras endast om behövs – håll default för nu */
+  }
+
+  .main .header {
+  margin-left: 48px;
+}
+
+  body.menu-open .hamburger-menu {
+    color: white;
   }
 }

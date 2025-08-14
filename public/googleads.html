@@ -183,11 +183,12 @@
       const formData = new FormData(this);
       const data = Object.fromEntries(formData.entries());
 
-      fetch("/api/ads/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      })
+      fetch("/api/customers/marketing/google", {
+  method: "PUT",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ answers: data })  // skickar alla frågesvar i ett objekt
+})
+
       .then(res => {
         if (!res.ok) throw new Error("Något gick fel vid skick till servern.");
         return res.json();

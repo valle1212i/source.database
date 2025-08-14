@@ -4,13 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kundportal - Utbetalningsrapporter</title>
-  <link rel="stylesheet" href="CSS/betalningar.css" />
+  <link rel="stylesheet" href="CSS/rapporter.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
   />
 </head>
+<body>
  <div class="sidebar">
   <div class="logo">
     <a href="customerportal.html">
@@ -18,33 +19,16 @@
     </a>
   </div>
  <ul class="nav-menu">
-  <li>
-    <a href="customerportal.html"><i class="fas fa-home"></i> Hem</a>
-  </li>
-  <li>
-    <a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a>
-  </li>
-  <li>
-    <a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a>
-  </li>
-  <li class="active">
-    <a href="rapporter.html" class="active"><i class="fas fa-chart-line"></i> Rapporter</a>
-  </li>
-  <li>
-    <a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a>
-  </li>
-  <li>
-    <a href="kunder.html"><i class="fas fa-users"></i> Kunder</a>
-  </li>
-  <li>
-    <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a>
-  </li>
-  <li>
-    <a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a>
-  </li>
-  <li>
-    <a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a>
-  </li>
+  <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+  <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+  <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+  <li class="active"><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+  <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+  <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+  <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+  <li><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+  <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+  <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
 </ul>
   <div class="help">
     <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
@@ -63,7 +47,10 @@
   </div>
 </div>
 
-    <div class="header">Utbetalningsrapporter</div>
+    <!-- Hamburgermeny för mobil -->
+<button class="hamburger-menu" onclick="toggleSidebar()">☰</button>
+
+<h2 class="page-title">Utbetalningsrapporter</h2>
     <a href="customerportal.html" class="back-button">← Tillbaka till översikt</a>
     <p class="info-text">Här visas senaste genomförda utbetalningar.</p>
 
@@ -271,6 +258,22 @@
   }
 
   loadUserProfile();
+</script>
+<script>
+  function toggleSidebar() {
+    const sidebar = document.querySelector(".sidebar");
+    const isActive = sidebar.classList.contains("active");
+
+    sidebar.classList.toggle("active", !isActive);
+    document.body.classList.toggle("menu-open", !isActive);
+  }
+</script>
+<script>
+  // Hantera hamburgermeny-klick
+  document.getElementById("hamburgerBtn").addEventListener("click", function () {
+    document.querySelector(".sidebar").classList.toggle("active");
+    document.body.classList.toggle("menu-open");
+  });
 </script>
 </body>
 </html>

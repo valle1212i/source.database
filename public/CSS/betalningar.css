@@ -422,3 +422,62 @@ h1 {
 .back-button:hover {
   text-decoration: underline;
 }
+
+/* ===== HAMBURGER-MENY & MOBILSIDOPANEL ===== */
+
+/* Döljs på desktop */
+.hamburger-menu {
+  display: none;
+}
+
+/* Syns bara på mobilskärmar */
+@media (max-width: 768px) {
+  .hamburger-menu {
+    display: block;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    font-size: 28px;
+    background: none;
+    border: none;
+    color: #1f2937; /* samma blågrå som på inställningar */
+    cursor: pointer;
+  }
+
+  .sidebar {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: -240px;
+    width: 240px;
+    height: 100%;
+    background-color: #111827;
+    color: white;
+    transition: left 0.3s ease, opacity 0.3s ease;
+    z-index: 998;
+
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sidebar.active {
+    left: 0;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .main {
+    margin-left: 0;
+  }
+
+  .main h1 {
+    margin-left: 48px; /* för att undvika att hamna under hamburgermenyn */
+  }
+
+  body.menu-open .hamburger-menu {
+    color: white;
+  }
+}

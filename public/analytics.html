@@ -9,7 +9,10 @@
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 <body>
- <!-- SIDOMENY -->
+ <!-- Hamburgermeny för mobil -->
+<button id="menuToggle" class="hamburger-menu" aria-label="Visa meny" onclick="toggleSidebar()">☰</button>
+
+<!-- SIDOMENY -->
 <div class="sidebar">
   <div class="logo">
     <a href="customerportal.html">
@@ -17,45 +20,25 @@
     </a>
   </div>
   <ul class="nav-menu">
-  <li>
-    <a href="customerportal.html"><i class="fas fa-home"></i> Hem</a>
-  </li>
-  <li>
-    <a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a>
-  </li>
-  <li>
-    <a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a>
-  </li>
-  <li>
-    <a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a>
-  </li>
-  <li>
-    <a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a>
-  </li>
-  <li>
-    <a href="kunder.html"><i class="fas fa-users"></i> Kunder</a>
-  </li>
-  <li class="active">
-    <a href="analytics.html" class="active"><i class="fas fa-chart-pie"></i> Analyser</a>
-  </li>
-     <a href="marknadsföring.html"><i class="fas fa-users"></i> Marknadsföring</a>
-  <li>
-    <a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a>
-  </li>
-  <li>
-    <a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a>
-  </li>
-</ul>
-<div class="help">
-  <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
-</div>
+    <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+    <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+    <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+    <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+    <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+    <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+    <li class="active"><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+    <li><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+    <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+    <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+  </ul>
+  <div class="help">
+    <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
+  </div>
 </div>
 
-  <!-- HUVUDINNEHÅLL -->
-  <main class="main">
-    <div class="profile-wrapper">
+<!-- PROFILMENY -->
+<div class="profile-wrapper">
   <div class="profile-icon" id="profileToggle">--</div>
-
   <div class="profile-dropdown" id="profileMenu">
     <div class="profile-email" id="userEmail">Laddar...</div>
     <hr />
@@ -65,8 +48,12 @@
   </div>
 </div>
 
-    <h1>Analyser & Statistik</h1>
 
+  <!-- HUVUDINNEHÅLL -->
+  <main class="main">
+ <div class="header-row">
+  <h1>Analyser & Statistik</h1>
+</div>
     <div class="chart-row">
       <div class="chart-card">
         <h3>Totala intäkter – Juni</h3>
@@ -287,6 +274,34 @@ new Chart(document.getElementById('bestsellersChart'), {
   }
 
   loadUserProfile();
+</script>
+<script>
+  function toggleSidebar() {
+    const sidebar = document.querySelector(".sidebar");
+    const isActive = sidebar.classList.contains("active");
+
+    // Toggla både sidomenyn och en body-klass (för ikonfärg m.m.)
+    sidebar.classList.toggle("active", !isActive);
+    document.body.classList.toggle("menu-open", !isActive);
+  }
+</script>
+<script>
+  // Stäng menyn om man klickar utanför (bara på mobil)
+  window.addEventListener("click", (e) => {
+    const sidebar = document.querySelector(".sidebar");
+    const menuBtn = document.getElementById("menuToggle");
+    const isMobile = window.innerWidth <= 768;
+
+    if (!isMobile) return;
+
+    const clickInMenu = sidebar.contains(e.target);
+    const clickOnBtn  = menuBtn && menuBtn.contains(e.target);
+
+    if (!clickInMenu && !clickOnBtn) {
+      sidebar.classList.remove("active");
+      document.body.classList.remove("menu-open");
+    }
+  });
 </script>
 </body>
 </html>

@@ -39,6 +39,21 @@
   </div>
 
   <script>
+  // Gör tokenen tillgänglig för login-fetchen
+  window.CSRF_TOKEN = null;
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const res = await fetch('/csrf-token', { credentials: 'include' });
+      const data = await res.json();
+      window.CSRF_TOKEN = data.csrfToken;
+    } catch (e) {
+      console.error('Kunde inte hämta CSRF-token:', e);
+    }
+  });
+</script>
+
+  <script>
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = e.target.email.value;
@@ -52,7 +67,10 @@
       try {
         const res = await fetch(`${baseURL}/login`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "X-CSRF-Token": window.CSRF_TOKEN
+        },
           credentials: "include", // 💡 viktigt för sessions-cookies
           body: JSON.stringify({ email, password })
         });

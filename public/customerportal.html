@@ -15,38 +15,21 @@
       <img src="images/logo.png" alt="Logotyp" class="logo-img" />
     </a>
   </div>
-  <ul class="nav-menu">
-    <li class="active">
-      <a href="customerportal.html"><i class="fas fa-home"></i> Hem</a>
-    </li>
-    <li>
-      <a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a>
-    </li>
-    <li>
-      <a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a>
-    </li>
-    <li>
-      <a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a>
-    </li>
-    <li>
-      <a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a>
-    </li>
-    <li>
-      <a href="kunder.html"><i class="fas fa-users"></i> Kunder</a>
-    </li>
-    <li>
-      <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a>
-    </li>
-    <li>
-      <a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a>
-    </li>
-    <li>
-      <a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a>
-    </li>
-  </ul>
-  <div class="help">
-    <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
-  </div>
+<ul class="nav-menu">
+  <li class="active"><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+  <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+  <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+  <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+  <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+  <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+  <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+  <li><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+  <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+  <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+</ul>
+<div class="help">
+  <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
+</div>
 </div>
 
 <!-- Hamburger-meny (visas bara på små skärmar) -->
@@ -128,30 +111,19 @@
               <th>Status</th>
             </tr>
           </thead>
-          <tbody>
-            <tr><td>#10234</td><td>2025-06-24</td><td>Anna Svensson</td><td>Problem med inloggning</td><td><span class="status-text closed">Avslutat</span></td></tr>
-            <tr><td>#10235</td><td>2025-06-24</td><td>Erik Johansson</td><td>Fakturafråga</td><td><span class="status-text closed">Avslutat</span></td></tr>
-            <tr><td>#10236</td><td>2025-06-25</td><td>Maria Nilsson</td><td>Buggrapport</td><td><span class="status-text progress">Pågående</span></td></tr>
-            <tr><td>#10237</td><td>2025-06-25</td><td>Jonas Berg</td><td>Uppdatering av konto</td><td><span class="status-text closed">Avslutat</span></td></tr>
-          </tbody>
+          <tbody></tbody>
         </table>
       </div>
     </div>
 
-    <!-- AI-förslag -->
-    <div class="card">
-      <h3>AI rekommenderade växningsmöjligheter</h3>
-      <ul class="growth-list">
-        <li>Starta kampanj i ny kanal (t.ex. TikTok)</li>
-        <li>Skapa lojalitetsprogram</li>
-        <li>Optimera nyhetsbrev med segmenterade utskick</li>
-        <li>Förbättra SEO på produktsidor</li>
-        <li>Retargeting-kampanj för övergivna varukorgar</li>
-        <li>Lansera produktbundle-erbjudanden</li>
-        <li>Uppdatera startsidans design</li>
-        <li>Erbjud nya betalningsmetoder (Swish, Klarna)</li>
-      </ul>
-    </div>
+  
+  <!-- AI Insights (ny version) -->
+<div class="card" id="aiInsightsCard">
+  <h3>📈 AI Insights</h3>
+  <div id="aiInsightsContent">Laddar AI-insikter...</div>
+</div>
+
+
 
       <div class="card latest-message">
         <div class="card-header aligned">
@@ -182,7 +154,8 @@
       <div class="card"><h3>Utbetalningar</h3><p>Senaste: 215 000 SEK den 20 juni</p></div>
       <div class="card"><h3>Senaste order</h3><p>Order #1820 - levererad 24 juni</p></div>
 
-      <div class="card"><h3>AI Insights</h3><ul><li>Optimera onboardingflöde</li><li>Förbättra e-postkampanjer</li><li>Identifiera kundbortfall</li></ul></div>
+      
+      
       <div class="card"><h3>Kommande möten</h3><p>Nästa möte: 27 juni kl. 14:00</p><p>Möte med marknadsteamet</p></div>
 
       <div class="card live-chat dark">
@@ -266,9 +239,20 @@
             }
           },
           scales: {
-            x: { display: false },
+            x: {
+              ticks: {
+                color: "#6b7280",  // Tailwind text-gray-500
+                maxRotation: 0,
+                autoSkip: true,
+                callback: function (val, index, ticks) {
+                  const label = this.getLabelForValue(val);
+                  return label; // redan formaterat som "Tis 29 juli"
+                }
+              },
+              grid: { display: false }
+            },
             y: { display: false }
-          }
+        }
         }
       });
     } catch (err) {
@@ -344,19 +328,86 @@ typeParagraph();
 <script>
 window.customerId = null;
 
-  async function fetchCustomerId() {
-    try {
-      const res = await fetch("/api/profile/me", { credentials: "include" });
-      if (!res.ok) throw new Error("Ej inloggad");
-      const data = await res.json();
-      window.customerId = data._id || null;
-      console.log("🆔 Kund-ID:", window.customerId);
-    } catch (err) {
-      console.warn("❌ Kunde inte hämta kund-ID:", err.message);
-    }
-  }
+async function fetchCustomerId() {
+  try {
+    const res = await fetch("/api/profile/me", { credentials: "include" });
+    const data = await res.json();
+    console.log("👤 /api/profile/me svar:", data); // DEBUG
 
-  window.addEventListener("DOMContentLoaded", fetchCustomerId);
+    if (!res.ok || !data.success || !data._id) {
+      console.warn("❌ Kunde inte hämta kund-ID");
+      window.customerId = null;
+      return null;
+    }
+
+    window.customerId = data._id;
+    return data._id;
+  } catch (err) {
+    console.warn("❌ Kunde inte hämta kund-ID:", err.message);
+    window.customerId = null;
+    return null;
+  }
+}
+
+
+  async function loadSupportHistory() {
+  try {
+    const res = await fetch("/api/profile/me", { credentials: "include" });
+    const data = await res.json();
+
+    const tbody = document.querySelector(".support-table tbody");
+    if (!tbody) return;
+
+    const history = data.supportHistory || [];
+
+    if (history.length === 0) {
+      tbody.innerHTML = `
+        <tr><td colspan="5">Inga tidigare ärenden hittades.</td></tr>
+      `;
+      return;
+    }
+
+    // Rensa gammal data
+    tbody.innerHTML = "";
+
+    // Sortera nyast först
+    history.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    for (const item of history) {
+      const tr = document.createElement("tr");
+
+      const formattedDate = new Date(item.date).toLocaleDateString("sv-SE", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      });
+
+      tr.innerHTML = `
+       <td>${item.caseId || "-"}</td>
+        <td>${formattedDate}</td>
+        <td>${data.name || "Okänd"}</td>
+        <td>${item.topic}</td>
+        <td><span class="status-text ${item.status.toLowerCase().replace(/\s/g, '')}">${item.status}</span></td>
+      `;
+
+      tbody.appendChild(tr);
+    }
+  } catch (err) {
+    console.error("❌ Kunde inte hämta supporthistorik:", err);
+  }
+}
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const id = await fetchCustomerId(); // vänta tills ID finns
+  loadSupportHistory();               // kan köras oavsett
+  if (id) {
+    loadAIInsights();                 // körs bara om vi fick ID
+  }
+});
+
+
+
 </script>
 
 <script>
@@ -386,9 +437,6 @@ window.customerId = null;
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/chat.js"></script>
 
-<!-- Andra scripts -->
-<script src="/socket.io/socket.io.js"></script>
-<script src="/js/chat.js"></script>
 
 <!-- Din hamburgermenyfunktion (redan inlagd) -->
 <script>
@@ -529,8 +577,6 @@ window.customerId = null;
   loadUserProfile();
 </script>
 
-<!-- Toast-container (dold tills något visas) -->
-<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
 <script>
   async function fetchPageViewInsights() {
@@ -589,5 +635,71 @@ window.customerId = null;
     console.error("🛑 Kunde inte hitta elementet #salesChart");
   }
 </script>
+<script>
+  async function loadAIInsights() {
+    const container = document.getElementById("aiInsightsContent");
+    if (!window.customerId) {
+      container.textContent = "Kunde inte ladda kunddata.";
+      return;
+    }
+  
+    try {
+      // 1) Försök hämta sparade insikter
+      let res = await fetch(`/api/insights/by-customer/${window.customerId}`, {
+        credentials: "include"
+      });
+      let data = await res.json();
+  
+      // 2) Om det inte finns några: trigga generering och hämta resultatet
+      if (!data?.success || !Array.isArray(data.insights) || data.insights.length === 0) {
+        container.innerHTML = "<p>Genererar AI-insikter…</p>";
+  
+        const genRes = await fetch(`/api/insights/${window.customerId}`, {
+          credentials: "include"
+        });
+        const genData = await genRes.json();
+  
+        if (Array.isArray(genData.insights) && genData.insights.length > 0) {
+          data = { success: true, insights: genData.insights };
+        } else {
+          container.innerHTML = "<p>Inga AI-insikter ännu.</p>";
+          return;
+        }
+      }
+  
+      // 3) Rendera insikter
+      const colors = {
+        "Annonsering": "#E3F2FD",
+        "Konvertering": "#FCE4EC",
+        "Strategi": "#E8F5E9",
+        "Engagemang": "#FFF8E1"
+      };
+  
+      container.innerHTML = "";
+      data.insights.forEach(tip => {
+        const card = document.createElement("div");
+        card.style.border = "1px solid #ccc";
+        card.style.borderRadius = "1rem";
+        card.style.padding = "1rem";
+        card.style.marginBottom = "1rem";
+        card.style.backgroundColor = colors[tip.category] || "#f4f4f4";
+  
+        card.innerHTML = `
+          <h4>${tip.title ?? ""} ${tip.priority ? "🔥" : ""}</h4>
+          <p><strong>Kategori:</strong> ${tip.category ?? "-"}</p>
+          <p><strong>Varför:</strong> ${tip.reason ?? "-"}</p>
+          <p><strong>Åtgärd:</strong> ${tip.action ?? "-"}</p>
+        `;
+        container.appendChild(card);
+      });
+  
+    } catch (err) {
+      console.error("❌ Kunde inte ladda/generera AI-insikter:", err);
+      container.innerHTML = "<p>Fel vid hämtning av insikter.</p>";
+    }
+  }
+  </script>
+  
+
 </body>
 </html>

@@ -11,16 +11,28 @@ const bcrypt = require('bcrypt');
 const Customer = require('./models/Customer');
 const multer = require('multer');
 const fs = require('fs');
+const inviteRoutes = require('./routes/inviteRoutes');
+const insightsRoutes = require('./routes/insights');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const csrf = require('csurf');
+const cookieParser = require('cookie-parser');
+
 
 dotenv.config();
 const app = express();
 app.set('trust proxy', 1); // ⬅️ KRÄVS på Render för att secure cookies ska funka
 const http = require('http').createServer(app);
 
+// CSRF-skydd via cookies
+const csrfProtection = csrf({ cookie: true });
+
+
+
 // 🖼️ Profilbild-lagring
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, 'public', 'uploads');
+    const uploadPath = path.join(__dirname, 'uploads');
     if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);
   },
@@ -30,7 +42,18 @@ const storage = multer.diskStorage({
     cb(null, uniqueName);
   }
 });
-const upload = multer({ storage });
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Max 5 MB
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/jfif'];
+    if (allowedMimes.includes(file.mimetype.toLowerCase())) {
+      cb(null, true);
+    } else {
+      cb(new Error('Ogiltig filtyp. Endast bilder tillåtna.'));
+    }
+  }
+});
 
 // 🌍 CORS – tillåtna domäner
 const allowedOrigins = [
@@ -71,6 +94,76 @@ app.use(session({
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+  }));
+  // Grundläggande Content Security Policy i report-only-läge
+app.use(helmet.contentSecurityPolicy({
+  useDefaults: true,
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "https://apis.google.com", "https://cdn.jsdelivr.net"],
+    styleSrc: ["'self'", "https://fonts.googleapis.com"],
+    fontSrc: ["'self'", "https://fonts.gstatic.com"],
+    imgSrc: ["'self'", "data:", "https://*"],
+    connectSrc: ["'self'"],
+    objectSrc: ["'none'"],
+    upgradeInsecureRequests: [],
+  },
+  reportOnly: true
+  }));
+app.use(helmet.referrerPolicy({ policy: 'no-referrer' })); // läck inte referers
+  if (process.env.NODE_ENV === 'production') {
+  app.use(helmet.hsts({ maxAge: 15552000 })); // ~180 dagar, endast i prod/HTTPS
+  }
+
+  const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,      // 15 minuter
+  max: 10,                       // max 10 försök/IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'För många inloggningsförsök. Försök igen senare.' }
+});
+
+const { router: securityRouter, requireAuth } = require("./routes/security");
+
+// Efter cookieParser
+app.use(cookieParser());
+
+// Aktivera CSRF-skydd (måste ligga efter cookieParser och före routes)
+app.use(csrfProtection);
+
+// Ge klienten ett sätt att hämta token
+app.get('/csrf-token', (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
+// Fångar ogiltig/saknad CSRF-token
+app.use((err, req, res, next) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    return res.status(403).json({ success: false, message: 'Ogiltig eller saknad CSRF-token' });
+  }
+  next(err);
+});
+
+// 🧭 Routes
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/chatwindow.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'chatwindow.html')));
+app.get('/customerportal.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'customerportal.html')));
+app.get('/fakturor.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'fakturor.html')));
+app.get('/rapporter.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'rapporter.html')));
+app.get('/inventarier.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'inventarier.html')));
+app.get('/kontakt.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'kontakt.html')));
+app.get('/kunder.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'kunder.html')));
+app.use('/api/profile', require('./routes/profile'));
+app.get('/admin-logins.html', requireLogin, (req, res) => {
+  const user = req.session?.user;
+  if (!user || user.role !== "admin") return res.status(403).send("Åtkomst nekad");
+  res.sendFile(path.join(__dirname, 'public', 'admin-logins.html'));
+});
+
+
 
 // 🔌 Socket.IO
 const io = require('socket.io')(http, {
@@ -79,12 +172,36 @@ const io = require('socket.io')(http, {
     credentials: true
   }
 });
+const axios = require('axios'); // ⬅️ LÄGG TILL ÖVERST om inte finns
+
 io.on("connection", (socket) => {
   console.log("🟢 En användare anslöt via Socket.IO");
 
+  // 🆕 När ny session startar (efter frågor)
+  socket.on("startSession", (sessionData) => {
+    console.log("🟡 Ny sessionsstart:", sessionData);
+    
+    // Broadcast till alla (inkl. adminportalen)
+    io.emit("newSession", sessionData);
+  });
+
+  // 📨 När kunden skickar meddelande
   socket.on("sendMessage", (msg) => {
     console.log("✉️ Meddelande mottaget:", msg);
-    io.emit("newMessage", msg);
+    io.emit("newMessage", msg); // Broadcast till alla
+  });
+
+  // ✅ När kunden avslutar chatten – skicka till adminportalens case-API
+  socket.on("endSession", async (fullSession) => {
+    try {
+      const response = await axios.post(
+        "https://admin-portal-rn5z.onrender.com/api/cases",
+        fullSession
+      );
+      console.log("💾 Chatten sparad till adminportal ✅", response.status);
+    } catch (err) {
+      console.error("❌ Kunde inte spara chatten till adminportal:", err.message);
+    }
   });
 
   socket.on("disconnect", () => {
@@ -92,10 +209,17 @@ io.on("connection", (socket) => {
   });
 });
 
+
 // 🛢️ MongoDB-anslutning
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('🟢 Ansluten till MongoDB Atlas'))
+  .then(() => {
+    console.log('🟢 Ansluten till MongoDB Atlas');
+
+    // ✅ Lägg till detta här
+    require('./cron/insightCron');
+  })
   .catch(err => console.error('🔴 Fel vid MongoDB:', err));
+
 
 // 🛡️ Skyddad route
 function requireLogin(req, res, next) {
@@ -104,7 +228,7 @@ function requireLogin(req, res, next) {
 }
 
 // 🔐 Inloggning
-app.post('/login', async (req, res) => {
+app.post('/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await Customer.findOne({ email });
@@ -114,13 +238,14 @@ app.post('/login', async (req, res) => {
     if (!isMatch) return res.status(401).json({ success: false, message: 'Fel e-post eller lösenord' });
 
     req.session.user = {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role || "user",
-      profileImage: user.profileImage,
-      settings: user.settings || {},
-    };
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role || "user",
+  profileImage: user.profileImage,
+  groupId: user.groupId,
+  settings: user.settings || {}
+};
 
     // 📊 Logga enhet
     const LoginEvent = require('./models/LoginEvent');
@@ -133,31 +258,6 @@ app.post('/login', async (req, res) => {
     console.error('❌ Fel vid inloggning:', err);
     res.status(500).json({ success: false, message: 'Serverfel vid inloggning' });
   }
-});
-
-
-// 🚪 Utloggning
-app.get('/logout', (req, res) => {
-  req.session.destroy(err => {
-    if (err) return res.status(500).json({ success: false, message: "Kunde inte logga ut." });
-    res.clearCookie('connect.sid');
-    res.json({ success: true });
-  });
-});
-
-// 🧭 Routes
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-app.get('/chatwindow.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'chatwindow.html')));
-app.get('/customerportal.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'customerportal.html')));
-app.get('/fakturor.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'fakturor.html')));
-app.get('/rapporter.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'rapporter.html')));
-app.get('/inventarier.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'inventarier.html')));
-app.get('/kontakt.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'kontakt.html')));
-app.get('/kunder.html', requireLogin, (req, res) => res.sendFile(path.join(__dirname, 'public', 'kunder.html')));
-app.get('/admin-logins.html', requireLogin, (req, res) => {
-  const user = req.session?.user;
-  if (!user || user.role !== "admin") return res.status(403).send("Åtkomst nekad");
-  res.sendFile(path.join(__dirname, 'public', 'admin-logins.html'));
 });
 
 // 📦 Dummy-inventarielager
@@ -189,6 +289,21 @@ app.post("/api/inventory/return", (req, res) => {
   res.json({ success: true, productId, stock: product.stock });
 });
 
+// Säker leverans av uppladdade bilder
+const ALLOWED_IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.jfif']);
+app.get('/uploads/:filename', requireLogin, (req, res) => {
+  const filename = path.basename(req.params.filename);
+  const ext = path.extname(filename).toLowerCase();
+  if (!ALLOWED_IMAGE_EXT.has(ext)) return res.status(400).send('Ogiltig filtyp');
+
+  const filePath = path.join(__dirname, 'uploads', filename);
+  if (!fs.existsSync(filePath)) return res.status(404).send('Filen finns inte');
+
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.type(filename);
+  res.sendFile(filePath);
+});
+
 // 📤 Uppdatera profil
 app.post("/api/profile/update", upload.single("profilePic"), async (req, res) => {
   const { name, email, password, language, removeImage } = req.body;
@@ -201,13 +316,34 @@ app.post("/api/profile/update", upload.single("profilePic"), async (req, res) =>
     if (name) user.name = name;
     if (email) user.email = email;
     if (language) user.settings.language = language;
-    if (password) user.password = await bcrypt.hash(password, 10);
-    if (removeImage === "true" && user.profileImage) {
-      const oldPath = path.join(__dirname, 'public', user.profileImage);
-      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-      user.profileImage = undefined;
+        if (password) {
+      const isValid = typeof password === 'string'
+        && password.length >= 8
+        && /[A-Z]/.test(password)     // minst en stor bokstav
+        && /[a-z]/.test(password)     // minst en liten bokstav
+        && /\d/.test(password)        // minst en siffra
+        && /[^A-Za-z0-9]/.test(password); // minst ett specialtecken
+
+      if (!isValid) {
+        return res.status(400).json({
+          success: false,
+          message: "Lösenordet måste vara minst 8 tecken och innehålla stora och små bokstäver, siffror och specialtecken."
+        });
+      }
+
+      user.password = await bcrypt.hash(password, 10);
     }
+    if (removeImage === "true" && user.profileImage) {
+    // Stöder både "/uploads/fil.png" och "fil.png"
+      const filename = path.basename(user.profileImage);
+      const oldPath = path.join(__dirname, 'uploads', filename);
+    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      user.profileImage = undefined;
+}
+    // Behåll lagrat värde som "/uploads/<fil>" för kompatibilitet.
+    // Vi serverar detta via en kontrollerad GET-route i nästa steg.
     if (req.file) user.profileImage = '/uploads/' + req.file.filename;
+
     const updatedUser = await user.save();
     req.session.user = updatedUser;
     res.json({ success: true, user: updatedUser });
@@ -217,22 +353,36 @@ app.post("/api/profile/update", upload.single("profilePic"), async (req, res) =>
   }
 });
 
-// 👤 Hämta inloggad användare
-app.get("/api/profile/me", (req, res) => {
+// 👤 Hämta inloggad användare + supporthistorik
+app.get("/api/profile/me", async (req, res) => {
   if (!req.session.user) return res.status(401).json({ success: false, message: "Inte inloggad" });
-  const { name, email, language, profileImage } = req.session.user;
-  res.json({ success: true, name, email, language, profileImage });
+
+  try {
+    const user = await Customer.findById(req.session.user._id).lean();
+    if (!user) return res.status(404).json({ success: false, message: "Användare hittades inte" });
+
+    const { _id, name, email, language, profileImage, supportHistory = [] } = user;
+
+    res.json({
+      success: true,
+      _id,
+      name,
+      email,
+      language,
+      profileImage,
+      supportHistory
+    });
+  } catch (err) {
+    console.error("❌ Fel vid hämtning av kundprofil:", err);
+    res.status(500).json({ success: false, message: "Serverfel vid hämtning av profil" });
+  }
 });
+
 
 // ⬇️ Lägg till denna rad innan serverstart
 app.use('/api/ads', require('./routes/adsRoutes'));
 
 
-// 🧠 Skyddad användarprofil (namn, e-post)
-function requireAuth(req, res, next) {
-  if (req.session && req.session.user) next();
-  else res.status(401).json({ error: "Inte inloggad" });
-}
 app.get('/api/user/profile', requireAuth, (req, res) => {
   const { name, email } = req.session.user;
   res.json({ name, email });
@@ -240,6 +390,7 @@ app.get('/api/user/profile', requireAuth, (req, res) => {
 
 // 🔧 API-routes
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use("/api/invites", require("./routes/inviteRoutes"));
 app.use('/api/invoices', require('./routes/invoiceRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/support', require('./routes/support'));
@@ -247,9 +398,13 @@ app.use('/api/email', require('./routes/emailRoutes'));
 app.use('/api/messages', require('./routes/messagesRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/customers', require('./routes/customers'));
-app.use("/api/security", require("./routes/security"));
+app.use("/api/security", securityRouter);
 app.use("/api/pageviews", require("./routes/pageviews"));
 app.use("/api/pageviews", require("./routes/trackRoutes"));
+app.use('/api/insights', insightsRoutes);
+app.use('/api/invites', inviteRoutes);
+
+
 app.use('/api/ai-marknadsstudio', require('./routes/aiMarknadsstudio'));
 
 // 🚀 Starta servern

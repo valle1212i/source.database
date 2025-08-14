@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 </head>
 <body>
+  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny" onclick="toggleSidebar()">☰</button>
   <div class="sidebar">
     <div class="logo">
       <a href="customerportal.html">
@@ -22,7 +23,7 @@
       <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
       <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
       <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
-      <li class="active"><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+      <li class="active"><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
       <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
       <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
     </ul>
@@ -31,9 +32,11 @@
     </div>
   </div>
 
+  
   <main class="main">
     <h1 class="page-title">Marknadsföring</h1>
     <p class="subtitle">Utforska verktyg för annonsering, design och rådgivning.</p>
+
 
    <section class="card automatiska-annonser">
   <h2><i class="fas fa-robot"></i> Automatiska annonser</h2>
@@ -95,5 +98,48 @@
       }, 1000);
     }
   </script>
+  <script>
+    document.getElementById("marketingForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+  
+      const status = document.getElementById("saveStatus");
+      status.textContent = "⏳ Sparar...";
+  
+      try {
+        const res = await fetch("/api/customers/me");
+        const customer = await res.json();
+        if (!customer._id) throw new Error("Kund saknas");
+  
+        const form = e.target;
+        const platforms = Array.from(form.platforms.selectedOptions).map(opt => opt.value);
+  
+        const payload = {
+          platforms,
+          goals: form.goals.value,
+          comment: form.comment.value
+        };
+  
+        const putRes = await fetch(`/api/customers/${customer._id}/marketing`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+  
+        const result = await putRes.json();
+        status.textContent = result.success ? "✅ Sparat!" : "❌ Kunde inte spara.";
+      } catch (err) {
+        console.error("❌ Fel vid sparande:", err);
+        status.textContent = "❌ Tekniskt fel, försök igen.";
+      }
+    });
+  </script>
+  <script>
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('active');
+  document.body.classList.toggle('menu-open');
+}
+</script>
 </body>
 </html>

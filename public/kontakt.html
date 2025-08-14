@@ -11,6 +11,10 @@
   />
 </head>
 <body>
+  <!-- Hamburgermeny för mobil -->
+<button class="hamburger-menu" onclick="toggleSidebar()">☰</button>
+
+
   <div class="sidebar">
   <div class="logo">
     <a href="customerportal.html">
@@ -18,33 +22,16 @@
     </a>
   </div>
   <ul class="nav-menu">
-    <li>
-      <a href="customerportal.html"><i class="fas fa-home"></i> Hem</a>
-    </li>
-    <li>
-      <a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a>
-    </li>
-    <li class="active">
-      <a href="kontakt.html" class="active"><i class="fas fa-envelope"></i> Kontakt</a>
-    </li>
-    <li>
-      <a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a>
-    </li>
-    <li>
-      <a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a>
-    </li>
-    <li>
-      <a href="kunder.html"><i class="fas fa-users"></i> Kunder</a>
-    </li>
-    <li>
-      <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a>
-    </li>
-    <li>
-      <a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a>
-    </li>
-    <li>
-      <a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a>
-    </li>
+    <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+    <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+    <li class="active"><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+    <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+    <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+    <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+    <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+    <li><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+    <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+    <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
   </ul>
   <div class="help">
     <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
@@ -62,7 +49,7 @@
       <h3>Chatta med oss</h3>
       <p class="subtitle">Vi är tillgängliga <strong>24/7</strong></p>
       <p>Klicka på knappen nedan för att starta en chatt med vårt supportteam.</p>
-      <button class="black-button">Starta chatt</button>
+      <button class="black-button" onclick="window.location.href='chatwindow.html'">Starta chatt</button>
     </div>
   </div>
 
@@ -227,4 +214,13 @@
 
   loadUserProfile();
 </script>
+<script>
+  function toggleSidebar() {
+    const sidebar = document.querySelector(".sidebar");
+    const isActive = sidebar.classList.contains("active");
 
+    sidebar.classList.toggle("active", !isActive);
+    document.body.classList.toggle("menu-open", !isActive);
+  }
+</script>
+</body>

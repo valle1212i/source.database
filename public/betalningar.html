@@ -3,60 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kundportal - Betalningar</title>
+  <title>Kundportal – Betalningar</title>
+
   <link rel="stylesheet" href="CSS/betalningar.css" />
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-    <div class="sidebar">
+<body>
+
+<!-- SIDOMENY -->
+<div class="sidebar">
   <div class="logo">
     <a href="customerportal.html">
       <img src="images/logo.png" alt="Logotyp" class="logo-img" />
     </a>
   </div>
- <ul class="nav-menu">
-  <li>
-    <a href="customerportal.html"><i class="fas fa-home"></i> Hem</a>
-  </li>
-  <li class="active">
-    <a href="betalningar.html" class="active"><i class="fas fa-credit-card"></i> Betalningar</a>
-  </li>
-  <li>
-    <a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a>
-  </li>
-  <li>
-    <a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a>
-  </li>
-  <li>
-    <a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a>
-  </li>
-  <li>
-    <a href="kunder.html"><i class="fas fa-users"></i> Kunder</a>
-  </li>
-  <li>
-    <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a>
-  </li>
-  <li>
-    <a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a>
-  </li>
-  <li>
-    <a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a>
-  </li>
-</ul>
+  <ul class="nav-menu">
+    <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+    <li class="active"><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+    <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+    <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+    <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+    <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+    <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+    <li><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+    <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+    <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+  </ul>
   <div class="help">
     <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
   </div>
 </div>
-  </div>
 
-  <!-- Här börjar huvudinnehållet för Betalningar -->
-  <main class="main">
+<!-- HAMBURGERMENY (mobil) -->
+<button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">
+  &#9776;
+</button>
 
-    <div class="profile-wrapper">
+<!-- PROFILMENY -->
+<div class="profile-wrapper">
   <div class="profile-icon" id="profileToggle">--</div>
-
   <div class="profile-dropdown" id="profileMenu">
     <div class="profile-email" id="userEmail">Laddar...</div>
     <hr />
@@ -66,80 +53,80 @@
   </div>
 </div>
 
-    <h1>Betalningar</h1>
+<!-- HUVUDINNEHÅLL -->
+<main class="main">
+  <h1>Betalningar</h1>
+  <a href="customerportal.html" class="back-button">← Tillbaka till översikt</a>
+  <p class="info-text">Hantera dina senaste transaktioner nedan.</p>
 
-    <a href="customerportal.html" class="back-button">← Tillbaka till översikt</a>
-    <p class="info-text">Hantera dina senaste transaktioner nedan.</p>
+  <div class="filters">
+    <input type="text" id="searchInput" placeholder="Sök ordernummer eller transaktions-ID...">
+    <select id="statusFilter">
+      <option value="all">Alla</option>
+      <option value="captured">Captured</option>
+      <option value="authorized">Authorized</option>
+    </select>
+    <input type="date" id="startDate">
+    <button class="black-button" onclick="filterPayments()">Filtrera</button>
+    <button class="black-button" onclick="sortByDate()">Sortera efter datum</button>
+    <button class="black-button" onclick="exportData()">Exportera som Excel</button>
+  </div>
 
-    <div class="filters">
-      <input type="text" id="searchInput" placeholder="Sök ordernummer eller transaktions-ID...">
-      <select id="statusFilter">
-        <option value="all">Alla</option>
-        <option value="captured">Captured</option>
-        <option value="authorized">Authorized</option>
-      </select>
-      <input type="date" id="startDate">
-      <button class="black-button" onclick="filterPayments()">Filtrera</button>
-      <button class="black-button" onclick="sortByDate()">Sortera efter datum</button>
-      <button class="black-button" onclick="exportData()">Exportera som Excel</button>
-    </div>
-
-    <div id="paymentsList">
-      <!-- Exempelbetalningar -->
-      <div class="card">
-        <div class="card-top">
-          <div>
-            <strong>Order #29348</strong>
-            <p class="amount">450 kr</p>
-          </div>
-          <div class="status open">
-            <i class="fas fa-check-circle"></i> Captured
-          </div>
+  <div id="paymentsList">
+    <!-- Exempelbetalningar -->
+    <div class="card">
+      <div class="card-top">
+        <div>
+          <strong>Order #29348</strong>
+          <p class="amount">450 kr</p>
         </div>
-        <div class="card-details">
-          <p>Kort: Visa **** 5269</p>
-          <p>Datum: 2025-06-12, kl. 12:14</p>
-          <p>Transaktions-ID: TXN123456789</p>
-        </div>
-        <div class="actions">
-          <button class="black-button" onclick='showReceipt({
-            order: "29348",
-            amount: "450 kr",
-            status: "captured",
-            card: "Visa **** 5269",
-            date: "2025-06-12",
-            time: "12:14",
-            id: "TXN123456789"
-          })'>Visa detaljer</button>
+        <div class="status open">
+          <i class="fas fa-check-circle"></i> Captured
         </div>
       </div>
+      <div class="card-details">
+        <p>Kort: Visa **** 5269</p>
+        <p>Datum: 2025-06-12, kl. 12:14</p>
+        <p>Transaktions-ID: TXN123456789</p>
+      </div>
+      <div class="actions">
+        <button class="black-button" onclick='showReceipt({
+          order: "29348",
+          amount: "450 kr",
+          status: "captured",
+          card: "Visa **** 5269",
+          date: "2025-06-12",
+          time: "12:14",
+          id: "TXN123456789"
+        })'>Visa detaljer</button>
+      </div>
+    </div>
 
-      <div class="card">
-        <div class="card-top">
-          <div>
-            <strong>Order #29349</strong>
-            <p class="amount">300 kr</p>
-          </div>
-          <div class="status progress">
-            <i class="fas fa-hourglass-half"></i> Authorized
-          </div>
+    <div class="card">
+      <div class="card-top">
+        <div>
+          <strong>Order #29349</strong>
+          <p class="amount">300 kr</p>
         </div>
-        <div class="card-details">
-          <p>Kort: Mastercard **** 7624</p>
-          <p>Datum: 2025-06-11, kl. 10:45</p>
-          <p>Transaktions-ID: TXN987654321</p>
+        <div class="status progress">
+          <i class="fas fa-hourglass-half"></i> Authorized
         </div>
-        <div class="actions">
-          <button class="black-button" onclick='showReceipt({
-            order: "29349",
-            amount: "300 kr",
-            status: "authorized",
-            card: "Mastercard **** 7624",
-            date: "2025-06-11",
-            time: "10:45",
-            id: "TXN987654321"
-          })'>Visa detaljer</button>
-        </div>
+      </div>
+      <div class="card-details">
+        <p>Kort: Mastercard **** 7624</p>
+        <p>Datum: 2025-06-11, kl. 10:45</p>
+        <p>Transaktions-ID: TXN987654321</p>
+      </div>
+      <div class="actions">
+        <button class="black-button" onclick='showReceipt({
+          order: "29349",
+          amount: "300 kr",
+          status: "authorized",
+          card: "Mastercard **** 7624",
+          date: "2025-06-11",
+          time: "10:45",
+          id: "TXN987654321"
+        })'>Visa detaljer</button>
       </div>
     </div>
   </div>
@@ -152,55 +139,56 @@
       <button class="black-button" onclick="exportReceiptAsPDF()">Exportera kvitto som PDF</button>
     </div>
   </div>
+</main>
 
-  <script>
-    let currentReceipt = {};
+<!-- SCRIPT: Funktionalitet -->
+<script>
+  let currentReceipt = {};
 
-    function showReceipt(payment) {
-      currentReceipt = payment;
-      document.getElementById("modalDetails").innerHTML = `
-        <p><strong>Order:</strong> #${payment.order}</p>
-        <p><strong>Belopp:</strong> ${payment.amount}</p>
-        <p><strong>Status:</strong> ${payment.status}</p>
-        <p><strong>Kort:</strong> ${payment.card}</p>
-        <p><strong>Datum & Tid:</strong> ${payment.date}, kl. ${payment.time}</p>
-        <p><strong>Transaktions-ID:</strong> ${payment.id}</p>
-      `;
-      document.getElementById("receiptModal").style.display = "block";
-    }
+  function showReceipt(payment) {
+    currentReceipt = payment;
+    document.getElementById("modalDetails").innerHTML = `
+      <p><strong>Order:</strong> #${payment.order}</p>
+      <p><strong>Belopp:</strong> ${payment.amount}</p>
+      <p><strong>Status:</strong> ${payment.status}</p>
+      <p><strong>Kort:</strong> ${payment.card}</p>
+      <p><strong>Datum & Tid:</strong> ${payment.date}, kl. ${payment.time}</p>
+      <p><strong>Transaktions-ID:</strong> ${payment.id}</p>
+    `;
+    document.getElementById("receiptModal").style.display = "block";
+  }
 
-    function closeModal() {
-      document.getElementById("receiptModal").style.display = "none";
-    }
+  function closeModal() {
+    document.getElementById("receiptModal").style.display = "none";
+  }
 
-    function exportReceiptAsPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      doc.setFontSize(14);
-      doc.text("Kvitto", 20, 20);
-      doc.setFontSize(12);
-      doc.text(`Order: #${currentReceipt.order}`, 20, 35);
-      doc.text(`Belopp: ${currentReceipt.amount}`, 20, 45);
-      doc.text(`Status: ${currentReceipt.status}`, 20, 55);
-      doc.text(`Kort: ${currentReceipt.card}`, 20, 65);
-      doc.text(`Datum & Tid: ${currentReceipt.date}, kl. ${currentReceipt.time}`, 20, 75);
-      doc.text(`Transaktions-ID: ${currentReceipt.id}`, 20, 85);
-      doc.save(`Kvitto_Order_${currentReceipt.order}.pdf`);
-    }
+  function exportReceiptAsPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text("Kvitto", 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Order: #${currentReceipt.order}`, 20, 35);
+    doc.text(`Belopp: ${currentReceipt.amount}`, 20, 45);
+    doc.text(`Status: ${currentReceipt.status}`, 20, 55);
+    doc.text(`Kort: ${currentReceipt.card}`, 20, 65);
+    doc.text(`Datum & Tid: ${currentReceipt.date}, kl. ${currentReceipt.time}`, 20, 75);
+    doc.text(`Transaktions-ID: ${currentReceipt.id}`, 20, 85);
+    doc.save(`Kvitto_Order_${currentReceipt.order}.pdf`);
+  }
 
-    function filterPayments() {
-      alert("Filtreringslogik implementeras här.");
-    }
+  function filterPayments() {
+    alert("Filtreringslogik implementeras här.");
+  }
 
-    function sortByDate() {
-      alert("Sorteringslogik implementeras här.");
-    }
+  function sortByDate() {
+    alert("Sorteringslogik implementeras här.");
+  }
 
-    function exportData() {
-      alert("Exporteringslogik implementeras här.");
-    }
-  </script>
-  <script>
+  function exportData() {
+    alert("Exporteringslogik implementeras här.");
+  }
+
   const toggle = document.getElementById('profileToggle');
   const menu = document.getElementById('profileMenu');
 
@@ -286,6 +274,28 @@
   }
 
   loadUserProfile();
+
+  // Hamburger toggle
+  document.addEventListener("DOMContentLoaded", function () {
+    const menuBtn = document.getElementById("menuToggle");
+    const sidebar = document.querySelector(".sidebar");
+
+    menuBtn.addEventListener("click", () => {
+      const isActive = sidebar.classList.toggle("active");
+      document.body.classList.toggle("menu-open", isActive);
+    });
+
+    window.addEventListener("click", (e) => {
+      const isClickInsideMenu = sidebar.contains(e.target);
+      const isClickOnToggle = menuBtn.contains(e.target);
+      const isMobile = window.innerWidth <= 768;
+
+      if (!isClickInsideMenu && !isClickOnToggle && isMobile) {
+        sidebar.classList.remove("active");
+        document.body.classList.remove("menu-open");
+      }
+    });
+  });
 </script>
 </body>
 </html>

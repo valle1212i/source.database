@@ -2,10 +2,35 @@ const express = require('express');
 const router = express.Router();
 const Customer = require('../models/Customer');
 const bcrypt = require('bcrypt');
+const rateLimit = require('express-rate-limit');
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,     // 15 minuter
+  max: 10,                      // max 10 försök per IP
+  standardHeaders: true,        // skickar RateLimit-* headers
+  legacyHeaders: false,
+  message: { success: false, message: 'För många inloggningsförsök. Försök igen senare.' }
+});
+
 
 // 📝 Registrera ny användare
 router.post('/register', async (req, res) => {
+  return res.status(403).json({ success: false, message: 'Registrering är avstängd. Använd inbjudningslänk.' });
   const { name, email, password } = req.body;
+    // Lösenordspolicy – kräver stora och små bokstäver, siffror och specialtecken
+  const isValid = typeof password === 'string'
+    && password.length >= 8
+    && /[A-Z]/.test(password)     // minst en stor bokstav
+    && /[a-z]/.test(password)     // minst en liten bokstav
+    && /\d/.test(password)        // minst en siffra
+    && /[^A-Za-z0-9]/.test(password); // minst ett specialtecken
+
+  if (!isValid) {
+    return res.status(400).json({
+      success: false,
+      message: "Lösenordet måste vara minst 8 tecken och innehålla stora och små bokstäver, siffror och specialtecken."
+    });
+  }
   try {
     const existingUser = await Customer.findOne({ email });
     if (existingUser) {
@@ -30,7 +55,7 @@ router.post('/register', async (req, res) => {
 });
 
 // 🔑 Logga in användare
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await Customer.findOne({ email });
@@ -44,6 +69,14 @@ router.post('/login', async (req, res) => {
       console.warn("❌ Inloggning: lösenord matchar ej för:", email);
       return res.status(401).json({ success: false, message: '❌ Fel e-post eller lösenord' });
     }
+
+    // 🔐 Regenerera session för att förhindra session fixation
+    await new Promise((resolve, reject) => {
+      req.session.regenerate(err => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });    
 
     // ✅ Spara endast det som behövs i sessionen
     req.session.user = {
@@ -63,7 +96,10 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.get('/logout', (req, res) => {
+router.post('/logout', (req, res) => {
+  if (!req.session?.user) {
+    return res.status(401).json({ success: false, message: 'Inte inloggad' });
+  }
   req.session.destroy(err => {
     if (err) {
       console.error("Utloggning misslyckades:", err);

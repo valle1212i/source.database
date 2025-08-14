@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 </head>
 <body>
+  <!-- Hamburgermeny för mobil -->
+<button class="hamburger-menu" onclick="toggleSidebar()">☰</button>
   <div class="sidebar">
   <div class="logo">
     <a href="customerportal.html">
@@ -16,34 +18,17 @@
     </a>
   </div>
     <ul class="nav-menu">
-  <li>
-    <a href="customerportal.html"><i class="fas fa-home"></i> Hem</a>
-  </li>
-  <li>
-    <a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a>
-  </li>
-  <li>
-    <a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a>
-  </li>
-  <li>
-    <a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a>
-  </li>
-  <li class="active">
-    <a href="fakturor.html" class="active"><i class="fas fa-file-invoice"></i> Fakturor</a>
-  </li>
-  <li>
-    <a href="kunder.html"><i class="fas fa-users"></i> Kunder</a>
-  </li>
-  <li>
-    <a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a>
-  </li>
-  <li>
-    <a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a>
-  </li>
-  <li>
-    <a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a>
-  </li>
-</ul>
+  <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+  <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+  <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+  <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+  <li class="active"><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+  <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+  <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+  <li><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+  <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+  <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+    </ul>
     <div class="help">
       <i class="fas fa-question-circle"></i> Hjälp
     </div>
@@ -213,6 +198,13 @@
   }
 
   loadUserProfile();
+</script>
+<script>
+  // Hantera hamburgermeny-klick
+  function toggleSidebar() {
+    document.querySelector(".sidebar").classList.toggle("active");
+    document.body.classList.toggle("menu-open");
+  }
 </script>
 </body>
 </html>
