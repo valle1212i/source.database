@@ -26,6 +26,7 @@
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.5",
     "openai": "^5.9.0",
+    "pdf-lib": "^1.17.1",
     "socket.io": "^4.8.1"
   },
   "keywords": [],

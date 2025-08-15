@@ -5,7 +5,6 @@ const path = require("path");
 const fs = require("fs");
 const { createPromptFromDescription, generateImageFromPrompt } = require("../utils/aiUtils");
 const { PDFDocument } = require("pdf-lib");
-const fetch = require("node-fetch");
 
 // Multer setup
 const storage = multer.diskStorage({
