@@ -153,29 +153,6 @@
     // Alternativ: visa modal för språkval
   });
 
- document.getElementById("logout").addEventListener("click", function (e) {
-  e.preventDefault();
-  if (confirm("Är du säker på att du vill logga ut?")) {
-    fetch('/logout', {
-      method: 'GET',
-      credentials: 'include' // 🧠 Viktigt: skicka med cookies
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        localStorage.clear(); // om du använder det
-        window.location.href = "/login.html";
-      } else {
-        alert("Utloggning misslyckades.");
-      }
-    })
-    .catch(err => {
-      console.error("Fel vid utloggning:", err);
-      alert("Kunde inte logga ut.");
-    });
-  }
-});
-
 </script>
 <script>
   async function loadUserProfile() {
@@ -223,4 +200,5 @@
     document.body.classList.toggle("menu-open", !isActive);
   }
 </script>
+<script src="/js/logout.js"></script>
 </body>

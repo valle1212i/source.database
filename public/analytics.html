@@ -217,29 +217,6 @@ new Chart(document.getElementById('bestsellersChart'), {
     window.location.href = "profile.html";
   });
 
-  document.getElementById("logout").addEventListener("click", function (e) {
-    e.preventDefault();
-    if (confirm("Är du säker på att du vill logga ut?")) {
-      fetch('/logout', {
-        method: 'GET',
-        credentials: 'include'
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            localStorage.clear();
-            window.location.href = "/login.html";
-          } else {
-            alert("Utloggning misslyckades.");
-          }
-        })
-        .catch(err => {
-          console.error("Fel vid utloggning:", err);
-          alert("Kunde inte logga ut.");
-        });
-    }
-  });
-
   async function loadUserProfile() {
     try {
       const res = await fetch("/api/profile/me");
@@ -303,5 +280,6 @@ new Chart(document.getElementById('bestsellersChart'), {
     }
   });
 </script>
+<script src="/js/logout.js"></script>
 </body>
 </html>
