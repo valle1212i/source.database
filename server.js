@@ -227,37 +227,12 @@ function requireLogin(req, res, next) {
   next();
 }
 
-// 🔐 Inloggning
-app.post('/login', loginLimiter, async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const user = await Customer.findOne({ email });
-    if (!user) return res.status(401).json({ success: false, message: 'Fel e-post eller lösenord' });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ success: false, message: 'Fel e-post eller lösenord' });
-
-    req.session.user = {
-  _id: user._id,
-  name: user.name,
-  email: user.email,
-  role: user.role || "user",
-  profileImage: user.profileImage,
-  groupId: user.groupId,
-  settings: user.settings || {}
-};
-
-    // 📊 Logga enhet
-    const LoginEvent = require('./models/LoginEvent');
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-    const device = req.headers['user-agent'] || '';
-    await LoginEvent.create({ userId: user._id, ip, device });
-
-    res.status(200).json({ success: true });
-  } catch (err) {
-    console.error('❌ Fel vid inloggning:', err);
-    res.status(500).json({ success: false, message: 'Serverfel vid inloggning' });
-  }
+// 🔐 Legacy-inloggning avvecklad – använd /api/auth/login
+app.post('/login', (req, res) => {
+  return res.status(410).json({
+    success: false,
+    message: 'Endpoint avvecklad. Använd /api/auth/login.'
+  });
 });
 
 // 📦 Dummy-inventarielager

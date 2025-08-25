@@ -3,6 +3,7 @@ const router = express.Router();
 const Customer = require('../models/Customer');
 const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
+const LoginEvent = require('../models/LoginEvent');
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,     // 15 minuter
@@ -89,6 +90,10 @@ router.post('/login', loginLimiter, async (req, res) => {
     };
 
     console.log("✅ Inloggad:", email);
+    // 📊 Logga enhet (IP + User-Agent) efter lyckad inloggning
+const ip = (req.headers['x-forwarded-for']?.split(',')[0] || '').trim() || req.socket.remoteAddress || '';
+const device = req.headers['user-agent'] || '';
+await LoginEvent.create({ userId: user._id, ip, device });
     res.status(200).json({ success: true, message: '✅ Inloggning lyckades!' });
   } catch (err) {
     console.error('❌ Fel vid inloggning:', err);
