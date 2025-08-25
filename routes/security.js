@@ -32,8 +32,14 @@ router.get("/logins", requireAuth, async (req, res) => {
   }
 });
 
+  if (!req.session.user || req.session.user.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Endast admin kan se login-historik.' });
+  }
+
 // GET: Alla inloggningar (endast för admin)
-router.get("/all-logins", requireAuth, async (req, res) => {
+const requireAuth = require('../middleware/requireAuth');
+
+router.get('/all-logins', requireAuth, async (req, res) => {
   const isAdmin = req.session.user?.role === "admin";
 
   if (!isAdmin) {

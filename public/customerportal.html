@@ -282,12 +282,17 @@
   responseDiv.innerHTML = '<div id="loadingAnimation" class="loader"></div>';
 
   try {
-    const res = await fetch("/api/chat/ask", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
-      credentials: "include"
-    });
+    const csrf = await getCsrfToken();
+const res = await fetch("/api/chat/ask", {
+  method: "POST",
+  headers: { 
+    "Content-Type": "application/json",
+    "CSRF-Token": csrf
+  },
+  body: JSON.stringify({ message }),
+  credentials: "include"
+});
+
 
     const data = await res.json();
     const reply = data.reply || "❌ Inget svar från AI.";
