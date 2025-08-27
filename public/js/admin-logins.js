@@ -34,14 +34,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         timeStyle: "short",
       });
 
-      row.innerHTML = `
-        <td>${userName}</td>
-        <td>${userEmail}</td>
-        <td>${ip}</td>
-        <td>${device}</td>
-        <td>${time}</td>
-      `;
+            const tdName = document.createElement("td");
+      tdName.textContent = userName ?? "";
 
+      const tdEmail = document.createElement("td");
+      tdEmail.textContent = userEmail ?? "";
+
+      const tdIp = document.createElement("td");
+      tdIp.textContent = ip ?? "";
+
+      const tdDevice = document.createElement("td");
+      tdDevice.textContent = device ?? "";
+
+      const tdTime = document.createElement("td");
+      tdTime.textContent = time ?? "";
+
+      row.append(tdName, tdEmail, tdIp, tdDevice, tdTime);
       tableBody.appendChild(row);
     });
   } catch (err) {

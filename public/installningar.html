@@ -241,17 +241,24 @@ document.body.classList.add(`theme-${selectedTheme}`);
         const email = data.email || '';
         const image = data.profileImage;
 
+               const profileToggle = document.getElementById("profileToggle");
+        while (profileToggle.firstChild) profileToggle.removeChild(profileToggle.firstChild);
+
         if (image) {
-          document.getElementById("profileToggle").innerHTML = `
-            <img src="${image}" alt="Profilbild" style="width: 32px; height: 32px; border-radius: 50%;" />
-          `;
+          const img = document.createElement("img");
+          img.src = image;
+          img.alt = "Profilbild";
+          img.style.width = "32px";
+          img.style.height = "32px";
+          img.style.borderRadius = "50%";
+          profileToggle.appendChild(img);
         } else {
-          const initials = name
-            .split(' ')
+          const initials = (name || "")
+            .split(" ")
             .map(part => part.charAt(0).toUpperCase())
-            .join('')
+            .join("")
             .substring(0, 2);
-          document.getElementById("profileToggle").textContent = initials;
+          profileToggle.textContent = initials || "--";
         }
 
         document.getElementById("userEmail").textContent = email;

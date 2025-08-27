@@ -160,20 +160,37 @@
         const res = await fetch('/api/messages/latest');
         const data = await res.json();
 
-        const tbody = document.querySelector(".customer-table tbody");
-        tbody.innerHTML = "";
+            const tbody = document.querySelector(".customer-table tbody");
+    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
-        data.forEach(entry => {
-          const row = `
-            <tr onclick="viewMessage('${entry.customerName}', '${entry.subject}', '${entry.message}', '${new Date(entry.date).toLocaleDateString()}')">
-              <td>${entry.customerName}</td>
-              <td>${entry.subject}</td>
-              <td>${entry.message}</td>
-              <td>${new Date(entry.date).toLocaleDateString()}</td>
-            </tr>
-          `;
-          tbody.innerHTML += row;
-        });
+    data.forEach(entry => {
+      const tr = document.createElement("tr");
+      tr.addEventListener("click", () => {
+        viewMessage(
+          entry.customerName,
+          entry.subject,
+          entry.message,
+          new Date(entry.date).toLocaleDateString()
+        );
+      });
+
+      const tdName = document.createElement("td");
+      tdName.appendChild(document.createTextNode(entry.customerName ?? ""));
+
+      const tdSubj = document.createElement("td");
+      tdSubj.appendChild(document.createTextNode(entry.subject ?? ""));
+
+      const tdMsg = document.createElement("td");
+      tdMsg.appendChild(document.createTextNode(entry.message ?? ""));
+
+      const tdDate = document.createElement("td");
+      tdDate.appendChild(document.createTextNode(
+        new Date(entry.date).toLocaleDateString()
+      ));
+
+      tr.append(tdName, tdSubj, tdMsg, tdDate);
+      tbody.appendChild(tr);
+    })
       } catch (err) {
         console.error("Kunde inte ladda meddelanden:", err);
       }
@@ -218,21 +235,29 @@
         const email = data.email || '';
         const image = data.profileImage;
 
+               const profileToggle = document.getElementById("profileToggle");
+        while (profileToggle.firstChild) profileToggle.removeChild(profileToggle.firstChild);
+
         if (image) {
-          document.getElementById("profileToggle").innerHTML = `
-            <img src="${image}" alt="Profilbild" style="width: 32px; height: 32px; border-radius: 50%;" />
-          `;
+          const img = document.createElement("img");
+          img.src = image;
+          img.alt = "Profilbild";
+          img.style.width = "32px";
+          img.style.height = "32px";
+          img.style.borderRadius = "50%";
+          profileToggle.appendChild(img);
         } else {
-          const initials = name
-            .split(' ')
+          const initials = (name || "")
+            .split(" ")
             .map(part => part.charAt(0).toUpperCase())
-            .join('')
+            .join("")
             .substring(0, 2);
-          document.getElementById("profileToggle").textContent = initials;
+          profileToggle.textContent = initials || "--";
         }
 
         document.getElementById("userEmail").textContent = email;
       } else {
+
         document.getElementById("profileToggle").textContent = "??";
         document.getElementById("userEmail").textContent = "Ej inloggad";
       }

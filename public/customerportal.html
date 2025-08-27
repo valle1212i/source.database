@@ -279,7 +279,11 @@
     return;
   }
 
-  responseDiv.innerHTML = '<div id="loadingAnimation" class="loader"></div>';
+    while (responseDiv.firstChild) responseDiv.removeChild(responseDiv.firstChild);
+  const loading = document.createElement("div");
+  loading.id = "loadingAnimation";
+  loading.className = "loader";
+  responseDiv.appendChild(loading);
 
   try {
     const csrf = await getCsrfToken();
@@ -297,7 +301,7 @@ const res = await fetch("/api/chat/ask", {
     const data = await res.json();
     const reply = data.reply || "❌ Inget svar från AI.";
 
-      responseDiv.innerHTML = "";
+            while (responseDiv.firstChild) responseDiv.removeChild(responseDiv.firstChild);
 const paragraphs = reply.split('\n\n'); // Dela upp i stycken
 let i = 0;
 const delay = 200; // Millisekunder mellan varje stycke
@@ -365,15 +369,21 @@ async function fetchCustomerId() {
 
     const history = data.supportHistory || [];
 
-    if (history.length === 0) {
-      tbody.innerHTML = `
-        <tr><td colspan="5">Inga tidigare ärenden hittades.</td></tr>
-      `;
+        if (history.length === 0) {
+      while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 5;
+      td.appendChild(document.createTextNode("Inga tidigare ärenden hittades."));
+      tr.appendChild(td);
+      tbody.appendChild(tr);
       return;
     }
 
     // Rensa gammal data
-    tbody.innerHTML = "";
+    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
 
     // Sortera nyast först
     history.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -387,14 +397,26 @@ async function fetchCustomerId() {
         day: "2-digit"
       });
 
-      tr.innerHTML = `
-       <td>${item.caseId || "-"}</td>
-        <td>${formattedDate}</td>
-        <td>${data.name || "Okänd"}</td>
-        <td>${item.topic}</td>
-        <td><span class="status-text ${item.status.toLowerCase().replace(/\s/g, '')}">${item.status}</span></td>
-      `;
+            //Bygg celler
+      const tdId = document.createElement("td");
+      tdId.appendChild(document.createTextNode(item.caseId || "-"));
 
+      const tdDate = document.createElement("td");
+      tdDate.appendChild(document.createTextNode(formattedDate));
+
+      const tdName = document.createElement("td");
+      tdName.appendChild(document.createTextNode(data.name || "Okänd"));
+
+      const tdTopic = document.createElement("td");
+      tdTopic.appendChild(document.createTextNode(item.topic ?? ""));
+
+      const tdStatus = document.createElement("td");
+      const spanStatus = document.createElement("span");
+      spanStatus.className = "status-text " + (item.status || "").toLowerCase().replace(/\s/g, "");
+      spanStatus.appendChild(document.createTextNode(item.status ?? ""));
+      tdStatus.appendChild(spanStatus);
+
+      tr.append(tdId, tdDate, tdName, tdTopic, tdStatus);
       tbody.appendChild(tr);
     }
   } catch (err) {
@@ -532,18 +554,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         const email = data.email || '';
         const image = data.profileImage;
 
+                const profileToggle = document.getElementById("profileToggle");
+        
+        while (profileToggle.firstChild) profileToggle.removeChild(profileToggle.firstChild);
+
         if (image) {
-          document.getElementById("profileToggle").innerHTML = `
-            <img src="${image}" alt="Profilbild" style="width: 32px; height: 32px; border-radius: 50%;" />
-          `;
+          const img = document.createElement("img");
+          img.src = image;
+          img.alt = "Profilbild";
+          img.style.width = "32px";
+          img.style.height = "32px";
+          img.style.borderRadius = "50%";
+          profileToggle.appendChild(img);
         } else {
+          if (!name) return;
           const initials = name
-            .split(' ')
+            .split(" ")
             .map(part => part.charAt(0).toUpperCase())
-            .join('')
+            .join("")
             .substring(0, 2);
-            if (!name) return;
-          document.getElementById("profileToggle").textContent = initials;
+          profileToggle.textContent = initials;
         }
 
         document.getElementById("userEmail").textContent = email;
@@ -570,7 +600,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       const weekBefore = data.counts[0] || 0;
       const percent = weekBefore > 0 ? Math.round(((today - weekBefore) / weekBefore) * 100) : null;
 
-      document.getElementById("todayCount").innerHTML = `<strong>${today} visningar idag</strong>`;
+            const todayCountEl = document.getElementById("todayCount");
+      while (todayCountEl.firstChild) todayCountEl.removeChild(todayCountEl.firstChild);
+      const strong = document.createElement("strong");
+      strong.appendChild(document.createTextNode(`${today} visningar idag`));
+      todayCountEl.appendChild(strong);
 
       const changeElem = document.getElementById("change");
       if (percent === null) {
@@ -634,7 +668,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   
       // 2) Om det inte finns några: trigga generering och hämta resultatet
       if (!data?.success || !Array.isArray(data.insights) || data.insights.length === 0) {
-        container.innerHTML = "<p>Genererar AI-insikter…</p>";
+                while (container.firstChild) container.removeChild(container.firstChild);
+        {
+          const p = document.createElement("p");
+          p.appendChild(document.createTextNode("Genererar AI-insikter…"));
+          container.appendChild(p);
+        }
   
         const genRes = await fetch(`/api/insights/${window.customerId}`, {
           credentials: "include"
@@ -644,7 +683,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (Array.isArray(genData.insights) && genData.insights.length > 0) {
           data = { success: true, insights: genData.insights };
         } else {
-          container.innerHTML = "<p>Inga AI-insikter ännu.</p>";
+                  while (container.firstChild) container.removeChild(container.firstChild);
+        {
+          const p = document.createElement("p");
+          p.appendChild(document.createTextNode("Inga AI-insikter ännu."));
+          container.appendChild(p);
+        }
           return;
         }
       }
@@ -657,7 +701,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         "Engagemang": "#FFF8E1"
       };
   
-      container.innerHTML = "";
+            while (container.firstChild) container.removeChild(container.firstChild);
       data.insights.forEach(tip => {
         const card = document.createElement("div");
         card.style.border = "1px solid #ccc";
@@ -666,18 +710,39 @@ document.addEventListener("DOMContentLoaded", async () => {
         card.style.marginBottom = "1rem";
         card.style.backgroundColor = colors[tip.category] || "#f4f4f4";
   
-        card.innerHTML = `
-          <h4>${tip.title ?? ""} ${tip.priority ? "🔥" : ""}</h4>
-          <p><strong>Kategori:</strong> ${tip.category ?? "-"}</p>
-          <p><strong>Varför:</strong> ${tip.reason ?? "-"}</p>
-          <p><strong>Åtgärd:</strong> ${tip.action ?? "-"}</p>
-        `;
+        const h4 = document.createElement("h4");
+        h4.appendChild(document.createTextNode(tip.title ?? ""));
+        if (tip.priority) h4.appendChild(document.createTextNode(" 🔥"));
+
+        const pCat = document.createElement("p");
+        const bCat = document.createElement("strong");
+        bCat.textContent = "Kategori:";
+        pCat.appendChild(bCat);
+        pCat.appendChild(document.createTextNode(" " + (tip.category ?? "-")));
+
+        const pWhy = document.createElement("p");
+        const bWhy = document.createElement("strong");
+        bWhy.textContent = "Varför:";
+        pWhy.appendChild(bWhy);
+        pWhy.appendChild(document.createTextNode(" " + (tip.reason ?? "-")));
+
+        const pAct = document.createElement("p");
+        const bAct = document.createElement("strong");
+        bAct.textContent = "Åtgärd:";
+        pAct.appendChild(bAct);
+        pAct.appendChild(document.createTextNode(" " + (tip.action ?? "-")));
+
+        card.append(h4, pCat, pWhy, pAct);
         container.appendChild(card);
+
       });
   
     } catch (err) {
       console.error("❌ Kunde inte ladda/generera AI-insikter:", err);
-      container.innerHTML = "<p>Fel vid hämtning av insikter.</p>";
+            while (container.firstChild) container.removeChild(container.firstChild);
+      const p = document.createElement("p");
+      p.appendChild(document.createTextNode("Fel vid hämtning av insikter."));
+      container.appendChild(p);
     }
   }
   </script>

@@ -32,12 +32,20 @@
   </div>
 
   <script>
-    // Hämta och visa info
+        // Hämta och visa info – defensivt (trim + längdbegränsning + default)
     const params = new URLSearchParams(window.location.search);
-    document.getElementById("message-name").textContent = params.get("name");
-    document.getElementById("message-subject").textContent = params.get("subject");
-    document.getElementById("message-content").textContent = params.get("content");
-    document.getElementById("message-date").textContent = params.get("date");
+    const safeGet = (key, max = 200, fallback = "—") => {
+      const v = params.get(key);
+      if (typeof v !== "string") return fallback;
+      const trimmed = v.trim();
+      if (!trimmed) return fallback;
+      return trimmed.length > max ? trimmed.slice(0, max) : trimmed;
+    };
+
+    document.getElementById("message-name").textContent = safeGet("name", 120, "Okänd avsändare");
+    document.getElementById("message-subject").textContent = safeGet("subject", 200, "—");
+    document.getElementById("message-content").textContent = safeGet("content", 2000, "—");
+    document.getElementById("message-date").textContent = safeGet("date", 40, "—");
 
     // Modal
     function openMessageModal() {

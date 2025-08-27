@@ -107,10 +107,43 @@
   }
 
   function render(items){
-    const tbody = document.getElementById("inventoryBody");
-    tbody.innerHTML = items.map(rowHTML).join("");
-    refreshNotifications();
-  }
+  const tbody = document.getElementById("inventoryBody");
+  while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+  items.forEach(item => {
+    const s = statusFor(item.stock);
+
+    const tr = document.createElement("tr");
+    if (item.id)  tr.dataset.id  = item.id;
+    if (item.sku) tr.dataset.sku = item.sku;
+
+    const tdName = document.createElement("td");
+    tdName.appendChild(document.createTextNode(item.name ?? ""));
+
+    const tdSku = document.createElement("td");
+    tdSku.appendChild(document.createTextNode(item.sku ?? ""));
+
+    const tdStock = document.createElement("td");
+    tdStock.className = "stock-cell";
+    tdStock.appendChild(document.createTextNode(String(item.stock ?? "")));
+
+    const tdStatus = document.createElement("td");
+    tdStatus.className = s.className;
+    tdStatus.appendChild(document.createTextNode(s.text));
+
+    const tdEdit = document.createElement("td");
+    const icon = document.createElement("i");
+    icon.className = "fas fa-edit";
+    icon.title = "Redigera";
+    icon.addEventListener("click", () => toggleEdit(icon));
+    tdEdit.appendChild(icon);
+
+    tr.append(tdName, tdSku, tdStock, tdStatus, tdEdit);
+    tbody.appendChild(tr);
+  });
+
+  refreshNotifications();
+}
 
   // === Sök & sort ===
   function filterTable() {

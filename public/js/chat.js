@@ -102,9 +102,12 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     document.getElementById("chatForm").style.display = "none";
 
-    const div = document.createElement("div");
+        const div = document.createElement("div");
     div.className = "message system";
-    div.innerHTML = "<strong>System:</strong> Chatten har avslutats.";
+    const strong = document.createElement("strong");
+    strong.appendChild(document.createTextNode("System:"));
+    div.appendChild(strong);
+    div.appendChild(document.createTextNode(" Chatten har avslutats."));
     chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
   });
