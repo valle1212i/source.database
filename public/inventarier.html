@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Inventarier</title>
   <link rel="stylesheet" href="CSS/inventarier.css" />
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-  />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 </head>
 <body>
   <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny" onclick="toggleSidebar()">☰</button>
@@ -19,23 +16,22 @@
       </a>
     </div>
     <ul class="nav-menu">
-  <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
-  <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
-  <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
-  <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
-  <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
-  <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
-  <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
-  <li><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
-  <li class="active"><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
-  <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
-</ul>
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+      <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+      <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+      <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+      <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+      <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+      <li><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+      <li class="active"><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+      <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+    </ul>
     <div class="help">
       <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
     </div>
   </div>
 
-  <!-- HUVUDINNEHÅLL -->
   <main class="main">
     <div class="profile-wrapper">
       <div class="profile-icon" id="profileToggle">??</div>
@@ -47,16 +43,13 @@
         <a href="#" id="logout">Logga ut</a>
       </div>
     </div>
-    <!-- Resten av innehållet är oförändrat -->
 
     <h1>Inventarier</h1>
     <p>Hantera dina produkter och lagersaldo. Få notiser när produkter är slutsålda.</p>
 
     <section class="card">
-      <!-- Sökfält -->
       <input type="text" id="searchInput" placeholder="🔍 Sök produkt, artikelnummer eller status..." onkeyup="filterTable()" style="margin-bottom: 15px; padding: 10px; width: 100%; border-radius: 6px; border: 1px solid #ccc;">
 
-      <!-- Tabell -->
       <table class="inventory-table" id="inventoryTable">
         <thead>
           <tr>
@@ -67,142 +60,154 @@
             <th>Redigera</th>
           </tr>
         </thead>
-        <tbody>
-  <tr>
-    <td>Vit T-shirt</td>
-    <td>TS1001</td>
-    <td class="stock-cell">0</td>
-    <td class="status-soldout">Slutsåld</td>
-    <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
-  </tr>
-  <tr>
-    <td>Svart Hoodie</td>
-    <td>HD1002</td>
-    <td class="stock-cell">12</td>
-    <td class="status-instock">I lager</td>
-    <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
-  </tr>
-  <tr>
-    <td>Blå Keps</td>
-    <td>KP1003</td>
-    <td class="stock-cell">3</td>
-    <td class="status-low">Lågt lager</td>
-    <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
-  </tr>
-  <tr>
-    <td>Grå Mössa</td>
-    <td>GM1004</td>
-    <td class="stock-cell">6</td>
-    <td class="status-instock">I lager</td>
-    <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
-  </tr>
-  <tr>
-    <td>Vita Sneakers</td>
-    <td>SN1005</td>
-    <td class="stock-cell">0</td>
-    <td class="status-soldout">Slutsåld</td>
-    <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
-  </tr>
-</tbody>
+        <!-- ENDA tbody: fylls via JS -->
+        <tbody id="inventoryBody"></tbody>
       </table>
     </section>
 
     <section class="notifications">
       <h3>Notiser</h3>
-      <p>Produkten <strong>Vit T-shirt</strong> och <strong>Vita Sneakers</strong> är slutsålda. Uppdatera lagersaldo eller inaktivera produkterna i webbshopen.</p>
+      <ul id="notifList" style="margin:0; padding-left:18px;"></ul>
     </section>
   </main>
-
-  <script>
+<!-- INVENTARIE-LOGIK: dynamisk render + SSE -->
+<script>
   const savedTheme = localStorage.getItem("theme") || "light";
   document.body.classList.add(`${savedTheme}-theme`);
 
-  function filterTable() {
-    const input = document.getElementById("searchInput").value.toLowerCase();
-    const rows = document.querySelectorAll("#inventoryTable tbody tr");
-    rows.forEach(row => {
-      row.style.display = Array.from(row.cells).some(td =>
-        td.textContent.toLowerCase().includes(input)) ? "" : "none";
-    });
+  const API_BASE = ""; // samma origin; ändra vid behov
+  let CSRF_TOKEN = null;
+
+  // === CSRF ===
+  async function initCsrf() {
+    // credentials:'include' om session-cookies används
+    const r = await fetch('/csrf-token', { credentials: 'include' });
+    const { csrfToken } = await r.json();
+    CSRF_TOKEN = csrfToken;
   }
 
-  function sortTable(colIndex) {
-    const table = document.getElementById("inventoryTable");
-    const tbody = table.tBodies[0];
-    const rows = Array.from(tbody.rows);
+  // === Statushjälp ===
+  function statusFor(stock){
+    if (stock === 0) return { text: "Slutsåld", className: "status-soldout" };
+    if (stock < 5)  return { text: "Lågt lager", className: "status-low" };
+    return { text: "I lager", className: "status-instock" };
+  }
 
+  // === Render ===
+  function rowHTML(item){
+    const s = statusFor(item.stock);
+    return `
+      <tr data-id="${item.id}" data-sku="${item.sku}">
+        <td>${item.name}</td>
+        <td>${item.sku}</td>
+        <td class="stock-cell">${item.stock}</td>
+        <td class="${s.className}">${s.text}</td>
+        <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
+      </tr>`;
+  }
+
+  function render(items){
+    const tbody = document.getElementById("inventoryBody");
+    tbody.innerHTML = items.map(rowHTML).join("");
+    refreshNotifications();
+  }
+
+  // === Sök & sort ===
+  function filterTable() {
+    const q = document.getElementById("searchInput").value.toLowerCase();
+    document.querySelectorAll("#inventoryBody tr").forEach(row => {
+      row.style.display = Array.from(row.cells).some(td => td.textContent.toLowerCase().includes(q)) ? "" : "none";
+    });
+  }
+  function sortTable(colIndex) {
+    const tbody = document.getElementById("inventoryBody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
     rows.sort((a, b) => {
       const A = a.cells[colIndex].textContent.trim();
       const B = b.cells[colIndex].textContent.trim();
       return isNaN(A - B) ? A.localeCompare(B) : Number(A) - Number(B);
     });
+    rows.forEach(r => tbody.appendChild(r));
+  }
 
-    rows.forEach(row => tbody.appendChild(row));
+  // === Redigering / API ===
+  function updateStatus(stock, statusCell) {
+    const s = statusFor(stock);
+    statusCell.textContent = s.text;
+    statusCell.className = s.className;
+  }
+
+  function callStockAPI(productId, quantity, op){
+    const endpoint = op === "return" ? "/api/inventory/return" : "/api/inventory/buy";
+    // Säkerställ token
+    if (!CSRF_TOKEN) {
+      console.warn("CSRF-token saknas, försöker hämta om...");
+      return initCsrf().then(() => callStockAPI(productId, quantity, op));
+    }
+    fetch(API_BASE + endpoint, {
+      method: "POST",
+      credentials: "include", // viktigt om cookies behövs
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": CSRF_TOKEN
+      },
+      body: JSON.stringify({ productId, quantity })
+    })
+    .then(res => { if (!res.ok) throw new Error("API-fel"); return res.json(); })
+    .catch(err => {
+      console.error("Fel vid API-anrop:", err);
+      alert("Kunde inte uppdatera lagret mot servern.");
+    });
   }
 
   function toggleEdit(icon) {
     const td = icon.parentElement;
     const row = td.parentElement;
-    const productId = row.cells[1].textContent.trim();
+    const productId = row.dataset.id || row.cells[1].textContent.trim(); // id eller SKU
     const stockCell = row.cells[2];
     const statusCell = row.cells[3];
 
-    // Ta bort gamla kontroller om de finns
     const existing = td.querySelector(".edit-controls");
-    if (existing) {
-      existing.remove();
-      stockCell.innerHTML = stockCell.dataset.originalText || stockCell.textContent;
-      stockCell.removeAttribute("contenteditable");
-      return;
-    }
+    if (existing) { existing.remove(); return; }
 
-    // Spara originaltext
-    stockCell.dataset.originalText = stockCell.textContent;
-    let stock = parseInt(stockCell.textContent.trim());
+    let stock = parseInt(stockCell.textContent.trim()) || 0;
 
-    // Inputfält för manuellt lagersaldo
     const input = document.createElement("input");
     input.type = "number";
     input.value = stock;
-    input.style.width = "50px";
+    input.style.width = "60px";
     input.style.marginRight = "6px";
     input.onchange = () => {
       const newStock = parseInt(input.value);
       const diff = newStock - stock;
       if (!isNaN(newStock) && diff !== 0) {
+        const op = diff > 0 ? "return" : "buy";
+        callStockAPI(productId, Math.abs(diff), op);
         stock = newStock;
         stockCell.textContent = stock;
         updateStatus(stock, statusCell);
-        updateStockAPI(productId, diff);
       }
     };
-    stockCell.innerHTML = '';
+    stockCell.innerHTML = "";
     stockCell.appendChild(input);
 
-    // ➖ och ➕ knappar
-    const controlDiv = document.createElement("div");
-    controlDiv.className = "edit-controls";
+    const controls = document.createElement("div");
+    controls.className = "edit-controls";
 
     const minusBtn = document.createElement("button");
     minusBtn.textContent = "➖";
     minusBtn.onclick = () => {
       if (stock > 0) {
-        stock--;
-        input.value = stock;
-        stockCell.textContent = stock;
-        updateStatus(stock, statusCell);
-        updateStockAPI(productId, -1);
+        callStockAPI(productId, 1, "buy");
+        stock--; input.value = stock; stockCell.textContent = stock; updateStatus(stock, statusCell);
       }
     };
 
     const plusBtn = document.createElement("button");
     plusBtn.textContent = "➕";
     plusBtn.onclick = () => {
-      stock++;
-      input.value = stock;
-      stockCell.textContent = stock;
-      updateStatus(stock, statusCell);
-      updateStockAPI(productId, 1);
+      callStockAPI(productId, 1, "return");
+      stock++; input.value = stock; stockCell.textContent = stock; updateStatus(stock, statusCell);
     };
 
     [minusBtn, plusBtn].forEach(btn => {
@@ -212,166 +217,129 @@
       btn.style.cursor = "pointer";
     });
 
-    controlDiv.appendChild(minusBtn);
-    controlDiv.appendChild(plusBtn);
-    td.appendChild(controlDiv);
+    controls.appendChild(minusBtn);
+    controls.appendChild(plusBtn);
+    td.appendChild(controls);
   }
 
-  function updateStatus(stock, statusCell) {
-    if (stock === 0) {
-      statusCell.textContent = "Slutsåld";
-      statusCell.className = "status-soldout";
-    } else if (stock < 5) {
-      statusCell.textContent = "Lågt lager";
-      statusCell.className = "status-low";
-    } else {
-      statusCell.textContent = "I lager";
-      statusCell.className = "status-instock";
-    }
+  // === Notiser ===
+  function refreshNotifications(){
+    const list = document.getElementById("notifList");
+    if (!list) return;
+    const rows = Array.from(document.querySelectorAll("#inventoryBody tr"));
+    const soldOut = rows.filter(r => r.cells[3].classList.contains("status-soldout"))
+                        .map(r => r.cells[0].textContent.trim());
+    list.innerHTML = soldOut.length
+      ? soldOut.map(n => `<li>Produkten <strong>${n}</strong> är slutsåld. Uppdatera lagersaldo eller inaktivera i webbshopen.</li>`).join("")
+      : `<li>Inga kritiska notiser just nu.</li>`;
   }
 
-  function updateStockAPI(productId, quantityChange) {
-    const endpoint = quantityChange > 0
-      ? "/api/inventory/return"
-      : "/api/inventory/buy";
-
-    fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        productId: productId,
-        quantity: Math.abs(quantityChange)
-      })
-    })
-    .then(res => {
-      if (!res.ok) throw new Error("API-fel");
-      return res.json();
-    })
-    .then(data => {
-      console.log("Lager uppdaterat:", data);
-    })
-    .catch(err => {
-      console.error("Fel vid API-anrop:", err);
-      alert("Kunde inte uppdatera lagret mot servern.");
-    });
-  }
-  </script>
-  <script>
-  const toggle = document.getElementById('profileToggle');
-  const menu = document.getElementById('profileMenu');
-
-  toggle.addEventListener('click', () => {
-    const isOpen = menu.style.display === 'flex';
-    menu.style.display = isOpen ? 'none' : 'flex';
-    toggle.classList.toggle('open', !isOpen);
-  });
-
-  window.addEventListener('click', function (e) {
-    if (!document.querySelector('.profile-wrapper').contains(e.target)) {
-      menu.style.display = 'none';
-      toggle.classList.remove('open');
-    }
-  });
-
-  document.getElementById("switchAccount").addEventListener("click", function (e) {
-    e.preventDefault();
-    if (confirm("Vill du logga ut och byta konto?")) {
-      window.location.href = "login.html";
-    }
-  });
-
-  document.getElementById("openSettings").addEventListener("click", function (e) {
-    e.preventDefault();
-    window.location.href = "profile.html";
-  });
-
-  document.getElementById("logout").addEventListener("click", function (e) {
-    e.preventDefault();
-    if (confirm("Är du säker på att du vill logga ut?")) {
-      fetch('/logout', {
-        method: 'GET',
-        credentials: 'include'
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            localStorage.clear();
-            window.location.href = "/login.html";
-          } else {
-            alert("Utloggning misslyckades.");
-          }
-        })
-        .catch(err => {
-          console.error("Fel vid utloggning:", err);
-          alert("Kunde inte logga ut.");
-        });
-    }
-  });
-
-  async function loadUserProfile() {
-    try {
-      const res = await fetch("/api/profile/me");
-      const data = await res.json();
-
-      if (data.success) {
-        const name = data.name || '';
-        const email = data.email || '';
-        const image = data.profileImage;
-
-        if (image) {
-          document.getElementById("profileToggle").innerHTML = `
-            <img src="${image}" alt="Profilbild" style="width: 32px; height: 32px; border-radius: 50%;" />
-          `;
+  // === Realtid (SSE) + initial data ===
+  function connectSSE(){
+    const ev = new EventSource(API_BASE + "/api/inventory/stream");
+    ev.onmessage = (e) => {
+      const p = JSON.parse(e.data || "{}");
+      if (p.type === "snapshot" && Array.isArray(p.items)) render(p.items);
+      if (p.type === "stock" && p.item){
+        const row = document.querySelector(`tr[data-id="${p.item.id}"]`);
+        if (row){
+          row.querySelector(".stock-cell").textContent = p.item.stock;
+          updateStatus(p.item.stock, row.cells[3]);
         } else {
-          const initials = name
-            .split(' ')
-            .map(part => part.charAt(0).toUpperCase())
-            .join('')
-            .substring(0, 2);
-          document.getElementById("profileToggle").textContent = initials;
+          document.getElementById("inventoryBody").insertAdjacentHTML("beforeend", rowHTML(p.item));
         }
-
-        document.getElementById("userEmail").textContent = email;
-      } else {
-        document.getElementById("profileToggle").textContent = "??";
-        document.getElementById("userEmail").textContent = "Ej inloggad";
+        refreshNotifications();
       }
-    } catch (err) {
-      console.error("Fel vid hämtning av användarprofil:", err);
-    }
+    };
+    ev.onerror = () => { console.warn("SSE tappad, försöker igen om 3s..."); setTimeout(connectSSE, 3000); };
   }
 
-  loadUserProfile();
-</script>
-<script>
-  function toggleSidebar() {
-    const sidebar = document.querySelector(".sidebar");
-    const isActive = sidebar.classList.contains("active");
-
-    // Toggla både sidomenyn och en body-klass (för ikonfärg m.m.)
-    sidebar.classList.toggle("active", !isActive);
-    document.body.classList.toggle("menu-open", !isActive);
+  // Init – hämta CSRF först, sedan data + SSE
+  async function initInventory(){
+    await initCsrf();
+    fetch(API_BASE + "/api/inventory", { credentials: 'include' })
+      .then(r => r.json())
+      .then(d => { if (d.success) render(d.items); });
+    connectSSE();
   }
+  initInventory();
+
+  // Exponera för HTML-attribut
+  window.filterTable = filterTable;
+  window.sortTable = sortTable;
+  window.toggleEdit = toggleEdit;
 </script>
-<script>
-  // Stäng menyn om man klickar utanför (bara på mobil)
-  window.addEventListener("click", (e) => {
-    const sidebar = document.querySelector(".sidebar");
-    const menuBtn = document.getElementById("menuToggle");
-    const isMobile = window.innerWidth <= 768;
 
-    if (!isMobile) return;
+  <!-- PROFIL/MENY (oförändrat) -->
+  <script>
+    const toggle = document.getElementById('profileToggle');
+    const menu = document.getElementById('profileMenu');
 
-    const clickInMenu = sidebar.contains(e.target);
-    const clickOnBtn  = menuBtn && menuBtn.contains(e.target);
+    toggle.addEventListener('click', () => {
+      const isOpen = menu.style.display === 'flex';
+      menu.style.display = isOpen ? 'none' : 'flex';
+      toggle.classList.toggle('open', !isOpen);
+    });
 
-    if (!clickInMenu && !clickOnBtn) {
-      sidebar.classList.remove("active");
-      document.body.classList.remove("menu-open");
+    window.addEventListener('click', function (e) {
+      if (!document.querySelector('.profile-wrapper').contains(e.target)) {
+        menu.style.display = 'none';
+        toggle.classList.remove('open');
+      }
+    });
+
+    document.getElementById("switchAccount").addEventListener("click", function (e) {
+      e.preventDefault();
+      if (confirm("Vill du logga ut och byta konto?")) {
+        window.location.href = "login.html";
+      }
+    });
+
+    document.getElementById("openSettings").addEventListener("click", function (e) {
+      e.preventDefault();
+      window.location.href = "profile.html";
+    });
+
+    document.getElementById("logout").addEventListener("click", function (e) {
+      e.preventDefault();
+      if (confirm("Är du säker på att du vill logga ut?")) {
+        fetch('/logout', { method: 'GET', credentials: 'include' })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              localStorage.clear();
+              window.location.href = "/login.html";
+            } else {
+              alert("Utloggning misslyckades.");
+            }
+          })
+          .catch(err => {
+            console.error("Fel vid utloggning:", err);
+            alert("Kunde inte logga ut.");
+          });
+      }
+    });
+
+    function toggleSidebar() {
+      const sidebar = document.querySelector(".sidebar");
+      const isActive = sidebar.classList.contains("active");
+      sidebar.classList.toggle("active", !isActive);
+      document.body.classList.toggle("menu-open", !isActive);
     }
-  });
-</script>
+
+    // Stäng menyn på mobil vid klick utanför
+    window.addEventListener("click", (e) => {
+      const sidebar = document.querySelector(".sidebar");
+      const menuBtn = document.getElementById("menuToggle");
+      const isMobile = window.innerWidth <= 768;
+      if (!isMobile) return;
+      const clickInMenu = sidebar.contains(e.target);
+      const clickOnBtn  = menuBtn && menuBtn.contains(e.target);
+      if (!clickInMenu && !clickOnBtn) {
+        sidebar.classList.remove("active");
+        document.body.classList.remove("menu-open");
+      }
+    });
+  </script>
 </body>
 </html>

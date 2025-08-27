@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Testshop – köpflöde</title>
+  <style>
+    body{ font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 20px; }
+    table{ border-collapse: collapse; width: 100%; }
+    th, td{ border:1px solid #ddd; padding:8px; }
+    th{ text-align:left; }
+    input[type="number"]{ width:70px; }
+    button{ cursor:pointer; }
+    .status-instock{ color:#1b7a33; font-weight:600; }
+    .status-low{ color:#b36b00; font-weight:600; }
+    .status-soldout{ color:#b30000; font-weight:700; }
+  </style>
+</head>
+<body>
+  <h1>Testshop</h1>
+  <p>Simulera köp och se hur lagret ändras i realtid (kopplat till inventarie-API:t).</p>
+
+  <table id="shopTable">
+    <thead>
+      <tr>
+        <th>Produkt</th>
+        <th>Artikelnummer</th>
+        <th>Lagersaldo</th>
+        <th>Status</th>
+        <th>Köp</th>
+      </tr>
+    </thead>
+    <tbody id="shopBody"></tbody>
+  </table>
+
+  <script>
+    const API_BASE = ""; // samma origin
+    let CSRF_TOKEN = null;
+
+    // === CSRF ===
+    async function initCsrf() {
+      const r = await fetch('/csrf-token', { credentials: 'include' });
+      const { csrfToken } = await r.json();
+      CSRF_TOKEN = csrfToken;
+    }
+
+    // === Status ===
+    function statusFor(stock){
+      if (stock === 0) return { text: "Slutsåld", className: "status-soldout" };
+      if (stock < 5)  return { text: "Lågt lager", className: "status-low" };
+      return { text: "I lager", className: "status-instock" };
+    }
+
+    // === Render ===
+    function rowHTML(item){
+      const s = statusFor(item.stock);
+      return `
+        <tr data-id="${item.id}">
+          <td>${item.name}</td>
+          <td>${item.sku}</td>
+          <td class="stock">${item.stock}</td>
+          <td class="status ${s.className}">${s.text}</td>
+          <td>
+            <input type="number" min="1" value="1" />
+            <button onclick="buy('${item.id}', this)">Köp</button>
+          </td>
+        </tr>`;
+    }
+
+    function render(items){
+      document.getElementById("shopBody").innerHTML = items.map(rowHTML).join("");
+    }
+
+    function applyUpdate(item){
+      const row = document.querySelector(`tr[data-id="${item.id}"]`);
+      if (!row) return;
+      row.querySelector('.stock').textContent = item.stock;
+      const s = statusFor(item.stock);
+      const st = row.querySelector('.status');
+      st.textContent = s.text;
+      st.className = `status ${s.className}`;
+    }
+
+    // === Köp ===
+    function buy(productId, btn){
+      if (!CSRF_TOKEN) {
+        // lazy-retry om token saknas
+        return initCsrf().then(() => buy(productId, btn));
+      }
+      const q = Math.max(1, parseInt(btn.parentElement.querySelector('input').value) || 1);
+      fetch(API_BASE + "/api/inventory/buy", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": CSRF_TOKEN
+        },
+        body: JSON.stringify({ productId, quantity: q })
+      })
+      .then(r => { if(!r.ok) throw new Error("API-fel"); return r.json(); })
+      .catch(err => { alert("Köp misslyckades: " + err.message); });
+    }
+
+    // === SSE ===
+    function connectSSE(){
+      const ev = new EventSource(API_BASE + "/api/inventory/stream");
+      ev.onmessage = (e) => {
+        const p = JSON.parse(e.data || "{}");
+        if (p.type === "snapshot" && Array.isArray(p.items)) render(p.items);
+        if (p.type === "stock" && p.item) applyUpdate(p.item);
+      };
+      ev.onerror = () => {
+        console.warn("SSE tappad, försöker igen om 3s...");
+        setTimeout(connectSSE, 3000);
+      };
+    }
+
+    // === Init ===
+    async function initShop(){
+      await initCsrf(); // token först (POST kräver den)
+      // initial inventory
+      fetch(API_BASE + "/api/inventory", { credentials: 'include' })
+        .then(r => r.json())
+        .then(d => { if (d.success) render(d.items); });
+      // realtime
+      connectSSE();
+    }
+    initShop();
+
+    // Exponera buy för onclick
+    window.buy = buy;
+  </script>
+</body>
+</html>

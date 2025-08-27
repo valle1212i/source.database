@@ -260,34 +260,143 @@ app.post('/login', loginLimiter, async (req, res) => {
   }
 });
 
+
 // 📦 Dummy-inventarielager
 let inventory = {
-  TS1001: { name: "Vit T-shirt", stock: 0 },
-  HD1002: { name: "Svart Hoodie", stock: 12 },
-  KP1003: { name: "Blå Keps", stock: 3 },
-  GM1004: { name: "Grå Mössa", stock: 6 },
-  SN1005: { name: "Vita Sneakers", stock: 0 },
+  TS1001: { name: "Vit T-shirt",  stock: 0  },
+  HD1002: { name: "Svart Hoodie",  stock: 12 },
+  KP1003: { name: "Blå Keps",      stock: 3  },
+  GM1004: { name: "Grå Mössa",     stock: 6  },
+  SN1005: { name: "Vita Sneakers", stock: 0  },
 };
-app.get("/api/inventory", (req, res) => res.json(inventory));
+// ===== Orders (i minnet) – enkel demo =====
+let orders = []; // { id, productId, sku, name, qty, ts }
+
+// Hjälpare: senaste 24h buckets (per timme)
+function ordersPerHourLast24h(list) {
+  const now = Date.now();
+  const ONE_H = 60 * 60 * 1000;
+  const start = now - 23 * ONE_H;
+  const buckets = [];
+  for (let i = 0; i < 24; i++) {
+    const t = start + i * ONE_H;
+    const hour = new Date(t);
+    const count = list.filter(o => {
+      const ts = typeof o.ts === 'number' ? o.ts : Date.parse(o.ts);
+      return ts >= t && ts < t + ONE_H;
+    }).reduce((sum, o) => sum + o.qty, 0);
+    buckets.push({
+      label: hour.toLocaleTimeString('sv-SE', { hour: '2-digit' }),
+      count
+    });
+  }
+  return buckets;
+}
+
+// Aggregera toppsäljare
+function bestsellers(list) {
+  const map = new Map(); // sku -> { id, sku, name, qty }
+  for (const o of list) {
+    const key = o.productId || o.sku;
+    if (!map.has(key)) map.set(key, { id: key, sku: key, name: o.name, qty: 0 });
+    map.get(key).qty += o.qty;
+  }
+  return [...map.values()].sort((a,b)=> b.qty - a.qty);
+}
+
+// Sammanfattning
+app.get("/api/orders/summary", (req, res) => {
+  const totalOrders = orders.reduce((sum, o) => sum + o.qty, 0);
+  const latestOrder = orders[orders.length - 1] || null;
+  const top = bestsellers(orders);
+  const perHour = ordersPerHourLast24h(orders);
+  res.json({
+    success: true,
+    totalOrders,
+    latestOrder,
+    bestsellers: top,        // [{id, sku, name, qty}]
+    perHour                  // [{label: "13", count: 5}, ... 24 st]
+  });
+});
+
+// ==== INVENTORY: SSE helpers ====
+const sseClients = new Set();
+
+function toItemsArray(invObj) {
+  return Object.entries(invObj).map(([sku, v]) => ({
+    id: sku,      // använd SKU som id
+    sku,
+    name: v.name,
+    stock: v.stock
+  }));
+}
+
+function sseBroadcast(payload) {
+  const data = `data: ${JSON.stringify(payload)}\n\n`;
+  for (const res of sseClients) res.write(data);
+}
+
+app.get("/api/inventory", (req, res) => {
+  if ((req.query.format || '').toLowerCase() === 'object') {
+    // ev. gammal klient
+    return res.json(inventory);
+  }
+  res.json({ success: true, items: toItemsArray(inventory) });
+});
 app.post("/api/inventory/buy", (req, res) => {
-  const { productId, quantity } = req.body;
+  const { productId, quantity } = req.body || {};
   const product = inventory[productId];
   const qty = Number(quantity);
-  if (!product) return res.status(404).json({ error: "Produkt hittades inte" });
-  if (!Number.isInteger(qty) || qty <= 0) return res.status(400).json({ error: "Ogiltig kvantitet" });
-  if (product.stock < qty) return res.status(400).json({ error: "Ej tillräckligt i lager" });
+  if (!product) return res.status(404).json({ success: false, error: "Produkt hittades inte" });
+  if (!Number.isInteger(qty) || qty <= 0) return res.status(400).json({ success: false, error: "Ogiltig kvantitet" });
+  if (product.stock < qty) return res.status(400).json({ success: false, error: "Ej tillräckligt i lager" });
+
   product.stock -= qty;
-  res.json({ success: true, productId, stock: product.stock });
+  const item = { id: productId, sku: productId, name: product.name, stock: product.stock };
+
+  // 🆕 Logga ordern
+  const order = { id: `ORD-${Date.now()}`, productId, sku: productId, name: product.name, qty, ts: Date.now() };
+  orders.push(order);
+
+  // Realtid
+  sseBroadcast({ type: "stock", item });
+  // 🆕 Skicka även order-event
+  sseBroadcast({ type: "order", order });
+
+  res.json({ success: true, item });
 });
+
 app.post("/api/inventory/return", (req, res) => {
-  const { productId, quantity } = req.body;
+  const { productId, quantity } = req.body || {};
   const product = inventory[productId];
   const qty = Number(quantity);
-  if (!product) return res.status(404).json({ error: "Produkt hittades inte" });
-  if (!Number.isInteger(qty) || qty <= 0) return res.status(400).json({ error: "Ogiltig kvantitet" });
+  if (!product) return res.status(404).json({ success: false, error: "Produkt hittades inte" });
+  if (!Number.isInteger(qty) || qty <= 0) return res.status(400).json({ success: false, error: "Ogiltig kvantitet" });
+
   product.stock += qty;
-  res.json({ success: true, productId, stock: product.stock });
+  const item = { id: productId, sku: productId, name: product.name, stock: product.stock };
+
+  // (Returer loggas inte som "order" här, men du kan göra en separat "return"-händelse om du vill)
+  sseBroadcast({ type: "stock", item });
+
+  res.json({ success: true, item });
 });
+
+
+app.get("/api/inventory/stream", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+   res.setHeader("X-Accel-Buffering", "no"); // <- för Nginx/Render
+  if (res.flushHeaders) res.flushHeaders();
+
+  // initial snapshot
+  res.write(`data: ${JSON.stringify({ type: "snapshot", items: toItemsArray(inventory) })}\n\n`);
+
+  sseClients.add(res);
+  req.on("close", () => sseClients.delete(res));
+});
+
 
 // Säker leverans av uppladdade bilder
 const ALLOWED_IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.jfif']);

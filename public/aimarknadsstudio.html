@@ -56,6 +56,22 @@
         <p><i class="fas fa-cloud-upload-alt"></i> Släpp en bild här eller klicka för att välja</p>
         <input type="file" id="image" name="image" accept="image/*" />
       </div>
+      
+      <!-- Alternativ (valfria) -->
+      <div class="options">
+        <label for="overlayMode">Hur ska uppladdad bild användas?</label>
+        <select id="overlayMode" name="overlayMode">
+          <option value="none">Använd inte som overlay</option>
+          <option value="logo" selected>Som logotyp (hörn)</option>
+          <option value="main">Som huvudmotiv (centrerat)</option>
+        </select>
+
+        <label style="margin-top:8px;">
+          <input type="checkbox" id="ctaEnabled" />
+          Lägg till valfri text/CTA längst ned
+        </label>
+        <input id="cta" name="cta" placeholder="Ex: Boka konsultation" disabled />
+      </div>
 
       <!-- Startknapp -->
       <button type="submit" class="ai-button">
@@ -74,42 +90,105 @@
   const loadingBar = document.getElementById("loadingBar");
   const dropZone = document.getElementById("dropZone");
   const fileInput = document.getElementById("image");
+  const submitBtn = form.querySelector('button[type="submit"]');
 
+  // enable/disable CTA input based on checkbox
+  const ctaEnabledEl = document.getElementById("ctaEnabled");
+  const ctaEl = document.getElementById("cta");
+  ctaEnabledEl.addEventListener("change", () => {
+    ctaEl.disabled = !ctaEnabledEl.checked;
+    if (!ctaEnabledEl.checked) ctaEl.value = "";
+  });
+
+  // --- CSRF: hämta token en gång vid sidladdning ---
+  let csrfTokenPromise = fetch("/csrf-token", { credentials: "include" })
+    .then(r => r.json())
+    .then(d => d.csrfToken)
+    .catch(() => null);
+
+  // Dra & släpp
   dropZone.addEventListener("click", () => fileInput.click());
-  dropZone.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    dropZone.classList.add("dragover");
-  });
-  dropZone.addEventListener("dragleave", () => {
-    dropZone.classList.remove("dragover");
-  });
+  dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
+  dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
   dropZone.addEventListener("drop", (e) => {
     e.preventDefault();
     dropZone.classList.remove("dragover");
     fileInput.files = e.dataTransfer.files;
+    if (fileInput.files && fileInput.files[0]) {
+      dropZone.querySelector("p").textContent = `Vald fil: ${fileInput.files[0].name}`;
+    }
+  });
+
+  // Visa filnamn vid vanlig filväljare
+  fileInput.addEventListener("change", () => {
+    if (fileInput.files && fileInput.files[0]) {
+      dropZone.querySelector("p").textContent = `Vald fil: ${fileInput.files[0].name}`;
+    }
   });
 
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
     loadingBar.style.display = "block";
+    submitBtn.disabled = true;
 
-    const description = document.getElementById("prompt").value;
+    const description = document.getElementById("prompt").value || "";
     const imageFile = fileInput.files[0];
+
+    // hämta användarval
+    const overlayMode = document.getElementById("overlayMode")?.value || "logo";
+    const ctaEnabled = document.getElementById("ctaEnabled")?.checked || false;
+    const cta = document.getElementById("cta")?.value || "";
+
     const formData = new FormData();
     formData.append("description", description);
+    if (imageFile) formData.append("image", imageFile);
+
+    // Marknads-parametrar (exempel)
+    formData.append("platform", "Instagram Feed");
+    formData.append("goal", "lead generation");
+    formData.append("audience", "Women 25–45 in Stockholm");
+    formData.append("tone", "bold, friendly, high-contrast");
+    formData.append("brandName", "Acme Co");
+    formData.append("brandColors", "#0ea5e9,#111827");
+    formData.append("aspectRatio", "1080x1350");
+    formData.append("style", "clean, minimalist, studio lighting");
+
+    // nya val
+    formData.append("overlayMode", overlayMode);       // none|logo|main
+    formData.append("ctaEnabled", String(ctaEnabled)); // "true"/"false"
+    if (ctaEnabled && cta) {
+      formData.append("cta", cta); // bara om användaren valt
+    }
+
+    // Skicka img2img-läge ENDAST om fil valts
     if (imageFile) {
-      formData.append("image", imageFile);
+      formData.append("generationMode", "img2img");
     }
 
     try {
+      const token = await csrfTokenPromise;
       const response = await fetch("/api/ai-marknadsstudio", {
         method: "POST",
         body: formData,
+        credentials: "include",
+        headers: token ? { "x-csrf-token": token } : undefined
       });
 
       loadingBar.style.display = "none";
+      submitBtn.disabled = false;
 
-      if (!response.ok) throw new Error("Fel vid kommunikation med AI-servern.");
+      if (!response.ok) {
+        let msg = "Fel vid kommunikation med AI-servern.";
+        try {
+          const errJson = await response.json();
+          if (errJson?.error || errJson?.detail) {
+            msg = `${errJson.error || msg}${errJson.detail ? ` — ${errJson.detail}` : ""}`;
+          }
+        } catch {}
+        if (response.status === 403) msg = "403 – Ogiltig eller saknad CSRF-token. Ladda om sidan och försök igen.";
+        throw new Error(msg);
+      }
+
       const data = await response.json();
 
       if (data.imageUrl) {
@@ -121,25 +200,37 @@
         img.alt = "AI-resultat";
         img.className = "ai-result-img";
         img.addEventListener("click", () => {
-  window.open(`/preview.html?imageUrl=${encodeURIComponent(data.imageUrl)}`, "_blank");
-});
+          window.open(`/preview.html?imageUrl=${encodeURIComponent(data.imageUrl)}`, "_blank");
+        });
 
+        const actions = document.createElement("div");
+        actions.className = "ai-actions";
+
+        const dlImg = document.createElement("a");
+        dlImg.href = `/api/ai-marknadsstudio/download-image?url=${encodeURIComponent(data.imageUrl)}`;
+        dlImg.setAttribute("download", "ai-bild.jpg");
+        dlImg.className = "btn";
+        dlImg.textContent = "Ladda ned bild";
+
+        actions.appendChild(dlImg);
         card.appendChild(img);
+        card.appendChild(actions);
         resultArea.prepend(card);
 
         const cards = resultArea.querySelectorAll(".ai-result-card");
-        if (cards.length > 3) {
-          cards[3].remove();
-        }
+        if (cards.length > 3) cards[3].remove();
+
       } else if (data.message) {
         resultArea.innerHTML = `<p>${data.message}</p>`;
       } else {
         resultArea.innerHTML = "❗ Inget resultat kunde genereras.";
       }
+
     } catch (err) {
       loadingBar.style.display = "none";
+      submitBtn.disabled = false;
       console.error(err);
-      resultArea.innerHTML = "❌ Något gick fel. Försök igen.";
+      resultArea.innerHTML = "❌ " + err?.message || "Något gick fel. Försök igen.";
     }
   });
   </script>

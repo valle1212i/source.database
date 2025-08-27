@@ -6,18 +6,28 @@
   <title>Analyser – Kundportal</title>
   <link rel="stylesheet" href="CSS/analytics.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <style>
+    /* Lätt finish om din CSS saknar detta */
+    .kpi-grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin: 12px 0 22px; }
+    .kpi-card{ background: var(--card-bg,#fff); border-radius:16px; padding:18px; box-shadow: 0 6px 16px rgba(0,0,0,.06); position:relative; overflow:hidden;}
+    .kpi-card .icon{ position:absolute; right:14px; top:14px; opacity:.15; font-size:42px;}
+    .kpi-title{ margin:0 0 8px; font-size:14px; color:#64748b; text-transform:uppercase; letter-spacing:.02em;}
+    .big-number{ font-size:28px; font-weight:700; margin:0; }
+    .subtle{ color:#64748b; font-size:12px; }
+    .chart-row{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+    .chart-card{ background: var(--card-bg,#fff); border-radius:16px; padding:18px; box-shadow: 0 6px 16px rgba(0,0,0,.06);}
+    @media (max-width: 900px){ .chart-row{ grid-template-columns: 1fr; } }
+  </style>
 </head>
 <body>
- <!-- Hamburgermeny för mobil -->
+<!-- Hamburgermeny -->
 <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny" onclick="toggleSidebar()">☰</button>
 
 <!-- SIDOMENY -->
 <div class="sidebar">
   <div class="logo">
-    <a href="customerportal.html">
-      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
-    </a>
+    <a href="customerportal.html"><img src="images/logo.png" alt="Logotyp" class="logo-img" /></a>
   </div>
   <ul class="nav-menu">
     <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
@@ -31,9 +41,7 @@
     <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
     <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
   </ul>
-  <div class="help">
-    <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
-  </div>
+  <div class="help"><a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a></div>
 </div>
 
 <!-- PROFILMENY -->
@@ -48,255 +56,225 @@
   </div>
 </div>
 
+<!-- INNEHÅLL -->
+<main class="main">
+  <div class="header-row"><h1>Analyser & Statistik</h1></div>
 
-  <!-- HUVUDINNEHÅLL -->
-  <main class="main">
- <div class="header-row">
-  <h1>Analyser & Statistik</h1>
-</div>
-    <div class="chart-row">
-      <div class="chart-card">
-        <h3>Totala intäkter – Juni</h3>
-        <p class="big-number">752 300 kr</p>
-        <canvas id="incomeChart"></canvas>
-      </div>
-
-      <div class="chart-card">
-        <h3>Visningar på hemsidan</h3>
-        <p class="big-number">+12% senaste veckan<br>28 000 visningar idag</p>
-        <canvas id="viewsChart"></canvas>
-      </div>
+  <!-- KPI:er -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <div class="icon"><i class="fa-solid fa-basket-shopping"></i></div>
+      <p class="kpi-title">Totalt antal ordrar</p>
+      <p class="big-number" id="kpiTotalOrders">0</p>
+      <p class="subtle" id="kpiTotalSub">Senaste 24 timmar</p>
     </div>
-
-    <div class="chart-row">
-      <div class="chart-card">
-        <h3>Antal ordrar denna månaden</h3>
-        <p class="big-number">105 st</p>
-        <canvas id="customerChart"></canvas>
-      </div>
-
-      <div class="chart-card">
-       <!-- Mest sålda -->
-<section class="card">
-  <h2>Mest sålda produkter</h2>
-  <canvas id="bestsellersChart"></canvas>
-</section>
-      </div>
+    <div class="kpi-card">
+      <div class="icon"><i class="fa-solid fa-crown"></i></div>
+      <p class="kpi-title">Mest köpt produkt</p>
+      <p class="big-number" id="kpiTopProduct">–</p>
+      <p class="subtle" id="kpiTopProductQty"></p>
     </div>
-  </main>
+    <div class="kpi-card">
+      <div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+      <p class="kpi-title">Senaste ordern</p>
+      <p class="big-number" id="kpiLatestOrder">–</p>
+      <p class="subtle" id="kpiLatestTime"></p>
+    </div>
+  </section>
 
-  <script>
-    // Intäkter – Stapeldiagram
-    new Chart(document.getElementById('incomeChart'), {
-      type: 'bar',
-      data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Juni'],
-        datasets: [{
-          label: 'Intäkter (kr)',
-          data: [430000, 390000, 480000, 515000, 620000, 752300],
-          backgroundColor: '#00bfa6'
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: { beginAtZero: true }
-        }
-      }
-    });
+  <!-- Diagram -->
+  <section class="chart-row">
+    <div class="chart-card">
+      <h3>Ordrar per timme (senaste 24h)</h3>
+      <canvas id="ordersByHourChart" height="160"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Mest sålda produkter</h3>
+      <canvas id="bestsellersChart" height="160"></canvas>
+    </div>
+  </section>
+</main>
 
-    // Visningar – Linjediagram
-    new Chart(document.getElementById('viewsChart'), {
+<!-- DATA & REALTID -->
+<script>
+  const API_BASE = ""; // samma origin
+  const savedTheme = localStorage.getItem("theme") || "light";
+  document.body.classList.add(`${savedTheme}-theme`);
+
+  // ---------- Helpers ----------
+  function fmtTime(ts){
+    const d = new Date(typeof ts === 'number' ? ts : Date.parse(ts));
+    return d.toLocaleString('sv-SE', { hour:'2-digit', minute:'2-digit', year:'numeric', month:'2-digit', day:'2-digit' });
+  }
+
+  // ---------- Charts ----------
+  let ordersByHourChart, bestsellersChart;
+
+  function buildOrdersByHourChart(perHour){
+    const ctx = document.getElementById('ordersByHourChart');
+    const labels = perHour.map(b => b.label);
+    const data = perHour.map(b => b.count);
+    if (ordersByHourChart) ordersByHourChart.destroy();
+    ordersByHourChart = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: ['Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör', 'Sön'],
-        datasets: [{
-          label: 'Visningar',
-          data: [17000, 18000, 20000, 22000, 24000, 26000, 28000],
-          fill: false,
-          borderColor: '#3b82f6',
-          tension: 0.3
-        }]
+        labels,
+        datasets: [{ label:'Antal ordrar', data, tension:.25, fill:false }]
       },
       options: {
-        responsive: true,
-        scales: {
-          y: { beginAtZero: true }
-        }
+        responsive:true,
+        plugins:{ legend:{ display:false }},
+        scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }
       }
     });
+  }
 
-    // Diagram: Åldersfördelning för nya kunder
-new Chart(document.getElementById('customerChart'), {
-  type: 'doughnut',
-  data: {
-    labels: ['15–24 år', '25–34 år', '35–44 år', '45+ år'],
-    datasets: [{
-      label: 'Nya kunder',
-      data: [20, 35, 30, 20],
-      backgroundColor: ['#38bdf8', '#2563eb', '#9333ea', '#f97316'], // nyanser: blå-lila-orange
-      borderWidth: 1
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          font: {
-            size: 14
-          }
-        }
-      },
-      tooltip: {
-        callbacks: {
-          label: function (context) {
-            return `${context.label}: ${context.parsed} personer`;
-          }
-        }
+  function buildBestsellersChart(items){
+    const top = items.slice(0,7); // topp 7
+    const ctx = document.getElementById('bestsellersChart');
+    const labels = top.map(x=> x.name || x.sku);
+    const data = top.map(x=> x.qty);
+    if (bestsellersChart) bestsellersChart.destroy();
+    bestsellersChart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [{ label:'Antal sålda', data }] },
+      options: {
+        responsive:true,
+        plugins:{ legend:{ display:false }},
+        scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }
       }
+    });
+  }
+
+  // ---------- KPIs ----------
+  function renderKPIs(summary){
+    const tot = summary.totalOrders || 0;
+    document.getElementById('kpiTotalOrders').textContent = tot.toString();
+
+    const top = (summary.bestsellers || [])[0];
+    if (top){
+      document.getElementById('kpiTopProduct').textContent = top.name || top.sku;
+      document.getElementById('kpiTopProductQty').textContent = `${top.qty} st totalt`;
+    } else {
+      document.getElementById('kpiTopProduct').textContent = '–';
+      document.getElementById('kpiTopProductQty').textContent = '';
+    }
+
+    const last = summary.latestOrder;
+    if (last){
+      document.getElementById('kpiLatestOrder').textContent = `${last.name} ×${last.qty}`;
+      document.getElementById('kpiLatestTime').textContent = fmtTime(last.ts);
+    } else {
+      document.getElementById('kpiLatestOrder').textContent = '–';
+      document.getElementById('kpiLatestTime').textContent = '';
     }
   }
-});
 
+  // ---------- Init fetch ----------
+  async function loadSummary(){
+    const r = await fetch(API_BASE + "/api/orders/summary", { credentials:'include' });
+    const data = await r.json();
+    if (!data.success) throw new Error("Kunde inte hämta orderdata");
+    renderKPIs(data);
+    buildOrdersByHourChart(data.perHour || []);
+    buildBestsellersChart(data.bestsellers || []);
+  }
 
-    // TEMA
-    const savedTheme = localStorage.getItem("theme") || "light";
-    document.body.classList.add(`${savedTheme}-theme`);
-    // Diagram: Mest sålda produkter
-new Chart(document.getElementById('bestsellersChart'), {
-  type: 'bar',
-  data: {
-    labels: ['Webbshop Premium', 'Startup Paket', 'UX Optimering', 'Social Boost', 'SEO Bas'],
-    datasets: [{
-      label: 'Antal sålda',
-      data: [120, 95, 83, 60, 48],
-      backgroundColor: '#3b82f6'
-    }]
-  },
-  options: {
-    responsive: true,
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 20
+  // ---------- Live via SSE ----------
+  function connectSSE(){
+    const ev = new EventSource(API_BASE + "/api/inventory/stream");
+    ev.onmessage = (e) => {
+      const p = JSON.parse(e.data || "{}");
+      if (p.type === "order" && p.order){
+        // Uppdatera KPI “totalt”
+        const val = Number(document.getElementById('kpiTotalOrders').textContent || 0);
+        document.getElementById('kpiTotalOrders').textContent = String(val + p.order.qty);
+
+        // Senaste ordern
+        document.getElementById('kpiLatestOrder').textContent = `${p.order.name} ×${p.order.qty}`;
+        document.getElementById('kpiLatestTime').textContent = fmtTime(p.order.ts);
+
+        // Bumpa per-timme datapunkt (sista etiketten)
+        if (ordersByHourChart){
+          // Om värdet gäller "nuvarande timme", öka sista punkten
+          const idx = ordersByHourChart.data.labels.length - 1;
+          ordersByHourChart.data.datasets[0].data[idx] = (ordersByHourChart.data.datasets[0].data[idx] || 0) + p.order.qty;
+          ordersByHourChart.update('none');
+        }
+
+        // Uppdatera toppsäljare (lägg till/öka)
+        if (bestsellersChart){
+          const name = p.order.name || p.order.sku;
+          const i = bestsellersChart.data.labels.indexOf(name);
+          if (i >= 0) {
+            bestsellersChart.data.datasets[0].data[i] += p.order.qty;
+          } else {
+            // lägg längst bak (enkelt), ev. trimma till topp 7
+            bestsellersChart.data.labels.push(name);
+            bestsellersChart.data.datasets[0].data.push(p.order.qty);
+            if (bestsellersChart.data.labels.length > 7){
+              bestsellersChart.data.labels.shift();
+              bestsellersChart.data.datasets[0].data.shift();
+            }
+          }
+          bestsellersChart.update('none');
         }
       }
-    }
+    };
+    ev.onerror = () => { console.warn("SSE tappad, försöker igen om 3s..."); setTimeout(connectSSE, 3000); };
   }
-});
-  </script>
-  <script>
+
+  // ---------- Boot ----------
+  loadSummary().catch(err => console.error(err));
+  connectSSE();
+</script>
+
+<!-- PROFIL/MENY (oförändrat) -->
+<script>
   const toggle = document.getElementById('profileToggle');
   const menu = document.getElementById('profileMenu');
-
   toggle.addEventListener('click', () => {
     const isOpen = menu.style.display === 'flex';
     menu.style.display = isOpen ? 'none' : 'flex';
     toggle.classList.toggle('open', !isOpen);
   });
-
   window.addEventListener('click', function (e) {
     if (!document.querySelector('.profile-wrapper').contains(e.target)) {
       menu.style.display = 'none';
       toggle.classList.remove('open');
     }
   });
-
   document.getElementById("switchAccount").addEventListener("click", function (e) {
-    e.preventDefault();
-    if (confirm("Vill du logga ut och byta konto?")) {
-      window.location.href = "login.html";
-    }
+    e.preventDefault(); if (confirm("Vill du logga ut och byta konto?")) window.location.href = "login.html";
   });
-
   document.getElementById("openSettings").addEventListener("click", function (e) {
-    e.preventDefault();
-    window.location.href = "profile.html";
+    e.preventDefault(); window.location.href = "profile.html";
   });
-
   document.getElementById("logout").addEventListener("click", function (e) {
     e.preventDefault();
     if (confirm("Är du säker på att du vill logga ut?")) {
-      fetch('/logout', {
-        method: 'GET',
-        credentials: 'include'
-      })
+      fetch('/logout', { method: 'GET', credentials: 'include' })
         .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            localStorage.clear();
-            window.location.href = "/login.html";
-          } else {
-            alert("Utloggning misslyckades.");
-          }
-        })
-        .catch(err => {
-          console.error("Fel vid utloggning:", err);
-          alert("Kunde inte logga ut.");
-        });
+        .then(data => { if (data.success) { localStorage.clear(); window.location.href = "/login.html"; } else { alert("Utloggning misslyckades."); }})
+        .catch(err => { console.error("Fel vid utloggning:", err); alert("Kunde inte logga ut."); });
     }
   });
 
-  async function loadUserProfile() {
-    try {
-      const res = await fetch("/api/profile/me");
-      const data = await res.json();
-
-      if (data.success) {
-        const name = data.name || '';
-        const email = data.email || '';
-        const image = data.profileImage;
-
-        if (image) {
-          document.getElementById("profileToggle").innerHTML = `
-            <img src="${image}" alt="Profilbild" style="width: 32px; height: 32px; border-radius: 50%;" />
-          `;
-        } else {
-          const initials = name
-            .split(' ')
-            .map(part => part.charAt(0).toUpperCase())
-            .join('')
-            .substring(0, 2);
-          document.getElementById("profileToggle").textContent = initials;
-        }
-
-        document.getElementById("userEmail").textContent = email;
-      } else {
-        document.getElementById("profileToggle").textContent = "??";
-        document.getElementById("userEmail").textContent = "Ej inloggad";
-      }
-    } catch (err) {
-      console.error("Fel vid hämtning av användarprofil:", err);
-    }
-  }
-
-  loadUserProfile();
-</script>
-<script>
   function toggleSidebar() {
     const sidebar = document.querySelector(".sidebar");
     const isActive = sidebar.classList.contains("active");
-
-    // Toggla både sidomenyn och en body-klass (för ikonfärg m.m.)
     sidebar.classList.toggle("active", !isActive);
     document.body.classList.toggle("menu-open", !isActive);
   }
-</script>
-<script>
-  // Stäng menyn om man klickar utanför (bara på mobil)
+
+  // Stäng menyn på mobil vid klick utanför
   window.addEventListener("click", (e) => {
     const sidebar = document.querySelector(".sidebar");
     const menuBtn = document.getElementById("menuToggle");
     const isMobile = window.innerWidth <= 768;
-
     if (!isMobile) return;
-
     const clickInMenu = sidebar.contains(e.target);
     const clickOnBtn  = menuBtn && menuBtn.contains(e.target);
-
     if (!clickInMenu && !clickOnBtn) {
       sidebar.classList.remove("active");
       document.body.classList.remove("menu-open");
