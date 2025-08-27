@@ -45,7 +45,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       tableBody.appendChild(row);
     });
   } catch (err) {
-    console.error("Fel:", err);
-    tableBody.innerHTML = `<tr><td colspan="5">❌ Kunde inte hämta loggar</td></tr>`;
-  }
+  console.error("Fel:", err);
+
+  // Töm tabellkroppen säkert
+  while (tableBody.firstChild) tableBody.removeChild(tableBody.firstChild);
+
+  // Bygg en säker felrad utan innerHTML
+  const tr = document.createElement("tr");
+  const td = document.createElement("td");
+  td.colSpan = 5;
+  td.appendChild(document.createTextNode("❌ Kunde inte hämta loggar"));
+  tr.appendChild(td);
+  tableBody.appendChild(tr);
+}
 });

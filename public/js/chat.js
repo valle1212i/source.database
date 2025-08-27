@@ -9,6 +9,13 @@ const socket = io(BASE_URL, {
   withCredentials: true
 });
 
+// CSRF-hjälpare som hämtar token från servern
+async function getCsrfToken() {
+  const res = await fetch(`${BASE_URL}/csrf-token`, { credentials: "include" });
+  const { csrfToken } = await res.json();
+  return csrfToken;
+}
+
 socket.on("connect", () => {
   console.log("✅ Ansluten till Socket.IO:", socket.id);
 });
@@ -65,7 +72,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     sendMessage(userInput);
   });
 
-  document.getElementById("endChatBtn")?.addEventListener("click", () => {
+    document.getElementById("endChatBtn")?.addEventListener("click", async () => {
     const confirmEnd = confirm("Är du säker på att du vill avsluta chatten?");
     if (!confirmEnd) return;
 
@@ -77,11 +84,18 @@ window.addEventListener("DOMContentLoaded", async () => {
       customerId: window.customerId
     };
 
+    // Skicka till Socket.IO
     socket.emit("sendMessage", systemMsg);
 
-    fetch(`${BASE_URL}/api/chat`, {
+    // Hämta CSRF och skicka i headern
+    const csrf = await getCsrfToken();
+
+    await fetch(`${BASE_URL}/api/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": csrf
+      },
       credentials: "include",
       body: JSON.stringify(systemMsg)
     });
@@ -94,6 +108,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
   });
+
 
   showNextQuestion();
 });
@@ -176,7 +191,7 @@ async function initChat() {
   }
 }
 
-function sendMessage(text) {
+async function sendMessage(text) {
   if (!text || !window.customerId) return;
 
   const msg = {
@@ -189,20 +204,22 @@ function sendMessage(text) {
 
   input.value = "";
 
+  // Skicka till Socket.IO 
   socket.emit("sendMessage", msg);
   console.log("📤 Meddelande skickat via Socket.IO:", msg);
 
-  fetch(`${BASE_URL}/api/chat`, {
+  // Hämta CSRF och skicka i headern
+  const csrf = await getCsrfToken();
+
+  await fetch(`${BASE_URL}/api/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "CSRF-Token": csrf
+    },
     body: JSON.stringify(msg),
     credentials: "include"
-  })
-    .then(res => res.json())
-    .then(data => console.log("✅ Sparat till /api/chat:", data))
-    .catch(err => {
-      console.error("❌ Kunde inte spara meddelande:", err);
-    });
+  });
 }
 
 socket.on("newMessage", (msg) => {
@@ -256,17 +273,19 @@ async function maybeSendWelcomeMessage() {
     customerId: window.customerId
   };
 
+  // Skicka till Socket.IO som tidigare
   socket.emit("sendMessage", welcome);
 
-  fetch(`${BASE_URL}/api/chat`, {
+  // ⬇️ NYTT: hämta CSRF och skicka i headern
+  const csrf = await getCsrfToken();
+
+  await fetch(`${BASE_URL}/api/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "CSRF-Token": csrf
+    },
     credentials: "include",
     body: JSON.stringify(welcome)
-  })
-    .then(res => res.json())
-    .then(data => console.log("✅ Välkomstmeddelande sparat:", data))
-    .catch(err => {
-      console.error("❌ Kunde inte spara välkomstmeddelande:", err);
-    });
+  });
 }
