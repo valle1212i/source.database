@@ -60,26 +60,17 @@
       const password = e.target.password.value;
       const errorBox = document.getElementById("loginError");
 
-      const baseURL = window.location.hostname === "localhost"
-        ? "http://localhost:3000"
-        : "https://source-database.onrender.com";
-
       try {
-        const res = await fetch(`${baseURL}/login`, {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "X-CSRF-Token": window.CSRF_TOKEN
-        },
-          credentials: "include", // 💡 viktigt för sessions-cookies
-          body: JSON.stringify({ email, password })
-        });
 
-        if (res.redirected) {
-          // Render redirectar till /customerportal.html direkt
-          window.location.href = res.url;
-          return;
-        }
+        const res = await fetch(`/api/auth/login`, {
+  method: "POST",
+  headers: { 
+    "Content-Type": "application/json",
+    "X-CSRF-Token": window.CSRF_TOKEN
+  },
+  credentials: "include",
+  body: JSON.stringify({ email, password })
+});
 
         const result = await res.text();
 

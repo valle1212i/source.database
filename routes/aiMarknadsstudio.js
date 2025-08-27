@@ -8,8 +8,7 @@ const { PDFDocument } = require("pdf-lib");
 const sharp = require("sharp"); // komposition & typografiband
 
 // Node 18+ har global fetch. För Node 16/17:
-// const fetch = require("node-fetch");
-
+// 
 const ai = require("../utils/aiUtils"); // createPromptFromDescription, generateImageFromPrompt, (ev) generateImageFromPromptWithInit
 
 // ---------- Multer (public/uploads) ----------

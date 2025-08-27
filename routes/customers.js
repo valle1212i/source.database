@@ -20,11 +20,8 @@ router.get('/me', async (req, res) => {
   }
 });
 
-// 💾 PUT /api/customers/marketing/:platform – Spara formulärsvar för t.ex. Google Ads
-router.put('/:id/marketing', requireAuth, async (req, res) => {
-  if (req.session.user?.role !== 'admin') {
-    return res.status(403).json({ success: false, message: 'Åtkomst nekad' });
-  }
+// 💾 PUT /api/customers/marketing/:platform – Spara formulärsvar för inloggad kund
+router.put('/marketing/:platform', requireAuth, async (req, res) => {
   if (!req.session.user || !req.session.user.email) {
     return res.status(401).json({ error: "Inte inloggad" });
   }
@@ -59,8 +56,11 @@ router.put('/:id/marketing', requireAuth, async (req, res) => {
   }
 });
 
-// 💾 PUT /api/customers/:id/marketing – Spara all marknadsföringsdata (admin)
-router.put('/:id/marketing', async (req, res) => {
+// 💾 PUT /api/customers/:id/marketing – Spara all marknadsföringsdata (endast admin)
+router.put('/:id/marketing', requireAuth, async (req, res) => {
+  if (req.session.user?.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Åtkomst nekad' });
+  }
   const { id } = req.params;
   const marketingData = req.body;
 
