@@ -174,8 +174,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  window.nextStep = nextStep;
-  window.prevStep = prevStep;
+  // CSP-härdning: ta bort inline onclick och bind säkert
+document.querySelectorAll('button[onclick="nextStep()"]').forEach(btn => {
+  btn.removeAttribute('onclick');
+  btn.addEventListener('click', nextStep);
+});
+document.querySelectorAll('button[onclick="prevStep()"]').forEach(btn => {
+  btn.removeAttribute('onclick');
+  btn.addEventListener('click', prevStep);
+});
 
   updateProgressBar();
 });

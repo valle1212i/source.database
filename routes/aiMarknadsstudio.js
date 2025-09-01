@@ -11,10 +11,10 @@ const sharp = require("sharp"); // komposition & typografiband
 // 
 const ai = require("../utils/aiUtils"); // createPromptFromDescription, generateImageFromPrompt, (ev) generateImageFromPromptWithInit
 
-// ---------- Multer (public/uploads) ----------
+// ---------- Multer (privat uploads) ----------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, "../public/uploads");
+    const uploadPath = path.join(__dirname, "../uploads");
     if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);
   },
@@ -24,6 +24,7 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage });
+
 
 // ---------- Helpers ----------
 function isHttpUrl(u) { return /^https?:\/\//i.test(u || ""); }
@@ -39,10 +40,13 @@ async function bufferFromUrlOrLocal(url, req) {
     return Buffer.from(await r.arrayBuffer());
   }
   if (isLocalUpload(url)) {
-    const filePath = path.join(__dirname, "../public", url);
-    if (!fs.existsSync(filePath)) throw new Error("Lokal fil saknas");
-    return fs.readFileSync(filePath);
-  }
+  const rel = String(url || "").replace(/^[\\/]?uploads[\\/]?/i, "");
+  const normalized = path.normalize(rel).replace(/^(\.\.(\/|\\|$))+/, "");
+  const filePath = path.join(__dirname, "../uploads", normalized);
+
+  if (!fs.existsSync(filePath)) throw new Error("Lokal fil saknas");
+  return fs.readFileSync(filePath);
+}
   if (fs.existsSync(url)) return fs.readFileSync(url);
   const abs = absoluteUrl(req, url);
   const r = await fetch(abs);
@@ -278,8 +282,8 @@ router.post("/", upload.single("image"), async (req, res) => {
     const generationMode = (req.body.generationMode || "useUploadOnly").toString();
 
     // Basprompt (för ev. image‑modeler som tar textprompt)
-    const base = await ai.createPromptFromDescription(description);
-    const prompt = buildMarketingPrompt({ base, description, extras });
+    const basePrompt = await ai.createPromptFromDescription(description);
+    const prompt = buildMarketingPrompt({ base: basePrompt, description, extras });
     console.log("🤖 Prompt:", prompt);
 
     let imageUrl; // till klienten
@@ -320,15 +324,20 @@ router.post("/", upload.single("image"), async (req, res) => {
         composed = await addCtaBand(composed, { cta: ctaText, margin: 40 });
       }
 
-      // 4) Spara PNG lokalt
-      const genDir = path.join(__dirname, "../public/generated");
-      if (!fs.existsSync(genDir)) fs.mkdirSync(genDir, { recursive: true });
-      const outPngPath = path.join(genDir, `poster-${Date.now()}.png`);
-      fs.writeFileSync(outPngPath, composed);
+      // 4) Spara PNG lokalt (privat) + säker nedladdningslänk via route
+const genDir = path.join(__dirname, "../generated"); // inte under /public
+if (!fs.existsSync(genDir)) fs.mkdirSync(genDir, { recursive: true });
 
-      imageUrl = "/generated/" + path.basename(outPngPath);
-      uint8 = new Uint8Array(composed);
-      mime = "image/png";
+const fileName = `poster-${Date.now()}.png`;
+const outPngPath = path.join(genDir, fileName);
+fs.writeFileSync(outPngPath, composed);
+
+// Bygg länk mot vår nya säkra route (respektera hur routern är mountad)
+const base = req.baseUrl || "";
+imageUrl = `${base}/generated?file=${encodeURIComponent(fileName)}`;
+
+uint8 = new Uint8Array(composed);
+mime = "image/png";
 
     } else {
       // === UTAN FIL: ad‑bakgrund (med CTA inbakad om möjligt), annars CTA‑band lokalt
@@ -355,15 +364,20 @@ router.post("/", upload.single("image"), async (req, res) => {
         composed = await addCtaBand(composed, { cta: ctaText, margin: 40 });
       }
 
-      // Spara PNG lokalt (konsekvent länkhantering)
-      const genDir = path.join(__dirname, "../public/generated");
-      if (!fs.existsSync(genDir)) fs.mkdirSync(genDir, { recursive: true });
-      const outPngPath = path.join(genDir, `poster-${Date.now()}.png`);
-      fs.writeFileSync(outPngPath, composed);
+      // Spara PNG lokalt (privat) + säker nedladdningslänk via route
+const genDir = path.join(__dirname, "../generated"); // inte under /public
+if (!fs.existsSync(genDir)) fs.mkdirSync(genDir, { recursive: true });
 
-      imageUrl = "/generated/" + path.basename(outPngPath);
-      uint8 = new Uint8Array(composed);
-      mime = "image/png";
+const fileName = `poster-${Date.now()}.png`;
+const outPngPath = path.join(genDir, fileName);
+fs.writeFileSync(outPngPath, composed);
+
+// Bygg länk mot vår nya säkra route (respektera hur routern är mountad)
+const base = req.baseUrl || "";
+imageUrl = `${base}/generated?file=${encodeURIComponent(fileName)}`;
+
+uint8 = new Uint8Array(composed);
+mime = "image/png";
     }
 
     // 🧾 Skapa PDF
@@ -373,13 +387,17 @@ router.post("/", upload.single("image"), async (req, res) => {
     page.drawImage(img, { x: 0, y: 0, width, height });
     const pdfBytes = await pdfDoc.save();
 
-    // 💾 Spara PDF
-    const pdfDir = path.join(__dirname, "../public/generated");
-    if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
-    const pdfPath = path.join(pdfDir, `poster-${Date.now()}.pdf`);
-    fs.writeFileSync(pdfPath, pdfBytes);
+    // 💾 Spara PDF (privat) + säker nedladdningslänk via route
+const pdfDir = path.join(__dirname, "../generated"); // inte under /public
+if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
 
-    const pdfUrl = "/generated/" + path.basename(pdfPath);
+const pdfName = `poster-${Date.now()}.pdf`;
+const pdfPath = path.join(pdfDir, pdfName);
+fs.writeFileSync(pdfPath, pdfBytes);
+
+// Bygg länk mot vår nya säkra route
+const base = req.baseUrl || "";
+const pdfUrl = `${base}/generated?file=${encodeURIComponent(pdfName)}`;
 
     res.json({
       imageUrl,
@@ -437,14 +455,21 @@ router.get("/download-image", async (req, res) => {
     let buf;
 
     if (isLocalUpload(url)) {
-      const filePath = path.join(__dirname, "../public", url);
-      if (!fs.existsSync(filePath)) return res.status(404).send("Filen finns inte");
-      buf = fs.readFileSync(filePath);
-      const ext = path.extname(filePath).toLowerCase();
-      if (ext === ".png") ct = "image/png";
-      else if (ext === ".webp") ct = "image/webp";
-      else if (ext === ".gif") ct = "image/gif";
-    } else {
+  // Normalisera sökväg och förhindra ../
+  const rel = String(url || "").replace(/^[\\/]?uploads[\\/]?/i, "");
+  const normalized = path.normalize(rel).replace(/^(\.\.(\/|\\|$))+/, "");
+  const filePath = path.join(__dirname, "../uploads", normalized);
+
+  if (!fs.existsSync(filePath)) return res.status(404).send("Filen finns inte");
+  buf = fs.readFileSync(filePath);
+
+  // MIME-vitlista efter filändelse
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === ".png") ct = "image/png";
+  else if (ext === ".webp") ct = "image/webp";
+  else if (ext === ".gif") ct = "image/gif";
+  else ct = "image/jpeg";
+} else {
       const r = await fetch(isHttpUrl(url) ? url : absoluteUrl(req, url));
       if (!r.ok) return res.status(400).send("Kunde inte hämta bild");
       ct = r.headers.get("content-type") || ct;
@@ -462,6 +487,39 @@ router.get("/download-image", async (req, res) => {
   } catch (e) {
     console.error("download-image fel:", e);
     res.status(500).send("Kunde inte ladda ned bilden");
+  }
+});
+
+// SECURE DOWNLOAD – genererade filer (PNG/PDF) med path-säkring
+router.get("/generated", (req, res) => {
+  try {
+    const file = String(req.query.file || "");
+    if (!file) return res.status(400).send("Saknar filparameter.");
+
+    // Tillåt bara kända ändelser
+    const allowed = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".pdf"];
+    const ext = path.extname(file).toLowerCase();
+    if (!allowed.includes(ext)) return res.status(400).send("Ogiltig filtyp.");
+
+    // Normalisera och blockera stigklättring
+    const normalized = path.normalize(file).replace(/^(\.\.(\/|\\|$))+/, "");
+    const filePath = path.join(__dirname, "../generated", normalized);
+
+    if (!fs.existsSync(filePath)) return res.status(404).send("Filen finns inte.");
+
+    // Bestäm Content-Type
+    const ct = ext === ".png"  ? "image/png"  :
+               ext === ".webp" ? "image/webp" :
+               ext === ".gif"  ? "image/gif"  :
+               ext === ".pdf"  ? "application/pdf" :
+               (ext === ".jpg" || ext === ".jpeg") ? "image/jpeg" : "application/octet-stream";
+
+    res.setHeader("Content-Type", ct);
+    res.setHeader("Content-Disposition", `attachment; filename="${path.basename(normalized)}"`);
+    res.send(fs.readFileSync(filePath));
+  } catch (e) {
+    console.error("generated download fel:", e);
+    res.status(500).send("Kunde inte ladda ned filen.");
   }
 });
 

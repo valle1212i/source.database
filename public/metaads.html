@@ -174,7 +174,6 @@ function prevStep() {
     updateProgressBar();
   }
 }
-window.prevStep = prevStep;
       document.getElementById("stepForm").addEventListener("submit", function (e) {
         e.preventDefault();
         const data = Object.fromEntries(new FormData(this).entries());
@@ -194,6 +193,15 @@ window.prevStep = prevStep;
           alert("Något gick fel. Försök igen.");
           console.error(err);
         });
+        // ⬇️ CSP-härdning: ta bort inline onclick och bind säkert
+document.querySelectorAll('button[onclick="nextStep()"]').forEach(btn => {
+  btn.removeAttribute('onclick');
+  btn.addEventListener('click', nextStep);
+});
+document.querySelectorAll('button[onclick="prevStep()"]').forEach(btn => {
+  btn.removeAttribute('onclick');
+  btn.addEventListener('click', prevStep);
+});
       });
 
       function updateProgressBar() {
@@ -203,7 +211,6 @@ window.prevStep = prevStep;
   document.getElementById("progressText").innerText = `Steg ${currentStep + 1} av ${total}`;
 }
 
-      window.nextStep = nextStep;
     });
   </script>
 </body>

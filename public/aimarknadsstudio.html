@@ -207,10 +207,12 @@
         actions.className = "ai-actions";
 
         const dlImg = document.createElement("a");
-        dlImg.href = `/api/ai-marknadsstudio/download-image?url=${encodeURIComponent(data.imageUrl)}`;
+        // Servern returnerar redan Content-Disposition: attachment via /generated
+        dlImg.href = data.imageUrl;
         dlImg.setAttribute("download", "ai-bild.jpg");
         dlImg.className = "btn";
         dlImg.textContent = "Ladda ned bild";
+
 
         actions.appendChild(dlImg);
         card.appendChild(img);
@@ -221,16 +223,26 @@
         if (cards.length > 3) cards[3].remove();
 
       } else if (data.message) {
-        resultArea.innerHTML = `<p>${data.message}</p>`;
-      } else {
-        resultArea.innerHTML = "❗ Inget resultat kunde genereras.";
-      }
+  // Säkert: skapa noder i stället för att tolka HTML
+  while (resultArea.firstChild) resultArea.removeChild(resultArea.firstChild);
+  const p = document.createElement("p");
+  p.textContent = String(data.message);
+  resultArea.appendChild(p);
+} else {
+  while (resultArea.firstChild) resultArea.removeChild(resultArea.firstChild);
+  const p = document.createElement("p");
+  p.textContent = "❗ Inget resultat kunde genereras.";
+  resultArea.appendChild(p);
+}
 
     } catch (err) {
       loadingBar.style.display = "none";
       submitBtn.disabled = false;
       console.error(err);
-      resultArea.innerHTML = "❌ " + err?.message || "Något gick fel. Försök igen.";
+      while (resultArea.firstChild) resultArea.removeChild(resultArea.firstChild);
+      const p = document.createElement("p");
+      p.textContent = "❌ " + (err?.message || "Något gick fel. Försök igen.");
+      resultArea.appendChild(p);
     }
   });
   </script>

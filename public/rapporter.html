@@ -133,15 +133,30 @@
     let currentReport = {};
 
     function showReport(report) {
-      currentReport = report;
-      document.getElementById("modalDetails").innerHTML = `
-        <p><strong>Belopp:</strong> ${report.amount}</p>
-        <p><strong>Status:</strong> ${report.status}</p>
-        <p><strong>Datum:</strong> ${report.date}</p>
-        <p><strong>Referens-ID:</strong> ${report.id}</p>
-      `;
-      document.getElementById("receiptModal").style.display = "block";
-    }
+  currentReport = report;
+
+  const details = document.getElementById("modalDetails");
+  // Rensa befintligt innehåll utan att tolka HTML
+  details.textContent = "";
+
+  const rows = [
+    ["Belopp:", report.amount],
+    ["Status:", report.status],
+    ["Datum:", report.date],
+    ["Referens-ID:", report.id],
+  ];
+
+  for (const [label, value] of rows) {
+    const p = document.createElement("p");
+    const strong = document.createElement("strong");
+    strong.textContent = label + " ";
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(String(value ?? "")));
+    details.appendChild(p);
+  }
+
+  document.getElementById("receiptModal").style.display = "block";
+}
 
     function closeModal() {
       document.getElementById("receiptModal").style.display = "none";
@@ -212,10 +227,25 @@
         const image = data.profileImage;
 
         if (image) {
-          document.getElementById("profileToggle").innerHTML = `
-            <img src="${image}" alt="Profilbild" style="width: 32px; height: 32px; border-radius: 50%;" />
-          `;
-        } else {
+  try {
+    const u = new URL(image, window.location.origin);
+    if (u.protocol === "http:" || u.protocol === "https:" || u.protocol === "data:") {
+      const container = document.getElementById("profileToggle");
+      container.textContent = "";
+      const img = document.createElement("img");
+      img.src = u.href;
+      img.alt = "Profilbild";
+      img.width = 32;
+      img.height = 32;
+      img.style.borderRadius = "50%";
+      container.appendChild(img);
+    } else {
+      document.getElementById("profileToggle").textContent = "--";
+    }
+  } catch {
+    document.getElementById("profileToggle").textContent = "--";
+  }
+} else {
           const initials = name
             .split(' ')
             .map(part => part.charAt(0).toUpperCase())

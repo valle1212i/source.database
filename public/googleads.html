@@ -45,7 +45,7 @@
           <label><input type="radio" name="q1" value="Produkt" required> Produkt</label>
           <label><input type="radio" name="q1" value="Tjänst"> Tjänst</label>
         </div>
-        <button type="button" onclick="nextStep()">Nästa</button>
+        <button type="button" class="next-btn">Nästa</button>
       </div>
 
       <!-- Steg 2 -->
@@ -56,8 +56,8 @@
           <label><input type="radio" name="q2" value="Kännedom"> Varumärkeskännedom</label>
         </div>
         <div class="button-group">
-          <button type="button" onclick="prevStep()">Föregående</button>
-          <button type="button" onclick="nextStep()">Nästa</button>
+          <button type="button" class="prev-btn">Föregående</button>
+          <button type="button" class="next-btn">Nästa</button>
         </div>
       </div>
 
@@ -71,8 +71,8 @@
           <label><input type="radio" name="q3" value="Shopping"> Shopping</label>
         </div>
         <div class="button-group">
-          <button type="button" onclick="prevStep()">Föregående</button>
-          <button type="button" onclick="nextStep()">Nästa</button>
+          <button type="button" class="prev-btn">Föregående</button>
+          <button type="button" class="next-btn">Nästa</button>
         </div>
       </div>
 
@@ -84,8 +84,8 @@
           <label><input type="radio" name="q4" value="Nationellt"> Nationellt</label>
         </div>
         <div class="button-group">
-          <button type="button" onclick="prevStep()">Föregående</button>
-          <button type="button" onclick="nextStep()">Nästa</button>
+          <button type="button" class="prev-btn">Föregående</button>
+          <button type="button" class="next-btn">Nästa</button>
         </div>
       </div>
 
@@ -97,8 +97,8 @@
           <label><input type="radio" name="q5" value="Nej"> Nej</label>
         </div>
         <div class="button-group">
-          <button type="button" onclick="prevStep()">Föregående</button>
-          <button type="button" onclick="nextStep()">Nästa</button>
+          <button type="button" class="prev-btn">Föregående</button>
+          <button type="button" class="next-btn">Nästa</button>
         </div>
       </div>
 
@@ -106,7 +106,7 @@
       <div class="form-step">
         <h2>6. Beskriv kort vad du vill annonsera:</h2>
         <textarea name="q6" required placeholder="T.ex. PT-tjänst för kvinnor 30–50 år i Stockholm..."></textarea>
-        <button type="button" onclick="nextStep()">Nästa</button>
+        <button type="button" class="next-btn">Nästa</button>
       </div>
 
       <!-- Steg 7 -->
@@ -121,7 +121,7 @@
         <h2>Tack för din förfrågan! 🎉</h2>
         <p style="margin-top: 16px; font-size: 16px; line-height: 1.6; text-align: center;">
           Din kampanjinfo har skickats till våra experter.<br />
-          Vi återkommer med ett TikTok-förslag inom kort.<br />
+          Vi återkommer med ett Google Ads-förslag inom kort.<br />
           Du hittar förfrågan under <strong>Analyser</strong>.
         </p>
       </div>
@@ -184,11 +184,10 @@
       const data = Object.fromEntries(formData.entries());
 
       fetch("/api/customers/marketing/google", {
-  method: "PUT",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ answers: data })  // skickar alla frågesvar i ett objekt
-})
-
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answers: data })
+      })
       .then(res => {
         if (!res.ok) throw new Error("Något gick fel vid skick till servern.");
         return res.json();
@@ -207,12 +206,16 @@
       });
     });
 
-    // Tillgängliggör i global scope
-    window.nextStep = nextStep;
-    window.prevStep = prevStep;
+    // ⬇️ NYTT: ersätt inline onclick med säkra event listeners
+    document.querySelectorAll(".next-btn").forEach(btn => {
+      btn.addEventListener("click", nextStep);
+    });
+    document.querySelectorAll(".prev-btn").forEach(btn => {
+      btn.addEventListener("click", prevStep);
+    });
+
     updateProgressBar();
   });
 </script>
 </body>
 </html>
-

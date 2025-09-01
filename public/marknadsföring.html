@@ -84,19 +84,26 @@
 
   <script>
     function openTool(button, platform) {
-      const originalContent = button.innerHTML;
+  // Spara originalnoder istället för HTML-sträng
+  const originalNodes = Array.from(button.childNodes);
 
-      button.innerHTML += `<span class="spinner"></span>`;
-      button.disabled = true;
-      button.style.opacity = 0.7;
+  // Skapa spinner via DOM — ingen HTML tolkas
+  const spinner = document.createElement("span");
+  spinner.className = "spinner";
+  button.appendChild(spinner);
 
-      setTimeout(() => {
-        alert("Öppnar " + platform + " verktyg...");
-        button.innerHTML = originalContent;
-        button.disabled = false;
-        button.style.opacity = 1;
-      }, 1000);
-    }
+  button.disabled = true;
+  button.style.opacity = 0.7;
+
+  setTimeout(() => {
+    alert("Öppnar " + String(platform) + " verktyg...");
+    // Återställ innehåll säkert
+    while (button.firstChild) button.removeChild(button.firstChild);
+    for (const n of originalNodes) button.appendChild(n);
+    button.disabled = false;
+    button.style.opacity = 1;
+  }, 1000);
+}
   </script>
   <script>
     document.getElementById("marketingForm").addEventListener("submit", async function (e) {
