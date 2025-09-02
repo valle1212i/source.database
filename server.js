@@ -17,6 +17,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const csrf = require('csurf');
 const cookieParser = require('cookie-parser');
+const zxcvbn = require('zxcvbn');
 
 
 dotenv.config();
@@ -400,18 +401,36 @@ app.post("/api/profile/update", upload.single("profilePic"), async (req, res) =>
     if (name) user.name = name;
     if (email) user.email = email;
     if (language) user.settings.language = language;
-        if (password) {
-      const isValid = typeof password === 'string'
-        && password.length >= 8
-        && /[A-Z]/.test(password)     // minst en stor bokstav
-        && /[a-z]/.test(password)     // minst en liten bokstav
-        && /\d/.test(password)        // minst en siffra
-        && /[^A-Za-z0-9]/.test(password); // minst ett specialtecken
+    if (password) {
+      function isPasswordStrong(pw, { email, name }) {
+        if (typeof pw !== 'string' || pw.length < 10) return false;
 
-      if (!isValid) {
+        const classes = [
+          /[A-Z]/.test(pw),
+          /[a-z]/.test(pw),
+          /\d/.test(pw),
+          /[^A-Za-z0-9]/.test(pw)
+        ];
+        if (classes.filter(Boolean).length < 4) return false;
+
+        const lowered = pw.toLowerCase();
+        const emailUser = (email || '').toLowerCase().split('@')[0];
+        if (emailUser && lowered.includes(emailUser)) return false;
+        if (name && lowered.includes((name || '').toLowerCase())) return false;
+
+        try {
+          const score = zxcvbn(pw).score; // 0–4
+          if (score < 3) return false;
+        } catch {
+          return false;
+        }
+        return true;
+      }
+
+      if (!isPasswordStrong(password, { email: user.email, name: user.name })) {
         return res.status(400).json({
           success: false,
-          message: "Lösenordet måste vara minst 8 tecken och innehålla stora och små bokstäver, siffror och specialtecken."
+          message: "Lösenordet är för svagt. Använd minst 10 tecken med stora/små bokstäver, siffra och specialtecken. Undvik namn/e-post i lösenordet."
         });
       }
 

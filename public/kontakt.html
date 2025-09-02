@@ -166,18 +166,25 @@
       const image = data.profileImage;
 
       // Visa bild om den finns, annars visa initialer
-      if (image) {
-        document.getElementById("profileToggle").innerHTML = `
-          <img src="${image}" alt="Profilbild" style="width: 32px; height: 32px; border-radius: 50%;" />
-        `;
-      } else {
-        const initials = name
-          .split(' ')
-          .map(part => part.charAt(0).toUpperCase())
-          .join('')
-          .substring(0, 2);
-        document.getElementById("profileToggle").textContent = initials;
-      }
+        const container = document.getElementById("profileToggle");
+        while (container.firstChild) container.removeChild(container.firstChild);
+
+        if (image) {
+          const img = document.createElement("img");
+          img.src = image;
+          img.alt = "Profilbild";
+          img.style.width = "32px";
+          img.style.height = "32px";
+          img.style.borderRadius = "50%";
+          container.appendChild(img);
+        } else {
+          const initials = (name || "")
+            .split(" ")
+            .map(part => part.charAt(0).toUpperCase())
+            .join("")
+            .substring(0, 2);
+          container.textContent = initials || "--";
+        }
 
       document.getElementById("userEmail").textContent = email;
     } else {

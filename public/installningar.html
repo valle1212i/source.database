@@ -276,38 +276,68 @@ document.body.classList.add(`theme-${selectedTheme}`);
 <script>
   async function loadLoginHistory() {
     const container = document.querySelector('.login-history');
-    container.innerHTML = "<p>Laddar inloggningar...</p>";
+
+    // Visa "laddar" säkert
+    container.textContent = "";
+    const loading = document.createElement("p");
+    loading.appendChild(document.createTextNode("Laddar inloggningar."));
+    container.appendChild(loading);
 
     try {
-      const res = await fetch("/api/security/logins"); // <-- justera URL om du har annan
+      const res = await fetch("/api/security/logins"); // justera om annan URL
       const data = await res.json();
 
-      if (!data.success || !Array.isArray(data.logins)) {
-        container.innerHTML = "<p>Kunde inte ladda inloggningshistorik.</p>";
+      // Rensa container
+      container.textContent = "";
+
+      if (!data?.success || !Array.isArray(data.logins)) {
+        const p = document.createElement("p");
+        p.appendChild(document.createTextNode("Kunde inte ladda inloggningshistorik."));
+        container.appendChild(p);
         return;
       }
 
       if (data.logins.length === 0) {
-        container.innerHTML = "<p>Inga tidigare inloggningar hittades.</p>";
+        const p = document.createElement("p");
+        p.appendChild(document.createTextNode("Inga tidigare inloggningar hittades."));
+        container.appendChild(p);
         return;
       }
 
-      container.innerHTML = ""; // Töm innan vi lägger till
+      data.logins.forEach((login) => {
+        const row = document.createElement("div");
+        row.className = "login-row";
 
-      data.logins.forEach(login => {
-        const div = document.createElement('div');
-        div.className = "login-row";
-        div.innerHTML = `
-          <div><strong>Datum:</strong> ${login.timestamp}</div>
-          <div><strong>IP:</strong> ${login.ip}</div>
-          <div><strong>Enhet:</strong> ${login.device || 'Okänd'}</div>
-        `;
-        container.appendChild(div);
+        const fDate = document.createElement("div");
+        const fIp = document.createElement("div");
+        const fDev = document.createElement("div");
+
+        const strongDate = document.createElement("strong");
+        strongDate.appendChild(document.createTextNode("Datum:"));
+        const strongIp = document.createElement("strong");
+        strongIp.appendChild(document.createTextNode("IP:"));
+        const strongDev = document.createElement("strong");
+        strongDev.appendChild(document.createTextNode("Enhet:"));
+
+        // Säkra textvärden
+        const ts = login?.timestamp ? String(login.timestamp) : "";
+        const ip = login?.ip ? String(login.ip) : "";
+        const dev = login?.device ? String(login.device) : "Okänd";
+
+        fDate.append(strongDate, document.createTextNode(" " + ts));
+        fIp.append(strongIp, document.createTextNode(" " + ip));
+        fDev.append(strongDev, document.createTextNode(" " + dev));
+
+        row.append(fDate, fIp, fDev);
+        container.appendChild(row);
       });
 
     } catch (err) {
       console.error("Fel vid inloggningshämtning:", err);
-      container.innerHTML = "<p>Något gick fel. Försök igen senare.</p>";
+      container.textContent = "";
+      const p = document.createElement("p");
+      p.appendChild(document.createTextNode("Något gick fel. Försök igen senare."));
+      container.appendChild(p);
     }
   }
 

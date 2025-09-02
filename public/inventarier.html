@@ -94,16 +94,37 @@
   }
 
   // === Render ===
-  function rowHTML(item){
+  // === Render-hjälpare (säker DOM) ===
+  function createRow(item){
     const s = statusFor(item.stock);
-    return `
-      <tr data-id="${item.id}" data-sku="${item.sku}">
-        <td>${item.name}</td>
-        <td>${item.sku}</td>
-        <td class="stock-cell">${item.stock}</td>
-        <td class="${s.className}">${s.text}</td>
-        <td><i class="fas fa-edit" title="Redigera" onclick="toggleEdit(this)"></i></td>
-      </tr>`;
+
+    const tr = document.createElement("tr");
+    if (item.id)  tr.dataset.id  = item.id;
+    if (item.sku) tr.dataset.sku = item.sku;
+
+    const tdName = document.createElement("td");
+    tdName.appendChild(document.createTextNode(item.name ?? ""));
+
+    const tdSku = document.createElement("td");
+    tdSku.appendChild(document.createTextNode(item.sku ?? ""));
+
+    const tdStock = document.createElement("td");
+    tdStock.className = "stock-cell";
+    tdStock.appendChild(document.createTextNode(String(item.stock ?? "")));
+
+    const tdStatus = document.createElement("td");
+    tdStatus.className = s.className;
+    tdStatus.appendChild(document.createTextNode(s.text));
+
+    const tdEdit = document.createElement("td");
+    const icon = document.createElement("i");
+    icon.className = "fas fa-edit";
+    icon.title = "Redigera";
+    icon.addEventListener("click", () => toggleEdit(icon));
+    tdEdit.appendChild(icon);
+
+    tr.append(tdName, tdSku, tdStock, tdStatus, tdEdit);
+    return tr;
   }
 
   function render(items){
@@ -259,12 +280,31 @@
   function refreshNotifications(){
     const list = document.getElementById("notifList");
     if (!list) return;
+
+    // Töm listan säkert
+    while (list.firstChild) list.removeChild(list.firstChild);
+
     const rows = Array.from(document.querySelectorAll("#inventoryBody tr"));
-    const soldOut = rows.filter(r => r.cells[3].classList.contains("status-soldout"))
-                        .map(r => r.cells[0].textContent.trim());
-    list.innerHTML = soldOut.length
-      ? soldOut.map(n => `<li>Produkten <strong>${n}</strong> är slutsåld. Uppdatera lagersaldo eller inaktivera i webbshopen.</li>`).join("")
-      : `<li>Inga kritiska notiser just nu.</li>`;
+    const soldOut = rows
+      .filter(r => r.cells[3].classList.contains("status-soldout"))
+      .map(r => r.cells[0].textContent.trim());
+
+    if (soldOut.length === 0) {
+      const li = document.createElement("li");
+      li.appendChild(document.createTextNode("Inga kritiska notiser just nu."));
+      list.appendChild(li);
+      return;
+    }
+
+    soldOut.forEach((name) => {
+      const li = document.createElement("li");
+      li.appendChild(document.createTextNode("Produkten "));
+      const strong = document.createElement("strong");
+      strong.appendChild(document.createTextNode(name));
+      li.appendChild(strong);
+      li.appendChild(document.createTextNode(" är slutsåld. Uppdatera lagersaldo eller inaktivera i webbshopen."));
+      list.appendChild(li);
+    });
   }
 
   // === Realtid (SSE) + initial data ===
@@ -279,7 +319,8 @@
           row.querySelector(".stock-cell").textContent = p.item.stock;
           updateStatus(p.item.stock, row.cells[3]);
         } else {
-          document.getElementById("inventoryBody").insertAdjacentHTML("beforeend", rowHTML(p.item));
+                    const tbody = document.getElementById("inventoryBody");
+          tbody.appendChild(createRow(p.item));
         }
         refreshNotifications();
       }

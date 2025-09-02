@@ -4,6 +4,7 @@ const Customer = require('../models/Customer');
 const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
 const LoginEvent = require('../models/LoginEvent');
+const zxcvbn = require('zxcvbn');
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,     // 15 minuter
@@ -18,18 +19,30 @@ const loginLimiter = rateLimit({
 router.post('/register', async (req, res) => {
   return res.status(403).json({ success: false, message: 'Registrering är avstängd. Använd inbjudningslänk.' });
   const { name, email, password } = req.body;
-    // Lösenordspolicy – kräver stora och små bokstäver, siffror och specialtecken
-  const isValid = typeof password === 'string'
-    && password.length >= 8
-    && /[A-Z]/.test(password)     // minst en stor bokstav
-    && /[a-z]/.test(password)     // minst en liten bokstav
-    && /\d/.test(password)        // minst en siffra
-    && /[^A-Za-z0-9]/.test(password); // minst ett specialtecken
+function isPasswordStrong(pw, { email, name }) {
+    if (typeof pw !== 'string' || pw.length < 10) return false;
 
-  if (!isValid) {
+    const classes = [
+      /[A-Z]/.test(pw),
+      /[a-z]/.test(pw),
+      /\d/.test(pw),
+      /[^A-Za-z0-9]/.test(pw)
+    ];
+    if (classes.filter(Boolean).length < 4) return false;
+
+    const lowered = pw.toLowerCase();
+    const emailUser = (email || '').toLowerCase().split('@')[0];
+    if (emailUser && lowered.includes(emailUser)) return false;
+    if (name && lowered.includes(name.toLowerCase())) return false;
+
+    const score = zxcvbn(pw).score; // 0–4
+    return score >= 3;
+  }
+
+  if (!isPasswordStrong(password, { email, name })) {
     return res.status(400).json({
       success: false,
-      message: "Lösenordet måste vara minst 8 tecken och innehålla stora och små bokstäver, siffror och specialtecken."
+      message: "Lösenordet är för svagt. Använd minst 10 tecken, alla fyra teckentyper, och undvik att inkludera namn/e-post."
     });
   }
   try {

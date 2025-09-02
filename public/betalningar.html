@@ -147,14 +147,29 @@
 
   function showReceipt(payment) {
     currentReceipt = payment;
-    document.getElementById("modalDetails").innerHTML = `
-      <p><strong>Order:</strong> #${payment.order}</p>
-      <p><strong>Belopp:</strong> ${payment.amount}</p>
-      <p><strong>Status:</strong> ${payment.status}</p>
-      <p><strong>Kort:</strong> ${payment.card}</p>
-      <p><strong>Datum & Tid:</strong> ${payment.date}, kl. ${payment.time}</p>
-      <p><strong>Transaktions-ID:</strong> ${payment.id}</p>
-    `;
+
+    const details = document.getElementById("modalDetails");
+    // Töm säkert utan att tolka HTML
+    while (details.firstChild) details.removeChild(details.firstChild);
+
+    const rows = [
+      ["Order:", `#${String(payment.order ?? "")}`],
+      ["Belopp:", String(payment.amount ?? "")],
+      ["Status:", String(payment.status ?? "")],
+      ["Kort:", String(payment.card ?? "")],
+      ["Datum & Tid:", `${String(payment.date ?? "")}, kl. ${String(payment.time ?? "")}`],
+      ["Transaktions-ID:", String(payment.id ?? "")]
+    ];
+
+    for (const [label, value] of rows) {
+      const p = document.createElement("p");
+      const strong = document.createElement("strong");
+      strong.appendChild(document.createTextNode(label + " "));
+      p.appendChild(strong);
+      p.appendChild(document.createTextNode(value));
+      details.appendChild(p);
+    }
+
     document.getElementById("receiptModal").style.display = "block";
   }
 
@@ -227,17 +242,24 @@
         const email = data.email || '';
         const image = data.profileImage;
 
+        const container = document.getElementById("profileToggle");
+        while (container.firstChild) container.removeChild(container.firstChild);
+
         if (image) {
-          document.getElementById("profileToggle").innerHTML = `
-            <img src="${image}" alt="Profilbild" style="width: 32px; height: 32px; border-radius: 50%;" />
-          `;
+          const img = document.createElement("img");
+          img.src = image; // endast attribut – ingen HTML tolkas
+          img.alt = "Profilbild";
+          img.style.width = "32px";
+          img.style.height = "32px";
+          img.style.borderRadius = "50%";
+          container.appendChild(img);
         } else {
-          const initials = name
-            .split(' ')
+          const initials = (name || "")
+            .split(" ")
             .map(part => part.charAt(0).toUpperCase())
-            .join('')
+            .join("")
             .substring(0, 2);
-          document.getElementById("profileToggle").textContent = initials;
+          container.textContent = initials || "--";
         }
 
         document.getElementById("userEmail").textContent = email;
