@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const path = require('path');
 const dotenv = require('dotenv');
 const result = dotenv.config();
-const bodyParser = require('body-parser');
 const session = require('express-session');
 const MongoStore = require("connect-mongo");
 const bcrypt = require('bcrypt');
@@ -93,8 +92,8 @@ app.use(session({
 
 // 🧱 Middleware
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.urlencoded({ extended: true, limit: '200kb' }));
+app.use(express.json({ limit: '200kb' }));
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
