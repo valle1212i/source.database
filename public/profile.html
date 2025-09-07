@@ -92,46 +92,61 @@
         removeImage = true;
       }
     });
+  document.getElementById("profileForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
 
-    document.getElementById("profileForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
+    const name = document.getElementById('fullname').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const language = document.getElementById('language').value;
+    const profilePic = document.getElementById('profilePic').files[0];
 
-      const name = document.getElementById('fullname').value;
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const language = document.getElementById('language').value;
-      const profilePic = document.getElementById('profilePic').files[0];
+    const confirmed = confirm("Är du säker på att du vill spara dessa ändringar?");
+    if (!confirmed) return;
 
-      const confirmed = confirm("Är du säker på att du vill spara dessa ändringar?");
-      if (!confirmed) return;
+    // 1) Hämta CSRF-token
+    let csrfToken;
+    try {
+      const tRes = await fetch('/csrf-token', { credentials: 'include' });
+      const tData = await tRes.json();
+      csrfToken = tData?.csrfToken;
+      if (!csrfToken) throw new Error('Saknar CSRF-token i svar');
+    } catch (err) {
+      console.error('CSRF-token fel:', err);
+      document.getElementById('saveMessage').textContent = "❌ Kunde inte hämta säkerhetstoken. Prova igen.";
+      return;
+    }
 
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("email", email);
-      formData.append("password", password);
-      formData.append("language", language);
-      formData.append("removeImage", removeImage);
-      if (profilePic) formData.append("profilePic", profilePic);
+    // 2) Bygg formData som tidigare
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("email", email);
+    formData.append("password", password);
+    formData.append("language", language);
+    formData.append("removeImage", removeImage);
+    if (profilePic) formData.append("profilePic", profilePic);
 
-      try {
-        const res = await fetch("/api/profile/update", {
-          method: "POST",
-          body: formData,
-        });
+    // 3) Skicka med token i header + cookies
+    try {
+      const res = await fetch("/api/profile/update", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+        headers: { "CSRF-Token": csrfToken }
+      });
 
-        const data = await res.json();
-        if (data.success) {
-          document.getElementById('saveMessage').textContent = "✅ Ändringar sparade!";
-        } else {
-          document.getElementById('saveMessage').textContent = "⚠️ Det gick inte att spara ändringarna.";
-        }
-      } catch (err) {
-        console.error("Något gick fel:", err);
-        document.getElementById('saveMessage').textContent = "❌ Fel vid uppdatering.";
+      const data = await res.json();
+      if (res.ok && data.success) {
+        document.getElementById('saveMessage').textContent = "✅ Ändringar sparade!";
+      } else {
+        document.getElementById('saveMessage').textContent = "⚠️ Det gick inte att spara ändringarna.";
       }
-    });
+    } catch (err) {
+      console.error("Något gick fel:", err);
+      document.getElementById('saveMessage').textContent = "❌ Fel vid uppdatering.";
+    }
+  });
+</script>
 
-    loadProfile();
-  </script>
 </body>
 </html>

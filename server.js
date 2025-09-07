@@ -24,11 +24,6 @@ const app = express();
 app.set('trust proxy', 1); // ⬅️ KRÄVS på Render för att secure cookies ska funka
 const http = require('http').createServer(app);
 
-// CSRF-skydd via cookies
-const csrfProtection = csrf({ cookie: true });
-
-
-
 // 🖼️ Profilbild-lagring
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -46,7 +41,16 @@ const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // Max 5 MB
   fileFilter: (req, file, cb) => {
-    const allowedMimes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/jfif'];
+// i multer-konfigurationen
+const allowedMimes = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+  'image/jfif',
+  'image/heic',
+  'image/heif'
+];
     if (allowedMimes.includes(file.mimetype.toLowerCase())) {
       cb(null, true);
     } else {
@@ -73,7 +77,8 @@ app.use(cors({
 }));
 
 // 💾 Session-hantering med MongoStore
-app.use(session({
+// Gör session-middleware återanvändbar (Express + Socket.IO)
+const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'source_secret_key',
   resave: false,
   saveUninitialized: false,
@@ -82,13 +87,13 @@ app.use(session({
     dbName: "adminportal"
   }),
   cookie: {
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-  httpOnly: true,
-  maxAge: 1000 * 60 * 60 * 2
-}
-
-}));
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    httpOnly: true,
+    maxAge: 1000 * 60 * 60 * 2
+  }
+});
+app.use(sessionMiddleware);
 
 // 🧱 Middleware
 app.use(express.static(path.join(__dirname, 'public')));
@@ -130,11 +135,16 @@ const { router: securityRouter, requireAuth } = require("./routes/security");
 
 // Efter cookieParser
 app.use(cookieParser());
+const csrfProtection = csrf({ cookie: true });
 
-// Aktivera CSRF-skydd (måste ligga efter cookieParser och före routes)
-app.use(csrfProtection);
+// Kör CSRF globalt för allt UTOM multipart-rutten (Multer först)
+const csrfExclude = new Set(['/api/profile/update']);
+app.use((req, res, next) => {
+  if (csrfExclude.has(req.path)) return next();
+  return csrfProtection(req, res, next);
+});
 
-// Ge klienten ett sätt att hämta token
+// Ge klienten ett sätt att hämta token (kräver att CSRF-mw redan körts)
 app.get('/csrf-token', (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
 });
@@ -172,43 +182,106 @@ const io = require('socket.io')(http, {
     credentials: true
   }
 });
-const axios = require('axios'); // ⬅️ LÄGG TILL ÖVERST om inte finns
+const axios = require('axios');
 
-io.on("connection", (socket) => {
-  console.log("🟢 En användare anslöt via Socket.IO");
+// Dela Express-session med Socket.IO
+io.engine.use(sessionMiddleware);
 
-  // 🆕 När ny session startar (efter frågor)
-  socket.on("startSession", (sessionData) => {
-    console.log("🟡 Ny sessionsstart:", sessionData);
-    
-    // Broadcast till alla (inkl. adminportalen)
-    io.emit("newSession", sessionData);
-  });
-
-  // 📨 När kunden skickar meddelande
-  socket.on("sendMessage", (msg) => {
-    console.log("✉️ Meddelande mottaget:", msg);
-    io.emit("newMessage", msg); // Broadcast till alla
-  });
-
-  // ✅ När kunden avslutar chatten – skicka till adminportalens case-API
-  socket.on("endSession", async (fullSession) => {
-    try {
-      const response = await axios.post(
-        "https://admin-portal-rn5z.onrender.com/api/cases",
-        fullSession
-      );
-      console.log("💾 Chatten sparad till adminportal ✅", response.status);
-    } catch (err) {
-      console.error("❌ Kunde inte spara chatten till adminportal:", err.message);
-    }
-  });
-
-  socket.on("disconnect", () => {
-    console.log("🔴 Användare frånkopplad");
-  });
+// Auth-guard: blockera icke-inloggade och minimera PII
+io.use((socket, next) => {
+  try {
+    const user = socket.request?.session?.user;
+    if (!user?._id) return next(new Error('unauthorized'));
+    // Spara endast minsta möjliga data på socketen
+    socket.data.user = { _id: user._id, role: user.role, name: user.name };
+    return next();
+  } catch {
+    return next(new Error('unauthorized'));
+  }
 });
 
+io.on("connection", (socket) => {
+  const user = socket.data?.user; // {_id, role, name} – satt av io.use(...)
+  console.log("🟢 Socket.IO anslutning", { userId: user?._id, role: user?.role });
+
+  // 🆕 Ny session: skicka bara minimal data
+  socket.on("startSession", (sessionData = {}) => {
+    const sessionId = typeof sessionData.sessionId === "string" ? sessionData.sessionId : "";
+    // Validera sessionId
+    if (!/^[A-Za-z0-9._-]{8,128}$/.test(sessionId)) return;
+    const startedAt = sessionData.startedAt ? new Date(sessionData.startedAt).toISOString() : new Date().toISOString();
+
+    // Broadcasta utan PII
+    io.emit("newSession", { sessionId, startedAt });
+  });
+
+  // ✉️ Meddelande: sanera, validera, sätt sender från roll
+  socket.on("sendMessage", (msg = {}) => {
+    const raw = typeof msg.message === "string" ? msg.message : "";
+    let message = raw.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+    if (!message) return;
+    if (message.length > 2000) message = message.slice(0, 2000);
+
+    const sessionId = typeof msg.sessionId === "string" ? msg.sessionId : "";
+    if (!/^[A-Za-z0-9._-]{8,128}$/.test(sessionId)) return;
+
+    const sender = user?.role === "admin" ? "admin" : "customer";
+
+    // Skicka endast minsta nödvändiga
+    io.emit("newMessage", {
+      message,
+      sender,
+      timestamp: new Date().toISOString(),
+      sessionId
+    });
+  });
+
+  // ✅ Avsluta chattsession och skicka minimal data till admin-API
+socket.on("endSession", async (payload = {}) => {
+  try {
+    // Validera sessionId
+    const sessionId = typeof payload.sessionId === "string" ? payload.sessionId : "";
+    if (!/^[A-Za-z0-9._-]{8,128}$/.test(sessionId)) return;
+
+    // Begränsa och sanera meddelanden (max 200)
+    const rawMessages = Array.isArray(payload.messages) ? payload.messages : [];
+    const messages = rawMessages.slice(0, 200).map(m => {
+      const raw = typeof m?.message === "string" ? m.message : "";
+      let message = raw.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+      if (!message) return null;
+      if (message.length > 2000) message = message.slice(0, 2000);
+
+      const sender = ["admin", "customer", "system"].includes(m?.sender) ? m.sender : "customer";
+      const ts = new Date(m?.timestamp || Date.now()).toISOString();
+      const sid = (typeof m?.sessionId === "string" && /^[A-Za-z0-9._-]{8,128}$/.test(m.sessionId)) ? m.sessionId : sessionId;
+
+      return { message, sender, timestamp: ts, sessionId: sid };
+    }).filter(Boolean);
+
+    // Minimal payload till admin-API (ingen e-post, inga profiler)
+    const caseData = {
+      sessionId,
+      startedAt: payload.startedAt ? new Date(payload.startedAt).toISOString() : undefined,
+      endedAt: new Date().toISOString(),
+      messages
+    };
+    Object.keys(caseData).forEach(k => caseData[k] === undefined && delete caseData[k]);
+
+    // URL + timeout via .env med säkra default
+    const url = process.env.ADMIN_CASES_URL || "https://admin-portal-rn5z.onrender.com/api/cases";
+    const timeout = Number(process.env.ADMIN_CASES_TIMEOUT_MS || 8000);
+
+    await axios.post(url, caseData, { timeout });
+    console.log("💾 Chatten sparad till adminportal ✅");
+  } catch (err) {
+    console.error("❌ Kunde inte spara chatten till adminportal:", err.message || err);
+  }
+});
+
+  socket.on("disconnect", () => {
+    console.log("🔴 Frånkopplad", { userId: user?._id });
+  });
+});
 
 // 🛢️ MongoDB-anslutning
 mongoose.connect(process.env.MONGO_URI)
@@ -374,7 +447,11 @@ app.get("/api/inventory/stream", (req, res) => {
 
 
 // Säker leverans av uppladdade bilder
-const ALLOWED_IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.jfif']);
+// i säkra bildleveransen
+const ALLOWED_IMAGE_EXT = new Set([
+  '.png', '.jpg', '.jpeg', '.webp', '.gif', '.jfif',
+  '.heic', '.heif'
+]);
 app.get('/uploads/:filename', requireLogin, (req, res) => {
   const filename = path.basename(req.params.filename);
   const ext = path.extname(filename).toLowerCase();
@@ -384,102 +461,70 @@ app.get('/uploads/:filename', requireLogin, (req, res) => {
   if (!fs.existsSync(filePath)) return res.status(404).send('Filen finns inte');
 
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.type(filename);
   res.sendFile(filePath);
 });
 
-// 📤 Uppdatera profil
-app.post("/api/profile/update", upload.single("profilePic"), async (req, res) => {
+// 📤 Uppdatera profil (Multer först, sedan CSRF)
+app.post("/api/profile/update", upload.single("profilePic"), csrfProtection, async (req, res) => {
   const { name, email, password, language, removeImage } = req.body;
   const userId = req.session?.user?._id;
   if (!userId) return res.status(401).json({ success: false, message: "Inte inloggad" });
 
+  // Stark lösenordskoll – samma princip som tidigare
+  function isPasswordStrong(pw, { email, name }) {
+    if (typeof pw !== 'string' || pw.length < 10) return false;
+    const classes = [/[A-Z]/.test(pw), /[a-z]/.test(pw), /\d/.test(pw), /[^A-Za-z0-9]/.test(pw)];
+    if (classes.filter(Boolean).length < 4) return false;
+    const lowered = pw.toLowerCase();
+    const emailUser = (email || "").toLowerCase().split("@")[0];
+    if (emailUser && lowered.includes(emailUser)) return false;
+    if (name && lowered.includes((name || "").toLowerCase())) return false;
+    try {
+      const score = zxcvbn(pw).score; // 0–4
+      if (score < 3) return false;
+    } catch {
+      return false;
+    }
+    return true;
+  }
+
   try {
     const user = await Customer.findById(userId);
     if (!user) return res.status(404).json({ success: false, message: "Användare hittades inte" });
+
     if (name) user.name = name;
     if (email) user.email = email;
-    if (language) user.settings.language = language;
+    if (language) user.language = language;
+
     if (password) {
-      function isPasswordStrong(pw, { email, name }) {
-        if (typeof pw !== 'string' || pw.length < 10) return false;
-
-        const classes = [
-          /[A-Z]/.test(pw),
-          /[a-z]/.test(pw),
-          /\d/.test(pw),
-          /[^A-Za-z0-9]/.test(pw)
-        ];
-        if (classes.filter(Boolean).length < 4) return false;
-
-        const lowered = pw.toLowerCase();
-        const emailUser = (email || '').toLowerCase().split('@')[0];
-        if (emailUser && lowered.includes(emailUser)) return false;
-        if (name && lowered.includes((name || '').toLowerCase())) return false;
-
-        try {
-          const score = zxcvbn(pw).score; // 0–4
-          if (score < 3) return false;
-        } catch {
-          return false;
-        }
-        return true;
-      }
-
       if (!isPasswordStrong(password, { email: user.email, name: user.name })) {
         return res.status(400).json({
           success: false,
-          message: "Lösenordet är för svagt. Använd minst 10 tecken med stora/små bokstäver, siffra och specialtecken. Undvik namn/e-post i lösenordet."
+          message: "Lösenordet är för svagt. Minst 10 tecken, stora/små bokstäver, siffra och specialtecken. Undvik namn/e-post."
         });
       }
-
       user.password = await bcrypt.hash(password, 10);
     }
+
     if (removeImage === "true" && user.profileImage) {
-    // Stöder både "/uploads/fil.png" och "fil.png"
-      const filename = path.basename(user.profileImage);
-      const oldPath = path.join(__dirname, 'uploads', filename);
-    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      const filename = path.basename(user.profileImage); // hanterar både '/uploads/x.png' och 'x.png'
+      const oldPath = path.join(__dirname, "uploads", filename);
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
       user.profileImage = undefined;
-}
-    // Behåll lagrat värde som "/uploads/<fil>" för kompatibilitet.
-    // Vi serverar detta via en kontrollerad GET-route i nästa steg.
-    if (req.file) user.profileImage = '/uploads/' + req.file.filename;
+    }
+
+    if (req.file) {
+      user.profileImage = "/uploads/" + req.file.filename; // serveras via GET /uploads/:filename
+    }
 
     const updatedUser = await user.save();
-    req.session.user = updatedUser;
+    req.session.user = updatedUser; // uppdatera sessionen så UI kan spegla ny data
     res.json({ success: true, user: updatedUser });
   } catch (error) {
     console.error("Fel vid profiluppdatering:", error);
     res.status(500).json({ success: false, message: "Misslyckades att uppdatera profil" });
   }
 });
-
-// 👤 Hämta inloggad användare + supporthistorik
-app.get("/api/profile/me", async (req, res) => {
-  if (!req.session.user) return res.status(401).json({ success: false, message: "Inte inloggad" });
-
-  try {
-    const user = await Customer.findById(req.session.user._id).lean();
-    if (!user) return res.status(404).json({ success: false, message: "Användare hittades inte" });
-
-    const { _id, name, email, language, profileImage, supportHistory = [] } = user;
-
-    res.json({
-      success: true,
-      _id,
-      name,
-      email,
-      language,
-      profileImage,
-      supportHistory
-    });
-  } catch (err) {
-    console.error("❌ Fel vid hämtning av kundprofil:", err);
-    res.status(500).json({ success: false, message: "Serverfel vid hämtning av profil" });
-  }
-});
-
 
 // ⬇️ Lägg till denna rad innan serverstart
 app.use('/api/ads', require('./routes/adsRoutes'));
@@ -508,6 +553,45 @@ app.use('/api/invites', inviteRoutes);
 
 
 app.use('/api/ai-marknadsstudio', require('./routes/aiMarknadsstudio'));
+
+// Centralt felhanterings-middleware för uploads (Multer + övrigt)
+app.use((err, req, res, next) => {
+  // Multer-fel (t.ex. för stor fil)
+  if (err && err.name === 'MulterError') {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        message: 'Filen är för stor. Max 5 MB.',
+        code: 'LIMIT_FILE_SIZE'
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      message: 'Fel vid filuppladdning.',
+      code: err.code || 'MULTER_ERROR'
+    });
+  }
+
+  // Filtreringsfel från vår fileFilter (ogiltig MIME)
+  if (err && /Ogiltig filtyp/i.test(err.message || '')) {
+    return res.status(400).json({
+      success: false,
+      message: 'Ogiltig filtyp. Endast bildformat tillåts.',
+      code: 'INVALID_MIME'
+    });
+  }
+
+  // CSRF hanteras redan tidigare; övrigt → 500 JSON
+  if (err) {
+    console.error('❌ Oväntat fel:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Serverfel. Försök igen senare.'
+    });
+  }
+
+  next();
+});
 
 // 🚀 Starta servern
 const PORT = process.env.PORT || 3000;

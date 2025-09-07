@@ -43,7 +43,7 @@
   <script>
     async function loadUserGreeting() {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        const res = await fetch('/api/profile/me', { credentials: 'include' });
         if (!res.ok) throw new Error('Inte inloggad');
 
         const data = await res.json();
@@ -261,6 +261,22 @@
   }
 
   document.addEventListener("DOMContentLoaded", renderPageViewChart);
+</script>
+
+<script>
+  // Hämtar CSRF-token från servern och returnerar strängen
+  async function getCsrfToken() {
+    try {
+      const res = await fetch('/csrf-token', { credentials: 'include' });
+      if (!res.ok) throw new Error('Kunde inte hämta CSRF-token');
+      const data = await res.json();
+      if (!data?.csrfToken) throw new Error('Saknar csrfToken i svar');
+      return data.csrfToken;
+    } catch (err) {
+      console.error('CSRF-token fel:', err);
+      throw err;
+    }
+  }
 </script>
 
   <script>
@@ -546,7 +562,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function loadUserProfile() {
     try {
-      const res = await fetch("/api/auth/me", { credentials: "include" });
+      const res = await fetch("/api/profile/me", { credentials: "include" });
       const data = await res.json();
 
       if (data.success) {
