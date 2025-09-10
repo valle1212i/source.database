@@ -16,7 +16,8 @@
 <div class="sidebar">
   <div class="logo">
     <a href="customerportal.html">
-      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+      <!-- Loggan visas här i menyn -->
+      <img src="Images/logo.png" alt="Logotyp" class="logo-img" />
     </a>
   </div>
   <ul class="nav-menu">
@@ -60,96 +61,185 @@
   <p class="info-text">Hantera dina senaste transaktioner nedan.</p>
 
   <div class="filters">
-    <input type="text" id="searchInput" placeholder="Sök ordernummer eller transaktions-ID...">
+    <input type="text" id="searchInput" placeholder="Sök e-post, transaktions-ID eller session-ID...">
     <select id="statusFilter">
       <option value="all">Alla</option>
-      <option value="captured">Captured</option>
-      <option value="authorized">Authorized</option>
+      <option value="paid">Paid</option>
+      <option value="unpaid">Unpaid</option>
+      <option value="processing">Processing</option>
+      <option value="requires_payment_method">Requires payment method</option>
     </select>
     <input type="date" id="startDate">
-    <button class="black-button" onclick="filterPayments()">Filtrera</button>
-    <button class="black-button" onclick="sortByDate()">Sortera efter datum</button>
-    <button class="black-button" onclick="exportData()">Exportera som Excel</button>
+    <button class="black-button" id="filterBtn">Filtrera</button>
+    <button class="black-button" id="sortBtn">Sortera efter datum</button>
+    <button class="black-button" id="reloadBtn">Ladda om</button>
   </div>
 
-  <div id="paymentsList">
-    <!-- Exempelbetalningar -->
-    <div class="card">
-      <div class="card-top">
-        <div>
-          <strong>Order #29348</strong>
-          <p class="amount">450 kr</p>
-        </div>
-        <div class="status open">
-          <i class="fas fa-check-circle"></i> Captured
-        </div>
-      </div>
-      <div class="card-details">
-        <p>Kort: Visa **** 5269</p>
-        <p>Datum: 2025-06-12, kl. 12:14</p>
-        <p>Transaktions-ID: TXN123456789</p>
-      </div>
-      <div class="actions">
-        <button class="black-button" onclick='showReceipt({
-          order: "29348",
-          amount: "450 kr",
-          status: "captured",
-          card: "Visa **** 5269",
-          date: "2025-06-12",
-          time: "12:14",
-          id: "TXN123456789"
-        })'>Visa detaljer</button>
-      </div>
-    </div>
+  <div id="paymentsList" aria-live="polite"></div>
 
-    <div class="card">
-      <div class="card-top">
-        <div>
-          <strong>Order #29349</strong>
-          <p class="amount">300 kr</p>
-        </div>
-        <div class="status progress">
-          <i class="fas fa-hourglass-half"></i> Authorized
-        </div>
-      </div>
-      <div class="card-details">
-        <p>Kort: Mastercard **** 7624</p>
-        <p>Datum: 2025-06-11, kl. 10:45</p>
-        <p>Transaktions-ID: TXN987654321</p>
-      </div>
-      <div class="actions">
-        <button class="black-button" onclick='showReceipt({
-          order: "29349",
-          amount: "300 kr",
-          status: "authorized",
-          card: "Mastercard **** 7624",
-          date: "2025-06-11",
-          time: "10:45",
-          id: "TXN987654321"
-        })'>Visa detaljer</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="receiptModal" class="modal">
+  <div id="receiptModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="receiptTitle">
     <div class="modal-content">
-      <span class="close" onclick="closeModal()">&times;</span>
-      <h2>Transaktionsdetaljer</h2>
+      <button class="close" aria-label="Stäng" onclick="closeModal()">&times;</button>
+      <h2 id="receiptTitle">Transaktionsdetaljer</h2>
       <div id="modalDetails"></div>
-      <button class="black-button" onclick="exportReceiptAsPDF()">Exportera kvitto som PDF</button>
+      <button class="black-button" id="pdfBtn">Exportera kvitto som PDF</button>
     </div>
   </div>
 </main>
 
 <!-- SCRIPT: Funktionalitet -->
 <script>
-  let currentReceipt = {};
+  // ---------------- Hjälpare ----------------
+  const SEK = new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' });
+  function formatCurrency(amount, currency) {
+    if (!Number.isFinite(amount)) return '';
+    const cur = (currency || 'SEK').toUpperCase();
+    // belopp kommer i öre från Stripe -> konvertera
+    const value = amount / 100;
+    try {
+      return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: cur }).format(value);
+    } catch {
+      return `${value.toFixed(2)} ${cur}`;
+    }
+  }
+  function formatDate(ts) {
+    if (!ts) return '';
+    const d = typeof ts === 'number' ? new Date(ts) : new Date(ts);
+    return d.toLocaleString('sv-SE', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+  }
+  function obfuscateCard(pm = {}) {
+    const brand = (pm.card_brand || pm.brand || '').toUpperCase();
+    const last4 = pm.card_last4 || pm.last4 || '';
+    if (!brand && !last4) return '';
+    return `${brand ? brand : 'Kort'} ${last4 ? '**** ' + last4 : ''}`.trim();
+  }
+  function safeText(el, text) {
+    while (el.firstChild) el.removeChild(el.firstChild);
+    el.appendChild(document.createTextNode(String(text ?? '')));
+  }
+
+  // --- Logo för PDF ---
+  let LOGO_DURL = null;
+  async function loadLogoDataUrl(src = 'images/logo.png') {
+    if (LOGO_DURL) return LOGO_DURL;
+    const res = await fetch(src, { credentials: 'same-origin' });
+    const blob = await res.blob();
+    LOGO_DURL = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+    return LOGO_DURL;
+  }
+
+  // ---------------- State ----------------
+  let allPayments = [];
+  let currentReceipt = null;
+  let sortAsc = false;
+
+  // ---------------- Render ----------------
+  function renderList(list) {
+    const wrap = document.getElementById('paymentsList');
+    while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
+
+    if (!list || list.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'info-text';
+      empty.textContent = 'Inga betalningar hittades.';
+      wrap.appendChild(empty);
+      return;
+    }
+
+    list.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const top = document.createElement('div');
+      top.className = 'card-top';
+
+      const left = document.createElement('div');
+      const strong = document.createElement('strong');
+      // Visa sessionId eller payment_intent som "Order"
+      const orderId = p.sessionId || p.payment_intent_id || p._id || '';
+      safeText(strong, `Order ${orderId ? '#' + orderId : ''}`);
+      const amount = document.createElement('p');
+      amount.className = 'amount';
+      amount.textContent = formatCurrency(p.amount_total ?? p.amount ?? 0, p.currency);
+
+      left.appendChild(strong);
+      left.appendChild(amount);
+
+      const statusDiv = document.createElement('div');
+      statusDiv.className = 'status ' + ((p.payment_status || '').toLowerCase() === 'paid' ? 'open' : 'progress');
+      const i = document.createElement('i');
+      i.className = (p.payment_status || '').toLowerCase() === 'paid' ? 'fas fa-check-circle' : 'fas fa-hourglass-half';
+      const stText = document.createTextNode(' ' + (p.payment_status || 'okänt'));
+      statusDiv.appendChild(i);
+      statusDiv.appendChild(stText);
+
+      top.appendChild(left);
+      top.appendChild(statusDiv);
+
+      const details = document.createElement('div');
+      details.className = 'card-details';
+      const cardRow = document.createElement('p');
+      cardRow.textContent = 'Kort: ' + obfuscateCard(p.payment_method_details || {});
+      const dateRow = document.createElement('p');
+      dateRow.textContent = 'Datum: ' + formatDate(p.stripe_created_ms || p.created || Date.now());
+      const txnRow = document.createElement('p');
+      txnRow.textContent = 'Transaktions-ID: ' + (p.payment_intent_id || '');
+
+      details.appendChild(cardRow);
+      details.appendChild(dateRow);
+      details.appendChild(txnRow);
+
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+      const btn = document.createElement('button');
+      btn.className = 'black-button';
+      btn.textContent = 'Visa detaljer';
+      btn.addEventListener('click', () => {
+        const pay = normalizeForReceipt(p);
+        showReceipt(pay);
+      });
+      actions.appendChild(btn);
+
+      card.appendChild(top);
+      card.appendChild(details);
+      card.appendChild(actions);
+      wrap.appendChild(card);
+    });
+  }
+
+  function normalizeForReceipt(p) {
+    // Gör ett kvitto-objekt med de fält vi använder i UI + PDF
+    const amount = p.amount_total ?? p.amount ?? 0;
+    const currency = (p.currency || 'SEK').toUpperCase();
+    const created = p.stripe_created_ms || p.created || Date.now();
+    const order = p.sessionId || p.payment_intent_id || p._id || '';
+    const status = p.payment_status || 'okänt';
+    const email = p.customer_email || '';
+    const card = obfuscateCard(p.payment_method_details || {});
+    const id = p.payment_intent_id || '';
+    const metadata = p.metadata || {};
+    const line_items = Array.isArray(p.line_items) ? p.line_items : [];
+    return {
+      order, amount: formatCurrency(amount, currency), status, card,
+      date: new Date(created).toLocaleDateString('sv-SE'),
+      time: new Date(created).toLocaleTimeString('sv-SE', { hour:'2-digit', minute:'2-digit' }),
+      id,
+      email,
+      currency,
+      amount_total: amount,
+      metadata,
+      line_items
+    };
+  }
 
   function showReceipt(payment) {
     currentReceipt = payment;
 
     const details = document.getElementById("modalDetails");
-    // Töm säkert utan att tolka HTML
     while (details.firstChild) details.removeChild(details.firstChild);
 
     const rows = [
@@ -157,6 +247,7 @@
       ["Belopp:", String(payment.amount ?? "")],
       ["Status:", String(payment.status ?? "")],
       ["Kort:", String(payment.card ?? "")],
+      ["Kund-e-post:", String(payment.email ?? "")],
       ["Datum & Tid:", `${String(payment.date ?? "")}, kl. ${String(payment.time ?? "")}`],
       ["Transaktions-ID:", String(payment.id ?? "")]
     ];
@@ -170,40 +261,166 @@
       details.appendChild(p);
     }
 
-    document.getElementById("receiptModal").style.display = "block";
-  }z
+    // Linjerader (om finns)
+    if (Array.isArray(payment.line_items) && payment.line_items.length) {
+      const h = document.createElement('h3');
+      h.textContent = 'Varor';
+      details.appendChild(h);
+      payment.line_items.forEach((li, i) => {
+        const row = document.createElement('p');
+        const nm = li?.description || li?.name || `Rad ${i+1}`;
+        const qty = li?.quantity || 1;
+        const unit = (li?.unit_amount ?? li?.amount_subtotal ?? 0);
+        const ccy = (payment.currency || 'SEK').toUpperCase();
+        row.textContent = `• ${nm} — ${qty} st, ${formatCurrency(unit, ccy)}`;
+        details.appendChild(row);
+      });
+    }
+
+    // Metadata (om finns)
+    if (payment.metadata && Object.keys(payment.metadata).length) {
+      const h = document.createElement('h3');
+      h.textContent = 'Metadata';
+      details.appendChild(h);
+      for (const [k,v] of Object.entries(payment.metadata)) {
+        const row = document.createElement('p');
+        row.textContent = `• ${k}: ${String(v)}`;
+        details.appendChild(row);
+      }
+    }
+
+    const modal = document.getElementById("receiptModal");
+    modal.style.display = "block";
+    modal.setAttribute('aria-hidden', 'false');
+  }
 
   function closeModal() {
-    document.getElementById("receiptModal").style.display = "none";
+    const modal = document.getElementById("receiptModal");
+    modal.style.display = "none";
+    modal.setAttribute('aria-hidden', 'true');
+    currentReceipt = null;
   }
 
-  function exportReceiptAsPDF() {
+  // --- PDF med logotyp uppe till vänster ---
+  async function exportReceiptAsPDF() {
+    if (!currentReceipt) return;
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    doc.setFontSize(14);
-    doc.text("Kvitto", 20, 20);
+
+    // 1) Logga
+    try {
+      const logo = await loadLogoDataUrl('images/logo.png');
+      // x=15, y=10, width=25 (höjd auto)
+      doc.addImage(logo, 'PNG', 15, 10, 25, 0);
+    } catch (e) {
+      console.warn('Kunde inte ladda logotypen för PDF:', e);
+    }
+
+    // 2) Titel + innehåll
+    doc.setFontSize(16);
+    doc.text("Kvitto", 45, 20);
     doc.setFontSize(12);
-    doc.text(`Order: #${currentReceipt.order}`, 20, 35);
-    doc.text(`Belopp: ${currentReceipt.amount}`, 20, 45);
-    doc.text(`Status: ${currentReceipt.status}`, 20, 55);
-    doc.text(`Kort: ${currentReceipt.card}`, 20, 65);
-    doc.text(`Datum & Tid: ${currentReceipt.date}, kl. ${currentReceipt.time}`, 20, 75);
-    doc.text(`Transaktions-ID: ${currentReceipt.id}`, 20, 85);
-    doc.save(`Kvitto_Order_${currentReceipt.order}.pdf`);
+
+    const lines = [
+      `Order: #${currentReceipt.order || ''}`,
+      `Belopp: ${currentReceipt.amount || ''}`,
+      `Status: ${currentReceipt.status || ''}`,
+      `Kort: ${currentReceipt.card || ''}`,
+      `Kund-e-post: ${currentReceipt.email || ''}`,
+      `Transaktions-ID: ${currentReceipt.id || ''}`
+    ];
+
+    let y = 35;
+    lines.forEach(t => { doc.text(t, 20, y); y += 8; });
+
+    if (Array.isArray(currentReceipt.line_items) && currentReceipt.line_items.length) {
+      y += 4;
+      doc.text('Varor:', 20, y); y += 8;
+      currentReceipt.line_items.forEach((li, i) => {
+        const nm = li?.description || li?.name || `Rad ${i+1}`;
+        const qty = li?.quantity || 1;
+        const amt = (li?.unit_amount ?? li?.amount_subtotal ?? 0) / 100;
+        const currency = (currentReceipt.currency || 'SEK').toUpperCase();
+        doc.text(`• ${nm} — ${qty} st, ${amt.toFixed(2)} ${currency}`, 20, y);
+        y += 7;
+      });
+    }
+
+    if (currentReceipt.metadata && Object.keys(currentReceipt.metadata).length) {
+      y += 4;
+      doc.text('Metadata:', 20, y); y += 8;
+      Object.entries(currentReceipt.metadata).forEach(([k, v]) => {
+        doc.text(`• ${k}: ${String(v)}`, 20, y);
+        y += 7;
+      });
+    }
+
+    const safeOrder = String(currentReceipt.order || 'order');
+    doc.save(`Kvitto_${safeOrder}.pdf`);
   }
 
-  function filterPayments() {
-    alert("Filtreringslogik implementeras här.");
+  // ---------------- Filters ----------------
+  function applyFilters() {
+    const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+    const status = document.getElementById('statusFilter').value || 'all';
+    const start = document.getElementById('startDate').value;
+
+    let list = [...allPayments];
+    if (q) {
+      list = list.filter(p => {
+        const email = (p.customer_email || '').toLowerCase();
+        const pi = (p.payment_intent_id || '').toLowerCase();
+        const sid = (p.sessionId || '').toLowerCase();
+        return email.includes(q) || pi.includes(q) || sid.includes(q);
+      });
+    }
+    if (status !== 'all') {
+      list = list.filter(p => (p.payment_status || '').toLowerCase() === status);
+    }
+    if (start) {
+      const startTs = new Date(start + 'T00:00:00').getTime();
+      list = list.filter(p => {
+        const t = p.stripe_created_ms || p.created || 0;
+        return t >= startTs;
+      });
+    }
+    renderList(list);
   }
 
   function sortByDate() {
-    alert("Sorteringslogik implementeras här.");
+    sortAsc = !sortAsc;
+    allPayments.sort((a, b) => {
+      const ta = a.stripe_created_ms || a.created || 0;
+      const tb = b.stripe_created_ms || b.created || 0;
+      return sortAsc ? (ta - tb) : (tb - ta);
+    });
+    applyFilters();
   }
 
-  function exportData() {
-    alert("Exporteringslogik implementeras här.");
+  async function reloadPayments() {
+    // Hämtar betalningar från din server
+    try {
+      const res = await fetch('/api/payments?limit=200', { credentials: 'include' });
+      const data = await res.json();
+      if (!data || data.success === false) {
+        throw new Error(data?.message || 'Kunde inte hämta betalningar');
+      }
+      allPayments = Array.isArray(data) ? data : (data.items || []);
+      // Default sortering: nyast först
+      allPayments.sort((a, b) => (b.stripe_created_ms || b.created || 0) - (a.stripe_created_ms || a.created || 0));
+      renderList(allPayments);
+    } catch (e) {
+      console.error('Fel vid hämtning av betalningar:', e);
+      const wrap = document.getElementById('paymentsList');
+      while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
+      const err = document.createElement('p');
+      err.className = 'info-text';
+      err.textContent = 'Kunde inte hämta betalningar. Försök igen senare.';
+      wrap.appendChild(err);
+    }
   }
 
+  // ---------------- Profil/meny ----------------
   const toggle = document.getElementById('profileToggle');
   const menu = document.getElementById('profileMenu');
 
@@ -232,9 +449,29 @@
     window.location.href = "profile.html";
   });
 
+  document.getElementById("logout").addEventListener("click", function (e) {
+    e.preventDefault();
+    if (confirm("Är du säker på att du vill logga ut?")) {
+      fetch('/logout', { method: 'GET', credentials: 'include' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            localStorage.clear();
+            window.location.href = "/login.html";
+          } else {
+            alert("Utloggning misslyckades.");
+          }
+        })
+        .catch(err => {
+          console.error("Fel vid utloggning:", err);
+          alert("Kunde inte logga ut.");
+        });
+    }
+  });
+
   async function loadUserProfile() {
     try {
-      const res = await fetch("/api/profile/me");
+      const res = await fetch("/api/profile/me", { credentials: 'include' });
       const data = await res.json();
 
       if (data.success) {
@@ -247,7 +484,7 @@
 
         if (image) {
           const img = document.createElement("img");
-          img.src = image; // endast attribut – ingen HTML tolkas
+          img.src = image;
           img.alt = "Profilbild";
           img.style.width = "32px";
           img.style.height = "32px";
@@ -272,8 +509,6 @@
     }
   }
 
-  loadUserProfile();
-
   // Hamburger toggle
   document.addEventListener("DOMContentLoaded", function () {
     const menuBtn = document.getElementById("menuToggle");
@@ -295,6 +530,16 @@
       }
     });
   });
+
+  // Buttons
+  document.getElementById('filterBtn').addEventListener('click', applyFilters);
+  document.getElementById('sortBtn').addEventListener('click', sortByDate);
+  document.getElementById('reloadBtn').addEventListener('click', reloadPayments);
+  document.getElementById('pdfBtn').addEventListener('click', exportReceiptAsPDF);
+
+  // Init
+  loadUserProfile();
+  reloadPayments();
 </script>
 <script src="/js/logout.js"></script>
 </body>

@@ -550,9 +550,8 @@ app.use("/api/pageviews", require("./routes/pageviews"));
 app.use("/api/pageviews", require("./routes/trackRoutes"));
 app.use('/api/insights', insightsRoutes);
 app.use('/api/invites', inviteRoutes);
-
-
 app.use('/api/ai-marknadsstudio', require('./routes/aiMarknadsstudio'));
+app.use('/api/payments', require('./routes/payments'));
 
 // Centralt felhanterings-middleware för uploads (Multer + övrigt)
 app.use((err, req, res, next) => {
