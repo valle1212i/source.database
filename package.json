@@ -19,6 +19,7 @@
     "express-session": "^1.18.2",
     "helmet": "^6.2.0",
     "imap-simple": "^1.6.3",
+    "json2csv": "^6.0.0-alpha.2",
     "langs": "^2.0.0",
     "mailparser": "^3.7.4",
     "mongoose": "^8.16.3",
