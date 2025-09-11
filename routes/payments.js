@@ -6,14 +6,12 @@ const { Parser } = require('json2csv');
 // Hämta lista (paginering + filtrering)
 router.get('/', async (req, res) => {
   try {
-    // Filtrera på inloggad kunds e-post som default,
-    // men tillåt admin att se allt
     const user = req.session?.user;
     const isAdmin = user?.role === 'admin';
 
     const {
       email,            // valfritt: override filter
-      status,           // tex "paid"
+      status,           // t.ex. "paid"
       start,            // ISO date
       end,              // ISO date
       q,                // fri text: sessionId eller payment_intent_id
@@ -21,30 +19,60 @@ router.get('/', async (req, res) => {
       limit = 20
     } = req.query;
 
-    const query = {};
+    // Bygg query med AND/OR så vi kan kombinera fritt
+    const and = [];
 
-    if (!isAdmin) {
-      // begränsa till eget konto
-      if (user?.email) query.customer_email = user.email;
-    } else if (email) {
-      query.customer_email = email;
+    // ----- Vems betalningar? -----
+    if (isAdmin) {
+      if (email) {
+        const e = String(email).toLowerCase().trim();
+        and.push({
+          $or: [
+            { customer_email: e },
+            { 'merchant.email': e }
+          ]
+        });
+      }
+      // admin utan email → ser alla
+    } else {
+      const e = String(user?.email || '').toLowerCase().trim();
+      if (e) {
+        and.push({
+          $or: [
+            { customer_email: e },     // köp där jag är kund
+            { 'merchant.email': e }    // köp där jag är säljare/partner
+          ]
+        });
+      } else {
+        // säkerhetsfallback: ingen e-post i sessionen → returnera tomt
+        return res.json({ success: true, total: 0, page: 1, limit: Number(limit) || 20, items: [] });
+      }
     }
 
-    if (status) query.status = status;
+    // ----- Status -----
+    if (status) and.push({ status });
 
-    // datumintervall
+    // ----- Datumintervall på stripe_created (UNIX sek → vi sparar som Date i modellen) -----
     if (start || end) {
-      query.stripe_created = {};
-      if (start) query.stripe_created.$gte = new Date(start);
-      if (end)   query.stripe_created.$lte = new Date(end);
+      const range = {};
+      if (start) range.$gte = new Date(start);
+      if (end)   range.$lte = new Date(end);
+      and.push({ stripe_created: range });
     }
 
+    // ----- Sök på id -----
     if (q) {
-      query.$or = [
-        { sessionId: { $regex: q, $options: 'i' } },
-        { payment_intent_id: { $regex: q, $options: 'i' } }
-      ];
+      const rx = new RegExp(String(q).trim(), 'i');
+      and.push({
+        $or: [
+          { sessionId: rx },
+          { payment_intent_id: rx },
+          { charge_id: rx }
+        ]
+      });
     }
+
+    const query = and.length ? { $and: and } : {};
 
     const pageNum  = Math.max(1, parseInt(page, 10) || 1);
     const perPage  = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
@@ -81,9 +109,11 @@ router.get('/:sessionId', async (req, res) => {
     const pay = await Payment.findOne({ sessionId }).lean();
     if (!pay) return res.status(404).json({ success: false, message: 'Hittades inte' });
 
-    // Säkerhet: kunder får bara se egna betalningar
-    if (!isAdmin && user?.email && pay.customer_email !== user.email) {
-      return res.status(403).json({ success: false, message: 'Åtkomst nekad' });
+    // Säkerhet: kunder får bara se egna betalningar (som kund eller som merchant)
+    if (!isAdmin) {
+      const e = String(user?.email || '').toLowerCase();
+      const isMine = (pay.customer_email?.toLowerCase() === e) || (pay.merchant?.email?.toLowerCase() === e);
+      if (!isMine) return res.status(403).json({ success: false, message: 'Åtkomst nekad' });
     }
 
     res.json({ success: true, payment: pay });
@@ -100,38 +130,50 @@ router.get('/export/csv', async (req, res) => {
     const isAdmin = user?.role === 'admin';
     const { email, start, end, status } = req.query;
 
-    const query = {};
-    if (!isAdmin) {
-      if (user?.email) query.customer_email = user.email;
-    } else if (email) {
-      query.customer_email = email;
-    }
-    if (status) query.status = status;
-    if (start || end) {
-      query.stripe_created = {};
-      if (start) query.stripe_created.$gte = new Date(start);
-      if (end)   query.stripe_created.$lte = new Date(end);
+    const and = [];
+
+    if (isAdmin) {
+      if (email) {
+        const e = String(email).toLowerCase().trim();
+        and.push({ $or: [{ customer_email: e }, { 'merchant.email': e }] });
+      }
+    } else {
+      const e = String(user?.email || '').toLowerCase().trim();
+      and.push({ $or: [{ customer_email: e }, { 'merchant.email': e }] });
     }
 
+    if (status) and.push({ status });
+    if (start || end) {
+      const range = {};
+      if (start) range.$gte = new Date(start);
+      if (end)   range.$lte = new Date(end);
+      and.push({ stripe_created: range });
+    }
+
+    const query = and.length ? { $and: and } : {};
     const docs = await Payment.find(query).sort({ stripe_created: -1 }).lean();
+
     const flat = docs.map(d => ({
       sessionId: d.sessionId,
       payment_intent_id: d.payment_intent_id,
       customer_email: d.customer_email,
+      merchant_email: d.merchant?.email || '',
       status: d.status,
       amount_total: d.amount_total,
       currency: d.currency,
-      product: (d.line_items?.[0]?.product) || '',
+      product: (d.line_items?.[0]?.product_name) || '',
       price_id: (d.line_items?.[0]?.price_id) || '',
       quantity: (d.line_items?.[0]?.quantity) || '',
-      stripe_created: d.stripe_created ? new Date(d.stripe_created).toISOString() : '',
+      stripe_created: d.stripe_created
+        ? new Date(d.stripe_created).toISOString()
+        : ''
     }));
 
     const parser = new Parser();
     const csv = parser.parse(flat);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="payments.csv"');
-    res.send('\ufeff' + csv); // BOM för Excel-kompatibilitet
+    res.send('\ufeff' + csv); // BOM för Excel
   } catch (err) {
     console.error('GET /api/payments/export/csv error:', err);
     res.status(500).json({ success: false, message: 'Kunde inte exportera CSV' });
