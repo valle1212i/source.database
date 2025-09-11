@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="payments-base" content="https://aurora-backend-kund-oversvamningsskydd.onrender.com">
+  <title>Betalning – Detaljer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto; margin:0; background:#f6f7f9; color:#111;}
+    .wrap{max-width:960px;margin:24px auto;padding:0 16px;}
+    .breadcrumb a{color:#555;text-decoration:none}
+    .header{display:flex;align-items:center;justify-content:space-between;margin:12px 0 20px}
+    .card{background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.05);padding:20px;margin-bottom:16px}
+    .row{display:flex;gap:16px;flex-wrap:wrap}
+    .col{flex:1 1 300px}
+    .label{font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+    .value{font-size:15px}
+    .amount{font-size:20px;font-weight:600}
+    .status{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;font-size:12px}
+    .status.paid{background:#e8f7ee;color:#0a7f3f}
+    .status.processing{background:#fff6e5;color:#9a6b00}
+    .status.refunded{background:#eef2ff;color:#3340aa}
+    /* Kort ”chip” */
+    .pm-card{display:flex;align-items:center;gap:12px;background:#0d1117;color:#fff;border-radius:14px;padding:16px 18px}
+    .pm-card img{height:26px}
+    .pm-card small{opacity:.8}
+    /* Timeline */
+    .timeline{position:relative;padding-left:18px}
+    .timeline:before{content:"";position:absolute;left:6px;top:0;bottom:0;width:2px;background:#e5e7eb}
+    .t-item{position:relative;margin:0 0 14px}
+    .t-item:before{content:"";position:absolute;left:-2px;top:3px;width:10px;height:10px;border-radius:50%;background:#111}
+    .muted{color:#6b7280}
+    .actions{display:flex;gap:8px;margin-top:12px}
+    button.black{background:#111;color:#fff;border:none;border-radius:10px;padding:10px 14px;cursor:pointer}
+    button.black:disabled{opacity:.5;cursor:not-allowed}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="breadcrumb"><a href="betalningar.html">← Tillbaka till betalningar</a></div>
+
+    <div class="header">
+      <h1 id="h1">Betalningsdetaljer</h1>
+      <span id="statusPill" class="status">status</span>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div class="col">
+          <div class="label">Order (Session-ID)</div>
+          <div class="value" id="orderValue">–</div>
+        </div>
+        <div class="col">
+          <div class="label">Transaktions-ID</div>
+          <div class="value" id="piValue">–</div>
+        </div>
+        <div class="col">
+          <div class="label">Belopp</div>
+          <div class="amount" id="amountValue">–</div>
+        </div>
+        <div class="col">
+          <div class="label">Kund</div>
+          <div class="value" id="customerValue">–</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <div class="card">
+          <div class="label">Kort</div>
+          <div class="pm-card" id="pmCard">
+            <img id="brandImg" alt="Brand" />
+            <div>
+              <div id="brandText">–</div>
+              <small id="masked">•••• •••• •••• ••••</small><br/>
+              <small id="expiry">Giltigt t.o.m. –</small>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="black" id="refundBtn">Återbetala</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card">
+          <div class="label">Händelser</div>
+          <div id="timeline" class="timeline"></div>
+          <div class="muted" id="lastUpdated">Uppdaterar…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ============= Helpers =============
+  const PAYMENTS_BASE = (document.querySelector('meta[name="payments-base"]')?.content || '').replace(/\/$/,'');
+  const SEK = new Intl.NumberFormat('sv-SE',{ style:'currency', currency:'SEK' });
+
+  function fmtAmt(ore, ccy){ if(!Number.isFinite(ore)) return '–'; try{ return new Intl.NumberFormat('sv-SE',{style:'currency', currency:(ccy||'SEK').toUpperCase()}).format((ore||0)/100);}catch{return `${(ore||0)/100} ${(ccy||'SEK').toUpperCase()}`;} }
+  const q = new URLSearchParams(location.search);
+  const sessionId = q.get('session');
+
+  const brandAssets = {
+    visa: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg',
+    mastercard: 'https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg',
+    'american express':'https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo_%282018%29.svg',
+    amex:'https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo_%282018%29.svg',
+    diners:'https://upload.wikimedia.org/wikipedia/commons/1/16/Diners_Club_Logo3.svg',
+    discover:'https://upload.wikimedia.org/wikipedia/commons/5/57/Discover_Card_logo.svg',
+    jcb:'https://upload.wikimedia.org/wikipedia/commons/0/0e/JCB_Co._Ltd._logo.svg',
+    unionpay:'https://upload.wikimedia.org/wikipedia/commons/4/40/UnionPay_logo.svg'
+  };
+
+  function setStatusPill(p){
+    const pill = document.getElementById('statusPill');
+    const s = (p.payment_status || p.status || '').toLowerCase();
+    pill.textContent = s || 'okänt';
+    pill.className = 'status ' + (s.includes('refund') ? 'refunded' : s === 'paid' ? 'paid' : 'processing');
+  }
+
+  function renderPM(p){
+    const pm = p.payment_method_details || {};
+    const brand = (pm.brand || pm.card_brand || '').toLowerCase();
+    const last4 = pm.last4 || pm.card_last4 || '';
+    const exp_month = pm.exp_month || pm.card_exp_month;
+    const exp_year  = pm.exp_year  || pm.card_exp_year;
+
+    const img = document.getElementById('brandImg');
+    const txt = document.getElementById('brandText');
+    const masked = document.getElementById('masked');
+    const expiry = document.getElementById('expiry');
+
+    const src = brandAssets[brand] || brandAssets[(brand||'').replace('american express','amex')] || '';
+    if (src) img.src = src; else img.remove();
+    txt.textContent = brand ? brand.charAt(0).toUpperCase() + brand.slice(1) : 'Kort';
+    masked.textContent = last4 ? `•••• •••• •••• ${last4}` : '•••• •••• •••• ••••';
+    expiry.textContent = (exp_month && exp_year) ? `Giltigt t.o.m. ${String(exp_month).padStart(2,'0')}/${String(exp_year).slice(-2)}` : 'Giltigt t.o.m. –';
+  }
+
+  function renderBasics(p){
+    document.getElementById('h1').textContent = 'Betalningsdetaljer';
+    document.getElementById('orderValue').textContent = p.sessionId || '–';
+    document.getElementById('piValue').textContent = p.payment_intent_id || '–';
+    document.getElementById('amountValue').textContent = fmtAmt(p.amount_total, p.currency);
+    document.getElementById('customerValue').textContent = p.customer_email || '–';
+    setStatusPill(p);
+    renderPM(p);
+  }
+
+  function renderTimeline(p){
+    const el = document.getElementById('timeline');
+    el.innerHTML = '';
+    const items = [];
+
+    // Skapad
+    if (p.stripe_created) {
+      items.push({
+        t: new Date((typeof p.stripe_created === 'number' ? p.stripe_created*1000 : p.stripe_created)),
+        label: 'Betalning skapad',
+        extra: p.sessionId
+      });
+    }
+
+    // Refunds
+    (p.refunds || []).forEach(r=>{
+      items.push({
+        t: new Date(r.created || Date.now()),
+        label: r.status === 'succeeded' ? 'Återbetalning genomförd' : 'Återbetalning',
+        extra: `${SEK.format((r.amount||0)/100)} – id ${r.id}`
+      });
+    });
+
+    // Sortera
+    items.sort((a,b)=>a.t-b.t);
+
+    items.forEach(i=>{
+      const d = document.createElement('div');
+      d.className = 't-item';
+      d.innerHTML = `<div><strong>${i.label}</strong></div>
+                     <div class="muted">${i.t.toLocaleString('sv-SE')}${i.extra? ' — '+i.extra:''}</div>`;
+      el.appendChild(d);
+    });
+
+    document.getElementById('lastUpdated').textContent = 'Senast uppdaterad: ' + new Date().toLocaleTimeString('sv-SE');
+  }
+
+  async function fetchPayment(){
+    if (!sessionId) return null;
+    const r = await fetch(`/api/payments/${encodeURIComponent(sessionId)}`, { credentials:'include' });
+    const d = await r.json();
+    if (!d?.success) throw new Error(d?.message || 'Kunde inte hämta betalning');
+    return d.payment;
+  }
+
+  async function refresh(){
+    try{
+      const p = await fetchPayment();
+      renderBasics(p);
+      renderTimeline(p);
+    }catch(err){
+      console.error(err);
+      alert('Kunde inte hämta betalningen.');
+    }
+  }
+
+  // Refund-knappen – använder ditt payments-backend
+  async function requestRefund(){
+    const p = await fetchPayment();
+    if (!p?.sessionId) return alert('Saknar sessionId');
+    const fullOre = p.amount_total || 0;
+
+    const amountStr = prompt("Belopp att återbetala i SEK (tomt = full):", "");
+    let amountOre = null;
+    if (amountStr && amountStr.trim() !== "") {
+      const parsed = parseFloat(amountStr.replace(",", "."));
+      if (!isFinite(parsed) || parsed <= 0) return alert("Ogiltigt belopp.");
+      amountOre = Math.round(parsed * 100);
+      if (amountOre > fullOre) amountOre = fullOre;
+    }
+
+    const choice = (prompt("Välj orsak:\n1 = Kund begärde (standard)\n2 = Dublett\n3 = Bedrägeri","1")||"1").trim().toLowerCase();
+    const reason = ({'1':'requested_by_customer','2':'duplicate','3':'fraudulent'})[choice] || 'requested_by_customer';
+
+    if (!confirm("Bekräfta återbetalning" + (amountOre ? ` av ${SEK.format(amountOre/100)}` : " (full)") + ".")) return;
+
+    try{
+      const base = PAYMENTS_BASE;
+      const r = await fetch(`${base}/api/payments/refund`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ sessionId: p.sessionId, amount: amountOre ?? undefined, reason })
+      });
+      const d = await r.json().catch(()=>({}));
+      if(!r.ok || d.success===false) throw new Error(d?.message || `Fel (${r.status})`);
+      alert('Återbetalning skapad ✅');
+      await refresh(); // uppdatera timeline
+    }catch(e){
+      console.error(e);
+      alert('Kunde inte skapa återbetalning: ' + (e.message||'okänt fel'));
+    }
+  }
+
+  document.getElementById('refundBtn').addEventListener('click', requestRefund);
+
+  // Start + polling
+  refresh();
+  setInterval(refresh, 10000);
+</script>
+</body>
+</html>

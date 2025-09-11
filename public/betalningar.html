@@ -209,9 +209,9 @@
       btn.className = 'black-button';
       btn.textContent = 'Visa detaljer';
       btn.addEventListener('click', () => {
-        const pay = normalizeForReceipt(p);
-        showReceipt(pay);
-      });
+  if (!p.sessionId) return alert('Saknar sessionId');
+  window.location.href = `betalning.html?session=${encodeURIComponent(p.sessionId)}`;
+});
       actions.appendChild(btn);
 
       const rBtn = document.createElement('button');
