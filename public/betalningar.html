@@ -16,7 +16,6 @@
 <div class="sidebar">
   <div class="logo">
     <a href="customerportal.html">
-      <!-- Loggan visas här i menyn -->
       <img src="Images/logo.png" alt="Logotyp" class="logo-img" />
     </a>
   </div>
@@ -84,7 +83,6 @@
       <div id="modalDetails"></div>
       <div style="display:flex; gap:8px; margin-top:12px;">
         <button class="black-button" id="pdfBtn">Exportera kvitto som PDF</button>
-        <!-- Extra återbetalningsknapp inne i modalen -->
         <button class="black-button" id="refundBtn">Återbetala</button>
       </div>
     </div>
@@ -93,17 +91,24 @@
 
 <!-- SCRIPT: Funktionalitet -->
 <script>
+  /* ================== CSRF helper ================== */
+  let CSRF_TOKEN = null;
+  async function getCsrfToken() {
+    if (CSRF_TOKEN) return CSRF_TOKEN;
+    const r = await fetch('/csrf-token', { credentials: 'include' });
+    const d = await r.json();
+    CSRF_TOKEN = d.csrfToken;
+    return CSRF_TOKEN;
+  }
+
   // ---------------- Hjälpare ----------------
-  const SEK = new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' });
   function formatCurrency(amount, currency) {
     if (!Number.isFinite(amount)) return '';
     const cur = (currency || 'SEK').toUpperCase();
-    const value = amount / 100; // Stripe-belopp i öre
+    const value = amount / 100;
     try {
       return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: cur }).format(value);
-    } catch {
-      return `${value.toFixed(2)} ${cur}`;
-    }
+    } catch { return `${value.toFixed(2)} ${cur}`; }
   }
   function formatDate(ts) {
     if (!ts) return '';
@@ -121,7 +126,7 @@
     el.appendChild(document.createTextNode(String(text ?? '')));
   }
 
-  // --- Logo för PDF (matchar sidomenyns "Images/logo.png") ---
+  // --- Logo för PDF ---
   let LOGO_DURL = null;
   async function loadLogoDataUrl(src = 'Images/logo.png') {
     if (LOGO_DURL) return LOGO_DURL;
@@ -207,7 +212,6 @@
       });
       actions.appendChild(btn);
 
-      // ÅTERBETALA – finns både här och i modalen
       const rBtn = document.createElement('button');
       rBtn.className = 'black-button';
       rBtn.textContent = 'Återbetala';
@@ -272,7 +276,6 @@
       details.appendChild(p);
     }
 
-    // Linjerader (om finns)
     if (Array.isArray(payment.line_items) && payment.line_items.length) {
       const h = document.createElement('h3');
       h.textContent = 'Varor';
@@ -288,7 +291,6 @@
       });
     }
 
-    // Metadata (om finns)
     if (payment.metadata && Object.keys(payment.metadata).length) {
       const h = document.createElement('h3');
       h.textContent = 'Metadata';
@@ -318,7 +320,6 @@
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
-    // 1) Logga
     try {
       const logo = await loadLogoDataUrl('Images/logo.png');
       doc.addImage(logo, 'PNG', 15, 10, 25, 0);
@@ -326,7 +327,6 @@
       console.warn('Kunde inte ladda logotypen för PDF:', e);
     }
 
-    // 2) Titel + innehåll
     doc.setFontSize(16);
     doc.text("Kvitto", 45, 20);
     doc.setFontSize(12);
@@ -369,11 +369,10 @@
     doc.save(`Kvitto_${safeOrder}.pdf`);
   }
 
-  // ---------------- ÅTERBETALNING ----------------
+  /* ================== ÅTERBETALNING (med CSRF) ================== */
   async function requestRefund(sessionId, amountTotalOre) {
     if (!sessionId) return alert("Hittar inget sessionId på betalningen.");
 
-    // 1) Belopp (frivilligt): tomt = full refund
     const amountStr = prompt("Belopp att återbetala i SEK (lämna tomt för full återbetalning):", "");
     let amountOre = null;
     if (amountStr && amountStr.trim() !== "") {
@@ -382,32 +381,63 @@
       amountOre = Math.round(parsed * 100);
       if (amountOre > amountTotalOre) {
         if (!confirm("Beloppet överstiger ursprungsbeloppet. Återbetala hela beloppet istället?")) return;
-        amountOre = null; // full
+        amountOre = null; // full refund
       }
     }
-
-    // 2) Orsak (valfri)
-    const reason = prompt("Ange orsak (t.ex. requested_by_customer, duplicate, fraudulent). Lämna tomt för default:", "") || "";
+    const reason = prompt("Orsak (t.ex. requested_by_customer, duplicate, fraudulent). Lämna tomt för standard:", "") || "";
 
     if (!confirm("Bekräfta återbetalning" + (amountOre ? ` av ${formatCurrency(amountOre, 'SEK')}` : " (full)") + ".")) {
       return;
     }
 
     try {
+      const token = await getCsrfToken();
+
       const res = await fetch('/api/payments/refund', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': token
+        },
         body: JSON.stringify({
           sessionId,
           amount: amountOre ?? undefined,
           reason: reason || undefined
         })
       });
-      const data = await res.json();
-      if (!res.ok || data.success === false) {
-        throw new Error(data?.message || "Återbetalningen misslyckades");
+
+      // Om token hann bli ogiltig → hämta ny & försök igen en gång
+      if (res.status === 403) {
+        CSRF_TOKEN = null;
+        const retryToken = await getCsrfToken();
+        const retry = await fetch('/api/payments/refund', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-csrf-token': retryToken
+          },
+          body: JSON.stringify({
+            sessionId,
+            amount: amountOre ?? undefined,
+            reason: reason || undefined
+          })
+        });
+        const rd = await retry.json().catch(() => ({}));
+        if (!retry.ok || rd.success === false) {
+          throw new Error(rd.message || `Återbetalning misslyckades (${retry.status})`);
+        }
+        alert('Återbetalning skapad ✅');
+        reloadPayments();
+        return;
       }
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.success === false) {
+        throw new Error(data?.message || `Återbetalning misslyckades (${res.status})`);
+      }
+
       alert("Återbetalning skapad ✅");
       reloadPayments();
     } catch (err) {
@@ -455,7 +485,6 @@
   }
 
   async function reloadPayments() {
-    // Hämtar betalningar från din server
     try {
       const res = await fetch('/api/payments?limit=200', { credentials: 'include' });
       const data = await res.json();
@@ -463,7 +492,6 @@
         throw new Error(data?.message || 'Kunde inte hämta betalningar');
       }
       allPayments = Array.isArray(data) ? data : (data.items || []);
-      // Default sortering: nyast först
       allPayments.sort((a, b) => (b.stripe_created_ms || b.created || 0) - (a.stripe_created_ms || a.created || 0));
       renderList(allPayments);
     } catch (e) {
@@ -594,9 +622,10 @@
   document.getElementById('reloadBtn').addEventListener('click', reloadPayments);
   document.getElementById('pdfBtn').addEventListener('click', exportReceiptAsPDF);
   document.getElementById('refundBtn').addEventListener('click', () => {
-    // återbetala från modal (om en betalning är vald)
     if (!currentReceipt) return;
-    requestRefund(currentReceipt.order?.replace(/^#/, '') || '', currentReceipt.amount_total || 0);
+    // order = sessionId i normalizeForReceipt
+    const sessionId = String(currentReceipt.order || '').replace(/^#/, '');
+    requestRefund(sessionId, currentReceipt.amount_total || 0);
   });
 
   // Init
