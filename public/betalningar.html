@@ -82,7 +82,11 @@
       <button class="close" aria-label="Stäng" onclick="closeModal()">&times;</button>
       <h2 id="receiptTitle">Transaktionsdetaljer</h2>
       <div id="modalDetails"></div>
-      <button class="black-button" id="pdfBtn">Exportera kvitto som PDF</button>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button class="black-button" id="pdfBtn">Exportera kvitto som PDF</button>
+        <!-- Extra återbetalningsknapp inne i modalen -->
+        <button class="black-button" id="refundBtn">Återbetala</button>
+      </div>
     </div>
   </div>
 </main>
@@ -94,8 +98,7 @@
   function formatCurrency(amount, currency) {
     if (!Number.isFinite(amount)) return '';
     const cur = (currency || 'SEK').toUpperCase();
-    // belopp kommer i öre från Stripe -> konvertera
-    const value = amount / 100;
+    const value = amount / 100; // Stripe-belopp i öre
     try {
       return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: cur }).format(value);
     } catch {
@@ -118,9 +121,9 @@
     el.appendChild(document.createTextNode(String(text ?? '')));
   }
 
-  // --- Logo för PDF ---
+  // --- Logo för PDF (matchar sidomenyns "Images/logo.png") ---
   let LOGO_DURL = null;
-  async function loadLogoDataUrl(src = 'images/logo.png') {
+  async function loadLogoDataUrl(src = 'Images/logo.png') {
     if (LOGO_DURL) return LOGO_DURL;
     const res = await fetch(src, { credentials: 'same-origin' });
     const blob = await res.blob();
@@ -159,7 +162,6 @@
 
       const left = document.createElement('div');
       const strong = document.createElement('strong');
-      // Visa sessionId eller payment_intent som "Order"
       const orderId = p.sessionId || p.payment_intent_id || p._id || '';
       safeText(strong, `Order ${orderId ? '#' + orderId : ''}`);
       const amount = document.createElement('p');
@@ -170,12 +172,12 @@
       left.appendChild(amount);
 
       const statusDiv = document.createElement('div');
-      statusDiv.className = 'status ' + ((p.payment_status || '').toLowerCase() === 'paid' ? 'open' : 'progress');
+      const paid = (p.payment_status || '').toLowerCase() === 'paid';
+      statusDiv.className = 'status ' + (paid ? 'open' : 'progress');
       const i = document.createElement('i');
-      i.className = (p.payment_status || '').toLowerCase() === 'paid' ? 'fas fa-check-circle' : 'fas fa-hourglass-half';
-      const stText = document.createTextNode(' ' + (p.payment_status || 'okänt'));
+      i.className = paid ? 'fas fa-check-circle' : 'fas fa-hourglass-half';
       statusDiv.appendChild(i);
-      statusDiv.appendChild(stText);
+      statusDiv.appendChild(document.createTextNode(' ' + (p.payment_status || 'okänt')));
 
       top.appendChild(left);
       top.appendChild(statusDiv);
@@ -195,6 +197,7 @@
 
       const actions = document.createElement('div');
       actions.className = 'actions';
+
       const btn = document.createElement('button');
       btn.className = 'black-button';
       btn.textContent = 'Visa detaljer';
@@ -204,6 +207,15 @@
       });
       actions.appendChild(btn);
 
+      // ÅTERBETALA – finns både här och i modalen
+      const rBtn = document.createElement('button');
+      rBtn.className = 'black-button';
+      rBtn.textContent = 'Återbetala';
+      rBtn.addEventListener('click', () => {
+        requestRefund(p.sessionId || '', p.amount_total ?? p.amount ?? 0);
+      });
+      actions.appendChild(rBtn);
+
       card.appendChild(top);
       card.appendChild(details);
       card.appendChild(actions);
@@ -212,7 +224,6 @@
   }
 
   function normalizeForReceipt(p) {
-    // Gör ett kvitto-objekt med de fält vi använder i UI + PDF
     const amount = p.amount_total ?? p.amount ?? 0;
     const currency = (p.currency || 'SEK').toUpperCase();
     const created = p.stripe_created_ms || p.created || Date.now();
@@ -309,8 +320,7 @@
 
     // 1) Logga
     try {
-      const logo = await loadLogoDataUrl('images/logo.png');
-      // x=15, y=10, width=25 (höjd auto)
+      const logo = await loadLogoDataUrl('Images/logo.png');
       doc.addImage(logo, 'PNG', 15, 10, 25, 0);
     } catch (e) {
       console.warn('Kunde inte ladda logotypen för PDF:', e);
@@ -357,6 +367,53 @@
 
     const safeOrder = String(currentReceipt.order || 'order');
     doc.save(`Kvitto_${safeOrder}.pdf`);
+  }
+
+  // ---------------- ÅTERBETALNING ----------------
+  async function requestRefund(sessionId, amountTotalOre) {
+    if (!sessionId) return alert("Hittar inget sessionId på betalningen.");
+
+    // 1) Belopp (frivilligt): tomt = full refund
+    const amountStr = prompt("Belopp att återbetala i SEK (lämna tomt för full återbetalning):", "");
+    let amountOre = null;
+    if (amountStr && amountStr.trim() !== "") {
+      const parsed = parseFloat(amountStr.replace(",", "."));
+      if (!isFinite(parsed) || parsed <= 0) return alert("Ogiltigt belopp.");
+      amountOre = Math.round(parsed * 100);
+      if (amountOre > amountTotalOre) {
+        if (!confirm("Beloppet överstiger ursprungsbeloppet. Återbetala hela beloppet istället?")) return;
+        amountOre = null; // full
+      }
+    }
+
+    // 2) Orsak (valfri)
+    const reason = prompt("Ange orsak (t.ex. requested_by_customer, duplicate, fraudulent). Lämna tomt för default:", "") || "";
+
+    if (!confirm("Bekräfta återbetalning" + (amountOre ? ` av ${formatCurrency(amountOre, 'SEK')}` : " (full)") + ".")) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/payments/refund', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          sessionId,
+          amount: amountOre ?? undefined,
+          reason: reason || undefined
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || data.success === false) {
+        throw new Error(data?.message || "Återbetalningen misslyckades");
+      }
+      alert("Återbetalning skapad ✅");
+      reloadPayments();
+    } catch (err) {
+      console.error("Refund error:", err);
+      alert("Kunde inte skapa återbetalning: " + (err.message || "okänt fel"));
+    }
   }
 
   // ---------------- Filters ----------------
@@ -536,6 +593,11 @@
   document.getElementById('sortBtn').addEventListener('click', sortByDate);
   document.getElementById('reloadBtn').addEventListener('click', reloadPayments);
   document.getElementById('pdfBtn').addEventListener('click', exportReceiptAsPDF);
+  document.getElementById('refundBtn').addEventListener('click', () => {
+    // återbetala från modal (om en betalning är vald)
+    if (!currentReceipt) return;
+    requestRefund(currentReceipt.order?.replace(/^#/, '') || '', currentReceipt.amount_total || 0);
+  });
 
   // Init
   loadUserProfile();
