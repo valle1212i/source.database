@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Payment = require('../models/Payment');
 const { Parser } = require('json2csv');
+const axios = require('axios');
+
 
 // Hämta lista (paginering + filtrering)
 router.get('/', async (req, res) => {
@@ -179,5 +181,74 @@ router.get('/export/csv', async (req, res) => {
     res.status(500).json({ success: false, message: 'Kunde inte exportera CSV' });
   }
 });
+// --- Skapa återbetalning (admin eller merchant) ---
+router.post('/refund', async (req, res) => {
+    try {
+      // 0) Auth
+      const user = req.session?.user;
+      if (!user?._id) return res.status(401).json({ success: false, message: 'Inte inloggad' });
+  
+      const { sessionId, amount, reason } = req.body || {};
+      if (!sessionId) {
+        return res.status(400).json({ success: false, message: 'sessionId krävs' });
+      }
+  
+      // 1) Behörighet – endast admin eller merchant får återbetala
+      const pay = await Payment.findOne({ sessionId }).lean();
+      if (!pay) return res.status(404).json({ success: false, message: 'Betalningen hittades inte' });
+  
+      const isAdmin    = user?.role === 'admin';
+      const isMerchant = (pay.merchant?.email || '').toLowerCase() === (user.email || '').toLowerCase();
+      if (!isAdmin && !isMerchant) {
+        return res.status(403).json({ success: false, message: 'Åtkomst nekad' });
+      }
+  
+      // 2) Miljövariabler för proxy → Payments-servern
+      const base   = process.env.PAYMENTS_BASE;           // t.ex. https://aurora-backend-kund-oversvamningsskydd.onrender.com
+      const secret = process.env.PAYMENTS_SHARED_SECRET;  // samma som i payments/server.js
+  
+      if (!base || !/^https?:\/\//i.test(base)) {
+        return res.status(500).json({ success: false, message: 'PAYMENTS_BASE saknas eller är ogiltig' });
+      }
+      if (!secret) {
+        return res.status(500).json({ success: false, message: 'PAYMENTS_SHARED_SECRET saknas' });
+      }
+  
+      // 3) Bygg kropp och headers – amount anges i öre vid delåterbetalning
+      const payload = {
+        sessionId: String(sessionId),
+        // amount & reason är valfria, inkludera bara om de skickats
+        ...(Number.isInteger(amount) && amount > 0 ? { amount } : {}),
+        ...(reason ? { reason: String(reason) } : {}),
+        actor: {
+          id: String(user._id || ''),
+          email: String(user.email || ''),
+          name: String(user.name || ''),
+          role: String(user.role || '')
+        }
+      };
+  
+      const resp = await axios.post(
+        `${base.replace(/\/+$/, '')}/api/payments/refund`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Payments-Secret': secret
+          },
+          timeout: 15000
+        }
+      );
+  
+      // 4) Forwarda svaret från Payments-servern
+      return res.status(resp.status).json(resp.data);
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || 'Återbetalningen misslyckades';
+      const code = err?.response?.status || 500;
+      console.error('POST /api/payments/refund error:', msg);
+      return res.status(code).json({ success: false, message: msg });
+    }
+  });
+  
 
 module.exports = router;
