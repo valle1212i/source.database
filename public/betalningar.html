@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="payments-base" content="https://aurora-backend-kund-oversvamningsskydd.onrender.com">
+
   <title>Kundportal – Betalningar</title>
 
   <link rel="stylesheet" href="CSS/betalningar.css" />
@@ -370,8 +372,12 @@
   }
 
   /* ================== ÅTERBETALNING (med CSRF) ================== */
+  // Bas-URL för betalningsservern (hämtas från <meta>)
+const PAYMENTS_BASE =
+  (document.querySelector('meta[name="payments-base"]')?.content || '').replace(/\/$/, '');
   async function requestRefund(sessionId, amountTotalOre) {
     if (!sessionId) return alert("Hittar inget sessionId på betalningen.");
+    
 
     const amountStr = prompt("Belopp att återbetala i SEK (lämna tomt för full återbetalning):", "");
     let amountOre = null;
@@ -391,59 +397,33 @@
     }
 
     try {
-      const token = await getCsrfToken();
+  const base = PAYMENTS_BASE;
+  if (!base) {
+    alert("Kunde inte skapa återbetalning: PAYMENTS_BASE saknas eller är ogiltig");
+    return;
+  }
 
-      const res = await fetch('/api/payments/refund', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': token
-        },
-        body: JSON.stringify({
-          sessionId,
-          amount: amountOre ?? undefined,
-          reason: reason || undefined
-        })
-      });
+  const res = await fetch(`${base}/api/payments/refund`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }, // inga CSRF/credentials här
+    body: JSON.stringify({
+      sessionId,
+      amount: amountOre ?? undefined,
+      reason: reason || undefined
+    })
+  });
 
-      // Om token hann bli ogiltig → hämta ny & försök igen en gång
-      if (res.status === 403) {
-        CSRF_TOKEN = null;
-        const retryToken = await getCsrfToken();
-        const retry = await fetch('/api/payments/refund', {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-csrf-token': retryToken
-          },
-          body: JSON.stringify({
-            sessionId,
-            amount: amountOre ?? undefined,
-            reason: reason || undefined
-          })
-        });
-        const rd = await retry.json().catch(() => ({}));
-        if (!retry.ok || rd.success === false) {
-          throw new Error(rd.message || `Återbetalning misslyckades (${retry.status})`);
-        }
-        alert('Återbetalning skapad ✅');
-        reloadPayments();
-        return;
-      }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.success === false) {
+    throw new Error(data?.message || `Återbetalning misslyckades (${res.status})`);
+  }
 
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || data.success === false) {
-        throw new Error(data?.message || `Återbetalning misslyckades (${res.status})`);
-      }
-
-      alert("Återbetalning skapad ✅");
-      reloadPayments();
-    } catch (err) {
-      console.error("Refund error:", err);
-      alert("Kunde inte skapa återbetalning: " + (err.message || "okänt fel"));
-    }
+  alert("Återbetalning skapad ✅");
+  reloadPayments();
+} catch (err) {
+  console.error("Refund error:", err);
+  alert("Kunde inte skapa återbetalning: " + (err.message || "okänt fel"));
+}
   }
 
   // ---------------- Filters ----------------
