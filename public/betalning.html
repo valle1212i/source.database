@@ -213,14 +213,13 @@
   }
 
   async function fetchPayment(){
-    if (!sessionId) return null;
-    // Din kundportal-server bör proxya detta vidare till Mongo
-    // Ex: GET /api/payments/:sessionId -> { success:true, payment:{...} }
-    const r = await fetch(`/api/payments/${encodeURIComponent(sessionId)}`, { credentials:'include' });
-    const d = await r.json().catch(()=>null);
-    if (!d?.success) throw new Error(d?.message || 'Kunde inte hämta betalning');
-    return d.payment;
-  }
+  if (!sessionId) return null;
+  const r = await fetch(`${PAYMENTS_BASE}/api/payments/${encodeURIComponent(sessionId)}`);
+  const d = await r.json().catch(()=>null);
+  if (!d?.success) throw new Error(d?.message || 'Kunde inte hämta betalning');
+  return d.payment;
+}
+
 
   async function refresh(){
     try{
