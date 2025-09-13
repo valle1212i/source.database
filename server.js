@@ -138,11 +138,11 @@ app.use(cookieParser());
 const csrfProtection = csrf({ cookie: true });
 
 // Kör CSRF globalt för allt UTOM multipart-rutten (Multer först)
-const csrfExclude = new Set(['/api/profile/update']);
-app.use((req, res, next) => {
-  if (csrfExclude.has(req.path)) return next();
-  return csrfProtection(req, res, next);
-});
+const csrfExclude = new Set([
+  '/api/profile/update',
+  '/api/support/ticket' // ⬅️ NYTT undantag
+]);
+
 
 // Ge klienten ett sätt att hämta token (kräver att CSRF-mw redan körts)
 app.get('/csrf-token', (req, res) => {
