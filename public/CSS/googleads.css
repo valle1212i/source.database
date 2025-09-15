@@ -8,7 +8,7 @@
 body {
   font-family: 'Segoe UI', sans-serif;
   color: #333;
-  background-image: url('../images/AIbakgrundbild2.0.png'), url('../images/AIbakgrundbild4.0.png');
+  background-image: url('/images/AIbakgrundbild2.0.png'), url('/images/AIbakgrundbild4.0.png');
   background-repeat: no-repeat, no-repeat;
   background-position: 120% -60px, -60% -70px;
   background-size: 54%, 78%;
@@ -36,34 +36,17 @@ body {
   z-index: 1000;
 }
 
-.logo {
-  margin-bottom: -10px;
-  text-align: center;
-}
-
-.logo-img {
-  max-width: 120px;
-  margin-top: -35px;
-}
+.logo { margin-bottom: -10px; text-align: center; }
+.logo-img { max-width: 120px; margin-top: -35px; }
 
 /* === Meny === */
-.nav-menu {
-  list-style: none;
-  flex-grow: 1;
-  padding: 0;
-  margin: 0;
-}
-
-.nav-menu li {
-  list-style: none;
-}
-
+.nav-menu { list-style: none; flex-grow: 1; padding: 0; margin: 0; }
+.nav-menu li { list-style: none; }
 .nav-menu li:nth-child(2) {
   background-color: #1f2937;
   border-left: 4px solid #ec4899;
   font-weight: bold;
 }
-
 .nav-menu a {
   color: white;
   text-decoration: none;
@@ -75,7 +58,6 @@ body {
   border-left: 4px solid transparent;
   transition: all 0.3s ease;
 }
-
 .nav-menu a:hover {
   background-color: #1f2937;
   border-left: 4px solid #ec4899;
@@ -108,10 +90,7 @@ body {
 }
 
 /* === Steg-för-steg-formulär === */
-form {
-  width: 100%;
-  max-width: 600px;
-}
+form { width: 100%; max-width: 600px; }
 
 .form-step {
   display: none;
@@ -125,10 +104,7 @@ form {
   animation: fadeIn 0.4s ease;
   width: 100%;
 }
-
-.form-step.active {
-  display: flex;
-}
+.form-step.active { display: flex; }
 
 h2 {
   font-size: 22px;
@@ -158,15 +134,8 @@ label {
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 }
-
-label:hover {
-  background: #e5e7eb;
-  border-color: #9ca3af;
-}
-
-input[type="radio"] {
-  accent-color: #2563eb;
-}
+label:hover { background: #e5e7eb; border-color: #9ca3af; }
+input[type="radio"] { accent-color: #2563eb; }
 
 /* === Textfält === */
 textarea {
@@ -193,13 +162,9 @@ button {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   margin: 0 8px;
 }
+button:hover { background: linear-gradient(to right, #1d4ed8, #4338ca); transform: translateY(-2px); }
 
-button:hover {
-  background: linear-gradient(to right, #1d4ed8, #4338ca);
-  transform: translateY(-2px);
-}
-
-/* === Tillbaka-länk uppe till höger === */
+/* === Tillbaka-länk === */
 .back-link {
   position: absolute;
   top: 20px;
@@ -213,10 +178,7 @@ button:hover {
   transition: background 0.2s ease;
   z-index: 10;
 }
-
-.back-link:hover {
-  background: #e5e7eb;
-}
+.back-link:hover { background: #e5e7eb; }
 
 /* === Progressbar === */
 .progress-container {
@@ -228,14 +190,12 @@ button:hover {
   overflow: hidden;
   margin-bottom: 30px;
 }
-
 .progress-bar {
   height: 100%;
   background: linear-gradient(to right, #2563eb, #4f46e5);
   width: 0%;
   transition: width 0.4s ease-in-out;
 }
-
 .progress-text {
   text-align: center;
   font-weight: 600;
@@ -258,19 +218,13 @@ button:hover {
 }
 
 /* === Animationer för stegövergångar === */
-.slide-up {
-  animation: slideUp 0.5s ease forwards;
-}
-
-.slide-down {
-  animation: slideDown 0.5s ease forwards;
-}
+.slide-up { animation: slideUp 0.5s ease forwards; }
+.slide-down { animation: slideDown 0.5s ease forwards; }
 
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(50px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-50px); }
   to { opacity: 1; transform: translateY(0); }
@@ -278,38 +232,13 @@ button:hover {
 
 /* === Responsivt === */
 @media (max-width: 768px) {
-  .main-content {
-    margin-left: 0;
-    padding: 20px 10px;
-    flex-direction: column;
-  }
-
+  .main-content { margin-left: 0; padding: 20px 10px; flex-direction: column; }
   .sidebar {
-    position: relative;
-    width: 100%;
-    height: auto;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    padding: 10px;
+    position: relative; width: 100%; height: auto;
+    flex-direction: row; flex-wrap: wrap; justify-content: center; padding: 10px;
   }
-
-  .form-step {
-    padding: 30px 20px;
-  }
-
-  h2 {
-    font-size: 20px;
-  }
-
-  label {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .back-link {
-    left: 10px;
-    top: 10px;
-    right: auto;
-  }
+  .form-step { padding: 30px 20px; }
+  h2 { font-size: 20px; }
+  label { width: 100%; justify-content: flex-start; }
+  .back-link { left: 10px; top: 10px; right: auto; }
 }
