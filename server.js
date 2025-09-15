@@ -35,14 +35,26 @@ const allowedOrigins = [
   "http://localhost:3000",
   "https://source-database.onrender.com",
   "https://admin-portal-rn5z.onrender.com",
+  // Publika sajter (både med och utan www)
+  "https://vattentrygg.se",
+  "https://www.vattentrygg.se",
 ];
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) callback(null, true);
-    else callback(new Error("CORS-fel: Ursprung inte tillåtet"));
+
+const corsOptions = {
+  origin(origin, callback) {
+    // Tillåt även “no origin” (curl, vissa mobilappar)
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error("CORS-fel: Ursprung inte tillåtet"));
   },
-  credentials: true
-}));
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "X-Tenant"],
+};
+
+app.use(cors(corsOptions));
+// Svara på preflight
+app.options("*", cors(corsOptions));
+
 
 // ── Sessions (återanvänds av Socket.IO) ──────────────────────────────────────
 app.use(cookieParser());
