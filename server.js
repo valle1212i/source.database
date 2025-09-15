@@ -34,7 +34,7 @@ const http = require('http').createServer(app);
 const allowedOrigins = [
   "http://localhost:3000",
   "https://source-database.onrender.com",
-  "https://admin-portal-rn5z.onrender.com"
+  "https://admin-portal-rn5z.onrender.com",
 ];
 app.use(cors({
   origin: function (origin, callback) {
