@@ -28,8 +28,7 @@ function resolveTenant(req) {
 
   if (!t) {
     const host = (req.headers.host || '').toLowerCase();
-    // subdomän.exempel.se -> subdomän
-    const m = host.match(/^([a-z0-9-]+)\./i);
+    const m = host.match(/^([a-z0-9-]+)\./i); // subdomän.exempel.se -> subdomän
     if (m && m[1] && m[1] !== 'www') t = m[1];
   }
   return t || null;
@@ -41,7 +40,7 @@ function resolveTenant(req) {
  */
 router.post('/', contactLimiter, async (req, res) => {
   try {
-    const { name, email, message, subject, company, consent } = req.body || {};
+    const { name, email, message, subject, company /* consent */ } = req.body || {};
 
     // Honeypot (company ifyllt => ignorera tyst)
     if (company && String(company).trim() !== '') {
@@ -57,29 +56,34 @@ router.post('/', contactLimiter, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Tenant saknas' });
     }
 
-    // ✅ Upsert av Customer per (email, tenant) – idempotent
-    const displayName = name || email.split('@')[0];
-    const customer = await Customer.findOneAndUpdate(
-      { email, tenant },
-      {
-        $setOnInsert: {
-          name: displayName,
-          email,
-          tenant,
-          role: 'customer'
+    // ✅ Upsert av Customer per (email, tenant) – idempotent och tålig för E11000
+    const displayName = name || (email ? email.split('@')[0] : 'Kund');
+    let customer;
+    try {
+      customer = await Customer.findOneAndUpdate(
+        { email, tenant },
+        {
+          $setOnInsert: { name: displayName, email, tenant, role: 'customer' },
+          ...(name ? { $set: { name: displayName } } : {}),
         },
-        // Om kund redan finns men saknar namn => fyll på
-        ...(name ? { $set: { name: displayName } } : {})
-      },
-      { new: true, upsert: true }
-    );
+        { new: true, upsert: true }
+      );
+    } catch (e) {
+      if (e && e.code === 11000) {
+        // Parallell request hann skapa den – hämta igen
+        customer = await Customer.findOne({ email, tenant });
+      } else {
+        throw e;
+      }
+    }
+    if (!customer) throw new Error('Kunde inte slå upp/skapa kund');
 
     // Bygg meddelandedokument
     const docPayload = {
       customerId: customer._id,
       message: clip(message, 5000),
       sender: 'customer',
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     // Sätt endast fält som faktiskt finns i Message-schemat
@@ -92,22 +96,23 @@ router.post('/', contactLimiter, async (req, res) => {
 
     const doc = await Message.create(docPayload);
     return res.status(201).json({ success: true, id: String(doc._id) });
-
   } catch (err) {
-    // Vanliga fel: E11000 (unik email utan tenant i schema), valideringsfel etc.
+    console.error('❌ /api/messages POST error:', (err && err.stack) || err);
     const code = err && (err.code || err.name || 'ERR');
-    const msg = err && (err.message || 'Serverfel');
-    console.error('❌ /api/messages POST error:', code, msg);
-
     if (String(code) === '11000') {
       return res.status(409).json({
         success: false,
         message: 'E-postadressen är redan registrerad.',
-        code: 'DUPLICATE_EMAIL'
+        code: 'DUPLICATE_EMAIL',
       });
     }
-
-    return res.status(500).json({ success: false, message: 'Serverfel' });
+    return res.status(500).json({
+      success: false,
+      message: 'Serverfel',
+      ...(process.env.NODE_ENV !== 'production'
+        ? { error: err.message || String(err), code }
+        : {}),
+    });
   }
 });
 
@@ -124,11 +129,11 @@ router.get('/latest', requireAuth, requireTenant, async (req, res) => {
       { $sort: { timestamp: -1 } },
       {
         $lookup: {
-          from: 'customers',
+          from: 'customers', // Mongo-samlingens namn
           localField: 'customerId',
           foreignField: '_id',
-          as: 'cust'
-        }
+          as: 'cust',
+        },
       },
       { $unwind: '$cust' },
       ...((user.role !== 'admin' || req.tenant)
@@ -141,9 +146,9 @@ router.get('/latest', requireAuth, requireTenant, async (req, res) => {
           timestamp: { $first: '$timestamp' },
           sender: { $first: '$sender' },
           subject: { $first: '$subject' },
-          customer: { $first: '$cust' }
-        }
-      }
+          customer: { $first: '$cust' },
+        },
+      },
     ];
 
     const messages = await Message.aggregate(pipeline);
@@ -152,7 +157,7 @@ router.get('/latest', requireAuth, requireTenant, async (req, res) => {
       customerName: m.customer?.name || 'Okänd',
       subject: m.subject || '(Ej implementerat)',
       message: m.message,
-      date: m.timestamp
+      date: m.timestamp,
     }));
 
     res.json(enriched);
