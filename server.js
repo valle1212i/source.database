@@ -117,7 +117,8 @@ const CSRF_SKIP = new Set([
   '/api/support/ticket',   // från gamla
   '/api/pageviews/track',  // extern tracker
   '/api/inventory/buy',
-  '/api/inventory/return'
+  '/api/inventory/return',
+   '/api/messages',
 ]);
 
 app.use((req, res, next) => {
