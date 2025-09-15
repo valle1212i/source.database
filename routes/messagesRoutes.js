@@ -60,14 +60,26 @@ router.post('/', contactLimiter, async (req, res) => {
     const displayName = name || (email ? email.split('@')[0] : 'Kund');
     let customer;
     try {
-      customer = await Customer.findOneAndUpdate(
-        { email, tenant },
-        {
-          $setOnInsert: { name: displayName, email, tenant, role: 'customer' },
-          ...(name ? { $set: { name: displayName } } : {}),
-        },
-        { new: true, upsert: true }
-      );
+      const query = { email, tenant };
+
+const update = {
+  $setOnInsert: {
+    email,
+    tenant,
+    role: 'customer'
+  }
+};
+
+// Sätt namn ENBART via $set (gäller både insert & update)
+if (displayName) {
+  update.$set = { name: displayName };
+}
+
+customer = await Customer.findOneAndUpdate(query, update, {
+  new: true,
+  upsert: true,
+  runValidators: true
+});
     } catch (e) {
       if (e && e.code === 11000) {
         // Parallell request hann skapa den – hämta igen
