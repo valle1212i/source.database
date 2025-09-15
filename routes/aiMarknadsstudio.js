@@ -5,28 +5,61 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const { PDFDocument } = require("pdf-lib");
-const sharp = require("sharp"); // komposition & typografiband
+const sharp = require("sharp");
 
-// Node 18+ har global fetch. För Node 16/17:
-// 
-const ai = require("../utils/aiUtils"); // createPromptFromDescription, generateImageFromPrompt, (ev) generateImageFromPromptWithInit
+const Customers = require("../models/Customer");
+const ai = require("../utils/aiUtils");
 
-// ---------- Multer (privat uploads) ----------
+// ---------- Multer (public/uploads) ----------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, "../uploads");
+    const uploadPath = path.join(__dirname, "../public/uploads");
     if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, Date.now() + "-" + Math.round(Math.random() * 1e9) + ext);
-  }
+  },
 });
 const upload = multer({ storage });
 
-
 // ---------- Helpers ----------
+const NO_DEVICE_UI = "Do not depict any phone, tablet, laptop or screen, and do not show any app UI (no icons, buttons, toolbars, social media frames, profile headers, comment bars, web browser chrome, status bars, or device bezels).";
+
+const NO_MOCKUP_GUARD = [
+  "Render a flat 2D AD ARTWORK (key visual) that fills the entire canvas.",
+  "Full-bleed, edge-to-edge, zero border or margin, no surrounding background.",
+  "No frames, no poster-on-wall, no billboards, no paper rectangle.",
+  "No mockups, no hands, no desk, no room, no floor.",
+  "No photo studio/backdrops/softboxes/light stands/hanging lamps.",
+  "No diorama/miniature set look.",
+  "No third-party logos or watermarks.",
+  NO_DEVICE_UI
+].join(" ");
+
+const stripTerms = [
+  /poster/gi, /affisch/gi, /billboard/gi, /frame/gi, /ram/gi, /mockup/gi,
+  /studio lighting/gi, /studio/gi, /photography studio/gi
+];
+function cleanUserText(s="") {
+  let out = String(s || "");
+  stripTerms.forEach(rx => out = out.replace(rx, ""));
+  // snyggare mellanslag
+  return out.replace(/\s{2,}/g, " ").trim();
+}
+
+function sanitizeExtras(extras = {}) {
+  const safe = { ...extras };
+  ["tone", "style", "brandName", "brandColors", "platform", "goal", "audience", "aspectRatio"]
+    .forEach(k => safe[k] = cleanUserText(safe[k] || ""));
+  // om style råkar bli tom, sätt en bra default
+  if (!safe.style) {
+    safe.style = "flat 2D ad artwork, full-bleed, edge-to-edge, high-contrast, print-ready";
+  }
+  return safe;
+}
+
 function isHttpUrl(u) { return /^https?:\/\//i.test(u || ""); }
 function isLocalUpload(u) { return typeof u === "string" && u.startsWith("/uploads/"); }
 function absoluteUrl(req, relative) {
@@ -40,13 +73,10 @@ async function bufferFromUrlOrLocal(url, req) {
     return Buffer.from(await r.arrayBuffer());
   }
   if (isLocalUpload(url)) {
-  const rel = String(url || "").replace(/^[\\/]?uploads[\\/]?/i, "");
-  const normalized = path.normalize(rel).replace(/^(\.\.(\/|\\|$))+/, "");
-  const filePath = path.join(__dirname, "../uploads", normalized);
-
-  if (!fs.existsSync(filePath)) throw new Error("Lokal fil saknas");
-  return fs.readFileSync(filePath);
-}
+    const filePath = path.join(__dirname, "../public", url);
+    if (!fs.existsSync(filePath)) throw new Error("Lokal fil saknas");
+    return fs.readFileSync(filePath);
+  }
   if (fs.existsSync(url)) return fs.readFileSync(url);
   const abs = absoluteUrl(req, url);
   const r = await fetch(abs);
@@ -54,92 +84,88 @@ async function bufferFromUrlOrLocal(url, req) {
   return Buffer.from(await r.arrayBuffer());
 }
 
-// ====== AD-BAKGRUND (PROFESSIONELL POSTER) ======
-
-/**
- * Bygger en "ad‑ready" bakgrundsprompt.
- * - Negativt utrymme
- * - Studioljus/premium
- * - Om overlayMode === 'main': reservera mitt‑yta för produkt
- * - Om ctaText finns: be modellen TYPSÄTTA exakt CTA‑text i nederkant
- */
-function buildAdBackgroundPrompt(description, extras = {}, overlayMode = "logo", ctaText = "") {
-  const {
-    aspectRatio = "1080x1350",
-    tone = "modern, premium",
-    style = "photorealistic, high quality, studio lighting, soft shadows",
-  } = extras;
+// ====== prompt builders: använd “ad artwork / key visual”, ej “poster” ======
+function buildBackgroundPrompt(description, extras = {}, overlayMode = "logo", ctaText = "") {
+  const { aspectRatio = "1080x1350", tone = "modern, premium", style } = extras;
 
   const reserve = overlayMode === "main"
-    ? "Reserve central area (negative space) for a product overlay; keep it clean and uncluttered."
-    : "Leave a clean corner area suitable for a small logo overlay.";
+    ? "Reserve a clean CENTRAL focal area (negative space) for a product overlay; uncluttered layout."
+    : "Leave a clean CORNER area suitable for a small logo overlay.";
 
   const ctaInstruction = (ctaText && ctaText.trim())
-    ? `Typeset the exact CTA text inside the artwork at the bottom center (verbatim): "${ctaText}". Use clean sans-serif typography, high contrast, and perfect legibility.`
-    : "Do not add any text; only leave negative space suitable for a CTA if needed.";
+    ? `If text is allowed, typeset this CTA at the BOTTOM area, verbatim: "${ctaText}". Use clean sans-serif, high contrast, excellent legibility.`
+    : "Do not render any text; just leave space where a CTA could go if needed.";
 
-  return `Generate a royalty-free AD BACKGROUND ONLY (no third-party logos, no brand marks, no watermarks).
-It must look like a professional marketing poster backdrop with NEGATIVE SPACE and premium studio look.
-Aspect ratio ${aspectRatio}. Visual tone: ${tone}. Style: ${style}.
-${reserve}
-${ctaInstruction}
-Avoid people and avoid any real-world brand logos. The scene should support a commercial product hero. 
-Keep edges clean and free of artifacts.
-
-Inspiration/concept from the user:
-${description || "N/A"}`;
+  const base = [
+    "Create a professional advertising BACKGROUND for an ad artwork (key visual).",
+    "Do NOT show a poster, frame, or thing placed in a scene; instead fill the canvas itself.",
+    `Aspect ratio ${aspectRatio}. Visual tone: ${tone}. Style: ${style}.`,
+    reserve,
+    ctaInstruction,
+    NO_MOCKUP_GUARD,
+    "Avoid people and any real-world brand marks.",
+    "User concept:", (description || "N/A")
+  ].join("\n");
+  return base;
 }
 
-/**
- * Robust bakgrundsgenerering – med fallback om safety triggas.
- * - Försök med CTA inbakad i motivet om ctaText finns
- * - Fallback: utan text (vi lägger CTA i efterhand om nödvändigt)
- */
-async function safeGenerateAdBackground(description, extras, overlayMode, ctaText) {
-  try {
-    return await ai.generateImageFromPrompt(
-      buildAdBackgroundPrompt(description, extras, overlayMode, ctaText)
-    );
-  } catch (e) {
-    const msg = String(e?.message || "");
-    if (/content_policy_violation|safety|not allowed/i.test(msg)) {
-      // försök igen, men utan text i motivet (vi renderar CTA lokalt)
-      return await ai.generateImageFromPrompt(
-        buildAdBackgroundPrompt(description, extras, overlayMode, "")
-      );
-    }
-    throw e;
-  }
+function buildAdArtworkPrompt({ base, description, extras = {} }) {
+  const {
+    
+    // platform is accepted but not printed to avoid UI/device mockups
+    goal = "drive conversions / sales",
+    audience = "primary target audience in Sweden",
+    tone = "modern, clean, high-contrast",
+    brandName = "Your brand",
+    brandColors = "",
+    ctaExact = "",
+    aspectRatio = "1080x1350",
+    style = "flat 2D ad artwork, full-bleed, edge-to-edge, high-contrast, print-ready",
+  } = extras;
+
+  const colors = (brandColors || "")
+    .split(",").map(s => s.trim()).filter(Boolean).join(", ");
+
+  const ctaBlock = ctaExact
+    ? `Place this CTA text verbatim INSIDE the artwork (bottom area, clean sans-serif, high contrast): "${ctaExact}".`
+    : `Leave space for a short headline/CTA but do NOT render any text.`;
+
+  let prompt = [
+    "Design a professional AD ARTWORK (key visual) as a flat 2D composition.",
+    "The image you output IS the final artwork (full-bleed), not a photo of a poster or screen.",
+    `Goal: ${goal}.`,
+    `Target: ${audience}. Visual tone: ${tone}. Style: ${style}.`,
+    "Distribution: digital advertising — do not show any device, display or app/interface elements.",
+    ctaBlock,
+    colors ? `Respect brand colors: ${colors}.` : "",
+    `Aspect ratio ${aspectRatio}.`,
+    "Focus on one strong focal point and generous negative space. Avoid excessive text.",
+    NO_MOCKUP_GUARD,
+    "User concept:", (description || "N/A")
+  ].join("\n");
+
+  if (base) prompt += `\n\nBase model hint:\n${base}`;
+  return prompt;
 }
 
-// ====== KOMPOSITION (LOGGA/PRODUKT + EV. CTA SOM BAND) ======
-
+// ====== komposition (overlay/logga/produkt + ev. CTA-band) ======
 async function composeOverlay(bgBuf, overlayBuf, opts = {}) {
   const {
-    mode = "logo",          // "logo" | "main"
-    margin = 48,
-    mainMaxRatio = 0.45,    // max produktbredd i % av canvasbredd
-    logoRatio = 0.18,       // loggans bredd i % av canvasbredd
-    corner = "tl",          // tl | tr | bl | br
-    addShadow = true
+    mode = "logo", margin = 48,
+    mainMaxRatio = 0.48, logoRatio = 0.18,
+    corner = "tl", addShadow = true
   } = opts;
 
-  const bg = sharp(bgBuf);
-  const meta = await bg.metadata();
+  const meta = await sharp(bgBuf).metadata();
   const W = meta.width, H = meta.height;
 
   let overlay = sharp(overlayBuf).png();
-
-  // Skala
-  let targetW = mode === "main"
-    ? Math.round(W * mainMaxRatio)
-    : Math.round(W * logoRatio);
+  const targetW = mode === "main" ? Math.round(W * mainMaxRatio) : Math.round(W * logoRatio);
   overlay = overlay.resize({ width: targetW });
 
-  let overlayBufResized = await overlay.png().toBuffer();
+  const overlayBufResized = await overlay.png().toBuffer();
   const ovMeta = await sharp(overlayBufResized).metadata();
 
-  // En enkel “skugga”
   let composites = [];
   if (addShadow) {
     const blur = Math.max(10, Math.round(W * 0.02));
@@ -154,7 +180,6 @@ async function composeOverlay(bgBuf, overlayBuf, opts = {}) {
     composites.push({ input: shadow, left: 0, top: 0 });
   }
 
-  // Placering
   let left = 0, top = 0;
   if (mode === "main") {
     left = Math.round((W - ovMeta.width) / 2);
@@ -169,19 +194,12 @@ async function composeOverlay(bgBuf, overlayBuf, opts = {}) {
   composites = composites.map(c => ({ ...c, left: left - Math.round(margin/2), top: top - Math.round(margin/2) }));
   composites.push({ input: overlayBufResized, left, top });
 
-  return await sharp(bgBuf)
-    .composite(composites)
-    .png()
-    .toBuffer();
+  return await sharp(bgBuf).composite(composites).png().toBuffer();
 }
 
-function escapeXml(s = "") {
-  return s.replace(/[<>&'"]/g, c => ({
-    "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", "\"": "&quot;"
-  }[c]));
+function escapeXml(s="") {
+  return s.replace(/[<>&'"]/g, c => ({ "<":"&lt;", ">":"&gt;", "&":"&amp;", "'":"&apos;", "\"":"&quot;" }[c]));
 }
-
-/** Lokal CTA (failsafe) – används endast om modellen inte fick med texten */
 async function addCtaBand(imageBuf, { cta = "", margin = 40 } = {}) {
   if (!cta || !cta.trim()) return imageBuf;
   const meta = await sharp(imageBuf).metadata();
@@ -195,13 +213,10 @@ async function addCtaBand(imageBuf, { cta = "", margin = 40 } = {}) {
             font-family="Inter, Arial, sans-serif"
             font-size="${fontSize}" fill="#ffffff">${escapeXml(cta)}</text>
     </svg>`;
-  return await sharp(imageBuf)
-    .composite([{ input: Buffer.from(svg), left: 0, top: H - bandH }])
-    .png()
-    .toBuffer();
+  return await sharp(imageBuf).composite([{ input: Buffer.from(svg), left: 0, top: H - bandH }]).png().toBuffer();
 }
 
-// ====== PDF-INBÄDDNING ======
+// ====== PDF-embed ======
 async function embedImageAuto(pdfDoc, uint8, mimeHint) {
   const isPng = mimeHint?.includes("png") || (uint8[0] === 0x89 && uint8[1] === 0x50);
   if (isPng) {
@@ -213,60 +228,17 @@ async function embedImageAuto(pdfDoc, uint8, mimeHint) {
   }
 }
 
-// ====== PROMPT FÖR MARKNADSVISUELL ======
-function buildMarketingPrompt({ base, description, extras = {} }) {
-  const {
-    platform = "Meta + Google",
-    goal = "drive conversions / sales",
-    audience = "primary target audience in Sweden",
-    tone = "modern, clean, high-contrast",
-    brandName = "Your brand",
-    brandColors = "",
-    ctaExact = "",                 // NYTT: exakt CTA‑text om vi vill att modellen ska sätta den
-    aspectRatio = "1080x1350",
-    style = "minimalist, crisp lighting, sharp focus",
-  } = extras;
-
-  const colors = (brandColors || "")
-    .split(",").map(s => s.trim()).filter(Boolean).join(", ");
-
-  const ctaBlock = ctaExact
-    ? `Place the following CTA text verbatim in the artwork, bottom area with high contrast, clean sans-serif typography: "${ctaExact}".`
-    : `Leave space for a short headline and CTA (do not render any text).`;
-
-  const prompt =
-`Design a professional marketing poster for ${brandName}.
-Platform(s): ${platform}. Campaign goal: ${goal}.
-Target: ${audience}. Visual tone: ${tone}. Style: ${style}.
-${ctaBlock}
-Respect brand consistency${colors ? ` using brand colors: ${colors}` : ""}.
-Aspect ratio ${aspectRatio}. Keep composition ad-friendly (clear focal point, negative space, studio quality).
-Avoid excessive text; focus on product/benefit with strong focal point and professional lighting.
-
-Concept details from the user:
-${description || "N/A"}
-
-Additional guidance:
-- Performance-ad look: thumb-stopping, clear value prop.
-- Color contrast to highlight CTA if present.
-- Legible typography, minimal artifacts.
-- No third-party logos or trademarks unless provided by user overlay.`;
-
-  return base ? `${prompt}\n\nBase model hint:\n${base}` : prompt;
-}
-
 // ================= ROUTE =================
-
 router.post("/", upload.single("image"), async (req, res) => {
   try {
-    const description = (req.body.description || "").toString();
+    const description = cleanUserText(req.body.description || "");
 
-    // Frontend-parametrar
-    const overlayMode = (req.body.overlayMode || "logo").toString();      // "none" | "logo" | "main"
+    const overlayMode = (req.body.overlayMode || "logo").toString(); // none | logo | main
     const ctaEnabled  = String(req.body.ctaEnabled || "false") === "true";
-    const ctaText     = ctaEnabled ? (req.body.cta || "").toString() : "";
+    const ctaText     = ctaEnabled ? cleanUserText(req.body.cta || "") : "";
+    const generationMode = (req.body.generationMode || "useUploadOnly").toString();
 
-    const extras = {
+    const extrasRaw = {
       platform: req.body.platform,
       goal: req.body.goal,
       audience: req.body.audience,
@@ -275,136 +247,172 @@ router.post("/", upload.single("image"), async (req, res) => {
       brandColors: req.body.brandColors,
       aspectRatio: req.body.aspectRatio,
       style: req.body.style,
-      // skickas in i "marketingprompten" för att instruera modellen att typsätta CTA i motivet
       ctaExact: ctaText || ""
     };
+    const extras = sanitizeExtras(extrasRaw);
 
-    const generationMode = (req.body.generationMode || "useUploadOnly").toString();
+    const base = await ai.createPromptFromDescription?.(description, {
+      tone: extras.tone, style: extras.style, aspectRatio: extras.aspectRatio
+    });
 
-    // Basprompt (för ev. image‑modeler som tar textprompt)
-    const basePrompt = await ai.createPromptFromDescription(description);
-    const prompt = buildMarketingPrompt({ base: basePrompt, description, extras });
-    console.log("🤖 Prompt:", prompt);
+    const prompt = buildAdArtworkPrompt({ base, description, extras });
 
-    let imageUrl; // till klienten
-    let uint8;    // bytes för PDF
-    let mime = "";
+    let imageUrl, uint8, mime = "image/png";
 
-    // === MED FIL ===
     if (req.file) {
       const uploadBuf = fs.readFileSync(req.file.path);
 
-      // 1) Generera ad‑bakgrund – först med CTA inbakad i motivet.
-      //    Triggar detta safety => fallback utan text.
-      const bgUrl = await safeGenerateAdBackground(description, extras, overlayMode, ctaText);
-      const bgRes = await fetch(bgUrl);
-      if (!bgRes.ok) throw new Error(`Kunde inte hämta AI-bakgrund (${bgRes.status})`);
-      let bgBuf = Buffer.from(await bgRes.arrayBuffer());
+      if (generationMode === "img2img" && typeof ai.generateImageFromPromptWithInit === "function") {
+        try {
+          const genUrl = await ai.generateImageFromPromptWithInit(uploadBuf, prompt, { size: "1024x1792" });
+          const genRes = await fetch(genUrl);
+          if (!genRes.ok) throw new Error(`Kunde inte hämta AI-bild (${genRes.status})`);
+          let buf = Buffer.from(await genRes.arrayBuffer());
+          if (ctaText) buf = await addCtaBand(buf, { cta: ctaText });
 
-      // 2) Komposita produkt/logga enligt val
-      let composed = bgBuf;
-      if (overlayMode === "logo") {
-        composed = await composeOverlay(bgBuf, uploadBuf, { mode: "logo", corner: "tl" });
-      } else if (overlayMode === "main") {
-        composed = await composeOverlay(bgBuf, uploadBuf, { mode: "main" });
-      } // "none" => bara bakgrund
+          const outDir = path.join(__dirname, "../public/generated");
+          if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+          const outPngPath = path.join(outDir, `artwork-${Date.now()}.png`);
+          fs.writeFileSync(outPngPath, buf);
 
-      // 3) Om modellen inte skrev CTA (t.ex. safety‑fallback gav bakgrund UTAN text)
-      //    så lägger vi CTA som band lokalt.
-      if (ctaText) {
-        // Heuristik: vi lägger bandet alltid vid ev. fallback; 
-        // (Vill du detektera text i bilden krävs OCR – hoppat här)
-        const usedPromptIncludedCTA = true; // vi bad om det
-        // Om bakgrunden kom från fallback (utan CTA), safeGenerateAdBackground ovan var redan utan text.
-        // Vi kan anta att CTA saknas och lägga bandet:
-        if (bgUrl && !bgUrl.includes("http")) {
-          // (skulle inte hända här) – lämna
-        }
-        // Lägg bandet som failsafe:
-        composed = await addCtaBand(composed, { cta: ctaText, margin: 40 });
-      }
-
-      // 4) Spara PNG lokalt (privat) + säker nedladdningslänk via route
-const genDir = path.join(__dirname, "../generated"); // inte under /public
-if (!fs.existsSync(genDir)) fs.mkdirSync(genDir, { recursive: true });
-
-const fileName = `poster-${Date.now()}.png`;
-const outPngPath = path.join(genDir, fileName);
-fs.writeFileSync(outPngPath, composed);
-
-// Bygg länk mot vår nya säkra route (respektera hur routern är mountad)
-const base = req.baseUrl || "";
-imageUrl = `${base}/generated?file=${encodeURIComponent(fileName)}`;
-
-uint8 = new Uint8Array(composed);
-mime = "image/png";
-
-    } else {
-      // === UTAN FIL: ad‑bakgrund (med CTA inbakad om möjligt), annars CTA‑band lokalt
-      let usedFallbackNoCta = false;
-      let bgUrl;
-      try {
-        bgUrl = await ai.generateImageFromPrompt(
-          buildAdBackgroundPrompt(description, extras, "none", ctaText)
-        );
-      } catch (e) {
-        const msg = String(e?.message || "");
-        if (/content_policy_violation|safety|not allowed/i.test(msg)) {
-          usedFallbackNoCta = true;
-          bgUrl = await ai.generateImageFromPrompt(
-            buildAdBackgroundPrompt(description, extras, "none", "")
+          imageUrl = "/generated/" + path.basename(outPngPath);
+          uint8 = new Uint8Array(buf);
+        } catch (err) {
+          // fallback: bakgrund + overlay
+          const bgUrl = await ai.generateImageFromPrompt(
+            buildBackgroundPrompt(description, extras, overlayMode, ctaText),
+            { size: "1024x1792" }
           );
-        } else throw e;
+          const bgRes = await fetch(bgUrl);
+          if (!bgRes.ok) throw new Error(`Kunde inte hämta AI-bakgrund (${bgRes.status})`);
+          let bgBuf = Buffer.from(await bgRes.arrayBuffer());
+
+          let composed = bgBuf;
+          if (overlayMode === "logo") {
+            composed = await composeOverlay(bgBuf, uploadBuf, { mode: "logo", corner: "tl" });
+          } else if (overlayMode === "main") {
+            composed = await composeOverlay(bgBuf, uploadBuf, { mode: "main" });
+          }
+          if (ctaText) composed = await addCtaBand(composed, { cta: ctaText });
+
+          const outDir = path.join(__dirname, "../public/generated");
+          if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+          const outPngPath = path.join(outDir, `artwork-${Date.now()}.png`);
+          fs.writeFileSync(outPngPath, composed);
+          imageUrl = "/generated/" + path.basename(outPngPath);
+          uint8 = new Uint8Array(composed);
+        }
+      } else {
+        // overlay-läge
+        const bgUrl = await ai.generateImageFromPrompt(
+          buildBackgroundPrompt(description, extras, overlayMode, ctaText),
+          { size: "1024x1792" }
+        );
+        const bgRes = await fetch(bgUrl);
+        if (!bgRes.ok) throw new Error(`Kunde inte hämta AI-bakgrund (${bgRes.status})`);
+        let bgBuf = Buffer.from(await bgRes.arrayBuffer());
+
+        let composed = bgBuf;
+        if (overlayMode === "logo") {
+          composed = await composeOverlay(bgBuf, uploadBuf, { mode: "logo", corner: "tl" });
+        } else if (overlayMode === "main") {
+          composed = await composeOverlay(bgBuf, uploadBuf, { mode: "main" });
+        }
+        if (ctaText) composed = await addCtaBand(composed, { cta: ctaText });
+
+        const outDir = path.join(__dirname, "../public/generated");
+        if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+        const outPngPath = path.join(outDir, `artwork-${Date.now()}.png`);
+        fs.writeFileSync(outPngPath, composed);
+        imageUrl = "/generated/" + path.basename(outPngPath);
+        uint8 = new Uint8Array(composed);
       }
-      const r = await fetch(bgUrl);
+    } else {
+      // text-only
+      let genUrl;
+      try {
+        genUrl = await ai.generateImageFromPrompt(prompt, { size: "1024x1792" });
+      } catch (e) {
+        // fallback utan CTA i prompten
+        const noCta = buildAdArtworkPrompt({ base, description, extras: { ...extras, ctaExact: "" } });
+        genUrl = await ai.generateImageFromPrompt(noCta, { size: "1024x1792" });
+      }
+      const r = await fetch(genUrl);
       if (!r.ok) throw new Error(`Kunde inte hämta AI-bild (${r.status})`);
       let composed = Buffer.from(await r.arrayBuffer());
+      if (ctaText) composed = await addCtaBand(composed, { cta: ctaText });
 
-      if (ctaText && usedFallbackNoCta) {
-        composed = await addCtaBand(composed, { cta: ctaText, margin: 40 });
-      }
-
-      // Spara PNG lokalt (privat) + säker nedladdningslänk via route
-const genDir = path.join(__dirname, "../generated"); // inte under /public
-if (!fs.existsSync(genDir)) fs.mkdirSync(genDir, { recursive: true });
-
-const fileName = `poster-${Date.now()}.png`;
-const outPngPath = path.join(genDir, fileName);
-fs.writeFileSync(outPngPath, composed);
-
-// Bygg länk mot vår nya säkra route (respektera hur routern är mountad)
-const base = req.baseUrl || "";
-imageUrl = `${base}/generated?file=${encodeURIComponent(fileName)}`;
-
-uint8 = new Uint8Array(composed);
-mime = "image/png";
+      const outDir = path.join(__dirname, "../public/generated");
+      if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+      const outPngPath = path.join(outDir, `artwork-${Date.now()}.png`);
+      fs.writeFileSync(outPngPath, composed);
+      imageUrl = "/generated/" + path.basename(outPngPath);
+      uint8 = new Uint8Array(composed);
     }
 
-    // 🧾 Skapa PDF
+    // PDF
     const pdfDoc = await PDFDocument.create();
     const { img, width, height } = await embedImageAuto(pdfDoc, uint8, mime);
     const page = pdfDoc.addPage([width, height]);
     page.drawImage(img, { x: 0, y: 0, width, height });
     const pdfBytes = await pdfDoc.save();
 
-    // 💾 Spara PDF (privat) + säker nedladdningslänk via route
-const pdfDir = path.join(__dirname, "../generated"); // inte under /public
-if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
+    const outDir = path.join(__dirname, "../public/generated");
+    if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+    const pdfPath = path.join(outDir, `artwork-${Date.now()}.pdf`);
+    fs.writeFileSync(pdfPath, pdfBytes);
+    const pdfUrl = "/generated/" + path.basename(pdfPath);
 
-const pdfName = `poster-${Date.now()}.pdf`;
-const pdfPath = path.join(pdfDir, pdfName);
-fs.writeFileSync(pdfPath, pdfBytes);
+    // autosave (icke-blockerande)
+    (async () => {
+      try {
+        const sessionEmail = req.user?.email;
+        const userEmail = sessionEmail || (req.body.userEmail ? String(req.body.userEmail) : null);
+        if (!userEmail) return;
 
-// Bygg länk mot vår nya säkra route
-const base = req.baseUrl || "";
-const pdfUrl = `${base}/generated?file=${encodeURIComponent(pdfName)}`;
+        const customer = await Customers.findOne({ email: userEmail }).lean();
+        if (!customer) return;
 
-    res.json({
-      imageUrl,
-      pdfUrl,
-      promptUsed: prompt,
-      source: req.file ? "upload+compose" : "ai"
-    });
+        const marketing = customer.marketing || {};
+        const existingAssets = Array.isArray(marketing?.aiStudio?.assets) ? marketing.aiStudio.assets : [];
+        const existingContentTypes = Array.isArray(marketing?.aiStudio?.contentTypes) ? marketing.aiStudio.contentTypes : [];
+        const existingCampaigns = Array.isArray(marketing?.aiStudio?.campaigns) ? marketing.aiStudio.campaigns : [];
+
+        const updated = {
+          ...marketing,
+          aiStudio: {
+            ...(marketing.aiStudio || {}),
+            assets: [...existingAssets, imageUrl],
+            contentTypes: Array.from(new Set([...existingContentTypes, "image"])),
+            campaigns: [
+              ...existingCampaigns,
+              {
+                platform: extras.platform,
+                goal: extras.goal,
+                audience: extras.audience,
+                tone: extras.tone,
+                brandName: extras.brandName,
+                brandColors: extras.brandColors,
+                aspectRatio: extras.aspectRatio,
+                style: extras.style,
+                overlayMode,
+                ctaEnabled,
+                cta: ctaText
+              }
+            ],
+            notes: description,
+            updatedAt: new Date().toISOString()
+          },
+          updatedAt: new Date().toISOString()
+        };
+
+        await Customers.updateOne({ _id: customer._id }, { $set: { marketing: updated } });
+      } catch (e) {
+        console.warn("🟡 aiStudio autosave misslyckades:", e?.message || e);
+      }
+    })();
+
+    res.json({ imageUrl, pdfUrl, promptUsed: prompt, source: req.file ? "upload" : "text-only" });
 
   } catch (error) {
     console.error("❌ AI-fel:", error);
@@ -416,7 +424,7 @@ const pdfUrl = `${base}/generated?file=${encodeURIComponent(pdfName)}`;
   }
 });
 
-// GET – generera PDF från imageUrl (http eller /uploads/…)
+// GET – generera PDF från imageUrl
 router.get("/pdf", async (req, res) => {
   try {
     const imageUrl = req.query.imageUrl;
@@ -445,7 +453,7 @@ router.get("/pdf", async (req, res) => {
   }
 });
 
-// PROXY – ladda ned bild (http eller /uploads/…)
+// PROXY – ladda ned bild
 router.get("/download-image", async (req, res) => {
   const url = req.query.url;
   if (!url) return res.status(400).send("Ingen URL angiven");
@@ -455,21 +463,14 @@ router.get("/download-image", async (req, res) => {
     let buf;
 
     if (isLocalUpload(url)) {
-  // Normalisera sökväg och förhindra ../
-  const rel = String(url || "").replace(/^[\\/]?uploads[\\/]?/i, "");
-  const normalized = path.normalize(rel).replace(/^(\.\.(\/|\\|$))+/, "");
-  const filePath = path.join(__dirname, "../uploads", normalized);
-
-  if (!fs.existsSync(filePath)) return res.status(404).send("Filen finns inte");
-  buf = fs.readFileSync(filePath);
-
-  // MIME-vitlista efter filändelse
-  const ext = path.extname(filePath).toLowerCase();
-  if (ext === ".png") ct = "image/png";
-  else if (ext === ".webp") ct = "image/webp";
-  else if (ext === ".gif") ct = "image/gif";
-  else ct = "image/jpeg";
-} else {
+      const filePath = path.join(__dirname, "../public", url);
+      if (!fs.existsSync(filePath)) return res.status(404).send("Filen finns inte");
+      buf = fs.readFileSync(filePath);
+      const ext = path.extname(filePath).toLowerCase();
+      if (ext === ".png") ct = "image/png";
+      else if (ext === ".webp") ct = "image/webp";
+      else if (ext === ".gif") ct = "image/gif";
+    } else {
       const r = await fetch(isHttpUrl(url) ? url : absoluteUrl(req, url));
       if (!r.ok) return res.status(400).send("Kunde inte hämta bild");
       ct = r.headers.get("content-type") || ct;
@@ -487,39 +488,6 @@ router.get("/download-image", async (req, res) => {
   } catch (e) {
     console.error("download-image fel:", e);
     res.status(500).send("Kunde inte ladda ned bilden");
-  }
-});
-
-// SECURE DOWNLOAD – genererade filer (PNG/PDF) med path-säkring
-router.get("/generated", (req, res) => {
-  try {
-    const file = String(req.query.file || "");
-    if (!file) return res.status(400).send("Saknar filparameter.");
-
-    // Tillåt bara kända ändelser
-    const allowed = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".pdf"];
-    const ext = path.extname(file).toLowerCase();
-    if (!allowed.includes(ext)) return res.status(400).send("Ogiltig filtyp.");
-
-    // Normalisera och blockera stigklättring
-    const normalized = path.normalize(file).replace(/^(\.\.(\/|\\|$))+/, "");
-    const filePath = path.join(__dirname, "../generated", normalized);
-
-    if (!fs.existsSync(filePath)) return res.status(404).send("Filen finns inte.");
-
-    // Bestäm Content-Type
-    const ct = ext === ".png"  ? "image/png"  :
-               ext === ".webp" ? "image/webp" :
-               ext === ".gif"  ? "image/gif"  :
-               ext === ".pdf"  ? "application/pdf" :
-               (ext === ".jpg" || ext === ".jpeg") ? "image/jpeg" : "application/octet-stream";
-
-    res.setHeader("Content-Type", ct);
-    res.setHeader("Content-Disposition", `attachment; filename="${path.basename(normalized)}"`);
-    res.send(fs.readFileSync(filePath));
-  } catch (e) {
-    console.error("generated download fel:", e);
-    res.status(500).send("Kunde inte ladda ned filen.");
   }
 });
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LinkedIn Ads – Stegvis</title>
- <link rel="stylesheet" href="css/linkedin.css" />
+  <link rel="stylesheet" href="css/linkedin.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 </head>
 <body>
@@ -14,22 +14,23 @@
       <img src="images/logo.png" alt="Logotyp" class="logo-img"/>
     </div>
     <ul class="nav-menu">
-         <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
       <li><a href="googleads.html"><i class="fab fa-google"></i> Google Ads</a></li>
       <li><a href="metaads.html"><i class="fab fa-facebook"></i> Meta Ads</a></li>
       <li><a href="tiktokads.html"><i class="fab fa-tiktok"></i> TikTok Ads</a></li>
-    <li><a href="linkedin.html" class="active"><i class="fab fa-linkedin"></i> LinkedIn Ads</a></li>
-    <li><a href="aimarknadsstudio.html"><i class="fas fa-magic"></i> AI Studio</a></li>
-    <li><a href="radgivning.html"><i class="fas fa-headset"></i> Rådgivning</a></li>
-     </ul>
+      <li><a href="linkedin.html" class="active"><i class="fab fa-linkedin"></i> LinkedIn Ads</a></li>
+      <li><a href="aimarknadsstudio.html"><i class="fas fa-magic"></i> AI Studio</a></li>
+      <li><a href="radgivning.html"><i class="fas fa-headset"></i> Rådgivning</a></li>
+    </ul>
     <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
   </div>
 
   <!-- INNEHÅLL -->
   <div class="main-content">
     <a href="marknadsföring.html" class="back-link">&larr; Tillbaka</a>
+
     <form id="stepForm">
-      <div class="progress-text" id="progressText">Steg 1 av 7</div>
+      <div class="progress-text" id="progressText">Steg 1 av 6</div>
       <div class="progress-container">
         <div class="progress-bar" id="progressBar"></div>
       </div>
@@ -104,91 +105,104 @@
   </div>
 
   <script>
-document.addEventListener("DOMContentLoaded", () => {
-  let currentStep = 0;
-  const steps = document.querySelectorAll(".form-step");
-  const progressText = document.getElementById("progressText");
+    document.addEventListener("DOMContentLoaded", () => {
+      let currentStep = 0;
+      const steps = document.querySelectorAll(".form-step");
+      const progressText = document.getElementById("progressText");
 
-  function updateProgressBar() {
-    const totalSteps = steps.length - 1; // exkludera tack-sidan
-    const percentage = (currentStep / totalSteps) * 100;
-    document.getElementById("progressBar").style.width = percentage + "%";
-    progressText.textContent = `Steg ${currentStep + 1} av ${totalSteps}`;
-  }
+      // Hämta CSRF-token och skicka cookies i alla anrop
+      const csrfTokenPromise = fetch("/csrf-token", { credentials: "include" })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => d?.csrfToken || null)
+        .catch(() => null);
 
-  function nextStep() {
-    const current = steps[currentStep];
-    const inputs = current.querySelectorAll("input, textarea");
-
-    for (const input of inputs) {
-      if (input.type === "radio") {
-        const name = input.name;
-        const group = current.querySelectorAll(`input[name="${name}"]`);
-        if (![...group].some(i => i.checked)) {
-          alert("Välj ett alternativ innan du går vidare.");
-          return;
-        }
-      } else if (input.tagName === "TEXTAREA" && input.required && input.value.trim() === "") {
-        alert("Fyll i ett svar innan du går vidare.");
-        return;
+      function updateProgressBar() {
+        const totalSteps = steps.length - 1; // exkludera tack-sidan
+        const percentage = Math.min((currentStep / totalSteps) * 100, 100);
+        document.getElementById("progressBar").style.width = percentage + "%";
+        progressText.textContent = `Steg ${Math.min(currentStep + 1, totalSteps)} av ${totalSteps}`;
       }
-    }
 
-    steps[currentStep].classList.remove("active");
-    currentStep++;
-    if (steps[currentStep]) {
-      steps[currentStep].classList.add("active");
+      function nextStep() {
+        const current = steps[currentStep];
+        const inputs = current.querySelectorAll("input, textarea");
+
+        for (const input of inputs) {
+          if (input.type === "radio") {
+            const name = input.name;
+            const group = current.querySelectorAll(`input[name="${name}"]`);
+            if (![...group].some(i => i.checked)) {
+              alert("Välj ett alternativ innan du går vidare.");
+              return;
+            }
+          } else if (input.tagName === "TEXTAREA" && input.required && input.value.trim() === "") {
+            alert("Fyll i ett svar innan du går vidare.");
+            return;
+          }
+        }
+
+        steps[currentStep].classList.remove("active");
+        currentStep++;
+        if (steps[currentStep]) {
+          steps[currentStep].classList.add("active");
+          updateProgressBar();
+        }
+      }
+
+      function prevStep() {
+        if (currentStep > 0) {
+          steps[currentStep].classList.remove("active");
+          currentStep--;
+          steps[currentStep].classList.add("active");
+          updateProgressBar();
+        }
+      }
+
+      document.getElementById("stepForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+          const token = await csrfTokenPromise;
+          const res = await fetch("/api/ads/linkedin", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { "x-csrf-token": token } : {})
+            },
+            body: JSON.stringify(data)
+          });
+
+          if (!res.ok) {
+            let msg = `Serverfel ${res.status}`;
+            try {
+              const j = await res.json();
+              if (j?.message || j?.error) msg = j.message || j.error;
+            } catch {}
+            throw new Error(msg);
+          }
+
+          // Visa tack-sidan
+          steps[currentStep].classList.remove("active");
+          currentStep++;
+          if (steps[currentStep]) {
+            steps[currentStep].classList.add("active");
+            updateProgressBar();
+          }
+        } catch (err) {
+          console.error("Fel:", err);
+          alert("❌ Kunde inte skicka in formuläret. " + (err?.message || ""));
+        }
+      });
+
+      // Exponera för knapparna i HTML
+      window.nextStep = nextStep;
+      window.prevStep = prevStep;
+
       updateProgressBar();
-    }
-  }
-
-  function prevStep() {
-    if (currentStep > 0) {
-      steps[currentStep].classList.remove("active");
-      currentStep--;
-      steps[currentStep].classList.add("active");
-      updateProgressBar();
-    }
-  }
-
-  document.getElementById("stepForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    const data = Object.fromEntries(formData.entries());
-
-    fetch("/api/ads/linkedin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    })
-    .then(res => {
-      if (!res.ok) throw new Error("Något gick fel vid skick till servern.");
-      return res.json();
-    })
-    .then(() => {
-      steps[currentStep].classList.remove("active");
-      currentStep++;
-      steps[currentStep].classList.add("active"); // visa tack-sidan
-      updateProgressBar();
-    })
-    .catch(err => {
-      console.error("Fel:", err);
-      alert("❌ Kunde inte skicka in formuläret. Försök igen.");
     });
-  });
-
-// CSP-härdning: ta bort inline onclick och bind säkert
-document.querySelectorAll('button[onclick="nextStep()"]').forEach(btn => {
-  btn.removeAttribute('onclick');
-  btn.addEventListener('click', nextStep);
-});
-document.querySelectorAll('button[onclick="prevStep()"]').forEach(btn => {
-  btn.removeAttribute('onclick');
-  btn.addEventListener('click', prevStep);
-});
-
-  updateProgressBar();
-});
-</script>
+  </script>
 </body>
 </html>
