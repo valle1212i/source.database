@@ -44,7 +44,7 @@ router.post('/', contactLimiter, async (req, res) => {
 
     // Honeypot (company ifyllt => ignorera tyst)
     if (company && String(company).trim() !== '') {
-      return res.status(200).json({ success: true });
+      return res.status(200).json({ success: true, ignored: true });
     }
 
     if (!email || !message) {
@@ -61,25 +61,14 @@ router.post('/', contactLimiter, async (req, res) => {
     let customer;
     try {
       const query = { email, tenant };
+      const update = { $setOnInsert: { email, tenant, role: 'customer' } };
+      if (displayName) update.$set = { name: displayName };
 
-const update = {
-  $setOnInsert: {
-    email,
-    tenant,
-    role: 'customer'
-  }
-};
-
-// Sätt namn ENBART via $set (gäller både insert & update)
-if (displayName) {
-  update.$set = { name: displayName };
-}
-
-customer = await Customer.findOneAndUpdate(query, update, {
-  new: true,
-  upsert: true,
-  runValidators: true
-});
+      customer = await Customer.findOneAndUpdate(query, update, {
+        new: true,
+        upsert: true,
+        runValidators: true,
+      });
     } catch (e) {
       if (e && e.code === 11000) {
         // Parallell request hann skapa den – hämta igen
@@ -90,26 +79,34 @@ customer = await Customer.findOneAndUpdate(query, update, {
     }
     if (!customer) throw new Error('Kunde inte slå upp/skapa kund');
 
-    // Bygg meddelandedokument
+    // Säkra defaults
+    const subjectSafe = (subject && String(subject).trim()) || 'Kontaktformulär';
+
+    // Bygg meddelande – lägg alltid med tenant (ignoreras av Mongoose om fältet saknas)
     const docPayload = {
       customerId: customer._id,
+      tenant,                             // <— alltid med
+      subject: subjectSafe,               // <— alltid med
       message: clip(message, 5000),
       sender: 'customer',
       timestamp: new Date(),
     };
 
-    // Sätt endast fält som faktiskt finns i Message-schemat
-    if (Object.prototype.hasOwnProperty.call(Message.schema.paths, 'subject')) {
-      docPayload.subject = subject || null;
-    }
-    if (Object.prototype.hasOwnProperty.call(Message.schema.paths, 'tenant')) {
-      docPayload.tenant = tenant;
-    }
-
     const doc = await Message.create(docPayload);
     return res.status(201).json({ success: true, id: String(doc._id) });
   } catch (err) {
-    console.error('❌ /api/messages POST error:', (err && err.stack) || err);
+    // Svara 400 på valideringsfel istället för 500
+    if (err?.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Valideringsfel',
+        errors: Object.fromEntries(
+          Object.entries(err.errors || {}).map(([k, v]) => [k, v?.message || 'ogiltigt'])
+        ),
+      });
+    }
+
+    // Dubblett-e-post hanteras redan men låt det vara kvar
     const code = err && (err.code || err.name || 'ERR');
     if (String(code) === '11000') {
       return res.status(409).json({
@@ -118,6 +115,8 @@ customer = await Customer.findOneAndUpdate(query, update, {
         code: 'DUPLICATE_EMAIL',
       });
     }
+
+    console.error('❌ /api/messages POST error:', err?.message || err, err?.stack);
     return res.status(500).json({
       success: false,
       message: 'Serverfel',
@@ -127,6 +126,7 @@ customer = await Customer.findOneAndUpdate(query, update, {
     });
   }
 });
+
 
 /**
  * GET /api/messages/latest
