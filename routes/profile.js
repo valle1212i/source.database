@@ -1,39 +1,42 @@
 // routes/profile.js
 const express = require('express');
 const router = express.Router();
-const { requireAuth } = require('./security');   // din auth-middleware
+
+// Behåll din befintliga auth-middleware
+const { requireAuth } = require('./security');
 const Customer = require('../models/Customer');
 
 // GET /api/profile/me
 router.get('/me', requireAuth, async (req, res) => {
   try {
-    // 1) Hämta användare från middleware/session
-    const sessionUser = req.user || (req.session ? req.session.user : null);
-    if (!sessionUser || !sessionUser._id) {
+    // 1) Hämta inloggat användar-ID från req.user eller session
+    const userId =
+      req.user?._id ||
+      req.session?.user?._id;
+
+    if (!userId) {
       return res.status(401).json({ success: false, message: 'Inte inloggad' });
     }
 
-    // 2) Hämta kund från DB
-    const customer = await Customer.findById(sessionUser._id).lean();
+    // 2) Slå upp kunden
+    const customer = await Customer.findById(userId).lean();
     if (!customer) {
       return res.status(404).json({ success: false, message: 'Kund hittades inte' });
     }
 
-    // 3) Plocka ut fält till frontend
-    const language     = customer.settings?.language || customer.language || null;
-    const profileImage = customer.profileImage || null;
-    const tenant       = customer.tenant || sessionUser.tenant || null;  // <-- VIKTIGT
+    // 3) Bestäm tenant
+    const tenantFromDb = customer.tenant && String(customer.tenant).trim().toLowerCase();
+    const tenantFromSession = req.session?.tenant && String(req.session.tenant).trim().toLowerCase();
+    const tenantFromHeader = req.get('X-Tenant') && String(req.get('X-Tenant')).trim().toLowerCase();
 
-    // 4) SÄTT TENANTEN I SESSIONEN (så /api/messages kan läsa den server-side)
-    if (req.session) {
-      req.session.tenant = tenant || null;
-      // synka även user-objektet i session (om du sparar det)
-      if (req.session.user) req.session.user.tenant = tenant || null;
+    const tenant = tenantFromDb || tenantFromSession || tenantFromHeader || null;
+
+    // 4) Lägg även i sessionen för serverns middleware att använda
+    if (tenant && req.session) {
+      req.session.tenant = tenant;
     }
-    // och på req.user om du använder det vidare under requesten
-    if (req.user) req.user.tenant = tenant || null;
 
-    // 5) Svar till frontend – inkluderar tenant
+    // 5) Svara med profilinfo som frontenden behöver
     return res.json({
       success: true,
       id: String(customer._id),
@@ -41,9 +44,9 @@ router.get('/me', requireAuth, async (req, res) => {
       email: customer.email || '',
       role: customer.role || null,
       plan: customer.plan || null,
-      tenant,                                // <-- FRONTEND LÄSER DENNA
-      language,
-      profileImage,
+      tenant, // <-- VIKTIGT: nu finns den alltid med om den finns någonstans
+      language: (customer.settings?.language || customer.language || null),
+      profileImage: customer.profileImage || null,
       supportHistory: customer.supportHistory || []
     });
   } catch (err) {
