@@ -315,7 +315,21 @@ router.get('/', requireAuth, requireTenant, async (req, res) => {
     const total = totalArr[0]?.total ?? items.length;
     const totalPages = Math.max(Math.ceil(total / limit), 1);
 
-    res.json({ page, limit, total, totalPages, items });
+    const payload = { page, limit, total, totalPages, items };
+
+    if (req.query.debug === '1') {
+      payload.debug = {
+        tenant: req.tenant,
+        q,
+        pageComputed: page,
+        limitComputed: limit,
+        skipComputed: skip,
+        itemsOnPage: items.length
+      };
+    }
+
+    res.json(payload);
+
   } catch (err) {
     console.error('❌ /api/messages GET error:', err);
     res.status(400).json({ error: 'Bad Request', detail: err.message });
