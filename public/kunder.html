@@ -358,13 +358,17 @@ window.sendMessage = sendMessage;
   // Läs profil
   (async () => {
     try {
-      const res = await fetch(apiUrl('/api/profile/me'), {
-        headers: { 'Accept': 'application/json' },
-        credentials: 'same-origin',
+         const res = await fetch(apiUrl('/api/profile/me'), {
+     headers: { 'Accept': 'application/json' },
+        credentials: 'include',   // 🟢 se till att cookie följer med
         cache: 'no-store'
       });
       const data = await res.json();
       if (data && (data.success !== false)) {
+        // 🟢 Spara tenant i CONFIG (om backend skickar med)
+        if (data.tenant) {
+  CONFIG.TENANT = String(data.tenant).trim().toLowerCase();
+}
         const name = data.name || '';
         const email = data.email || '';
         const image = data.profileImage;
@@ -388,6 +392,8 @@ window.sendMessage = sendMessage;
         toggle.textContent = '??';
         els.userEmail.textContent = 'Ej inloggad';
       }
+      // 🟢 Ladda meddelanden först när profil och tenant finns
+      await loadMessages();
     } catch (err) {
       console.error('Fel vid hämtning av användarprofil:', err);
       els.userEmail.textContent = 'Ej inloggad';
@@ -397,13 +403,11 @@ window.sendMessage = sendMessage;
 
 /** Init */
 document.addEventListener('DOMContentLoaded', () => {
-  // tema
   const savedTheme = localStorage.getItem('theme') || 'light';
   document.body.classList.add(`${savedTheme}-theme`);
-
-  // första laddning
-  loadMessages();
+  // Listan laddas nu efter profilhämtningen i initProfile()
 });
+
 </script>
 <script>
   function toggleSidebar() {
