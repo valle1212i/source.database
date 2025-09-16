@@ -381,8 +381,11 @@ window.sendMessage = sendMessage;
   CONFIG.TENANT = String(data.tenant).trim().toLowerCase();
   console.log('🟢 Tenant från profil:', CONFIG.TENANT);
 } else {
-  console.warn('⚠️ Ingen tenant i profil, behåller från subdomän:', CONFIG.TENANT);
+  console.warn('⚠️ Ingen tenant i profil – använder serverns session-tenant i stället.');
+  // Viktigt: skicka INTE X-Tenant / ?tenant om profilen saknar tenant
+  CONFIG.TENANT = null;
 }
+
 
 
         const name = data.name || '';
