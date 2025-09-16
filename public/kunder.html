@@ -216,7 +216,7 @@ async function fetchMessages({ page, limit, sort, q }) {
   }
   const data = await res.json();
   // Stöd både {items:[...]} och ren array
-  return Array.isArray(data) ? data : (data.items || data.data || []);
+  return Array.isArray(data) ? data : (data.items ?? []);
 }
 
 /** Rendera tabellrader */
@@ -310,7 +310,7 @@ async function sendMessage(e) {
     const res = await fetch(apiUrl('/api/email/send'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      credentials: 'same-origin',
+      credentials: 'include',
       cache: 'no-store',
       body: JSON.stringify(body)
     });
