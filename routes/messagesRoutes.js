@@ -56,24 +56,45 @@ router.post('/', contactLimiter, async (req, res) => {
     }
 
     // Upsert kund (idempotent)
-    const displayName = name || (email ? email.split('@')[0] : 'Kund');
-    let customer;
-    try {
-      const query  = { email, tenant };
-      const update = { $setOnInsert: { email, tenant, role: 'customer' } };
-      if (displayName) update.$set = { name: displayName };
+   // --- Hitta eller skapa kund (utan upsert-trassel) ---
+const displayName = name || (email ? email.split('@')[0] : 'Kund');
+let customer = await Customer.findOne({ email, tenant });
 
-      customer = await Customer.findOneAndUpdate(query, update, {
-        new: true, upsert: true, runValidators: true,
+if (!customer) {
+  try {
+    customer = await Customer.create({
+      email,
+      tenant,
+      role: 'customer',              // viktigt: undvik krav på password/groupId
+      name: displayName || undefined
+    });
+  } catch (e) {
+    // Dublett? (någon annan hann skapa den)
+    if (e && e.code === 11000) {
+      customer = await Customer.findOne({ email, tenant });
+    } else {
+      console.error('❌ Customer.create error:', e?.message || e, e?.stack);
+      return res.status(500).json({
+        success: false,
+        message: 'Serverfel vid kundskapande',
+        ...(req.query?.debug === '1' ? { error: e?.message || String(e) } : {})
       });
-    } catch (e) {
-      if (e && e.code === 11000) {
-        customer = await Customer.findOne({ email, tenant });
-      } else {
-        throw e;
-      }
     }
-    if (!customer) throw new Error('Kunde inte slå upp/skapa kund');
+  }
+} else {
+  // uppdatera namn om vi fick ett nytt displayName
+  if (displayName && displayName !== customer.name) {
+    try {
+      await Customer.updateOne(
+        { _id: customer._id },
+        { $set: { name: displayName } }
+      );
+    } catch (e) {
+      console.warn('⚠️ Kunde inte uppdatera kundnamn:', e?.message || e);
+    }
+  }
+}
+
 
     const docPayload = {
       customerId: customer._id,
