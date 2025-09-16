@@ -1,30 +1,54 @@
-// server/index.js
+// routes/index.js
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
+
 const app = express();
 const server = http.createServer(app);
-const io = require('socket.io')(server, {
-  cors: { origin: ['https://kundensdomän.se', 'https://portal.dindomän.se'], credentials: false }
-});
 
+// ── Whitelist för domäner ───────────────────────────────────────────────────
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://source-database.onrender.com',
+  'https://admin-portal-rn5z.onrender.com',
+  'https://vattentrygg.se',
+  'https://www.vattentrygg.se',
+];
 
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) return callback(null, true); // Postman/curl
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(null, false); // blockera okända
+  },
+  credentials: false, // ändra till true om cookies ska skickas
+};
 
-app.use(cors({ origin: true })); // justera för er domänlista
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
 app.use(express.json({ limit: '50kb' }));
 
-// Socket.IO: lägg på app så routern kan nå io
+// ── Socket.IO ───────────────────────────────────────────────────────────────
+const { Server } = require('socket.io');
+const io = new Server(server, { cors: corsOptions });
+
+// gör io tillgänglig för andra routes
 app.set('io', io);
 
-
-
-// Tillåt portalen att ansluta i en "site-room"
+// Socket.IO events
 io.on('connection', (socket) => {
   socket.on('join_site', (siteId) => {
-    socket.join(`site:${siteId || 'default'}`);
+    const room = typeof siteId === 'string' && siteId.trim() ? siteId.trim() : 'default';
+    socket.join(`site:${room}`);
   });
 });
 
+// ── Routes ──────────────────────────────────────────────────────────────────
 app.use('/api/pageviews', require('./pageviews'));
 
-server.listen(process.env.PORT || 3000);
+// ── Start ───────────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`✅ Routes-server körs på port ${PORT}`);
+});
