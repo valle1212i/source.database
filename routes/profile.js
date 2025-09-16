@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 
-// Behåll din befintliga auth-middleware
+// Auth-middleware (session/cookie-baserad)
 const { requireAuth } = require('./security');
 const Customer = require('../models/Customer');
 
@@ -11,8 +11,8 @@ router.get('/me', requireAuth, async (req, res) => {
   try {
     // 1) Hämta inloggat användar-ID från req.user eller session
     const userId =
-      req.user?._id ||
-      req.session?.user?._id;
+      (req.user && req.user._id) ||
+      (req.session && req.session.user && req.session.user._id);
 
     if (!userId) {
       return res.status(401).json({ success: false, message: 'Inte inloggad' });
@@ -24,14 +24,19 @@ router.get('/me', requireAuth, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Kund hittades inte' });
     }
 
-    // 3) Bestäm tenant
-    const tenantFromDb = customer.tenant && String(customer.tenant).trim().toLowerCase();
-    const tenantFromSession = req.session?.tenant && String(req.session.tenant).trim().toLowerCase();
-    const tenantFromHeader = req.get('X-Tenant') && String(req.get('X-Tenant')).trim().toLowerCase();
+    // 3) Bestäm tenant (DB → session → header)
+    const tenantFromDb =
+      customer.tenant ? String(customer.tenant).trim().toLowerCase() : null;
+    const tenantFromSession =
+      req.session && req.session.tenant
+        ? String(req.session.tenant).trim().toLowerCase()
+        : null;
+    const tenantFromHeader =
+      req.get('X-Tenant') ? String(req.get('X-Tenant')).trim().toLowerCase() : null;
 
     const tenant = tenantFromDb || tenantFromSession || tenantFromHeader || null;
 
-    // 4) Lägg även i sessionen för serverns middleware att använda
+    // 4) Spegla till session så servern kan använda den i efterföljande requests
     if (tenant && req.session) {
       req.session.tenant = tenant;
     }
@@ -44,8 +49,8 @@ router.get('/me', requireAuth, async (req, res) => {
       email: customer.email || '',
       role: customer.role || null,
       plan: customer.plan || null,
-      tenant, // <-- VIKTIGT: nu finns den alltid med om den finns någonstans
-      language: (customer.settings?.language || customer.language || null),
+      tenant, // <- Viktigt: skicka alltid tillbaka om vi känner till den
+      language: (customer.settings && customer.settings.language) || customer.language || null,
       profileImage: customer.profileImage || null,
       supportHistory: customer.supportHistory || []
     });
