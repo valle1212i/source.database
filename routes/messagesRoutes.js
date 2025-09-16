@@ -203,24 +203,22 @@ router.get('/latest', requireAuth, requireTenant, async (req, res) => {
     const user = req.user || req.session?.user;
 
     // Bas-pipeline: senaste först, joina kund
-    const pipeline = [
-      { $sort: { timestamp: -1 } },
-      {
-        $lookup: {
-          from: 'customers',
-          localField: 'customerId',
-          foreignField: '_id',
-          as: 'cust',
-        }
-      },
-      { $unwind: '$cust' },
-    ];
-    
-    // Filtrera på tenant endast om req.tenant finns (icke-admin eller explicit X-Tenant)
-    // Admin utan tenant => hoppa över match så vi ser alla tenants
-    if (req.tenant) {
-      pipeline.push({ $match: { 'cust.tenant': req.tenant } });
+ // Bas-pipeline: senaste först, joina kund
+const pipeline = [
+  { $sort: { timestamp: -1 } },
+  {
+    $lookup: {
+      from: 'customers',
+      localField: 'customerId',
+      foreignField: '_id',
+      as: 'cust',
     }
+  },
+  { $unwind: '$cust' },
+  // Filtrera på tenant endast om req.tenant finns (admin utan tenant => alla)
+  ...(req.tenant ? [{ $match: { 'cust.tenant': req.tenant } }] : []),
+];
+
     
     // Valfri text-sök i message/subject/kundnamn
     if (q) {
@@ -274,7 +272,7 @@ router.get('/', requireAuth, requireTenant, async (req, res) => {
         }
       },
       { $unwind: '$cust' },
-      { $match: { 'cust.tenant': req.tenant } },
+      ...(req.tenant ? [{ $match: { 'cust.tenant': req.tenant } }] : []),
       ...matchSearch,
       {
         $group: {
