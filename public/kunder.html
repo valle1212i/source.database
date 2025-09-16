@@ -414,5 +414,80 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <script src="/js/logout.js"></script>
+<script>
+  (function () {
+    if (window.__vtgKunderBound) return;
+    window.__vtgKunderBound = true;
+
+    // Bas-API – samma origin i portalen
+    const API_BASE = '';
+
+    // Element i tabellen (justera selectors om dina skiljer sig)
+    const tableBody = document.querySelector('table tbody') 
+                   || document.querySelector('.w-dyn-items, .messages-table tbody');
+
+    // Visa en enkel rad när det saknas data
+    function renderEmpty() {
+      if (!tableBody) return;
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="4" style="padding:12px;color:#667085">Inga kundmeddelanden ännu.</td>
+        </tr>`;
+    }
+
+    async function loadMessages() {
+      try {
+        const res = await fetch(`${API_BASE}/api/messages?page=1&limit=50`, {
+          method: 'GET',
+          credentials: 'include', // viktigt för inloggad session
+          headers: {
+            'Accept': 'application/json'
+            // 'X-Tenant': 'vattentrygg'  // valfritt; behövs normalt inte när du är inloggad
+          },
+          cache: 'no-store',
+          mode: 'cors'
+        });
+
+        if (!res.ok) {
+          console.warn('GET /api/messages failed:', res.status, res.statusText);
+          renderEmpty();
+          return;
+        }
+
+        const data = await res.json();
+        const items = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
+
+        if (!items.length) { renderEmpty(); return; }
+
+        if (!tableBody) return;
+
+        tableBody.innerHTML = items.map(it => {
+          const name  = it.customerName || it.email || 'Okänd';
+          const subj  = it.subject || '';
+          const msg   = it.message || '';
+          const date  = it.date ? new Date(it.date).toLocaleString('sv-SE') : '';
+          return `
+            <tr>
+              <td>${name}</td>
+              <td>${subj}</td>
+              <td>${msg}</td>
+              <td>${date}</td>
+            </tr>`;
+        }).join('');
+      } catch (e) {
+        console.error('loadMessages error:', e);
+        renderEmpty();
+      }
+    }
+
+    // Kör direkt när sidan laddats
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadMessages, { once: true });
+    } else {
+      loadMessages();
+    }
+  })();
+</script>
+
 </body>
 </html>
