@@ -274,7 +274,7 @@ router.get('/', requireAuth, requireTenant, async (req, res) => {
         }
       },
       { $unwind: '$cust' },
-      { $match: { 'cust.tenant': req.tenant } },
+      ...(req.tenant ? [{ $match: { 'cust.tenant': req.tenant } }] : []),
       ...matchSearch,
       {
         $group: {
