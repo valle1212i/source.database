@@ -204,6 +204,7 @@ router.get('/latest', requireAuth, requireTenant, async (req, res) => {
 
     // Bas-pipeline: senaste först, joina kund
  // Bas-pipeline: senaste först, joina kund
+// Bas-pipeline: senaste först, joina kund
 const pipeline = [
   { $sort: { timestamp: -1 } },
   {
@@ -218,6 +219,7 @@ const pipeline = [
   // Filtrera på tenant endast om req.tenant finns (admin utan tenant => alla)
   ...(req.tenant ? [{ $match: { 'cust.tenant': req.tenant } }] : []),
 ];
+
 
     
     // Valfri text-sök i message/subject/kundnamn
@@ -272,7 +274,7 @@ router.get('/', requireAuth, requireTenant, async (req, res) => {
         }
       },
       { $unwind: '$cust' },
-      ...(req.tenant ? [{ $match: { 'cust.tenant': req.tenant } }] : []),
+      { $match: { 'cust.tenant': req.tenant } },
       ...matchSearch,
       {
         $group: {
