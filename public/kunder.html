@@ -97,65 +97,61 @@
 </main>
 
   <!-- JS -->
-<script>
-/**
- * 🔧 KONFIG (gör portalen generell för alla kunder)
- * - API_BASE: lämna '' för samma domän/proxy, eller peka mot din gateway.
- * - TENANT: läses automatiskt från subdomän (acme.source-database.com → acme)
- *           men kan också sättas via localStorage('tenant') eller hardcodas här.
- */
-const CONFIG = (() => {
-  const API_BASE = ''; // t.ex. '' (samma origin) eller 'https://source-database.onrender.com'
-  const sub = location.hostname.split('.')[0];
-  const tenantFromSub = (sub && sub !== 'www' && /^[a-z0-9-]+$/i.test(sub)) ? sub : null;
-  const tenantFromLS  = localStorage.getItem('tenant') || null;
-  const TENANT = tenantFromLS || tenantFromSub || null;
-  if (!CONFIG.TENANT) {
-  const ls = localStorage.getItem('tenant');
-  if (ls) CONFIG.TENANT = ls;
-}
-
-  return { API_BASE, TENANT, DEFAULT_LIMIT: 50 };
-})();
-
-/** Hjälpmetoder */
-const $ = (sel, root = document) => root.querySelector(sel);
-const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-
-const state = {
-  page: 1,
-  limit: CONFIG.DEFAULT_LIMIT,
-  sort: 'desc', // skapad/nyast först
-  q: '',
-  loading: false
-};
-
-const els = {
-  tbody: document.querySelector('.customer-table tbody'),
-  search: document.getElementById('searchInput'),
-  modal: document.getElementById('messageModal'),
-  profileToggle: document.getElementById('profileToggle'),
-  profileMenu: document.getElementById('profileMenu'),
-  userEmail: document.getElementById('userEmail'),
-};
-
-/** Liten debounce för sök */
-function debounce(fn, ms = 300) {
-  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-}
-
-/** Bygg URL till API (respekterar proxy/same-origin) */
-function apiUrl(path, params = {}) {
-  const base = CONFIG.API_BASE || '';
-  const url = new URL((base.endsWith('/') ? base.slice(0, -1) : base) + path, location.origin);
-  Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
-  });
-  if (CONFIG.TENANT && !url.searchParams.has('tenant')) {
-    url.searchParams.set('tenant', CONFIG.TENANT);
-  }
-  return url.toString();
-}
+  <script>
+    /**
+     * 🔧 KONFIG (gör portalen generell för alla kunder)
+     * - API_BASE: lämna '' för samma domän/proxy, eller peka mot din gateway.
+     * - TENANT: läses från subdomän eller localStorage.
+     */
+    const CONFIG = (() => {
+      const API_BASE = ''; // '' = samma origin
+      const sub = location.hostname.split('.')[0];
+      const tenantFromSub = (sub && sub !== 'www' && /^[a-z0-9-]+$/i.test(sub)) ? sub : null;
+      const tenantFromLS  = localStorage.getItem('tenant') || null;
+      const TENANT = tenantFromLS || tenantFromSub || null;
+      return { API_BASE, TENANT, DEFAULT_LIMIT: 50 };
+    })();
+    
+    // ✅ Fallback måste ligga EFTER att CONFIG finns
+    (() => {
+    })();
+    
+    /** Hjälpmetoder */
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+    
+    const state = {
+      page: 1,
+      limit: CONFIG.DEFAULT_LIMIT,
+      sort: 'desc',
+      q: '',
+      loading: false
+    };
+    
+    const els = {
+      tbody: document.querySelector('.customer-table tbody'),
+      search: document.getElementById('searchInput'),
+      modal: document.getElementById('messageModal'),
+      profileToggle: document.getElementById('profileToggle'),
+      profileMenu: document.getElementById('profileMenu'),
+      userEmail: document.getElementById('userEmail'),
+    };
+    
+    /** Bygg URL till API (respekterar proxy/same-origin) */
+    function apiUrl(path, params = {}) {
+      const base = CONFIG.API_BASE || '';
+      const url = new URL((base.endsWith('/') ? base.slice(0, -1) : base) + path, location.origin);
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
+      });
+      if (CONFIG.TENANT && !url.searchParams.has('tenant')) {
+        url.searchParams.set('tenant', CONFIG.TENANT);
+      }
+      return url.toString();
+    }
+    
+    /** … (resten av ditt skript oförändrat) … */
+    </script>    
 
 /** Säkert textinnehåll (du använder redan textContent – bra) */
 function td(text) {
