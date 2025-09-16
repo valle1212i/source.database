@@ -10,434 +10,341 @@
 </head>
 <body>
   <!-- Hamburgermeny för mobil -->
-<button class="hamburger-menu" onclick="toggleSidebar()">☰</button>
+  <button class="hamburger-menu" onclick="toggleSidebar()">☰</button>
+
   <!-- SIDOMENY -->
   <div class="sidebar">
-  <div class="logo">
-    <a href="customerportal.html">
-      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
-    </a>
+    <div class="logo">
+      <a href="customerportal.html">
+        <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+      </a>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+      <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+      <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+      <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+      <li class="active"><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+      <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+      <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+      <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+      <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+    </ul>
+    <div class="help">
+      <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
+    </div>
   </div>
-  <ul class="nav-menu">
-  <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
-  <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
-  <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
-  <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
-  <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
-  <li class="active"><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
-  <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
-  <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
-  <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
-  <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
-</ul>
-<div class="help">
-  <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
-</div>
-  </div>
-
 
   <!-- HUVUDINNEHÅLL -->
   <main class="main">
     <div class="profile-wrapper">
-  <div class="profile-icon" id="profileToggle">--</div>
+      <div class="profile-icon" id="profileToggle">--</div>
+      <div class="profile-dropdown" id="profileMenu">
+        <div class="profile-email" id="userEmail">Laddar...</div>
+        <hr />
+        <a href="#" id="switchAccount">Byt konto</a>
+        <a href="#" id="openSettings">Profilinställningar</a>
+        <a href="#" id="logout">Logga ut</a>
+      </div>
+    </div>
 
-  <div class="profile-dropdown" id="profileMenu">
-    <div class="profile-email" id="userEmail">Laddar...</div>
-    <hr />
-    <a href="#" id="switchAccount">Byt konto</a>
-    <a href="#" id="openSettings">Profilinställningar</a>
-    <a href="#" id="logout">Logga ut</a>
-  </div>
-</div>
     <h1 class="header">Kundmeddelanden</h1>
     <p class="subtitle">Här ser du alla inkommande kundärenden.</p>
 
     <!-- Sök och meddelandeknapp -->
-    <div class="table-header" style="display: flex; gap: 10px; align-items: center;">
+    <div class="table-header" style="display:flex;gap:10px;align-items:center;">
       <input id="searchInput" type="text" placeholder="🔍 Sök kundmeddelande..." />
-      <button class="message-btn" onclick="openMessageModal()"> Skriv meddelande</button>
+      <button class="message-btn" onclick="openMessageModal()">Skriv meddelande</button>
     </div>
 
     <!-- TABELL -->
     <table class="customer-table">
-  <thead>
-    <tr>
-      <th>Kund</th>
-      <th>Ämne</th>
-      <th>Senaste meddelande</th>
-      <th>Datum</th>
-    </tr>
-  </thead>
-  <tbody>
-    <!-- JS fyller detta -->
-  </tbody>
-</table>
+      <thead>
+        <tr>
+          <th>Kund</th>
+          <th>Ämne</th>
+          <th>Senaste meddelande</th>
+          <th>Datum</th>
+        </tr>
+      </thead>
+      <tbody><!-- JS fyller detta --></tbody>
+    </table>
 
-
-
-  <!-- MODAL: Skicka meddelande -->
-  <div id="messageModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeMessageModal()">&times;</span>
-      <h2>Skicka meddelande till kund</h2>
-      <form onsubmit="sendMessage(event)">
-        <label for="customer">Kund:</label>
-        <input type="text" id="customer" required placeholder="Ex. Anna Karlsson" />
-
-        <label for="subject">Ämne:</label>
-        <input type="text" id="subject" required placeholder="Ämne..." />
-
-        <label for="message">Meddelande:</label>
-        <textarea id="message" required placeholder="Skriv ditt meddelande här..."></textarea>
-
-        <button type="submit" class="send-btn">Skicka</button>
-      </form>
+    <!-- MODAL: Skicka meddelande -->
+    <div id="messageModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeMessageModal()">&times;</span>
+        <h2>Skicka meddelande till kund</h2>
+        <form onsubmit="sendMessage(event)">
+          <label for="customer">Kund:</label>
+          <input type="text" id="customer" required placeholder="Ex. Anna Karlsson" />
+          <label for="subject">Ämne:</label>
+          <input type="text" id="subject" required placeholder="Ämne..." />
+          <label for="message">Meddelande:</label>
+          <textarea id="message" required placeholder="Skriv ditt meddelande här..."></textarea>
+          <button type="submit" class="send-btn">Skicka</button>
+        </form>
+      </div>
     </div>
-  </div>
-</main>
+  </main>
 
   <!-- JS -->
   <script>
-    /**
-     * 🔧 KONFIG (gör portalen generell för alla kunder)
-     * - API_BASE: lämna '' för samma domän/proxy, eller peka mot din gateway.
-     * - TENANT: läses från subdomän eller localStorage.
-     */
+    /** KONFIG **/
     const CONFIG = (() => {
-      const API_BASE = ''; // '' = samma origin
+      const API_BASE = ''; // eller 'https://source-database.onrender.com'
       const sub = location.hostname.split('.')[0];
       const tenantFromSub = (sub && sub !== 'www' && /^[a-z0-9-]+$/i.test(sub)) ? sub : null;
       const tenantFromLS  = localStorage.getItem('tenant') || null;
-      const TENANT = tenantFromLS || tenantFromSub || null;
+      let TENANT = tenantFromLS || tenantFromSub || null; // viktig: lokal var, inte CONFIG
       return { API_BASE, TENANT, DEFAULT_LIMIT: 50 };
     })();
-    
-    // ✅ Fallback måste ligga EFTER att CONFIG finns
-    (() => {
-    })();
-    
-    /** Hjälpmetoder */
-    const $ = (sel, root = document) => root.querySelector(sel);
-    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-    
-    const state = {
-      page: 1,
-      limit: CONFIG.DEFAULT_LIMIT,
-      sort: 'desc',
-      q: '',
-      loading: false
-    };
-    
+
+    /** Hjälpmetoder **/
+    const $  = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    function debounce(fn, ms=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+
+    const state = { page:1, limit:CONFIG.DEFAULT_LIMIT, sort:'desc', q:'', loading:false };
+
     const els = {
-      tbody: document.querySelector('.customer-table tbody'),
-      search: document.getElementById('searchInput'),
-      modal: document.getElementById('messageModal'),
-      profileToggle: document.getElementById('profileToggle'),
-      profileMenu: document.getElementById('profileMenu'),
-      userEmail: document.getElementById('userEmail'),
+      tbody: $('.customer-table tbody'),
+      search: $('#searchInput'),
+      modal:  $('#messageModal'),
+      profileToggle: $('#profileToggle'),
+      profileMenu:   $('#profileMenu'),
+      userEmail:     $('#userEmail'),
     };
-    
-    /** Bygg URL till API (respekterar proxy/same-origin) */
-    function apiUrl(path, params = {}) {
+
+    /** URL-builder **/
+    function apiUrl(path, params={}) {
       const base = CONFIG.API_BASE || '';
-      const url = new URL((base.endsWith('/') ? base.slice(0, -1) : base) + path, location.origin);
-      Object.entries(params).forEach(([k, v]) => {
+      const url = new URL((base.endsWith('/') ? base.slice(0,-1) : base) + path, location.origin);
+      Object.entries(params).forEach(([k,v]) => {
         if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
       });
-      if (CONFIG.TENANT && !url.searchParams.has('tenant')) {
-        url.searchParams.set('tenant', CONFIG.TENANT);
-      }
+      if (CONFIG.TENANT && !url.searchParams.has('tenant')) url.searchParams.set('tenant', CONFIG.TENANT);
       return url.toString();
     }
-    
-    /** … (resten av ditt skript oförändrat) … */
-    </script>    
 
-/** Säkert textinnehåll (du använder redan textContent – bra) */
-function td(text) {
-  const c = document.createElement('td');
-  c.textContent = text ?? '';
-  return c;
-}
+    /** Cells, datum, trim **/
+    function td(text){ const c=document.createElement('td'); c.textContent=text ?? ''; return c; }
+    function fmtDate(value){ const d=new Date(value); return isNaN(d.getTime()) ? '' : d.toLocaleDateString(); }
+    function truncate(text, max=120){ if(!text) return ''; return text.length>max ? text.slice(0,max-1)+'…' : text; }
 
-/** Datumformat robust */
-function fmtDate(value) {
-  const d = new Date(value);
-  return isNaN(d.getTime()) ? '' : d.toLocaleDateString();
-}
-
-/** Trunkera visning av senaste meddelande */
-function truncate(text, max = 120) {
-  if (!text) return '';
-  return text.length > max ? text.slice(0, max - 1) + '…' : text;
-}
-
-/** Tomt- och laddtillstånd */
-function renderLoading() {
-  els.tbody.innerHTML = '';
-  const tr = document.createElement('tr');
-  const c = document.createElement('td');
-  c.colSpan = 4;
-  c.textContent = 'Laddar...';
-  tr.appendChild(c);
-  els.tbody.appendChild(tr);
-}
-function renderEmpty() {
-  els.tbody.innerHTML = '';
-  const tr = document.createElement('tr');
-  const c = document.createElement('td');
-  c.colSpan = 4;
-  c.textContent = state.q ? 'Inga träffar på din sökning.' : 'Inga kundmeddelanden ännu.';
-  tr.appendChild(c);
-  els.tbody.appendChild(tr);
-}
-
-/** Hämta meddelanden (generiskt endpoint) */
-async function fetchMessages({ page, limit, sort, q }) {
-  // Försök primär /api/messages (med pagination/sort), fallback till /api/messages/latest
-  const tryPrimary = apiUrl('/api/messages', { page, limit, sort, q });
-  const tryFallback = apiUrl('/api/messages/latest');
-
-  const headers = { 'Accept': 'application/json' };
-  if (CONFIG.TENANT) headers['X-Tenant'] = CONFIG.TENANT;
-
-    // Skicka session-cookie alltid (även bakom proxy/subdomän): credentials:'include'
-    const opts = { method: 'GET', headers, credentials: 'include', cache: 'no-store' };
-
-
-  let res = await fetch(tryPrimary, opts);
-  if (!res.ok) {
-    // prova fallback
-    res = await fetch(tryFallback, opts);
-  }
-  if (!res.ok) {
-    const text = await res.text().catch(()=>'');
-    throw new Error(`API-fel ${res.status}: ${text}`);
-  }
-  const data = await res.json();
-  // Stöd både {items:[...]} och ren array
-  return Array.isArray(data) ? data : (data.items ?? []);
-}
-
-/** Rendera tabellrader (med debug-loggar) */
-function renderRows(rows) {
-  console.log('🔎 renderRows fick:', rows);
-  els.tbody.innerHTML = '';
-  if (!Array.isArray(rows)) {
-    console.warn('rows är inte en array →', rows);
-    renderEmpty();
-    return;
-  }
-  rows.forEach((entry, idx) => {
-    console.log('➡️ Rad', idx, JSON.stringify(entry, null, 2));
-    const tr = document.createElement('tr');
-    tr.addEventListener('click', () => {
-      const params = new URLSearchParams({
-        name: entry.customerName ?? '',
-        subject: entry.subject ?? '',
-        content: entry.message ?? '',
-        date: fmtDate(entry.date)
-      });
-      location.href = `kundmeddelande.html?${params.toString()}`;
-    });
-
-    const name = entry.customerName ?? entry.name ?? entry.customer?.name ?? entry.email ?? 'Okänd';
-    const subj = entry.subject ?? entry.topic ?? '(Ej angivet)';
-    const msg  = truncate(entry.message ?? entry.lastMessage ?? entry.content ?? '');
-    const date = fmtDate(entry.date ?? entry.timestamp ?? entry.createdAt ?? entry.updatedAt);
-
-    tr.append(td(name), td(subj), td(msg), td(date));
-    els.tbody.appendChild(tr);
-  });
-}
-
-
-/** Ladda lista */
-async function loadMessages() {
-  if (state.loading) return;
-  state.loading = true;
-  console.log('🔵 loadMessages start', { page: state.page, limit: state.limit, q: state.q, tenant: CONFIG.TENANT });
-  renderLoading();
-  try {
-    const rows = await fetchMessages(state);
-    console.log('🟢 fetchMessages → rows.length =', Array.isArray(rows) ? rows.length : 'NO_ARRAY', rows);
-    if (!rows || rows.length === 0) {
-      renderEmpty();
-      return;
+    /** UI-states **/
+    function renderLoading(){
+      els.tbody.innerHTML='';
+      const tr=document.createElement('tr'); const c=document.createElement('td');
+      c.colSpan=4; c.textContent='Laddar...'; tr.appendChild(c); els.tbody.appendChild(tr);
     }
-    renderRows(rows);
-  } catch (err) {
-    console.error('🔴 loadMessages error:', err);
-    els.tbody.innerHTML = '';
-    const tr = document.createElement('tr');
-    const c = document.createElement('td');
-    c.colSpan = 4;
-    c.textContent = 'Fel vid laddning av meddelanden. Försök igen.';
-    tr.appendChild(c);
-    els.tbody.appendChild(tr);
-  } finally {
-    state.loading = false;
-  }
-}
-
-
-/** Sökhantering */
-if (els.search) {
-  els.search.addEventListener('input', debounce((e) => {
-    state.q = e.target.value.trim();
-    state.page = 1;
-    loadMessages();
-  }, 300));
-}
-
-/** Modal: öppna/stäng */
-function openMessageModal(){ els.modal.style.display = 'block'; }
-function closeMessageModal(){ els.modal.style.display = 'none'; }
-window.openMessageModal = openMessageModal;
-window.closeMessageModal = closeMessageModal;
-
-/** Skicka meddelande (generiskt) */
-async function sendMessage(e) {
-  e.preventDefault();
-  const name = document.getElementById('customer').value.trim();
-  const subject = document.getElementById('subject').value.trim();
-  const message = document.getElementById('message').value.trim();
-  if (!name || !subject || !message) {
-    alert('Fyll i alla fält.');
-    return;
-  }
-
-  // Hämta e-postadress från API om systemet har kundregister
-  // Fallback: skicka med (name) och låt backend slå upp adress
-  const body = {
-    name,
-    subject,
-    message,
-    // to: 'optional@address.com', // sätt om du redan vet mottagaren
-    tenant: CONFIG.TENANT || undefined
-  };
-
-  try {
-    const res = await fetch(apiUrl('/api/email/send'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      credentials: 'include',
-      cache: 'no-store',
-      body: JSON.stringify(body)
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok && (data.success !== false)) {
-      alert(`✅ Meddelandet har skickats!`);
-      closeMessageModal();
-      // uppdatera listan om backend loggar utgående meddelanden som senaste
-      loadMessages();
-    } else {
-      alert('❌ Kunde inte skicka meddelandet.');
+    function renderEmpty(){
+      els.tbody.innerHTML='';
+      const tr=document.createElement('tr'); const c=document.createElement('td');
+      c.colSpan=4; c.textContent= state.q ? 'Inga träffar på din sökning.' : 'Inga kundmeddelanden ännu.';
+      tr.appendChild(c); els.tbody.appendChild(tr);
     }
-  } catch (err) {
-    console.error('❌ Fel vid e-post:', err);
-    alert('❌ Något gick fel vid skick.');
-  }
-}
-window.sendMessage = sendMessage;
 
-/** Profilmeny + profilinfo */
-(function initProfile() {
-  const toggle = els.profileToggle;
-  const menu = els.profileMenu;
-  toggle?.addEventListener('click', () => {
-    const isOpen = menu.style.display === 'flex';
-    menu.style.display = isOpen ? 'none' : 'flex';
-    toggle.classList.toggle('open', !isOpen);
-  });
-  window.addEventListener('click', (e) => {
-    if (!document.querySelector('.profile-wrapper').contains(e.target)) {
-      menu.style.display = 'none';
-      toggle.classList?.remove('open');
-    }
-  });
+    /** API: hämta meddelanden **/
+    async function fetchMessages({page,limit,sort,q}){
+      const tryPrimary  = apiUrl('/api/messages',        { page, limit, sort, q });
+      const tryFallback = apiUrl('/api/messages/latest');
 
-  document.getElementById('switchAccount')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (confirm('Vill du logga ut och byta konto?')) location.href = 'login.html';
-  });
-  document.getElementById('openSettings')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    location.href = 'profile.html';
-  });
+      const headers = { 'Accept':'application/json' };
+      if (CONFIG.TENANT) headers['X-Tenant'] = CONFIG.TENANT;
 
-  // Läs profil
-  (async () => {
-    try {
-         const res = await fetch(apiUrl('/api/profile/me'), {
-     headers: { 'Accept': 'application/json' },
-        credentials: 'include',   // 🟢 se till att cookie följer med
-        cache: 'no-store'
-      });
-      const data = await res.json();
-      if (data && (data.success !== false)) {
-        // 🟢 Spara tenant i CONFIG (om backend skickar med)
-        if (data.tenant) {
-  CONFIG.TENANT = String(data.tenant).trim().toLowerCase();
-  console.log('🟢 Tenant från profil:', CONFIG.TENANT);
-} else {
-  console.warn('⚠️ Ingen tenant i profil – använder serverns session-tenant i stället.');
-  // Viktigt: skicka INTE X-Tenant / ?tenant om profilen saknar tenant
-  CONFIG.TENANT = null;
-}
+      const opts = { method:'GET', headers, credentials:'include', cache:'no-store' };
 
+      let res = await fetch(tryPrimary, opts);
+      if (!res.ok) res = await fetch(tryFallback, opts);
 
-
-        const name = data.name || '';
-        const email = data.email || '';
-        const image = data.profileImage;
-
-        // Rendera ikon
-        while (toggle.firstChild) toggle.removeChild(toggle.firstChild);
-        if (image) {
-          const img = document.createElement('img');
-          img.src = image;
-          img.alt = 'Profilbild';
-          img.style.width = '32px';
-          img.style.height = '32px';
-          img.style.borderRadius = '50%';
-          toggle.appendChild(img);
-        } else {
-          const initials = (name || '').split(' ').map(p => p.charAt(0).toUpperCase()).join('').substring(0,2) || '--';
-          toggle.textContent = initials;
-        }
-        els.userEmail.textContent = email || 'Ej inloggad';
-      } else {
-        toggle.textContent = '??';
-        els.userEmail.textContent = 'Ej inloggad';
+      if (!res.ok) {
+        const text = await res.text().catch(()=> '');
+        throw new Error(`API-fel ${res.status}: ${text}`);
       }
-      // 🟢 Ladda meddelanden först när profil och tenant finns
-      await loadMessages();
-    } catch (err) {
-      console.error('Fel vid hämtning av användarprofil:', err);
-      els.userEmail.textContent = 'Ej inloggad';
+      const data = await res.json();
+      return Array.isArray(data) ? data : (data.items ?? []);
     }
-  })();
-})();
 
-/** Init */
-document.addEventListener('DOMContentLoaded', () => {
-  const savedTheme = localStorage.getItem('theme') || 'light';
-  document.body.classList.add(`${savedTheme}-theme`);
-  // Listan laddas nu efter profilhämtningen i initProfile()
-});
+    /** Rendera rader **/
+    function renderRows(rows){
+      els.tbody.innerHTML='';
+      if (!Array.isArray(rows) || rows.length===0) return renderEmpty();
 
-</script>
-<script>
-  function toggleSidebar() {
-    const sidebar = document.querySelector('.sidebar');
-    const body = document.body;
-    sidebar.classList.toggle('active');
-    body.classList.toggle('menu-open');
-  }
-</script>
+      rows.forEach(entry => {
+        const tr = document.createElement('tr');
+        tr.addEventListener('click', () => {
+          const params = new URLSearchParams({
+            name: entry.customerName ?? '',
+            subject: entry.subject ?? '',
+            content: entry.message ?? '',
+            date: fmtDate(entry.date)
+          });
+          location.href = `kundmeddelande.html?${params.toString()}`;
+        });
 
-<script src="/js/logout.js"></script>
+        const name = entry.customerName ?? entry.name ?? entry.customer?.name ?? entry.email ?? 'Okänd';
+        const subj = entry.subject ?? entry.topic ?? '(Ej angivet)';
+        const msg  = truncate(entry.message ?? entry.lastMessage ?? entry.content ?? '');
+        const date = fmtDate(entry.date ?? entry.timestamp ?? entry.createdAt ?? entry.updatedAt);
 
+        tr.append(td(name), td(subj), td(msg), td(date));
+        els.tbody.appendChild(tr);
+      });
+    }
+
+    /** Ladda listan **/
+    async function loadMessages(){
+      if (state.loading) return;
+      state.loading = true;
+      console.log('🔵 loadMessages', { page:state.page, limit:state.limit, q:state.q, tenant:CONFIG.TENANT });
+      renderLoading();
+      try {
+        const rows = await fetchMessages(state);
+        console.log('🟢 rows:', Array.isArray(rows)? rows.length : rows);
+        renderRows(rows);
+      } catch(err){
+        console.error('🔴 loadMessages error:', err);
+        els.tbody.innerHTML='';
+        const tr=document.createElement('tr'); const c=document.createElement('td');
+        c.colSpan=4; c.textContent='Fel vid laddning av meddelanden. Försök igen.'; tr.appendChild(c); els.tbody.appendChild(tr);
+      } finally { state.loading=false; }
+    }
+
+    /** Sök **/
+    els.search?.addEventListener('input', debounce(e=>{
+      state.q = e.target.value.trim(); state.page = 1; loadMessages();
+    }, 300));
+
+    /** Modal **/
+    function openMessageModal(){ els.modal.style.display='block'; }
+    function closeMessageModal(){ els.modal.style.display='none'; }
+    window.openMessageModal = openMessageModal;
+    window.closeMessageModal = closeMessageModal;
+
+    /** Skicka meddelande **/
+    async function sendMessage(e){
+      e.preventDefault();
+      const name = $('#customer').value.trim();
+      const subject = $('#subject').value.trim();
+      const message = $('#message').value.trim();
+      if (!name || !subject || !message){ alert('Fyll i alla fält.'); return; }
+
+      const body = { name, subject, message, tenant: CONFIG.TENANT || undefined };
+
+      try{
+        const res = await fetch(apiUrl('/api/email/send'), {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
+          credentials:'include',
+          cache:'no-store',
+          body: JSON.stringify(body)
+        });
+        const data = await res.json().catch(()=> ({}));
+        if (res.ok && (data.success !== false)){
+          alert('✅ Meddelandet har skickats!');
+          closeMessageModal();
+          loadMessages();
+        } else {
+          alert('❌ Kunde inte skicka meddelandet.');
+        }
+      }catch(err){
+        console.error('❌ Fel vid e-post:', err);
+        alert('❌ Något gick fel vid skick.');
+      }
+    }
+    window.sendMessage = sendMessage;
+
+    /** Profilmeny + profilinfo + laddning av lista **/
+    (function initProfile(){
+      const toggle = els.profileToggle;
+      const menu = els.profileMenu;
+
+      toggle?.addEventListener('click', ()=>{
+        const open = menu.style.display === 'flex';
+        menu.style.display = open ? 'none' : 'flex';
+        toggle.classList.toggle('open', !open);
+      });
+      window.addEventListener('click', (e)=>{
+        if (!document.querySelector('.profile-wrapper').contains(e.target)){
+          menu.style.display='none'; toggle.classList?.remove('open');
+        }
+      });
+
+      $('#switchAccount')?.addEventListener('click', e=>{
+        e.preventDefault();
+        if (confirm('Vill du logga ut och byta konto?')) location.href='login.html';
+      });
+      $('#openSettings')?.addEventListener('click', e=>{
+        e.preventDefault(); location.href='profile.html';
+      });
+
+      // Läs profil → sätt tenant → ladda lista
+      (async ()=>{
+        try{
+          const res = await fetch(apiUrl('/api/profile/me'), {
+            headers:{ 'Accept':'application/json' },
+            credentials:'include',
+            cache:'no-store'
+          });
+          const data = await res.json();
+
+          if (data && (data.success !== false)){
+            if (data.tenant){
+              CONFIG.TENANT = String(data.tenant).trim().toLowerCase();
+              console.log('🟢 Tenant från profil:', CONFIG.TENANT);
+            } else {
+              console.warn('⚠️ Ingen tenant i profil – använder serverns session-tenant i stället.');
+              CONFIG.TENANT = null; // låt serverns session styra
+            }
+
+            const name  = data.name || '';
+            const email = data.email || '';
+            const image = data.profileImage;
+
+            while (toggle.firstChild) toggle.removeChild(toggle.firstChild);
+            if (image){
+              const img = document.createElement('img');
+              img.src = image; img.alt = 'Profilbild';
+              img.style.width='32px'; img.style.height='32px'; img.style.borderRadius='50%';
+              toggle.appendChild(img);
+            } else {
+              const initials = name.split(' ').map(p=>p.charAt(0).toUpperCase()).join('').substring(0,2) || '--';
+              toggle.textContent = initials;
+            }
+            els.userEmail.textContent = email || 'Ej inloggad';
+          } else {
+            toggle.textContent='??';
+            els.userEmail.textContent='Ej inloggad';
+          }
+
+          // Ladda efter profil/tenant
+          await loadMessages();
+
+        } catch(err){
+          console.error('Fel vid hämtning av användarprofil:', err);
+          els.userEmail.textContent='Ej inloggad';
+        }
+      })();
+    })();
+
+    /** Init: tema (listan laddas i initProfile) */
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.body.classList.add(`${savedTheme}-theme`);
+    });
+  </script>
+
+  <script>
+    function toggleSidebar(){
+      const sidebar = document.querySelector('.sidebar');
+      const body = document.body;
+      sidebar.classList.toggle('active');
+      body.classList.toggle('menu-open');
+    }
+  </script>
+
+  <script src="/js/logout.js"></script>
 </body>
 </html>
