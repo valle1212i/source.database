@@ -30,10 +30,7 @@ app.set('trust proxy', 1); // krävs på Render för secure cookies
 
 const http = require('http').createServer(app);
 
-// CORS
-const cors = require("cors");
-
-// tillåtna origins
+// ── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = [
   "http://localhost:3000",
   "https://source-database.onrender.com",
@@ -44,10 +41,11 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin(origin, callback) {
-    // tillåt även “no origin” (curl, Postman)
+    // Tillåt requests utan Origin (curl/Postman/server-to-server)
     if (!origin) return callback(null, true);
+    // Tillåt whitelistan
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    // Viktigt: returnera false (ingen header sätts) — kasta INTE Error
+    // Annars: ingen CORS-header (blockera från browser), men kasta inte Error
     return callback(null, false);
   },
   credentials: true,
@@ -58,7 +56,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // svara på preflight
+app.options("*", cors(corsOptions)); // Svara på preflight
 
 
 
@@ -98,45 +96,41 @@ app.use(express.json({ limit: '200kb' }));
 // ── Helmet (CSP i report-only) ───────────────────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
 }));
-app.use(
-  helmet.contentSecurityPolicy({
-    useDefaults: true,
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: [
-        "'self'",
-        "https://apis.google.com",
-        "https://cdn.jsdelivr.net",
-        "https://cdnjs.cloudflare.com",
-      ],
-      styleSrc: [
-        "'self'",
-        "https://fonts.googleapis.com",
-        "https://cdnjs.cloudflare.com",
-        "'unsafe-inline'",
-      ],
-      fontSrc: [
-        "'self'",
-        "https://fonts.gstatic.com",
-        "https://cdnjs.cloudflare.com",
-      ],
-      imgSrc: ["'self'", "data:", "https://*"],
-      connectSrc: [
-        "'self'",
-        "http://localhost:3000",
-        "https://source-database.onrender.com",
-        "https://admin-portal-rn5z.onrender.com",
-        "https://vattentrygg.se",
-        "https://www.vattentrygg.se",
-      ],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: [],
-    },
-    reportOnly: true,
-  })
-);
+
+app.use(helmet.contentSecurityPolicy({
+  useDefaults: true,
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: [
+      "'self'",
+      "https://apis.google.com",
+      "https://cdn.jsdelivr.net",
+      "https://cdnjs.cloudflare.com",
+    ],
+    styleSrc: [
+      "'self'",
+      "https://fonts.googleapis.com",
+      "https://cdnjs.cloudflare.com",
+      "'unsafe-inline'",
+    ],
+    fontSrc: [
+      "'self'",
+      "https://fonts.gstatic.com",
+      "https://cdnjs.cloudflare.com",
+    ],
+    imgSrc: ["'self'", "data:", "https://*"],
+    connectSrc: [
+      "'self'",
+      ...allowedOrigins,
+    ],
+    objectSrc: ["'none'"],
+    upgradeInsecureRequests: [],
+  },
+  reportOnly: true,
+}));
+
 app.use(helmet.referrerPolicy({ policy: 'no-referrer' }));
 if (process.env.NODE_ENV === 'production') {
   app.use(helmet.hsts({ maxAge: 15552000 }));
