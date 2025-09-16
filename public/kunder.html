@@ -229,7 +229,7 @@ function renderRows(rows) {
     return;
   }
   rows.forEach((entry, idx) => {
-    console.log('➡️ Rad', idx, entry);
+    console.log('➡️ Rad', idx, JSON.stringify(entry, null, 2));
     const tr = document.createElement('tr');
     tr.addEventListener('click', () => {
       const params = new URLSearchParams({
