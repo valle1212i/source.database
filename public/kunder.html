@@ -241,30 +241,33 @@ function renderRows(rows) {
       location.href = `kundmeddelande.html?${params.toString()}`;
     });
 
-    const name = entry.customerName ?? entry.name ?? '';
-    const subj = entry.subject ?? entry.topic ?? '';
+    const name = entry.customerName ?? entry.name ?? entry.customer?.name ?? entry.email ?? 'Okänd';
+    const subj = entry.subject ?? entry.topic ?? '(Ej angivet)';
     const msg  = truncate(entry.message ?? entry.lastMessage ?? entry.content ?? '');
-    const date = fmtDate(entry.date ?? entry.createdAt ?? entry.updatedAt);
+    const date = fmtDate(entry.date ?? entry.timestamp ?? entry.createdAt ?? entry.updatedAt);
 
     tr.append(td(name), td(subj), td(msg), td(date));
     els.tbody.appendChild(tr);
   });
 }
 
+
 /** Ladda lista */
 async function loadMessages() {
   if (state.loading) return;
   state.loading = true;
+  console.log('🔵 loadMessages start', { page: state.page, limit: state.limit, q: state.q, tenant: CONFIG.TENANT });
   renderLoading();
   try {
     const rows = await fetchMessages(state);
+    console.log('🟢 fetchMessages → rows.length =', Array.isArray(rows) ? rows.length : 'NO_ARRAY', rows);
     if (!rows || rows.length === 0) {
       renderEmpty();
       return;
     }
     renderRows(rows);
   } catch (err) {
-    console.error('Kunde inte ladda meddelanden:', err);
+    console.error('🔴 loadMessages error:', err);
     els.tbody.innerHTML = '';
     const tr = document.createElement('tr');
     const c = document.createElement('td');
@@ -276,6 +279,7 @@ async function loadMessages() {
     state.loading = false;
   }
 }
+
 
 /** Sökhantering */
 if (els.search) {
