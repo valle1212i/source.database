@@ -92,8 +92,10 @@ if (!customer) {
         });
       }
 
-      // c) Om legacy-kunden saknar tenant och är en lead → sätt tenant och spara
-      if (!customer.tenant && customer.role === 'customer') {
+      
+     // c) Om legacy-kunden saknar tenant → sätt tenant och spara (oavsett roll)
+if (!customer.tenant) {
+
         try {
           customer.tenant = tenant;
           await customer.save(); // kan trigga nytt E11000 om annan post har samma (email, tenant)
