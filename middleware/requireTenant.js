@@ -1,33 +1,33 @@
 // middleware/requireTenant.js
-module.exports = function requireTenant(req, res, next) {
-    const user = req.user || req.session?.user;
-    if (!user) {
-      return res.status(401).json({ success: false, message: 'Inte inloggad.' });
+module.exports = function requireTenant(req, _res, next) {
+    const user = req.user || req.session?.user || null;
+  
+    // 1) Plocka ut möjliga källor
+    const header  = (req.get('X-Tenant') || '').trim().toLowerCase();
+    const query   = (req.query?.tenant || '').trim().toLowerCase();
+    const body    = (req.body?.tenant || '').trim().toLowerCase();
+    const session = (req.session?.tenant || '').trim().toLowerCase();
+    const userTen = (user?.tenant || '').trim().toLowerCase();
+  
+    // subdomän: acme.domain.tld -> "acme"
+    let sub = '';
+    const host = (req.headers.host || '').toLowerCase().split(':')[0];
+    const m = host.match(/^([a-z0-9-]+)\./i);
+    if (m && m[1] && m[1] !== 'www') sub = m[1].toLowerCase();
+  
+    // 2) Prioritetsordning
+    let t = header || query || body || session || userTen || sub || null;
+  
+    // 3) Om användaren inte är admin men HAR tenant → forcera den
+    if (user && user.role !== 'admin' && userTen) {
+      t = userTen;
     }
   
-    // Läs från user -> header -> query -> body -> subdomän
-    let t =
-      (user.tenant ? String(user.tenant).trim() : '') ||
-      (req.get('X-Tenant') || '').trim() ||
-      (req.query?.tenant || '').trim() ||
-      (req.body?.tenant || '').trim();
+    // 4) Sätt på req + spegla in i session för senare rutter
+    req.tenant = t || null;
+    if (t && req.session) req.session.tenant = t;
   
-    if (!t) {
-      const host = (req.headers.host || '').toLowerCase().split(':')[0]; // ta bort ev. port
-      const m = host.match(/^([a-z0-9-]+)\./i);
-      if (m && m[1] && m[1] !== 'www') t = m[1];
-    }
-  
-    if (!t) {
-      return res.status(400).json({ success: false, message: 'Tenant saknas' });
-    }
-  
-    // Icke-admin får inte hoppa mellan tenants
-    if (user.role !== 'admin' && user.tenant && String(t).toLowerCase() !== String(user.tenant).toLowerCase()) {
-      return res.status(403).json({ success: false, message: 'Åtkomst nekad' });
-    }
-  
-    req.tenant = String(t).trim().toLowerCase();
-    next();
+    // Viktigt: kasta INTE 400 här. Låt rutter avgöra hur null hanteras.
+    return next();
   };
   
