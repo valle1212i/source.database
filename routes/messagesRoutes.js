@@ -65,15 +65,16 @@ router.post('/', contactLimiter, async (req, res) => {
         customer = await Customer.create({
           email,
           tenant,
-          role: 'customer',              // => password & groupId ej required
-          name: displayName || undefined
+          role: 'customer',         // 🚨 tvinga in rätt role
+          name: displayName || undefined,
+          password: undefined,      // säkerställ att inget råkar krävas
+          groupId: undefined
         });
       } catch (e) {
-        // Dublett? (någon annan hann skapa den precis)
+        console.error('❌ Customer.create error:', e?.message || e, e?.stack); // <-- extra logg
         if (e && e.code === 11000) {
           customer = await Customer.findOne({ email, tenant });
         } else {
-          console.error('❌ Customer.create error:', e?.message || e, e?.stack);
           return res.status(500).json({
             success: false,
             message: 'Serverfel vid kundskapande',
@@ -81,6 +82,7 @@ router.post('/', contactLimiter, async (req, res) => {
           });
         }
       }
+      
     } else {
       // Uppdatera namn om nytt displayName inkommit
       if (displayName && displayName !== customer.name) {
