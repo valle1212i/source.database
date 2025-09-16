@@ -52,23 +52,26 @@ router.post('/', contactLimiter, async (req, res) => {
     }
 
     // Tenant måste med (från X-Tenant / body.tenant / query.tenant / subdomän)
-    const tenant = resolveTenant(req);
+      const tenant = resolveTenant(req);
     if (!tenant) {
       return res.status(400).json({ success: false, message: 'Tenant saknas' });
     }
+    const tenantNorm = String(tenant).trim().toLowerCase();
+
 
     const displayName = name || (email ? email.split('@')[0] : 'Kund');
 
     // 1) Försök hitta kunden
     // 1) Försök hitta kunden (ny modell först)
-let customer = await Customer.findOne({ email, tenant }).exec();
+    let customer = await Customer.findOne({ email, tenant: tenantNorm }).exec();
+
 
 if (!customer) {
   try {
     // 2) Skapa lead-kund (role: 'customer' ⇒ inga krav på password/groupId)
     const lead = new Customer({
       email,
-      tenant,
+      tenant: tenantNorm,
       role: 'customer',
       name: displayName || undefined,
     });
@@ -79,48 +82,44 @@ if (!customer) {
     if (String(e?.code) === '11000') {
       // a) försök hitta exakt (email, tenant)
       customer =
-        (await Customer.findOne({ email, tenant }).exec())
-        // b) eller legacy-kunden (email) utan tenant
-        || (await Customer.findOne({ email }).exec());
+      (await Customer.findOne({ email, tenant: tenantNorm }).exec())
+      // b) eller legacy-kunden (email) utan tenant
+      || (await Customer.findOne({ email }).exec());
 
-      if (!customer) {
-        // Det finns ett unikt index som stoppar oss men vi hittar inte posten ⇒ returnera 409
-        return res.status(409).json({
-          success: false,
-          message: 'E-post finns redan (legacy-index).',
-          code: 'DUPLICATE_EMAIL_LEGACY',
-        });
-      }
 
-      
-     // c) Om legacy-kunden saknar tenant → sätt tenant och spara (oavsett roll)
-if (!customer.tenant) {
-
-        try {
-          customer.tenant = tenant;
-          await customer.save(); // kan trigga nytt E11000 om annan post har samma (email, tenant)
-        } catch (e2) {
-          if (String(e2?.code) === '11000') {
-            // fallback: hämta igen (någon annan hann sätta)
-            const again = await Customer.findOne({ email, tenant }).exec();
-            if (again) {
-              customer = again;
-            } else {
-              return res.status(409).json({
-                success: false,
-                message: 'Konflikt vid tenant-migrering.',
-                code: 'TENANT_MERGE_CONFLICT',
-              });
+          // c) Om legacy-kunden saknar tenant → sätt tenant valideringsfritt (oavsett roll)
+          if (!customer.tenant) {
+            try {
+              await Customer.updateOne(
+                { _id: customer._id, $or: [{ tenant: { $exists: false } }, { tenant: null }, { tenant: '' }] },
+                { $set: { tenant: tenantNorm } },
+                { runValidators: false } // undvik att trigga andra roll-krav
+              );
+              // hämta om för att ha uppdaterad customer i minnet
+              customer = await Customer.findOne({ email, tenant: tenantNorm }).exec() || customer;
+            } catch (e2) {
+              if (String(e2?.code) === '11000') {
+                // unik-konflikt – försök hämta den som redan finns
+                const again = await Customer.findOne({ email, tenant: tenantNorm }).exec();
+                if (again) {
+                  customer = again;
+                } else {
+                  return res.status(409).json({
+                    success: false,
+                    message: 'Konflikt vid tenant-migrering.',
+                    code: 'TENANT_MERGE_CONFLICT',
+                  });
+                }
+              } else {
+                return res.status(500).json({
+                  success: false,
+                  message: 'Serverfel vid migrering av legacy-kund',
+                  ...(req.query?.debug === '1' ? { error: e2?.message || String(e2) } : {}),
+                });
+              }
             }
-          } else {
-            return res.status(500).json({
-              success: false,
-              message: 'Serverfel vid migrering av legacy-kund',
-              ...(req.query?.debug === '1' ? { error: e2?.message || String(e2) } : {}),
-            });
           }
-        }
-      }
+    
       // annars: vi använder den befintliga kunden som vi hittade
     } else if (e?.name === 'ValidationError') {
       const errors = Object.fromEntries(
@@ -153,7 +152,7 @@ if (!customer || !customer._id) {
     // 3) Skapa meddelande (validera först för bra 400-svar)
     const docPayload = {
       customerId: customer._id,
-      tenant, // ok även om Message-schemat saknar fältet – Mongoose ignorerar
+      tenant: tenantNorm, // ok även om Message-schemat saknar fältet – Mongoose ignorerar
       subject: (subject && String(subject).trim()) || 'Kontaktformulär',
       message: typeof message === 'string' ? message.slice(0, 5000) : '',
       sender: 'customer',
