@@ -60,69 +60,93 @@ router.post('/', contactLimiter, async (req, res) => {
     const displayName = name || (email ? email.split('@')[0] : 'Kund');
 
     // 1) Försök hitta kunden
-    let customer = await Customer.findOne({ email, tenant }).exec();
+    // 1) Försök hitta kunden (ny modell först)
+let customer = await Customer.findOne({ email, tenant }).exec();
 
-    // 2) Om inte finns: skapa en *ren lead-kund* (role: 'customer' ⇒ inga krav på password/groupId)
-    if (!customer) {
-      try {
-        const lead = new Customer({
-          email,
-          tenant,
-          role: 'customer',        // *** VIKTIGT: tvinga rätt role ***
-          name: displayName || undefined,
-          // LÄMNA INTE med password/groupId alls för leads
+if (!customer) {
+  try {
+    // 2) Skapa lead-kund (role: 'customer' ⇒ inga krav på password/groupId)
+    const lead = new Customer({
+      email,
+      tenant,
+      role: 'customer',
+      name: displayName || undefined,
+    });
+    await lead.validate();
+    customer = await lead.save();
+  } catch (e) {
+    // ⚠️ Hantera E11000 från gamla index / gamla poster
+    if (String(e?.code) === '11000') {
+      // a) försök hitta exakt (email, tenant)
+      customer =
+        (await Customer.findOne({ email, tenant }).exec())
+        // b) eller legacy-kunden (email) utan tenant
+        || (await Customer.findOne({ email }).exec());
+
+      if (!customer) {
+        // Det finns ett unikt index som stoppar oss men vi hittar inte posten ⇒ returnera 409
+        return res.status(409).json({
+          success: false,
+          message: 'E-post finns redan (legacy-index).',
+          code: 'DUPLICATE_EMAIL_LEGACY',
         });
+      }
 
-        // Validera tydligt – om något i schemat blockerar får vi ett bra fel
-        await lead.validate();
-
-        // Spara
-        customer = await lead.save();
-        if (!customer) {
-          // extremt ovanligt, men var explicita
-          throw new Error('Lead.save() gav inget dokument');
-        }
-      } catch (e) {
-        // Hjälpsam respons + logg vid valideringsfel el. annat
-        console.error('❌ Customer lead-create error:', e?.message || e, e?.stack);
-        if (e?.name === 'ValidationError') {
-          const errors = Object.fromEntries(
-            Object.entries(e.errors || {}).map(([k, v]) => [k, v?.message || 'ogiltigt'])
-          );
-          return res.status(400).json({
-            success: false,
-            message: 'Valideringsfel vid kundskapande',
-            errors,
-            ...(req.query?.debug === '1' ? { raw: e.message } : {}),
-          });
-        }
-        if (String(e?.code) === '11000') {
-          // Race condition: någon annan hann skapa den – hämta igen
-          customer = await Customer.findOne({ email, tenant }).exec();
-          if (!customer) {
+      // c) Om legacy-kunden saknar tenant och är en lead → sätt tenant och spara
+      if (!customer.tenant && customer.role === 'customer') {
+        try {
+          customer.tenant = tenant;
+          await customer.save(); // kan trigga nytt E11000 om annan post har samma (email, tenant)
+        } catch (e2) {
+          if (String(e2?.code) === '11000') {
+            // fallback: hämta igen (någon annan hann sätta)
+            const again = await Customer.findOne({ email, tenant }).exec();
+            if (again) {
+              customer = again;
+            } else {
+              return res.status(409).json({
+                success: false,
+                message: 'Konflikt vid tenant-migrering.',
+                code: 'TENANT_MERGE_CONFLICT',
+              });
+            }
+          } else {
             return res.status(500).json({
               success: false,
-              message: 'Kunde inte återfinna kund efter E11000',
+              message: 'Serverfel vid migrering av legacy-kund',
+              ...(req.query?.debug === '1' ? { error: e2?.message || String(e2) } : {}),
             });
           }
-        } else {
-          return res.status(500).json({
-            success: false,
-            message: 'Serverfel vid kundskapande',
-            ...(req.query?.debug === '1' ? { error: e?.message || String(e) } : {}),
-          });
         }
       }
-    }
-
-    // Extra säkerhetskoll
-    if (!customer || !customer._id) {
+      // annars: vi använder den befintliga kunden som vi hittade
+    } else if (e?.name === 'ValidationError') {
+      const errors = Object.fromEntries(
+        Object.entries(e.errors || {}).map(([k, v]) => [k, v?.message || 'ogiltigt'])
+      );
+      return res.status(400).json({
+        success: false,
+        message: 'Valideringsfel vid kundskapande',
+        errors,
+        ...(req.query?.debug === '1' ? { raw: e.message } : {}),
+      });
+    } else {
       return res.status(500).json({
         success: false,
-        message: 'Kunde inte slå upp/skapa kund (saknar _id)',
-        ...(req.query?.debug === '1' ? { customer } : {}),
+        message: 'Serverfel vid kundskapande',
+        ...(req.query?.debug === '1' ? { error: e?.message || String(e) } : {}),
       });
     }
+  }
+}
+
+if (!customer || !customer._id) {
+  return res.status(500).json({
+    success: false,
+    message: 'Kunde inte slå upp/skapa kund (saknar _id)',
+  });
+}
+
 
     // 3) Skapa meddelande (validera först för bra 400-svar)
     const docPayload = {
