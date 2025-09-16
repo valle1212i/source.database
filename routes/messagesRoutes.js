@@ -199,52 +199,49 @@ if (!customer || !customer._id) {
  */
 router.get('/latest', requireAuth, requireTenant, async (req, res) => {
   try {
-    const user = req.user || req.session?.user;
-
-    // Variant B: om Message saknar "tenant" men Customer har det
     const pipeline = [
       { $sort: { timestamp: -1 } },
       {
         $lookup: {
-          from: 'customers', // Mongo-samlingens namn
+          from: 'customers',
           localField: 'customerId',
           foreignField: '_id',
           as: 'cust',
         },
       },
       { $unwind: '$cust' },
-      ...((user.role !== 'admin' || req.tenant)
-        ? [{ $match: { 'cust.tenant': req.tenant || { $exists: true } } }]
-        : []),
+      { $match: { 'cust.tenant': req.tenant } },
       {
         $group: {
           _id: '$customerId',
-          message: { $first: '$message' },
-          timestamp: { $first: '$timestamp' },
-          sender: { $first: '$sender' },
-          subject: { $first: '$subject' },
+          message:  { $first: '$message' },
+          timestamp:{ $first: '$timestamp' },
+          sender:   { $first: '$sender' },
+          subject:  { $first: '$subject' },
           customer: { $first: '$cust' },
         },
       },
+      { $sort: { timestamp: -1 } },
+      {
+        $project: {
+          _id: 0,
+          customerName: { $ifNull: ['$customer.name', 'Okänd'] },
+          subject: { $ifNull: ['$subject', '(Ej angivet)'] },
+          message: 1,
+          date: '$timestamp'
+        }
+      }
     ];
 
     const messages = await Message.aggregate(pipeline);
-
-    const enriched = messages.map((m) => ({
-      customerName: m.customer?.name || 'Okänd',
-      subject: m.subject || '(Ej implementerat)',
-      message: m.message,
-      date: m.timestamp,
-    }));
-
-    res.json(enriched);
+    res.json(messages);
   } catch (err) {
     console.error('❌ /api/messages/latest error:', err);
     res.status(500).json({ error: 'Serverfel' });
   }
 });
-// GET /api/messages  – lista "senaste meddelande per kund" (tenant-aware)
-// Stöd: ?page=1&limit=20&q=valfriSöktext
+
+// GET /api/messages?page=1&limit=50&q=optional
 router.get('/', requireAuth, requireTenant, async (req, res) => {
   try {
     const page  = Math.max(parseInt(req.query.page, 10)  || 1, 1);
@@ -252,8 +249,16 @@ router.get('/', requireAuth, requireTenant, async (req, res) => {
     const skip  = (page - 1) * limit;
     const q     = (req.query.q || '').trim();
 
-    // Bas-pipeline: senaste först, joina kund, filtrera på tenant
-    const pipeline = [
+    const matchSearch = q
+      ? [{ $match: { $or: [
+            { message: { $regex: q, $options: 'i' } },
+            { subject: { $regex: q, $options: 'i' } },
+            { 'cust.name': { $regex: q, $options: 'i' } },
+            { 'cust.email': { $regex: q, $options: 'i' } },
+          ] } }]
+      : [];
+
+    const base = [
       { $sort: { timestamp: -1 } },
       {
         $lookup: {
@@ -265,57 +270,56 @@ router.get('/', requireAuth, requireTenant, async (req, res) => {
       },
       { $unwind: '$cust' },
       { $match: { 'cust.tenant': req.tenant } },
+      ...matchSearch,
+      {
+        $group: {
+          _id: '$customerId',
+          message:  { $first: '$message' },
+          subject:  { $first: '$subject' },
+          sender:   { $first: '$sender' },
+          timestamp:{ $first: '$timestamp' },
+          customer: { $first: '$cust' },
+        }
+      },
+      { $sort: { timestamp: -1 } },
     ];
 
-    // Valfri text-sök i message/subject/kundnamn
-    if (q) {
-      pipeline.push({
-        $match: {
-          $or: [
-            { message: { $regex: q, $options: 'i' } },
-            { subject: { $regex: q, $options: 'i' } },
-            { 'cust.name': { $regex: q, $options: 'i' } },
-            { 'cust.email': { $regex: q, $options: 'i' } },
-          ]
-        }
-      });
-    }
-
-    // Grupp: ta senaste per kund
-    pipeline.push({
-      $group: {
-        _id: '$customerId',
-        message:  { $first: '$message' },
-        timestamp:{ $first: '$timestamp' },
-        sender:   { $first: '$sender' },
-        subject:  { $first: '$subject' },
-        customer: { $first: '$cust' },
-      }
-    });
-
-    // Sortera grupperad lista och paginera
-    pipeline.push(
-      { $sort: { timestamp: -1 } },
+    const dataPipeline = [
+      ...base,
       { $skip: skip },
-      { $limit: limit }
-    );
+      { $limit: limit },
+      {
+        $project: {
+          _id: 0,
+          customerId: '$_id',
+          customerName: { $ifNull: ['$customer.name', 'Okänd'] },
+          subject: { $ifNull: ['$subject', '(Ej angivet)'] },
+          message: 1,
+          date: '$timestamp',
+          email: '$customer.email'
+        }
+      }
+    ];
 
-    const rows = await Message.aggregate(pipeline);
+    const countPipeline = [
+      ...base,
+      { $count: 'total' }
+    ];
 
-    const items = rows.map(r => ({
-      customerName: r.customer?.name || (r.customer?.email || 'Okänd'),
-      subject: r.subject || '',
-      message: r.message,
-      date: r.timestamp,
-      customerId: r.customer?._id,
-      email: r.customer?.email || '',
-    }));
+    const [items, totalArr] = await Promise.all([
+      Message.aggregate(dataPipeline),
+      Message.aggregate(countPipeline)
+    ]);
 
-    res.json({ page, limit, count: items.length, items });
+    const total = totalArr[0]?.total ?? items.length;
+    const totalPages = Math.max(Math.ceil(total / limit), 1);
+
+    res.json({ page, limit, total, totalPages, items });
   } catch (err) {
     console.error('❌ /api/messages GET error:', err);
-    res.status(500).json({ success:false, message:'Serverfel' });
+    res.status(400).json({ error: 'Bad Request', detail: err.message });
   }
 });
+
 
 module.exports = router;

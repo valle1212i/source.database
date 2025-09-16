@@ -5,22 +5,29 @@ module.exports = function requireTenant(req, res, next) {
       return res.status(401).json({ success: false, message: 'Inte inloggad.' });
     }
   
-    const fromHeader = req.get('X-Tenant');
-    const fromQuery  = req.query.tenant;
-    const fromBody   = req.body?.tenant;
-    const resolved   = fromHeader || fromQuery || fromBody || user.tenant || null;
+    // Läs från user -> header -> query -> body -> subdomän
+    let t =
+      (user.tenant ? String(user.tenant).trim() : '') ||
+      (req.get('X-Tenant') || '').trim() ||
+      (req.query?.tenant || '').trim() ||
+      (req.body?.tenant || '').trim();
   
-    // Icke-admin måste alltid ha en tenant
-    if (!resolved && user.role !== 'admin') {
-      return res.status(400).json({ success: false, message: 'Tenant saknas.' });
+    if (!t) {
+      const host = (req.headers.host || '').toLowerCase().split(':')[0]; // ta bort ev. port
+      const m = host.match(/^([a-z0-9-]+)\./i);
+      if (m && m[1] && m[1] !== 'www') t = m[1];
     }
   
-    // Icke-admin får inte låtsas tillhöra en annan tenant
-    if (user.role !== 'admin' && user.tenant && resolved && resolved !== user.tenant) {
+    if (!t) {
+      return res.status(400).json({ success: false, message: 'Tenant saknas' });
+    }
+  
+    // Icke-admin får inte hoppa mellan tenants
+    if (user.role !== 'admin' && user.tenant && String(t).toLowerCase() !== String(user.tenant).toLowerCase()) {
       return res.status(403).json({ success: false, message: 'Åtkomst nekad' });
     }
   
-    req.tenant = resolved || null; // admin kan ha null => alla tenants
+    req.tenant = String(t).trim().toLowerCase();
     next();
   };
   
