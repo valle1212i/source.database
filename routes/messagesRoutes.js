@@ -196,45 +196,44 @@ if (!customer || !customer._id) {
 
 /**
  * GET /api/messages/latest
- * - Senaste meddelandet per kund, tenant-aware
+ * - Senaste meddelandet per kund, tenant-aware (villkorlig match)
  */
 router.get('/latest', requireAuth, requireTenant, async (req, res) => {
   try {
-    const user = req.user || req.session?.user;
-
-    // Bas-pipeline: senaste först, joina kund
-const pipeline = [
-  { $sort: { timestamp: -1 } },
-  {
-    $lookup: {
-      from: 'customers',
-      localField: 'customerId',
-      foreignField: '_id',
-      as: 'cust',
-    }
-  },
-  { $unwind: '$cust' },
-  // Filtrera på tenant endast om req.tenant finns (admin utan tenant => alla)
-  ...(req.tenant ? [{ $match: { 'cust.tenant': req.tenant } }] : []),
-];
-
-
-
-    
-    // Valfri text-sök i message/subject/kundnamn
-    if (q) {
-      pipeline.push({
-        $match: {
-          $or: [
-            { message: { $regex: q, $options: 'i' } },
-            { subject: { $regex: q, $options: 'i' } },
-            { 'cust.name': { $regex: q, $options: 'i' } },
-            { 'cust.email': { $regex: q, $options: 'i' } },
-          ]
+    const pipeline = [
+      { $sort: { timestamp: -1 } },
+      {
+        $lookup: {
+          from: 'customers',
+          localField: 'customerId',
+          foreignField: '_id',
+          as: 'cust',
+        },
+      },
+      { $unwind: '$cust' },
+      // Filtrera på tenant endast om req.tenant finns (admin utan tenant => alla)
+      ...(req.tenant ? [{ $match: { 'cust.tenant': req.tenant } }] : []),
+      {
+        $group: {
+          _id: '$customerId',
+          message:  { $first: '$message' },
+          timestamp:{ $first: '$timestamp' },
+          sender:   { $first: '$sender' },
+          subject:  { $first: '$subject' },
+          customer: { $first: '$cust' },
+        },
+      },
+      { $sort: { timestamp: -1 } },
+      {
+        $project: {
+          _id: 0,
+          customerName: { $ifNull: ['$customer.name', 'Okänd'] },
+          subject: { $ifNull: ['$subject', '(Ej angivet)'] },
+          message: 1,
+          date: '$timestamp'
         }
-      });
-    }
-    
+      }
+    ];
 
     const messages = await Message.aggregate(pipeline);
     res.json(messages);
@@ -243,6 +242,7 @@ const pipeline = [
     res.status(500).json({ error: 'Serverfel' });
   }
 });
+
 
 
 // GET /api/messages?page=1&limit=50&q=optional
