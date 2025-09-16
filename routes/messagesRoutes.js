@@ -243,5 +243,79 @@ router.get('/latest', requireAuth, requireTenant, async (req, res) => {
     res.status(500).json({ error: 'Serverfel' });
   }
 });
+// GET /api/messages  – lista "senaste meddelande per kund" (tenant-aware)
+// Stöd: ?page=1&limit=20&q=valfriSöktext
+router.get('/', requireAuth, requireTenant, async (req, res) => {
+  try {
+    const page  = Math.max(parseInt(req.query.page, 10)  || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 100);
+    const skip  = (page - 1) * limit;
+    const q     = (req.query.q || '').trim();
+
+    // Bas-pipeline: senaste först, joina kund, filtrera på tenant
+    const pipeline = [
+      { $sort: { timestamp: -1 } },
+      {
+        $lookup: {
+          from: 'customers',
+          localField: 'customerId',
+          foreignField: '_id',
+          as: 'cust',
+        }
+      },
+      { $unwind: '$cust' },
+      { $match: { 'cust.tenant': req.tenant } },
+    ];
+
+    // Valfri text-sök i message/subject/kundnamn
+    if (q) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { message: { $regex: q, $options: 'i' } },
+            { subject: { $regex: q, $options: 'i' } },
+            { 'cust.name': { $regex: q, $options: 'i' } },
+            { 'cust.email': { $regex: q, $options: 'i' } },
+          ]
+        }
+      });
+    }
+
+    // Grupp: ta senaste per kund
+    pipeline.push({
+      $group: {
+        _id: '$customerId',
+        message:  { $first: '$message' },
+        timestamp:{ $first: '$timestamp' },
+        sender:   { $first: '$sender' },
+        subject:  { $first: '$subject' },
+        customer: { $first: '$cust' },
+      }
+    });
+
+    // Sortera grupperad lista och paginera
+    pipeline.push(
+      { $sort: { timestamp: -1 } },
+      { $skip: skip },
+      { $limit: limit }
+    );
+
+    const rows = await Message.aggregate(pipeline);
+
+    const items = rows.map(r => ({
+      customerName: r.customer?.name || (r.customer?.email || 'Okänd'),
+      subject: r.subject || '',
+      message: r.message,
+      date: r.timestamp,
+      customerId: r.customer?._id,
+      email: r.customer?.email || '',
+    }));
+
+    res.json({ page, limit, count: items.length, items });
+  } catch (err) {
+    console.error('❌ /api/messages GET error:', err);
+    res.status(500).json({ success:false, message:'Serverfel' });
+  }
+});
 
 module.exports = router;
