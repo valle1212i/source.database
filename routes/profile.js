@@ -1,31 +1,47 @@
+// routes/profile.js
 const express = require('express');
 const router = express.Router();
-const { requireAuth } = require('./security'); // byt från verifyToken till requireAuth
+const { requireAuth } = require('./security'); // använder session/cookie
 const Customer = require('../models/Customer');
 
 // GET /api/profile/me
 router.get('/me', requireAuth, async (req, res) => {
   try {
-    const customer = await Customer.findById(req.session.user._id); // använd session-data
-    if (!customer) {
-      return res.status(404).json({ success: false, message: "Kund hittades inte" });
+    // Säker session-källa
+    const sessionUser = req.user || req.session?.user;
+    if (!sessionUser) {
+      return res.status(401).json({ success: false, message: 'Inte inloggad' });
     }
 
-const language = (customer.settings && customer.settings.language) || customer.language;
-const profileImage = customer.profileImage;
+    // Hämta kundprofilen från DB
+    const customer = await Customer.findById(sessionUser._id).lean();
+    if (!customer) {
+      return res.status(404).json({ success: false, message: 'Kund hittades inte' });
+    }
 
-res.json({
-  success: true,
-  _id: customer._id,
-  name: customer.name,
-  email: customer.email,
-  language,
-  profileImage,
-  supportHistory: customer.supportHistory || []
-});
+    // Språk/profilbild
+    const language = customer.settings?.language || customer.language || null;
+    const profileImage = customer.profileImage || null;
+
+    // 🔴 VIKTIGT: exponera tenant (från kundposten i DB, eller fallback till session)
+    const tenant = customer.tenant || sessionUser.tenant || null;
+
+    // Svara med allt frontenden behöver
+    return res.json({
+      success: true,
+      id: String(customer._id),
+      name: customer.name || '',
+      email: customer.email || '',
+      role: customer.role || null,
+      plan: customer.plan || null,
+      tenant,                     // <- det här saknades
+      language,
+      profileImage,
+      supportHistory: customer.supportHistory || []
+    });
   } catch (err) {
-    console.error("❌ Fel i /profile/me:", err);
-    res.status(500).json({ success: false, message: "Serverfel" });
+    console.error('❌ Fel i /api/profile/me:', err);
+    return res.status(500).json({ success: false, message: 'Serverfel' });
   }
 });
 
