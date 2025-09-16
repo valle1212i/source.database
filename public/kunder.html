@@ -110,6 +110,10 @@ const CONFIG = (() => {
   const tenantFromSub = (sub && sub !== 'www' && /^[a-z0-9-]+$/i.test(sub)) ? sub : null;
   const tenantFromLS  = localStorage.getItem('tenant') || null;
   const TENANT = tenantFromLS || tenantFromSub || null;
+  if (!CONFIG.TENANT) {
+  const ls = localStorage.getItem('tenant');
+  if (ls) CONFIG.TENANT = ls;
+}
 
   return { API_BASE, TENANT, DEFAULT_LIMIT: 50 };
 })();
