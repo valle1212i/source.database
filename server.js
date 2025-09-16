@@ -56,7 +56,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // Svara på preflight
+app.options(/.*/, cors(corsOptions)); // handle preflight for any path
 
 
 
