@@ -377,10 +377,13 @@ window.sendMessage = sendMessage;
       const data = await res.json();
       if (data && (data.success !== false)) {
         // 🟢 Spara tenant i CONFIG (om backend skickar med)
-if (data.tenant) {
+        if (data.tenant) {
   CONFIG.TENANT = String(data.tenant).trim().toLowerCase();
   console.log('🟢 Tenant från profil:', CONFIG.TENANT);
+} else {
+  console.warn('⚠️ Ingen tenant i profil, behåller från subdomän:', CONFIG.TENANT);
 }
+
 
         const name = data.name || '';
         const email = data.email || '';
