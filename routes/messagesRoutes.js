@@ -40,13 +40,12 @@ function resolveTenant(req) {
  */
 router.post('/', contactLimiter, async (req, res) => {
   try {
-    const { name, email, message, subject, company /* consent */ } = req.body || {};
+    const { name, email, message, subject, company } = req.body || {};
 
-    // Honeypot (company ifyllt => ignorera tyst)
+    // Honeypot
     if (company && String(company).trim() !== '') {
       return res.status(200).json({ success: true, ignored: true });
     }
-
     if (!email || !message) {
       return res.status(400).json({ success: false, message: 'E-post och meddelande krävs' });
     }
@@ -56,22 +55,19 @@ router.post('/', contactLimiter, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Tenant saknas' });
     }
 
-    // ✅ Upsert av Customer per (email, tenant) – idempotent och tålig för E11000
+    // Upsert kund (idempotent)
     const displayName = name || (email ? email.split('@')[0] : 'Kund');
     let customer;
     try {
-      const query = { email, tenant };
+      const query  = { email, tenant };
       const update = { $setOnInsert: { email, tenant, role: 'customer' } };
       if (displayName) update.$set = { name: displayName };
 
       customer = await Customer.findOneAndUpdate(query, update, {
-        new: true,
-        upsert: true,
-        runValidators: true,
+        new: true, upsert: true, runValidators: true,
       });
     } catch (e) {
       if (e && e.code === 11000) {
-        // Parallell request hann skapa den – hämta igen
         customer = await Customer.findOne({ email, tenant });
       } else {
         throw e;
@@ -79,36 +75,40 @@ router.post('/', contactLimiter, async (req, res) => {
     }
     if (!customer) throw new Error('Kunde inte slå upp/skapa kund');
 
-    // Säkra defaults
-    const subjectSafe = (subject && String(subject).trim()) || 'Kontaktformulär';
-
-    // Bygg meddelande – lägg alltid med tenant (ignoreras av Mongoose om fältet saknas)
     const docPayload = {
       customerId: customer._id,
-      tenant,                             // <— alltid med
-      subject: subjectSafe,               // <— alltid med
-      message: clip(message, 5000),
+      tenant,                                         // ok även om fältet ej finns – Mongoose ignorerar
+      subject: (subject && String(subject).trim()) || 'Kontaktformulär',
+      message: typeof message === 'string' ? message.slice(0, 5000) : '',
       sender: 'customer',
       timestamp: new Date(),
     };
 
+    // ✅ Förvalidera så vi kan svara 400 med detaljer
+    const toValidate = new Message(docPayload);
+    await toValidate.validate();
+
+    // Skapa först när validering gick igenom
     const doc = await Message.create(docPayload);
     return res.status(201).json({ success: true, id: String(doc._id) });
+
   } catch (err) {
-    // Svara 400 på valideringsfel istället för 500
+    // Svara tydligt på valideringsfel
     if (err?.name === 'ValidationError') {
+      const errors = Object.fromEntries(
+        Object.entries(err.errors || {}).map(([k, v]) => [k, v?.message || 'ogiltigt'])
+      );
+      // visa extra info om du lägger ?debug=1 i URL:en (även i prod)
+      const debug = (req.query && req.query.debug === '1');
       return res.status(400).json({
         success: false,
         message: 'Valideringsfel',
-        errors: Object.fromEntries(
-          Object.entries(err.errors || {}).map(([k, v]) => [k, v?.message || 'ogiltigt'])
-        ),
+        errors,
+        ...(debug ? { raw: err.message } : {}),
       });
     }
 
-    // Dubblett-e-post hanteras redan men låt det vara kvar
-    const code = err && (err.code || err.name || 'ERR');
-    if (String(code) === '11000') {
+    if (String(err?.code) === '11000') {
       return res.status(409).json({
         success: false,
         message: 'E-postadressen är redan registrerad.',
@@ -116,13 +116,13 @@ router.post('/', contactLimiter, async (req, res) => {
       });
     }
 
+    // Mer hjälpsam server-logg
     console.error('❌ /api/messages POST error:', err?.message || err, err?.stack);
     return res.status(500).json({
       success: false,
       message: 'Serverfel',
-      ...(process.env.NODE_ENV !== 'production'
-        ? { error: err.message || String(err), code }
-        : {}),
+      // lägg ?debug=1 på URL:en om du vill få med feltext även i prod
+      ...(req.query?.debug === '1' ? { error: err.message || String(err) } : {}),
     });
   }
 });
