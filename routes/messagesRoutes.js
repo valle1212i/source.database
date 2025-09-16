@@ -200,6 +200,9 @@ if (!customer || !customer._id) {
  */
 router.get('/latest', requireAuth, requireTenant, async (req, res) => {
   try {
+    const user = req.user || req.session?.user;
+
+    // Bas-pipeline: senaste först, joina kund
     const pipeline = [
       { $sort: { timestamp: -1 } },
       {
@@ -208,31 +211,31 @@ router.get('/latest', requireAuth, requireTenant, async (req, res) => {
           localField: 'customerId',
           foreignField: '_id',
           as: 'cust',
-        },
+        }
       },
       { $unwind: '$cust' },
-      { $match: { 'cust.tenant': req.tenant } },
-      {
-        $group: {
-          _id: '$customerId',
-          message:  { $first: '$message' },
-          timestamp:{ $first: '$timestamp' },
-          sender:   { $first: '$sender' },
-          subject:  { $first: '$subject' },
-          customer: { $first: '$cust' },
-        },
-      },
-      { $sort: { timestamp: -1 } },
-      {
-        $project: {
-          _id: 0,
-          customerName: { $ifNull: ['$customer.name', 'Okänd'] },
-          subject: { $ifNull: ['$subject', '(Ej angivet)'] },
-          message: 1,
-          date: '$timestamp'
-        }
-      }
     ];
+    
+    // Filtrera på tenant endast om req.tenant finns (icke-admin eller explicit X-Tenant)
+    // Admin utan tenant => hoppa över match så vi ser alla tenants
+    if (req.tenant) {
+      pipeline.push({ $match: { 'cust.tenant': req.tenant } });
+    }
+    
+    // Valfri text-sök i message/subject/kundnamn
+    if (q) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { message: { $regex: q, $options: 'i' } },
+            { subject: { $regex: q, $options: 'i' } },
+            { 'cust.name': { $regex: q, $options: 'i' } },
+            { 'cust.email': { $regex: q, $options: 'i' } },
+          ]
+        }
+      });
+    }
+    
 
     const messages = await Message.aggregate(pipeline);
     res.json(messages);
@@ -241,6 +244,7 @@ router.get('/latest', requireAuth, requireTenant, async (req, res) => {
     res.status(500).json({ error: 'Serverfel' });
   }
 });
+
 
 // GET /api/messages?page=1&limit=50&q=optional
 router.get('/', requireAuth, requireTenant, async (req, res) => {
