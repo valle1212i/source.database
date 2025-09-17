@@ -4,6 +4,58 @@ const OpenAI = require("openai");
 const Customer = require("../models/Customer");
 const Message = require("../models/Message");
 const requireAuth = require('../middleware/requireAuth');
+const rateLimit = require("express-rate-limit");
+const { z } = require("zod");
+const mongoose = require("mongoose");
+
+// Enkel sanering: ta bort HTML-taggar + normalisera whitespace
+const sanitize = (s) =>
+  typeof s === "string" ? s.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim() : "";
+
+// Zod-schema för chatpayload
+const ChatMessageSchema = z.object({
+  message: z
+    .string()
+    .min(1, "message måste vara 1–2000 tecken")
+    .max(2000, "message måste vara 1–2000 tecken")
+    .transform(sanitize),
+  sessionId: z
+    .string()
+    .regex(/^[A-Za-z0-9._-]{8,128}$/, "ogiltigt sessionId-format"),
+  sender: z.enum(["admin", "customer", "system"]).optional(),
+  customerId: z
+    .string()
+    .optional()
+    .refine((v) => !v || mongoose.Types.ObjectId.isValid(v), {
+      message: "ogiltigt customerId",
+    }),
+});
+
+// Zod-schema för AI-fråga (/ask)
+const ChatAskSchema = z.object({
+  message: z
+    .string()
+    .min(1, "message måste vara 1–1500 tecken")
+    .max(1500, "message måste vara 1–1500 tecken")
+    .transform(sanitize),
+});
+
+const askLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minut
+  max: 12,             // max 12 anrop/min per användare/IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req, res) => (req.session?.user?._id?.toString() || req.ip)
+});
+
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minut
+  max: 30,             // max 30 meddelanden/min per användare/IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req.session?.user?._id?.toString() || req.ip)
+});
+
 
 dotenv.config();
 const router = express.Router();
@@ -15,7 +67,7 @@ const openai = new OpenAI({
 
 
 // 🧠 POST /api/chat/ask — AI-fråga
-router.post("/ask", async (req, res) => {
+router.post("/ask", askLimiter, async (req, res) => {
 
   const sessionUser = req.session?.user;
 
@@ -25,11 +77,15 @@ router.post("/ask", async (req, res) => {
     const customer = await Customer.findOne({ email: sessionUser.email });
     if (!customer) return res.status(404).json({ reply: "❌ Kunde inte hitta kunddata." });
 
-// Validera & sanera inkommande meddelande
-const rawMsg = typeof req.body?.message === "string" ? req.body.message : "";
-let message = rawMsg.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
-if (message.length > 1500) message = message.slice(0, 1500);
-if (!message) return res.status(400).json({ reply: "❌ Ogiltigt meddelande." });
+// Zod-parse (sanering via .transform i ChatAskSchema)
+const parsedAsk = ChatAskSchema.safeParse(req.body);
+if (!parsedAsk.success) {
+  return res.status(400).json({
+    reply: "❌ Ogiltigt meddelande.",
+    details: parsedAsk.error.issues.map(i => i.message)
+  });
+}
+const message = parsedAsk.data.message;
 
 // Maska e-post (ex: jo***@gmail.com)
 const maskedEmail = (customer.email || "").replace(/^(.{2}).+(@.*)$/,"$1***$2");
@@ -100,46 +156,37 @@ req.session.aiHistory = [...history, { question: message, answer: reply }];
 });
 
 
-// ✉️ POST /api/chat — Spara meddelande (härdad)
-router.post("/", requireAuth, async (req, res) => {
+router.post("/", requireAuth, chatLimiter, async (req, res) => {
   const user = req.session.user;
   const isAdmin = user?.role === "admin";
 
-  // Plocka fält och sanera/validera
-  const rawMsg = typeof req.body?.message === "string" ? req.body.message : "";
-  // Enkel sanering: ta bort HTML-taggar, normalisera whitespace och trimma längd
-  let message = rawMsg.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
-  if (message.length > 2000) message = message.slice(0, 2000);
+  // Zod-parse (sanering sker via .transform i ChatMessageSchema)
+  const parsed = ChatMessageSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: "Ogiltig data",
+      details: parsed.error.issues.map(i => i.message)
+    });
+  }
+  const data = parsed.data;
 
-  const sessionId = typeof req.body?.sessionId === "string" ? req.body.sessionId : "";
-  const senderReq = typeof req.body?.sender === "string" ? req.body.sender : "customer";
-  const customerIdReq = req.body?.customerId;
+  // Tvinga/derivera fält baserat på roll
+  const sender = isAdmin ? (data.sender || "admin") : "customer";
+  const finalCustomerId = isAdmin ? (data.customerId || user._id) : user._id;
 
-  // Tvinga sender baserat på roll (kund kan inte spoofa admin/system)
-  const sender = isAdmin ? (["admin", "customer", "system"].includes(senderReq) ? senderReq : "admin") : "customer";
-
-  // Endast admin får sätta customerId; övriga tvingas till sitt eget
-  const finalCustomerId = isAdmin ? (customerIdReq || user._id) : user._id;
-
-  const errors = [];
-  if (!finalCustomerId) errors.push("saknar customerId (session)");
-  if (!message) errors.push("message måste vara 1–2000 tecken");
-  if (!/^[A-Za-z0-9._-]{8,128}$/.test(sessionId)) errors.push("ogiltigt sessionId-format");
-
-  if (errors.length) {
-    return res.status(400).json({ error: "Ogiltig data", details: errors });
+  if (!finalCustomerId) {
+    return res.status(400).json({ error: "Ogiltig data", details: ["saknar customerId (session)"] });
   }
 
   try {
     const doc = await Message.create({
       customerId: finalCustomerId,
-      message,
+      message: data.message,     // redan sanerad av schema.transform(sanitize)
       sender,
       timestamp: new Date(),
-      sessionId
+      sessionId: data.sessionId
     });
 
-    // Dataminimerat svar
     return res.status(201).json({
       _id: doc._id,
       message: doc.message,
@@ -156,17 +203,23 @@ router.post("/", requireAuth, async (req, res) => {
 // 💬 GET /api/chat/customer/me?sessionId=
 router.get("/customer/me", requireAuth, async (req, res) => {
   const user = req.session?.user;
-  const sessionId = req.query.sessionId;
-
   if (!user?._id) return res.status(401).json({ error: "Inte inloggad" });
 
-  // Validera sessionId om angivet
-  if (typeof sessionId !== "undefined" && !/^[A-Za-z0-9._-]{8,128}$/.test(String(sessionId))) {
-    return res.status(400).json({ error: "Ogiltigt sessionId-format" });
+  // Zod-parse av query (optional sessionId)
+  const QueryMeSchema = z.object({
+    sessionId: z.string().regex(/^[A-Za-z0-9._-]{8,128}$/, "Ogiltigt sessionId-format").optional()
+  });
+
+  const parsed = QueryMeSchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: "Ogiltig query",
+      details: parsed.error.issues.map(i => i.message)
+    });
   }
 
   const query = { customerId: user._id };
-  if (sessionId) query.sessionId = sessionId;
+  if (parsed.data.sessionId) query.sessionId = parsed.data.sessionId;
 
   try {
     const messages = await Message.find(query).sort({ timestamp: 1 });
@@ -184,28 +237,34 @@ router.get("/customer/me", requireAuth, async (req, res) => {
 
 // 🧾 GET /api/chat/customer/:id?sessionId=
 router.get("/customer/:id", requireAuth, async (req, res) => {
-  const isAdmin = req.session.user?.role === 'admin';
-  const { id } = req.params;
+  const user = req.session.user;
+  const isAdmin = user?.role === 'admin';
 
-  // Behörighetskontroll (ägare eller admin)
-  const isOwner = req.session.user?._id?.toString() === id;
+  // Zod-scheman för params och query
+  const ParamsSchema = z.object({
+    id: z.string().refine(v => mongoose.Types.ObjectId.isValid(v), "Ogiltigt kund-ID"),
+  });
+  const QuerySchema = z.object({
+    sessionId: z.string().regex(/^[A-Za-z0-9._-]{8,128}$/, "Ogiltigt sessionId-format").optional(),
+  });
+
+  const paramsParsed = ParamsSchema.safeParse(req.params);
+  const queryParsed = QuerySchema.safeParse(req.query);
+  const issues = [];
+  if (!paramsParsed.success) issues.push(...paramsParsed.error.issues.map(i => i.message));
+  if (!queryParsed.success) issues.push(...queryParsed.error.issues.map(i => i.message));
+  if (issues.length) {
+    return res.status(400).json({ error: "Ogiltig request", details: issues });
+  }
+
+  const { id } = paramsParsed.data;
+  const isOwner = user?._id?.toString() === id;
   if (!isAdmin && !isOwner) {
     return res.status(403).json({ error: 'Åtkomst nekad' });
   }
 
-  // Validera kund-ID (ObjectId) och sessionId-format
-  const isValidObjectId = require('mongoose').Types.ObjectId.isValid;
-  if (!isValidObjectId(String(id))) {
-    return res.status(400).json({ error: 'Ogiltigt kund-ID' });
-  }
-
-  const { sessionId } = req.query;
-  if (typeof sessionId !== "undefined" && !/^[A-Za-z0-9._-]{8,128}$/.test(String(sessionId))) {
-    return res.status(400).json({ error: "Ogiltigt sessionId-format" });
-  }
-
   const query = { customerId: id };
-  if (sessionId) query.sessionId = sessionId;
+  if (queryParsed.data.sessionId) query.sessionId = queryParsed.data.sessionId;
 
   try {
     const messages = await Message.find(query).sort({ timestamp: 1 });

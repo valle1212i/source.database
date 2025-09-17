@@ -27,6 +27,7 @@
 
       <label for="profilePic">Profilbild:</label>
       <input type="file" id="profilePic" name="profilePic" accept="image/*" />
+      <div id="profilePicStatus" style="margin:6px 0 0;color:#666;font-size:0.9em;"></div>
 
       <div class="profile-pic-preview">
         <img id="profilePicPreview" src="" alt="" />
@@ -54,16 +55,19 @@
         document.getElementById('language').value = user.language || 'sv';
 
         const preview = document.getElementById("profilePicPreview");
-        const removeBtn = document.getElementById("removePicBtn");
+const removeBtn = document.getElementById("removePicBtn");
+const statusEl = document.getElementById("profilePicStatus");
 
-        if (user.profileImage) {
-          preview.src = user.profileImage;
-          preview.style.display = "block";
-          removeBtn.style.display = "inline";
-        } else {
-          preview.style.display = "none";
-          removeBtn.style.display = "none";
-        }
+if (user.profileImage) {
+  preview.src = user.profileImage;
+  preview.style.display = "block";
+  removeBtn.style.display = "inline";
+  if (statusEl) statusEl.textContent = "En profilbild finns sparad (ersätts om du laddar upp en ny).";
+} else {
+  preview.style.display = "none";
+  removeBtn.style.display = "none";
+  if (statusEl) statusEl.textContent = "Ingen profilbild är sparad ännu.";
+}
       } catch (err) {
         console.error("❌ Fel vid inladdning av profil:", err);
         document.getElementById('saveMessage').textContent = "❌ Kunde inte ladda profilen.";
@@ -71,27 +75,40 @@
     }
 
     document.getElementById("profilePic").addEventListener("change", function (e) {
-      const file = e.target.files[0];
-      const preview = document.getElementById("profilePicPreview");
-      const removeBtn = document.getElementById("removePicBtn");
+  const file = e.target.files[0];
+  const preview = document.getElementById("profilePicPreview");
+  const removeBtn = document.getElementById("removePicBtn");
+  const statusEl = document.getElementById("profilePicStatus");
 
-      if (file) {
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = "block";
-        removeBtn.style.display = "inline";
-        removeImage = false;
-      }
-    });
+  if (file) {
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+    removeBtn.style.display = "inline";
+    removeImage = false;
+    if (statusEl) statusEl.textContent = `Vald fil: ${file.name} (ersätter sparad bild när du sparar).`;
+  } else {
+    if (statusEl) statusEl.textContent = "Ingen fil vald.";
+  }
+});
 
     document.getElementById("removePicBtn").addEventListener("click", () => {
-      if (confirm("Vill du ta bort din profilbild?")) {
-        document.getElementById("profilePicPreview").src = "";
-        document.getElementById("profilePicPreview").style.display = "none";
-        document.getElementById("profilePic").value = "";
-        document.getElementById("removePicBtn").style.display = "none";
-        removeImage = true;
-      }
-    });
+  if (confirm("Vill du ta bort din profilbild?")) {
+    const preview = document.getElementById("profilePicPreview");
+    const fileInput = document.getElementById("profilePic");
+    const removeBtn = document.getElementById("removePicBtn");
+    const statusEl = document.getElementById("profilePicStatus");
+
+    // Nollställ visning och markera för borttag vid sparning
+    preview.src = "";
+    preview.style.display = "none";
+    fileInput.value = "";
+    removeBtn.style.display = "none";
+    removeImage = true;
+
+    // Tydlig statusrad
+    if (statusEl) statusEl.textContent = "Bild kommer att tas bort när du sparar.";
+  }
+});
   document.getElementById("profileForm").addEventListener("submit", async function (e) {
     e.preventDefault();
 
@@ -138,8 +155,12 @@
       const data = await res.json();
       if (res.ok && data.success) {
         document.getElementById('saveMessage').textContent = "✅ Ändringar sparade!";
-      } else {
-        document.getElementById('saveMessage').textContent = "⚠️ Det gick inte att spara ändringarna.";
+            } else {
+        const msg = (data && (data.message || data.error))
+          ? (data.message || data.error)
+          : `Det gick inte att spara (status ${res.status}).`;
+        document.getElementById('saveMessage').textContent = `⚠️ ${msg}`;
+        console.error("❌ Upload misslyckades:", { status: res.status, data });
       }
     } catch (err) {
       console.error("Något gick fel:", err);
