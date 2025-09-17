@@ -22,9 +22,10 @@ router.get('/me', requireAuth, async (req, res) => {
 
     // Bestäm tenant från DB (enda sanningen) och spara även i sessionen
     const tenant = customer.tenant ? String(customer.tenant).trim().toLowerCase() : null;
-    if (tenant && req.session) {
-      req.session.tenant = tenant;
-    }
+       if (tenant && req.session) {
+            req.session.tenant = tenant;
+            req.tenant = tenant; // 👈 direkt till request också
+       }
 
     const language = customer.settings?.language || customer.language || null;
 
