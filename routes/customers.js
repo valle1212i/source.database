@@ -4,6 +4,15 @@ const Customer = require('../models/Customer');
 const requireAuth = require('../middleware/requireAuth');
 const { z } = require('zod');
 
+// Fallback om requireRole saknas (t.ex. efter merge-konflikt)
+const ensureAdmin = (req, res, next) => {
+  if (req.session?.user?.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Åtkomst nekad' });
+  }
+  next();
+};
+
+
 const allowedPlatforms = ['google', 'meta', 'linkedin', 'tiktok'];
 
 const platformAnswersSchema = z.object({
@@ -123,7 +132,7 @@ router.put('/marketing/:platform', requireAuth, async (req, res) => {
 });
 
 // 💾 PUT /api/customers/:id/marketing – admin, validerad & sanerad
-router.put('/:id/marketing', requireAuth, requireAuth.requireRole('admin'), async (req, res) => {
+router.put('/:id/marketing', requireAuth, (requireAuth.requireRole ? requireAuth.requireRole('admin') : ensureAdmin), async (req, res) => {
   const { id } = req.params;
   if (!/^[0-9a-fA-F]{24}$/.test(id)) {
     return res.status(400).json({ success: false, message: 'Ogiltigt id-format' });

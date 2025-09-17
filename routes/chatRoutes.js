@@ -7,6 +7,8 @@ const requireAuth = require('../middleware/requireAuth');
 const rateLimit = require("express-rate-limit");
 const { z } = require("zod");
 const mongoose = require("mongoose");
+const { ipKeyGenerator } = require("express-rate-limit");
+
 
 // Enkel sanering: ta bort HTML-taggar + normalisera whitespace
 const sanitize = (s) =>
@@ -45,7 +47,8 @@ const askLimiter = rateLimit({
   max: 12,             // max 12 anrop/min per användare/IP
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req, res) => (req.session?.user?._id?.toString() || req.ip)
+  keyGenerator: (req, res) =>
+    req.session?.user?._id?.toString() || ipKeyGenerator(req)
 });
 
 const chatLimiter = rateLimit({
@@ -53,7 +56,8 @@ const chatLimiter = rateLimit({
   max: 30,             // max 30 meddelanden/min per användare/IP
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req.session?.user?._id?.toString() || req.ip)
+  keyGenerator: (req) =>
+    req.session?.user?._id?.toString() || ipKeyGenerator(req)
 });
 
 
