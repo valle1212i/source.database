@@ -145,6 +145,15 @@ const loginLimiter = rateLimit({
   message: { success: false, message: 'För många inloggningsförsök. Försök igen senare.' }
 });
 
+// Begränsa skrivande inventory-åtgärder (5/10s per IP)
+const inventoryLimiter = rateLimit({
+  windowMs: 10 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'För många förfrågningar. Försök igen strax.' }
+});
+
 // ── CSRF (global med undantag) ───────────────────────────────────────────────
 const csrfProtection = csrf({ cookie: true });
 const CSRF_SKIP = new Set([
@@ -225,11 +234,20 @@ const ALLOWED_IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.j
 app.get('/uploads/:filename', requireLogin, (req, res) => {
   const filename = path.basename(req.params.filename);
   const ext = path.extname(filename).toLowerCase();
-  if (!ALLOWED_IMAGE_EXT.has(ext)) return res.status(400).send('Ogiltig filtyp');
   const filePath = path.join(__dirname, 'uploads', filename);
+
   if (!fs.existsSync(filePath)) return res.status(404).send('Filen finns inte');
+
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.sendFile(filePath);
+
+  if (ALLOWED_IMAGE_EXT.has(ext)) {
+    // Bilder → visa inline
+    return res.sendFile(filePath);
+  } else {
+    // Annat → tvinga nedladdning
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return res.sendFile(filePath);
+  }
 });
 
 // ── Profil-API (Multer → CSRF) ───────────────────────────────────────────────
@@ -401,7 +419,7 @@ app.get("/api/inventory", (req, res) => {
   res.json({ success: true, items: toItemsArray(inventory) });
 });
 
-app.post("/api/inventory/buy", (req, res) => {
+app.post("/api/inventory/buy", inventoryLimiter, (req, res) => {
   const { productId, quantity } = req.body || {};
   const product = inventory[productId];
   const qty = Number(quantity);
@@ -421,7 +439,7 @@ app.post("/api/inventory/buy", (req, res) => {
   res.json({ success: true, item });
 });
 
-app.post("/api/inventory/return", (req, res) => {
+app.post("/api/inventory/return", inventoryLimiter, (req, res) => {
   const { productId, quantity } = req.body || {};
   const product = inventory[productId];
   const qty = Number(quantity);
@@ -453,14 +471,21 @@ app.set('io', io);
 // Dela Express-session med Socket.IO
 io.engine.use(sessionMiddleware);
 
-// Auth-guard + minimal PII som i gamla, men med join_site från nya
+// Auth-guard: använd delad session och minimera PII
 io.use((socket, next) => {
   try {
-    const user = socket.request?.session?.user;
-    if (!user?._id) return next(new Error('unauthorized'));
-    socket.data.user = { _id: user._id, role: user.role, name: user.name };
+    const u = socket.request?.session?.user;
+    if (!u?._id) return next(new Error('unauthorized'));
+
+    // Exponera endast minsta möjliga: id, roll, ev. namn
+    socket.data.user = Object.freeze({
+      _id: u._id,
+      role: u.role || 'user',
+      name: typeof u.name === 'string' ? u.name.slice(0, 100) : ''
+    });
+
     return next();
-  } catch {
+  } catch (err) {
     return next(new Error('unauthorized'));
   }
 });
@@ -469,15 +494,34 @@ io.on("connection", (socket) => {
   const user = socket.data?.user;
   console.log("🟢 Socket.IO anslutning", { userId: user?._id, role: user?.role });
 
+    // Event-whitelist och säkra bindningar
+  const ALLOWED_EVENTS = new Set(['join_site', 'startSession', 'sendMessage', 'endSession']);
+
+  function safeOn(event, handler) {
+    if (!ALLOWED_EVENTS.has(event)) {
+      console.warn(`🚫 Försök att binda otillåtet event: ${event}`);
+      return;
+    }
+    socket.on(event, handler);
+  }
+
+  // Avvisa okända inkommande events (probing/abuse)
+  socket.onAny((event) => {
+    if (!ALLOWED_EVENTS.has(event)) {
+      console.warn(`🚫 Blockerat otillåtet inkommande event: ${event}`);
+      // mild reaktion: ignorera. Alternativ: socket.disconnect(true)
+    }
+  });
+
   // live-rum för sidvisningar
-  socket.on('join_site', (siteId) => {
+  safeOn('join_site', (siteId) => {
     if (typeof siteId === 'string' && siteId.length <= 128) {
       socket.join(`site:${siteId}`);
     }
   });
 
   // Ny session – sanera & broadcasta minimal data
-  socket.on("startSession", (sessionData = {}) => {
+  safeOn("startSession", (sessionData = {}) => {
     const sessionId = typeof sessionData.sessionId === "string" ? sessionData.sessionId : "";
     if (!/^[A-Za-z0-9._-]{8,128}$/.test(sessionId)) return;
     const startedAt = sessionData.startedAt ? new Date(sessionData.startedAt).toISOString() : new Date().toISOString();
@@ -485,7 +529,7 @@ io.on("connection", (socket) => {
   });
 
   // Meddelanden – sanera innehåll och sätt sender från roll
-  socket.on("sendMessage", (msg = {}) => {
+  safeOn("sendMessage", (msg = {}) => {
     const raw = typeof msg.message === "string" ? msg.message : "";
     let message = raw.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
     if (!message) return;
@@ -497,7 +541,7 @@ io.on("connection", (socket) => {
   });
 
   // Avsluta session – spara minimal data till admin-API (med env-styrning)
-  socket.on("endSession", async (payload = {}) => {
+  safeOn("endSession", async (payload = {}) => {
     try {
       const sessionId = typeof payload.sessionId === "string" ? payload.sessionId : "";
       if (!/^[A-Za-z0-9._-]{8,128}$/.test(sessionId)) return;
@@ -544,6 +588,35 @@ mongoose.connect(process.env.MONGO_URI)
     require('./cron/insightCron');
   })
   .catch(err => console.error('🔴 Fel vid MongoDB:', err));
+
+// ── Enkel övervakning av många felkoder ──────────────────────────────────────
+const failCounts = new Map();
+const WINDOW_MS = 60 * 1000; // 1 minut
+const THRESHOLD = 10;
+
+app.use((req, res, next) => {
+  const end = res.end;
+  res.end = function (...args) {
+    try {
+      const status = res.statusCode;
+      if ([401, 403, 429].includes(status)) {
+        const key = req.ip;
+        const now = Date.now();
+        const arr = failCounts.get(key) || [];
+        const recent = arr.filter(ts => now - ts < WINDOW_MS);
+        recent.push(now);
+        failCounts.set(key, recent);
+        if (recent.length >= THRESHOLD) {
+          console.warn(`⚠️ Misstänkt aktivitet från ${key}: ${recent.length} felkoder inom ${WINDOW_MS / 1000}s`);
+        }
+      }
+    } catch (err) {
+      console.error("❌ Fel i övervakningslogg:", err);
+    }
+    end.apply(this, args);
+  };
+  next();
+});
 
 // ── Central felhantering (Multer + övrigt) ───────────────────────────────────
 app.use((err, req, res, next) => {

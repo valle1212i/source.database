@@ -22,11 +22,11 @@ const customerSchema = new mongoose.Schema({
   },
 
   // Nya fält (behålls)
-  campaigns: { type: [String], default: [] },
-  industry: { type: String, default: 'Ej angivet' },
-  website: { type: String, default: '' },
-  plan: { type: String, default: 'Gratis' },
-  notes: { type: String, default: '' },
+    campaigns: { type: [String], default: [], maxlength: 50 },
+  industry: { type: String, trim: true, maxlength: 200, default: 'Ej angivet' },
+  website: { type: String, trim: true, maxlength: 500, default: '' },
+  plan: { type: String, trim: true, maxlength: 100, default: 'Gratis' },
+  notes: { type: String, trim: true, maxlength: 2000, default: '' },
 
   // ✅ MARKNADSFÖRING
   marketing: {
@@ -62,7 +62,7 @@ const customerSchema = new mongoose.Schema({
       budget: { type: String, default: '' },
       goals: { type: String, default: '' }
     },
-    otherNotes: { type: String, default: '' }
+        otherNotes: { type: String, trim: true, maxlength: 2000, default: '' }
   },
 
   // ✅ SUPPORTHISTORIK
@@ -98,8 +98,10 @@ const customerSchema = new mongoose.Schema({
     aiLanguage: { type: String, default: 'sv' }
   },
 
-  profileImage: {
+    profileImage: {
     type: String,
+    trim: true,
+    maxlength: 500,
     default: null
   }
 }, { timestamps: true });
