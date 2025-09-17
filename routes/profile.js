@@ -1,47 +1,50 @@
 // routes/profile.js
 const express = require('express');
 const router = express.Router();
-const { requireAuth } = require('./security');
-const Customer = require('../models/Customer');
 
-// liten hjälpare
-const norm = (v) => (v ? String(v).trim().toLowerCase() : null);
+const { requireAuth } = require('./security'); // din auth-middleware
+const Customer = require('../models/Customer');
 
 // GET /api/profile/me
 router.get('/me', requireAuth, async (req, res) => {
   try {
-    // 1) Hämta inloggad användare från req.user eller session
+    // 1) Inloggad användare från req.user eller session
     const sessionUser = req.user || req.session?.user;
-    if (!sessionUser?._id) {
+    if (!sessionUser || !sessionUser._id) {
       return res.status(401).json({ success: false, message: 'Inte inloggad' });
     }
 
-    // 2) Hämta kundprofilen och SE TILL att tenant följer med
-    //    (om ditt schema har select:false på tenant måste +tenant anges)
+    // 2) Hämta kunden (välj uttryckligen fält vi vill skicka till klienten)
     const customer = await Customer.findById(sessionUser._id)
-      .select('+tenant name email role plan settings language profileImage supportHistory') // +tenant är det viktiga
+      .select('name email role plan tenant settings profileImage supportHistory')
       .lean();
 
     if (!customer) {
       return res.status(404).json({ success: false, message: 'Kund hittades inte' });
     }
 
-    // 3) Bestäm tenant från DB / session / header
-    const tenantFromDb       = norm(customer.tenant);
-    const tenantFromSession  = norm(req.session?.tenant);
-    const tenantFromHeader   = norm(req.get('X-Tenant'));
+    // 3) Härleder tenant i prioriterad ordning (DB -> session -> header)
+    const tenantFromDb       = customer.tenant ? String(customer.tenant).trim().toLowerCase() : null;
+    const tenantFromSession  = req.session?.tenant ? String(req.session.tenant).trim().toLowerCase() : null;
+    const tenantFromHeader   = req.get('X-Tenant') ? String(req.get('X-Tenant')).trim().toLowerCase() : null;
     const tenant             = tenantFromDb || tenantFromSession || tenantFromHeader || null;
 
-    // 4) Spegla in i session så resten av API:t får den
-    if (tenant && req.session) {
+    // 4) Spara tillbaka i session (så requireTenant/server-mw kan nyttja det)
+    if (req.session) {
       req.session.tenant = tenant;
-      // uppdatera även user-objektet i sessionen om det saknas
-      if (req.session.user && !req.session.user.tenant) {
-        req.session.user.tenant = tenant;
-      }
+      // Uppdatera även en slimmad user i sessionen
+      req.session.user = {
+        _id: String(customer._id),
+        email: customer.email,
+        role: customer.role,
+        tenant, // viktigt för senare middleware
+      };
     }
 
-    // 5) Svara med profilinfo – OBS: inkluderar tenant
+    // 5) Normaliserat språk (finns i settings.language hos din modell)
+    const language = customer?.settings?.language || null;
+
+    // 6) Svar till klienten
     return res.json({
       success: true,
       id: String(customer._id),
@@ -49,8 +52,8 @@ router.get('/me', requireAuth, async (req, res) => {
       email: customer.email || '',
       role: customer.role || null,
       plan: customer.plan || null,
-      tenant, // <-- viktigt för frontenden
-      language: customer?.settings?.language || customer.language || null,
+      tenant,                         // <- VIKTIGT för frontenden
+      language,                       // settings.language
       profileImage: customer.profileImage || null,
       supportHistory: customer.supportHistory || []
     });
