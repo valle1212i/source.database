@@ -343,7 +343,7 @@ app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/support', require('./routes/support'));
 app.use('/api/support/inbound', require('./routes/supportInbound')); // separerad
 app.use('/api/email', require('./routes/emailRoutes'));
-app.use('/api/messages', require('./routes/messageRoutes'));
+app.use('/api/messages', require('./routes/messagesRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/customers', require('./routes/customers'));
 app.use("/api/security", securityRouter);
