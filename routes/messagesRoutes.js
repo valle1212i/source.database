@@ -3,12 +3,12 @@ const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
 
-const InboxMessage = require('../models/InboxMessage');   // ⬅️ NY
+const InboxMessage = require('../models/InboxMessage');
 const Customer = require('../models/Customer');
 const requireAuth = require('../middleware/requireAuth');
-const requireTenant = require('../middleware/requireTenant');
+const requireTenant = require('../middleware/requireTenant'); // OK även om den lämnar req.tenant null
 
-// 🔒 Rate limit mot spam/botar
+// Rate limit mot spam i publik POST
 const contactLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
   max: 50,
@@ -16,7 +16,7 @@ const contactLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// 🔎 Resolve tenant från header/query/body/subdomän
+// --- Hjälpare ---
 function resolveTenant(req) {
   let t =
     (req.body?.tenant || '').trim() ||
@@ -24,20 +24,18 @@ function resolveTenant(req) {
     (req.query?.tenant || '').trim();
 
   if (!t) {
-    const host = (req.headers.host || '').toLowerCase();
+    const host = (req.headers.host || '').toLowerCase().split(':')[0];
     const m = host.match(/^([a-z0-9-]+)\./i);
     if (m && m[1] && m[1] !== 'www') t = m[1];
   }
   return t || null;
 }
 
-// Hjälp
 const clip = (s, n) => (typeof s === 'string' ? s.slice(0, n) : '');
 
-/**
- * POST /api/messages
- * Publik endpoint (kontaktformulär)
- */
+// ------------------------------------------------------------------
+// POST /api/messages   (Publik kontakt/inkorg)
+// ------------------------------------------------------------------
 router.post('/', contactLimiter, async (req, res) => {
   try {
     const { name, email, message, subject, company } = req.body || {};
@@ -50,7 +48,7 @@ router.post('/', contactLimiter, async (req, res) => {
       return res.status(400).json({ success: false, message: 'E-post och meddelande krävs' });
     }
 
-    // Tenant krävs (header/body/query/subdomän)
+    // Tenant krävs för att lagra korrekt
     const tenant = resolveTenant(req);
     if (!tenant) {
       return res.status(400).json({ success: false, message: 'Tenant saknas' });
@@ -58,7 +56,7 @@ router.post('/', contactLimiter, async (req, res) => {
     const tenantNorm = String(tenant).trim().toLowerCase();
     const displayName = name || (email ? email.split('@')[0] : 'Kund');
 
-    // Hitta / skapa kund (lead)
+    // Hitta eller skapa lead/kund inom den tenanten
     let customer = await Customer.findOne({ email, tenant: tenantNorm }).exec();
     if (!customer) {
       try {
@@ -72,9 +70,11 @@ router.post('/', contactLimiter, async (req, res) => {
         customer = await lead.save();
       } catch (e) {
         if (String(e?.code) === '11000') {
+          // Dublettmail: försök läsa igen
           customer =
             (await Customer.findOne({ email, tenant: tenantNorm }).exec()) ||
             (await Customer.findOne({ email }).exec());
+          // Om legacy-kund saknar tenant, försök migrera den
           if (customer && !customer.tenant) {
             try {
               await Customer.updateOne(
@@ -98,7 +98,6 @@ router.post('/', contactLimiter, async (req, res) => {
                 return res.status(500).json({
                   success: false,
                   message: 'Serverfel vid migrering av legacy-kund',
-                  ...(req.query?.debug === '1' ? { error: e2?.message || String(e2) } : {}),
                 });
               }
             }
@@ -111,13 +110,11 @@ router.post('/', contactLimiter, async (req, res) => {
             success: false,
             message: 'Valideringsfel vid kundskapande',
             errors,
-            ...(req.query?.debug === '1' ? { raw: e.message } : {}),
           });
         } else {
           return res.status(500).json({
             success: false,
             message: 'Serverfel vid kundskapande',
-            ...(req.query?.debug === '1' ? { error: e?.message || String(e) } : {}),
           });
         }
       }
@@ -127,7 +124,7 @@ router.post('/', contactLimiter, async (req, res) => {
       return res.status(500).json({ success: false, message: 'Kunde inte slå upp/skapa kund (saknar _id)' });
     }
 
-    // Skapa inbox-meddelandet
+    // Spara inboxmeddelandet
     const payload = {
       customerId: customer._id,
       tenant: tenantNorm,
@@ -142,9 +139,8 @@ router.post('/', contactLimiter, async (req, res) => {
 
     const doc = await InboxMessage.create(payload);
     return res.status(201).json({ success: true, id: String(doc._id) });
-
   } catch (err) {
-    console.error('❌ /api/messages POST error:', err?.message || err, err?.stack);
+    console.error('❌ /api/messages POST error:', err?.message || err);
     if (err?.name === 'ValidationError') {
       const errors = Object.fromEntries(
         Object.entries(err.errors || {}).map(([k, v]) => [k, v?.message || 'ogiltigt'])
@@ -158,10 +154,9 @@ router.post('/', contactLimiter, async (req, res) => {
   }
 });
 
-/**
- * GET /api/messages/latest
- * Senaste meddelandet per kund (tenant-aware)
- */
+// ------------------------------------------------------------------
+// GET /api/messages/latest   (Senaste meddelandet per kund, tenant-aware)
+// ------------------------------------------------------------------
 router.get('/latest', requireAuth, requireTenant, async (req, res) => {
   try {
     const pipeline = [
@@ -172,12 +167,14 @@ router.get('/latest', requireAuth, requireTenant, async (req, res) => {
           localField: 'customerId',
           foreignField: '_id',
           as: 'cust',
-        }
+        },
       },
       { $unwind: '$cust' },
+      // Fallback: matcha bara på tenant om den faktiskt finns
       ...(req.tenant ? [{ $match: { 'cust.tenant': req.tenant } }] : []),
     ];
-    const messages = await InboxMessage.aggregate(pipeline);   // ⬅️ NY
+
+    const messages = await InboxMessage.aggregate(pipeline);
     res.json(messages);
   } catch (err) {
     console.error('❌ /api/messages/latest error:', err);
@@ -185,22 +182,27 @@ router.get('/latest', requireAuth, requireTenant, async (req, res) => {
   }
 });
 
-/**
- * GET /api/messages?page=&limit=&q=
- * Paginering + sök, senast per kund (tenant-aware)
- */
+// ------------------------------------------------------------------
+// GET /api/messages?page=&limit=&q=   (pagination + sök + senaste per kund)
+// ------------------------------------------------------------------
 router.get('/', requireAuth, requireTenant, async (req, res) => {
   try {
-    const page  = Math.max(parseInt(req.query.page, 10)  || 1, 1);
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 100);
-    const skip  = (page - 1) * limit;
-    const q     = (req.query.q || '').trim();
+    const skip = (page - 1) * limit;
+    const q = (req.query.q || '').trim();
 
     const matchSearch = q
-      ? [{ $match: { $or: [
-            { message: { $regex: q, $options: 'i' } },
-            { subject: { $regex: q, $options: 'i' } },
-          ] } }]
+      ? [
+          {
+            $match: {
+              $or: [
+                { message: { $regex: q, $options: 'i' } },
+                { subject: { $regex: q, $options: 'i' } },
+              ],
+            },
+          },
+        ]
       : [];
 
     const base = [
@@ -211,20 +213,22 @@ router.get('/', requireAuth, requireTenant, async (req, res) => {
           localField: 'customerId',
           foreignField: '_id',
           as: 'cust',
-        }
+        },
       },
       { $unwind: '$cust' },
+      // Fallback: filtrera bara på tenant om vi faktiskt har en
       ...(req.tenant ? [{ $match: { 'cust.tenant': req.tenant } }] : []),
       ...matchSearch,
       {
+        // Senaste per kund
         $group: {
           _id: '$customerId',
-          message:  { $first: '$message' },
-          subject:  { $first: '$subject' },
-          sender:   { $first: '$sender' },
-          timestamp:{ $first: '$timestamp' },
+          message: { $first: '$message' },
+          subject: { $first: '$subject' },
+          sender: { $first: '$sender' },
+          timestamp: { $first: '$timestamp' },
           customer: { $first: '$cust' },
-        }
+        },
       },
       { $sort: { timestamp: -1 } },
     ];
@@ -241,26 +245,22 @@ router.get('/', requireAuth, requireTenant, async (req, res) => {
           subject: { $ifNull: ['$subject', '(Ej angivet)'] },
           message: 1,
           date: '$timestamp',
-          email: '$customer.email'
-        }
-      }
+          email: '$customer.email',
+        },
+      },
     ];
 
-    const countPipeline = [
-      ...base,
-      { $count: 'total' }
-    ];
+    const countPipeline = [...base, { $count: 'total' }];
 
     const [items, totalArr] = await Promise.all([
-      InboxMessage.aggregate(dataPipeline),   // ⬅️ NY
-      InboxMessage.aggregate(countPipeline),  // ⬅️ NY
+      InboxMessage.aggregate(dataPipeline),
+      InboxMessage.aggregate(countPipeline),
     ]);
 
     const total = totalArr[0]?.total ?? items.length;
     const totalPages = Math.max(Math.ceil(total / limit), 1);
 
     res.json({ page, limit, total, totalPages, items });
-
   } catch (err) {
     console.error('❌ /api/messages GET error:', err);
     res.status(400).json({ error: 'Bad Request', detail: err.message });

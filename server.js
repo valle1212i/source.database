@@ -297,12 +297,38 @@ app.get("/api/user/profile", requireAuth, (req, res) => {
   res.json({ name, email });
 });
 app.get("/api/profile/me", async (req, res) => {
-  if (!req.session.user) return res.status(401).json({ success: false, message: "Inte inloggad" });
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, message: "Inte inloggad" });
+  }
   try {
     const user = await Customer.findById(req.session.user._id).lean();
-    if (!user) return res.status(404).json({ success: false, message: "Användare hittades inte" });
-    const { _id, name, email, language, profileImage, supportHistory = [] } = user;
-    res.json({ success: true, _id, name, email, language, profileImage, supportHistory });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Användare hittades inte" });
+    }
+
+    const language =
+      (user.settings && user.settings.language) || user.language || null;
+    const profileImage = user.profileImage || null;
+    const tenant =
+      (user.tenant && String(user.tenant).trim().toLowerCase()) ||
+      (req.session.tenant && String(req.session.tenant).trim().toLowerCase()) ||
+      null;
+
+    // spara i session för serverns middleware att använda
+    if (tenant && req.session) req.session.tenant = tenant;
+
+    res.json({
+      success: true,
+      id: String(user._id),
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role || null,
+      plan: user.plan || null,
+      tenant,            // ⬅️ viktigt för frontenden
+      language,
+      profileImage,
+      supportHistory: user.supportHistory || []
+    });
   } catch (err) {
     console.error("❌ Fel vid hämtning av kundprofil:", err);
     res.status(500).json({ success: false, message: "Serverfel vid hämtning av profil" });
@@ -317,7 +343,7 @@ app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/support', require('./routes/support'));
 app.use('/api/support/inbound', require('./routes/supportInbound')); // separerad
 app.use('/api/email', require('./routes/emailRoutes'));
-app.use('/api/messages', require('./routes/messagesRoutes'));
+app.use('/api/messages', require('./routes/messageRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/customers', require('./routes/customers'));
 app.use("/api/security", securityRouter);
