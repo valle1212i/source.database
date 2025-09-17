@@ -3,21 +3,18 @@ const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
 
-const InboxMessage = require('../models/InboxMessage'); // 👈 BYT: använder inkorgsmodellen
+const InboxMessage = require('../models/InboxMessage');   // ⬅️ NY
 const Customer = require('../models/Customer');
 const requireAuth = require('../middleware/requireAuth');
 const requireTenant = require('../middleware/requireTenant');
 
-// 🔒 Rate limit mot spam/botar (publika formulär)
+// 🔒 Rate limit mot spam/botar
 const contactLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
   max: 50,
   standardHeaders: true,
   legacyHeaders: false,
 });
-
-// Hjälp: kapa textlängd säkert
-const clip = (s, n) => (typeof s === 'string' ? s.slice(0, n) : '');
 
 // 🔎 Resolve tenant från header/query/body/subdomän
 function resolveTenant(req) {
@@ -28,21 +25,24 @@ function resolveTenant(req) {
 
   if (!t) {
     const host = (req.headers.host || '').toLowerCase();
-    const m = host.match(/^([a-z0-9-]+)\./i); // subdomän.exempel.se -> subdomän
+    const m = host.match(/^([a-z0-9-]+)\./i);
     if (m && m[1] && m[1] !== 'www') t = m[1];
   }
   return t || null;
 }
 
+// Hjälp
+const clip = (s, n) => (typeof s === 'string' ? s.slice(0, n) : '');
+
 /**
  * POST /api/messages
- * Publik endpoint (kontaktformulär från kundens webb) -> sparas i inboxmessages
+ * Publik endpoint (kontaktformulär)
  */
 router.post('/', contactLimiter, async (req, res) => {
   try {
     const { name, email, message, subject, company } = req.body || {};
 
-    // Honeypot: om ifyllt -> låtsas OK men gör inget
+    // Honeypot
     if (company && String(company).trim() !== '') {
       return res.status(200).json({ success: true, ignored: true });
     }
@@ -50,36 +50,31 @@ router.post('/', contactLimiter, async (req, res) => {
       return res.status(400).json({ success: false, message: 'E-post och meddelande krävs' });
     }
 
-    // Tenant måste med (från X-Tenant / body.tenant / query.tenant / subdomän)
+    // Tenant krävs (header/body/query/subdomän)
     const tenant = resolveTenant(req);
     if (!tenant) {
       return res.status(400).json({ success: false, message: 'Tenant saknas' });
     }
     const tenantNorm = String(tenant).trim().toLowerCase();
-
     const displayName = name || (email ? email.split('@')[0] : 'Kund');
 
-    // 1) Hitta/Skapa kund i rätt tenant
+    // Hitta / skapa kund (lead)
     let customer = await Customer.findOne({ email, tenant: tenantNorm }).exec();
-
     if (!customer) {
       try {
         const lead = new Customer({
           email,
           tenant: tenantNorm,
-          role: 'customer',           // lead behöver inte password/groupId
+          role: 'customer',
           name: displayName || undefined,
         });
         await lead.validate();
         customer = await lead.save();
       } catch (e) {
         if (String(e?.code) === '11000') {
-          // försök återhämta befintlig kombination (email, tenant)
           customer =
-              (await Customer.findOne({ email, tenant: tenantNorm }).exec()) ||
-              (await Customer.findOne({ email }).exec());
-
-          // ev. legacy-post saknar tenant → sätt tenant utan övrig validering
+            (await Customer.findOne({ email, tenant: tenantNorm }).exec()) ||
+            (await Customer.findOne({ email }).exec());
           if (customer && !customer.tenant) {
             try {
               await Customer.updateOne(
@@ -87,22 +82,43 @@ router.post('/', contactLimiter, async (req, res) => {
                 { $set: { tenant: tenantNorm } },
                 { runValidators: false }
               );
-              customer = await Customer.findOne({ email, tenant: tenantNorm }).exec() || customer;
+              customer = (await Customer.findOne({ email, tenant: tenantNorm }).exec()) || customer;
             } catch (e2) {
               if (String(e2?.code) === '11000') {
                 const again = await Customer.findOne({ email, tenant: tenantNorm }).exec();
                 if (again) customer = again;
-                else return res.status(409).json({ success: false, message: 'Konflikt vid tenant-migrering.' });
+                else {
+                  return res.status(409).json({
+                    success: false,
+                    message: 'Konflikt vid tenant-migrering.',
+                    code: 'TENANT_MERGE_CONFLICT',
+                  });
+                }
               } else {
-                return res.status(500).json({ success: false, message: 'Serverfel vid migrering av legacy-kund' });
+                return res.status(500).json({
+                  success: false,
+                  message: 'Serverfel vid migrering av legacy-kund',
+                  ...(req.query?.debug === '1' ? { error: e2?.message || String(e2) } : {}),
+                });
               }
             }
           }
         } else if (e?.name === 'ValidationError') {
-          const errors = Object.fromEntries(Object.entries(e.errors || {}).map(([k, v]) => [k, v?.message || 'ogiltigt']));
-          return res.status(400).json({ success: false, message: 'Valideringsfel vid kundskapande', errors });
+          const errors = Object.fromEntries(
+            Object.entries(e.errors || {}).map(([k, v]) => [k, v?.message || 'ogiltigt'])
+          );
+          return res.status(400).json({
+            success: false,
+            message: 'Valideringsfel vid kundskapande',
+            errors,
+            ...(req.query?.debug === '1' ? { raw: e.message } : {}),
+          });
         } else {
-          return res.status(500).json({ success: false, message: 'Serverfel vid kundskapande' });
+          return res.status(500).json({
+            success: false,
+            message: 'Serverfel vid kundskapande',
+            ...(req.query?.debug === '1' ? { error: e?.message || String(e) } : {}),
+          });
         }
       }
     }
@@ -111,8 +127,8 @@ router.post('/', contactLimiter, async (req, res) => {
       return res.status(500).json({ success: false, message: 'Kunde inte slå upp/skapa kund (saknar _id)' });
     }
 
-    // 2) Skapa inkorgsmeddelande i egen collection
-    const docPayload = {
+    // Skapa inbox-meddelandet
+    const payload = {
       customerId: customer._id,
       tenant: tenantNorm,
       subject: (subject && String(subject).trim()) || 'Kontaktformulär',
@@ -121,16 +137,18 @@ router.post('/', contactLimiter, async (req, res) => {
       timestamp: new Date(),
     };
 
-    const toValidate = new InboxMessage(docPayload);
+    const toValidate = new InboxMessage(payload);
     await toValidate.validate();
 
-    const doc = await InboxMessage.create(docPayload);
+    const doc = await InboxMessage.create(payload);
     return res.status(201).json({ success: true, id: String(doc._id) });
 
   } catch (err) {
     console.error('❌ /api/messages POST error:', err?.message || err, err?.stack);
     if (err?.name === 'ValidationError') {
-      const errors = Object.fromEntries(Object.entries(err.errors || {}).map(([k, v]) => [k, v?.message || 'ogiltigt']));
+      const errors = Object.fromEntries(
+        Object.entries(err.errors || {}).map(([k, v]) => [k, v?.message || 'ogiltigt'])
+      );
       return res.status(400).json({ success: false, message: 'Valideringsfel', errors });
     }
     if (String(err?.code) === '11000') {
@@ -142,7 +160,7 @@ router.post('/', contactLimiter, async (req, res) => {
 
 /**
  * GET /api/messages/latest
- * Senaste inkorgsmeddelandet per kund (tenant-aware), från collection inboxmessages
+ * Senaste meddelandet per kund (tenant-aware)
  */
 router.get('/latest', requireAuth, requireTenant, async (req, res) => {
   try {
@@ -159,8 +177,7 @@ router.get('/latest', requireAuth, requireTenant, async (req, res) => {
       { $unwind: '$cust' },
       ...(req.tenant ? [{ $match: { 'cust.tenant': req.tenant } }] : []),
     ];
-
-    const messages = await InboxMessage.aggregate(pipeline);
+    const messages = await InboxMessage.aggregate(pipeline);   // ⬅️ NY
     res.json(messages);
   } catch (err) {
     console.error('❌ /api/messages/latest error:', err);
@@ -169,8 +186,8 @@ router.get('/latest', requireAuth, requireTenant, async (req, res) => {
 });
 
 /**
- * GET /api/messages?page=1&limit=50&q=optional
- * Lista “inkorgs”-meddelanden (inte chatten), grupperat på kund med senast först
+ * GET /api/messages?page=&limit=&q=
+ * Paginering + sök, senast per kund (tenant-aware)
  */
 router.get('/', requireAuth, requireTenant, async (req, res) => {
   try {
@@ -183,8 +200,6 @@ router.get('/', requireAuth, requireTenant, async (req, res) => {
       ? [{ $match: { $or: [
             { message: { $regex: q, $options: 'i' } },
             { subject: { $regex: q, $options: 'i' } },
-            { 'cust.name': { $regex: q, $options: 'i' } },
-            { 'cust.email': { $regex: q, $options: 'i' } },
           ] } }]
       : [];
 
@@ -237,27 +252,14 @@ router.get('/', requireAuth, requireTenant, async (req, res) => {
     ];
 
     const [items, totalArr] = await Promise.all([
-      InboxMessage.aggregate(dataPipeline), // 👈 BYT
-      InboxMessage.aggregate(countPipeline), // 👈 BYT
+      InboxMessage.aggregate(dataPipeline),   // ⬅️ NY
+      InboxMessage.aggregate(countPipeline),  // ⬅️ NY
     ]);
 
     const total = totalArr[0]?.total ?? items.length;
     const totalPages = Math.max(Math.ceil(total / limit), 1);
 
-    const payload = { page, limit, total, totalPages, items };
-
-    if (req.query.debug === '1') {
-      payload.debug = {
-        tenant: req.tenant,
-        q,
-        pageComputed: page,
-        limitComputed: limit,
-        skipComputed: skip,
-        itemsOnPage: items.length
-      };
-    }
-
-    res.json(payload);
+    res.json({ page, limit, total, totalPages, items });
 
   } catch (err) {
     console.error('❌ /api/messages GET error:', err);
