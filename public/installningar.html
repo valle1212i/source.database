@@ -2,521 +2,401 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Inställningar – Kundportal</title>
+
+  <!-- Sida-specifik CSS (innehåller även gemensam meny-CSS överst) -->
   <link rel="stylesheet" href="CSS/installningar.css" />
+
+  <!-- Ikoner -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <!-- Inter (matchar dina andra sidor) -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js" defer></script>
 </head>
 <body>
   <!-- SIDOMENY -->
+  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">☰</button>
   <div class="sidebar">
     <div class="logo">
       <a href="customerportal.html">
         <img src="images/logo.png" alt="Logotyp" class="logo-img" />
       </a>
     </div>
+
     <ul class="nav-menu">
-  <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
-  <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
-  <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
-  <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
-  <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
-  <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
-  <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
-  <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
-  <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
-  <li class="active"><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
-</ul>
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+      <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+      <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+      <li><a href="betalningslank.html"><i class="fas fa-link"></i> Betalningslänk</a></li>
+      <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+      <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+      <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+      <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+      <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+      <li class="active"><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+    </ul>
+
     <div class="help">
-      <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
+      <a href="faq.html">
+        <i class="fas fa-circle-question"></i> Hjälp / FAQ
+      </a>
     </div>
   </div>
 
   <!-- HUVUDINNEHÅLL -->
   <main class="main">
+    <!-- Profilmeny uppe till höger -->
     <div class="profile-wrapper">
-  <div class="profile-icon" id="profileToggle">--</div>
-
-  <div class="profile-dropdown" id="profileMenu">
-    <div class="profile-email" id="userEmail">Laddar...</div>
-    <hr />
-    <a href="#" id="switchAccount">Byt konto</a>
-    <a href="#" id="openSettings">Profilinställningar</a>
-    <a href="#" id="logout">Logga ut</a>
-  </div>
-</div>
-
-<!-- Hamburger-meny (visas bara på små skärmar) -->
-<button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">
-  &#9776;
-</button>
-
-    <h1>Inställningar</h1>
-
-    <div class="settings-container">
-
-    <!-- SPRÅK -->
-    <section class="setting-group">
-      <h2>🌐 Språk</h2>
-      <select id="language">
-        <option value="sv">Svenska</option>
-        <option value="en">English</option>
-      </select>
-    </section>
-
-    <!-- ANVÄNDARE -->
-<section class="setting-group">
-  <h2>👥 Användare & Roller</h2>
-    <div class="user-list" id="userList">
-      <p>Laddar användare...</p>
+      <button class="profile-icon" id="profileToggle" title="Profil">--</button>
+      <div class="profile-dropdown" id="profileMenu">
+        <div class="profile-email" id="userEmail">Laddar...</div>
+        <hr />
+        <a href="#" id="switchAccount"><i class="fa-solid fa-right-from-bracket"></i> Byt konto</a>
+        <a href="#" id="openSettings"><i class="fa-solid fa-user-gear"></i> Profilinställningar</a>
+        <a href="#" id="logout"><i class="fa-solid fa-arrow-right-to-bracket"></i> Logga ut</a>
+      </div>
     </div>
-  <button class="invite-user-btn" id="openInviteModal">➕ Bjud in användare</button>
-</section>
 
+    <h1 class="page-title"><i class="fas fa-sliders"></i> Inställningar</h1>
+    <p class="subtitle">Justera språk, tema, användare & andra portalinställningar.</p>
 
-    <!-- VISA ENDAST FÖR ADMIN -->
-<section class="setting-group" id="admin-login-link" style="display: none;">
-  <h2>🕵️‍♂️ Admin: Inloggningshistorik</h2>
-  <p>Visa senaste IP-adresser och enheter.</p>
-  <a href="admin-logins.html">➡ Öppna loggar</a>
-</section>
+    <div class="settings-grid">
+      <!-- VÄNSTER KOL -->
+      <section class="card">
+        <h2>🌐 Språk</h2>
+        <label for="language" class="label">Välj språk</label>
+        <select id="language" class="input">
+          <option value="sv">Svenska</option>
+          <option value="en">English</option>
+        </select>
+        <p class="note">Språket påverkar texter i portalen nästa gång sidan laddas.</p>
+      </section>
 
-    <!-- TEMA -->
-    <section class="setting-group">
-      <h2>🎨 Tema</h2>
-      <label><input type="radio" name="theme" value="light" checked> Ljust</label>
-      <label><input type="radio" name="theme" value="dark"> Mörkt</label>
-      <label><input type="radio" name="theme" value="green"> Skogsgrön</label>
-      <label><input type="radio" name="theme" value="indigo"> Indigo</label>
-      <label><input type="radio" name="theme" value="contrast"> Hög kontrast</label>
-    </section>
+      <section class="card">
+        <h2>🎨 Tema</h2>
+        <div class="theme-row">
+          <label class="theme-option">
+            <input type="radio" name="theme" value="light" checked />
+            <span class="swatch swatch-light"></span> Ljust
+          </label>
+          <label class="theme-option">
+            <input type="radio" name="theme" value="dark" />
+            <span class="swatch swatch-dark"></span> Mörkt
+          </label>
+          <label class="theme-option">
+            <input type="radio" name="theme" value="green" />
+            <span class="swatch swatch-green"></span> Skogsgrön
+          </label>
+          <label class="theme-option">
+            <input type="radio" name="theme" value="indigo" />
+            <span class="swatch swatch-indigo"></span> Indigo
+          </label>
+          <label class="theme-option">
+            <input type="radio" name="theme" value="contrast" />
+            <span class="swatch swatch-contrast"></span> Hög kontrast
+          </label>
+        </div>
+        <p class="note">Temat byts direkt och sparas som standard på denna enhet.</p>
+      </section>
 
+      <!-- HÖGER KOL -->
+      <section class="card">
+        <div class="card-header">
+          <h2>👥 Användare & Roller</h2>
+          <button class="btn brand" id="openInviteModal"><i class="fa-solid fa-user-plus"></i> Bjud in</button>
+        </div>
+        <div class="user-list" id="userList">
+          <p>Laddar användare...</p>
+        </div>
+      </section>
 
-    <!-- SUPPORT -->
-    <section class="setting-group">
-      <h2>📩 Kontakta support</h2>
-      <p>Behöver du hjälp? <a href="kontakt.html">Kontakta oss här</a></p>
-    </section>
+      <section class="card" id="admin-login-link" style="display:none;">
+        <h2>🕵️‍♂️ Admin: Inloggningshistorik</h2>
+        <p>Visa senaste IP-adresser och enheter.</p>
+        <a class="btn" href="admin-logins.html"><i class="fa-solid fa-arrow-up-right-from-square"></i> Öppna loggar</a>
+      </section>
 
-    <!-- SENASTE INLOGGNINGAR -->
-<section class="setting-group">
-  <h2>📍 Senaste inloggningar</h2>
-  <div class="login-history">
-    <div class="login-row">
-      <div><strong>Datum:</strong> 2025-07-22 13:05</div>
-      <div><strong>IP:</strong> 192.168.1.15</div>
-      <div><strong>Enhet:</strong> Chrome / Windows</div>
+      <section class="card">
+        <h2>📩 Kontakta support</h2>
+        <p>Behöver du hjälp? <a class="inline-link" href="kontakt.html">Kontakta oss här</a>.</p>
+      </section>
+
+      <section class="card">
+        <h2>📍 Senaste inloggningar</h2>
+        <div class="login-history">
+          <div class="login-row">
+            <div><strong>Datum:</strong> 2025-07-22 13:05</div>
+            <div><strong>IP:</strong> 192.168.1.15</div>
+            <div><strong>Enhet:</strong> Chrome / Windows</div>
+          </div>
+          <div class="login-row">
+            <div><strong>Datum:</strong> 2025-07-20 08:45</div>
+            <div><strong>IP:</strong> 192.168.1.18</div>
+            <div><strong>Enhet:</strong> Safari / iPhone</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>🛠 Kommande inställningar</h2>
+        <ul class="list">
+          <li>API-nycklar för integrationer</li>
+          <li>Webhook-händelser</li>
+          <li>Branding (eget namn, färg)</li>
+        </ul>
+      </section>
     </div>
-    <div class="login-row">
-      <div><strong>Datum:</strong> 2025-07-20 08:45</div>
-      <div><strong>IP:</strong> 192.168.1.18</div>
-      <div><strong>Enhet:</strong> Safari / iPhone</div>
-    </div>
-  </div>
-</section>
 
-    <!-- KOMMANDE -->
-    <section class="setting-group">
-      <h2>🛠 Kommande inställningar</h2>
-      <ul>
-        <li>API-nycklar för integrationer</li>
-        <li>Webhook-händelser</li>
-        <li>Branding (eget namn, färg)</li>
-      </ul>
-    </section>
-    </div>
-    <!-- SPARA -->
+    <!-- ÅTGÄRDER -->
     <div class="settings-actions">
-  <button class="save-btn">💾 Spara inställningar</button>
-  <button class="undo-btn">↩️ Ångra ändringar</button>
-</div>
+      <button class="btn ok save-btn"><i class="fa-solid fa-floppy-disk"></i> Spara inställningar</button>
+      <button class="btn ghost undo-btn"><i class="fa-solid fa-rotate-left"></i> Ångra ändringar</button>
+    </div>
   </main>
-  
+
+  <!-- Toast-container -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- INVITE MODAL -->
+  <div class="modal-overlay" id="inviteModalOverlay">
+    <div class="modal" id="inviteModal">
+      <button class="close-modal" id="closeInviteModal" aria-label="Stäng">&times;</button>
+      <h3><i class="fa-solid fa-user-plus"></i> Bjud in användare</h3>
+      <form id="inviteUserForm">
+        <label for="inviteName" class="label">Namn</label>
+        <input type="text" id="inviteName" class="input" required placeholder="Förnamn Efternamn" />
+
+        <label for="inviteEmail" class="label">E-postadress</label>
+        <input type="email" id="inviteEmail" class="input" required placeholder="anvandare@exempel.se" />
+
+        <button type="submit" class="btn brand full"><i class="fa-solid fa-paper-plane"></i> Skicka inbjudan</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== SCRIPTS ===== -->
   <script>
+    // Hamburger
+    const menuBtn = document.getElementById('menuToggle');
+    const sidebar = document.querySelector('.sidebar');
+    menuBtn.addEventListener('click', () => {
+      const active = sidebar.classList.toggle('active');
+      document.body.classList.toggle('menu-open', active);
+    });
+    // Stäng vid klick utanför (mobil)
+    window.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768) {
+        if (!sidebar.contains(e.target) && !menuBtn.contains(e.target)) {
+          sidebar.classList.remove('active');
+          document.body.classList.remove('menu-open');
+        }
+      }
+    });
 
-    let initialTheme;
-    let initialLanguage;
+    // Toast
+    function showToast(message) {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3200);
+    }
 
-    // TEMA - visa sparat
-   const savedTheme = localStorage.getItem("theme") || "light";
-document.body.classList.add(`theme-${savedTheme}`);
-document.querySelector(`input[name="theme"][value="${savedTheme}"]`).checked = true;
+    // Profilmeny
+    const toggle = document.getElementById('profileToggle');
+    const menu = document.getElementById('profileMenu');
+    toggle.addEventListener('click', () => {
+      const open = menu.style.display === 'flex';
+      menu.style.display = open ? 'none' : 'flex';
+      toggle.classList.toggle('open', !open);
+    });
+    window.addEventListener('click', (e) => {
+      if (!document.querySelector('.profile-wrapper').contains(e.target)) {
+        menu.style.display = 'none';
+        toggle.classList.remove('open');
+      }
+    });
 
-initialLanguage = document.getElementById("language").value;
-initialTheme = savedTheme;
+    document.getElementById("switchAccount").addEventListener("click", (e) => {
+      e.preventDefault();
+      if (confirm("Vill du logga ut och byta konto?")) window.location.href = "login.html";
+    });
+    document.getElementById("openSettings").addEventListener("click", (e) => {
+      e.preventDefault();
+      window.location.href = "profile.html";
+    });
 
+    async function loadUserProfile() {
+      try {
+        const res = await fetch("/api/profile/me", { credentials: "include" });
+        const data = await res.json();
+        const emailEl = document.getElementById("userEmail");
 
-// Växla tema direkt vid klick
-document.querySelectorAll('input[name="theme"]').forEach(radio => {
-  radio.addEventListener('change', () => {
-    // Ta bort tidigare theme-klasser
-    document.body.classList.remove(
-      "theme-light",
-      "theme-dark",
-      "theme-green",
-      "theme-indigo",
-      "theme-contrast"
-    );
-    // Lägg till ny
-    document.body.classList.add(`theme-${radio.value}`);
-  });
-});
+        if (data.success) {
+          const name = data.name || "";
+          const email = data.email || "";
+          const image = data.profileImage;
+          const profileToggle = document.getElementById("profileToggle");
+          profileToggle.textContent = "";
 
-    // Spara inställningar
+          if (image) {
+            const img = document.createElement("img");
+            img.src = image;
+            img.alt = "Profilbild";
+            img.width = 32; img.height = 32;
+            profileToggle.appendChild(img);
+          } else {
+            const initials = (name || "")
+              .split(" ").map(p => p.charAt(0).toUpperCase()).join("").slice(0,2);
+            profileToggle.textContent = initials || "--";
+          }
+          emailEl.textContent = email;
+
+          // Visa adminlänk om API skickar role: "admin" (om ej, lämna dold)
+          if (data.role === "admin") {
+            const adminBox = document.getElementById("admin-login-link");
+            if (adminBox) adminBox.style.display = "block";
+          }
+        } else {
+          document.getElementById("profileToggle").textContent = "??";
+          emailEl.textContent = "Ej inloggad";
+        }
+      } catch (err) {
+        console.error("Fel vid hämtning av profil:", err);
+      }
+    }
+    loadUserProfile();
+
+    // Tema & språk
+    let initialTheme, initialLanguage;
+    const savedTheme = localStorage.getItem("theme") || "light";
+    document.body.classList.add(`theme-${savedTheme}`);
+    document.querySelector(`input[name="theme"][value="${savedTheme}"]`).checked = true;
+
+    initialLanguage = document.getElementById("language").value;
+    initialTheme = savedTheme;
+
+    document.querySelectorAll('input[name="theme"]').forEach(r => {
+      r.addEventListener('change', () => {
+        document.body.classList.remove("theme-light","theme-dark","theme-green","theme-indigo","theme-contrast");
+        document.body.classList.add(`theme-${r.value}`);
+      });
+    });
+
     document.querySelector('.save-btn').addEventListener('click', () => {
       const selectedTheme = document.querySelector('input[name="theme"]:checked').value;
       const selectedLanguage = document.getElementById('language').value;
 
       localStorage.setItem("theme", selectedTheme);
-
-      document.body.classList.remove(
-        "theme-light",
-        "theme-dark",
-        "theme-green",
-        "theme-indigo",
-        "theme-contrast"
-);
-document.body.classList.add(`theme-${selectedTheme}`);
+      document.body.classList.remove("theme-light","theme-dark","theme-green","theme-indigo","theme-contrast");
+      document.body.classList.add(`theme-${selectedTheme}`);
+      // (Om du vill spara språk i backend – posta här)
 
       showToast("✅ Inställningar sparade.");
     });
 
     document.querySelector('.undo-btn').addEventListener('click', () => {
-  // Återställ språk
-  document.getElementById("language").value = initialLanguage;
+      document.getElementById("language").value = initialLanguage;
+      document.body.classList.remove("theme-light","theme-dark","theme-green","theme-indigo","theme-contrast");
+      document.body.classList.add(`theme-${initialTheme}`);
+      document.querySelector(`input[name="theme"][value="${initialTheme}"]`).checked = true;
+      showToast("↩️ Ändringar ångrade.");
+    });
 
-  // Återställ tema
-  document.body.classList.remove(
-    "theme-light",
-    "theme-dark",
-    "theme-green",
-    "theme-indigo",
-    "theme-contrast"
-  );
-  document.body.classList.add(`theme-${initialTheme}`);
-
-  // Återställ markerad radioknapp
-  document.querySelector(`input[name="theme"][value="${initialTheme}"]`).checked = true;
-
-  showToast("↩️ Ändringar ångrade.");
-});
-  </script>
-<script>
-  const toggle = document.getElementById('profileToggle');
-  const menu = document.getElementById('profileMenu');
-
-  toggle.addEventListener('click', () => {
-    const isOpen = menu.style.display === 'flex';
-    menu.style.display = isOpen ? 'none' : 'flex';
-    toggle.classList.toggle('open', !isOpen);
-  });
-
-  window.addEventListener('click', function (e) {
-    if (!document.querySelector('.profile-wrapper').contains(e.target)) {
-      menu.style.display = 'none';
-      toggle.classList.remove('open');
-    }
-  });
-
-  document.getElementById("switchAccount").addEventListener("click", function (e) {
-    e.preventDefault();
-    if (confirm("Vill du logga ut och byta konto?")) {
-      window.location.href = "login.html";
-    }
-  });
-
-  document.getElementById("openSettings").addEventListener("click", function (e) {
-    e.preventDefault();
-    window.location.href = "profile.html";
-  });
-
-  async function loadUserProfile() {
-    try {
-      const res = await fetch("/api/profile/me");
-      const data = await res.json();
-
-      if (data.success) {
-        const name = data.name || '';
-        const email = data.email || '';
-        const image = data.profileImage;
-
-               const profileToggle = document.getElementById("profileToggle");
-        while (profileToggle.firstChild) profileToggle.removeChild(profileToggle.firstChild);
-
-        if (image) {
-          const img = document.createElement("img");
-          img.src = image;
-          img.alt = "Profilbild";
-          img.style.width = "32px";
-          img.style.height = "32px";
-          img.style.borderRadius = "50%";
-          profileToggle.appendChild(img);
-        } else {
-          const initials = (name || "")
-            .split(" ")
-            .map(part => part.charAt(0).toUpperCase())
-            .join("")
-            .substring(0, 2);
-          profileToggle.textContent = initials || "--";
+    // Ladda användare
+    async function loadUserList() {
+      const container = document.getElementById("userList");
+      container.innerHTML = "<p>Laddar användare...</p>";
+      try {
+        const res = await fetch("/api/invites/users", { credentials: "include" });
+        const data = await res.json();
+        if (!data.success || !Array.isArray(data.users)) {
+          container.innerHTML = "<p>Kunde inte hämta användarlista.</p>";
+          return;
         }
-
-        document.getElementById("userEmail").textContent = email;
-      } else {
-        document.getElementById("profileToggle").textContent = "??";
-        document.getElementById("userEmail").textContent = "Ej inloggad";
+        if (data.users.length === 0) {
+          container.innerHTML = "<p>Inga användare hittades.</p>";
+          return;
+        }
+        const ul = document.createElement("ul");
+        ul.className = "user-ul";
+        data.users.forEach(u => {
+          const li = document.createElement("li");
+          li.className = "user-li";
+          li.innerHTML = `<span class="dot"></span><span>${u.name} (${u.email})</span><span class="role">${u.role === "admin" ? "Admin" : "Användare"}</span>`;
+          ul.appendChild(li);
+        });
+        container.innerHTML = "";
+        container.appendChild(ul);
+      } catch (err) {
+        console.error("Fel vid hämtning av användare:", err);
+        container.innerHTML = "<p>Ett fel uppstod.</p>";
       }
-    } catch (err) {
-      console.error("Fel vid hämtning av användarprofil:", err);
     }
-  }
+    document.addEventListener("DOMContentLoaded", loadUserList);
 
-  loadUserProfile();
-</script>
-<script>
-  async function loadLoginHistory() {
-    const container = document.querySelector('.login-history');
-
-    // Visa "laddar" säkert
-    container.textContent = "";
-    const loading = document.createElement("p");
-    loading.appendChild(document.createTextNode("Laddar inloggningar."));
-    container.appendChild(loading);
-
-    try {
-      const res = await fetch("/api/security/logins"); // justera om annan URL
-      const data = await res.json();
-
-      // Rensa container
-      container.textContent = "";
-
-      if (!data?.success || !Array.isArray(data.logins)) {
-        const p = document.createElement("p");
-        p.appendChild(document.createTextNode("Kunde inte ladda inloggningshistorik."));
-        container.appendChild(p);
-        return;
-      }
-
-      if (data.logins.length === 0) {
-        const p = document.createElement("p");
-        p.appendChild(document.createTextNode("Inga tidigare inloggningar hittades."));
-        container.appendChild(p);
-        return;
-      }
-
-      data.logins.forEach((login) => {
-        const row = document.createElement("div");
-        row.className = "login-row";
-
-        const fDate = document.createElement("div");
-        const fIp = document.createElement("div");
-        const fDev = document.createElement("div");
-
-        const strongDate = document.createElement("strong");
-        strongDate.appendChild(document.createTextNode("Datum:"));
-        const strongIp = document.createElement("strong");
-        strongIp.appendChild(document.createTextNode("IP:"));
-        const strongDev = document.createElement("strong");
-        strongDev.appendChild(document.createTextNode("Enhet:"));
-
-        // Säkra textvärden
-        const ts = login?.timestamp ? String(login.timestamp) : "";
-        const ip = login?.ip ? String(login.ip) : "";
-        const dev = login?.device ? String(login.device) : "Okänd";
-
-        fDate.append(strongDate, document.createTextNode(" " + ts));
-        fIp.append(strongIp, document.createTextNode(" " + ip));
-        fDev.append(strongDev, document.createTextNode(" " + dev));
-
-        row.append(fDate, fIp, fDev);
-        container.appendChild(row);
-      });
-
-    } catch (err) {
-      console.error("Fel vid inloggningshämtning:", err);
-      container.textContent = "";
-      const p = document.createElement("p");
-      p.appendChild(document.createTextNode("Något gick fel. Försök igen senare."));
-      container.appendChild(p);
+    // Admin: ladda historik (om du har ett skyddat API)
+    async function loadLoginHistory() {
+      const box = document.querySelector('.login-history');
+      if (!box) return;
+      try {
+        const res = await fetch("/api/security/logins", { credentials: "include" });
+        const data = await res.json();
+        if (!data?.success || !Array.isArray(data.logins)) return;
+        box.innerHTML = "";
+        data.logins.forEach(l => {
+          const row = document.createElement("div");
+          row.className = "login-row";
+          const ts = String(l.timestamp || "");
+          const ip = String(l.ip || "");
+          const dev = String(l.device || "Okänd");
+          row.innerHTML = `<div><strong>Datum:</strong> ${ts}</div><div><strong>IP:</strong> ${ip}</div><div><strong>Enhet:</strong> ${dev}</div>`;
+          box.appendChild(row);
+        });
+      } catch {}
     }
-  }
+    loadLoginHistory();
 
-  loadLoginHistory();
-</script>
-<script>
-  function showToast(message) {
-    const container = document.getElementById("toast-container");
-    const toast = document.createElement("div");
-    toast.className = "toast";
-    toast.textContent = message;
-
-    container.appendChild(toast);
-
-    setTimeout(() => {
-      toast.remove();
-    }, 3000); // måste matcha din CSS-animationstid
-  }
-</script>
-<script>
-  const menuBtn = document.getElementById('menuToggle');
-  const sidebar = document.querySelector('.sidebar');
-
-  menuBtn.addEventListener('click', () => {
-  const isActive = sidebar.classList.toggle('active');
-  document.body.classList.toggle('menu-open', isActive);
-});
-
-  // Stäng menyn om man klickar utanför på mobilen
-  window.addEventListener('click', (e) => {
-    const isClickInsideMenu = sidebar.contains(e.target);
-    const isClickOnToggle = menuBtn.contains(e.target);
-    const isMobile = window.innerWidth <= 768;
-
-    if (!isClickInsideMenu && !isClickOnToggle && isMobile) {
-      sidebar.classList.remove('active');
-    }
-  });
-
-  // Visa admin-länk om du är admin
-document.addEventListener("DOMContentLoaded", async () => {
-  try {
-    const res = await fetch("/api/profile/me");
-    const data = await res.json();
-
-    if (data.success && data.role === "admin") {
-      document.getElementById("admin-login-link").style.display = "block";
-    }
-  } catch (err) {
-    console.warn("Kunde inte hämta admin-status");
-  }
-})
-</script>
-
-<script>
-  async function loadUserList() {
-    const container = document.getElementById("userList");
-    container.innerHTML = "<p>Laddar användare...</p>";
-
-    try {
-      const res = await fetch("/api/invites/users", {
-        credentials: "include"
-      });
-
-      const data = await res.json();
-
-      if (!data.success || !Array.isArray(data.users)) {
-        container.innerHTML = "<p>Kunde inte hämta användarlista.</p>";
-        return;
-      }
-
-      if (data.users.length === 0) {
-        container.innerHTML = "<p>Inga användare hittades.</p>";
-        return;
-      }
-
-      // Bygg lista
-      container.innerHTML = "";
-      const ul = document.createElement("ul");
-
-      data.users.forEach(user => {
-        const li = document.createElement("li");
-        li.textContent = `${user.name} (${user.email}) – ${user.role === "admin" ? "Administratör" : "Användare"}`;
-        ul.appendChild(li);
-      });
-
-      container.appendChild(ul);
-    } catch (err) {
-      console.error("Fel vid hämtning av användare:", err);
-      container.innerHTML = "<p>Ett fel uppstod.</p>";
-    }
-  }
-
-  // Anropa direkt när sidan laddats
-  document.addEventListener("DOMContentLoaded", loadUserList);
-</script>
-
-<!-- Toast-container (dold tills något visas) -->
-<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
-<div class="modal-overlay" id="inviteModalOverlay">
-  <div class="modal" id="inviteModal">
-    <button class="close-modal" id="closeInviteModal">&times;</button>
-    <h3>Bjud in användare</h3>
-    <form id="inviteUserForm">
-      <label for="inviteName">Namn</label>
-      <input type="text" id="inviteName" required placeholder="Förnamn Efternamn" />
-
-      <label for="inviteEmail">E-postadress</label>
-      <input type="email" id="inviteEmail" required placeholder="anvandare@exempel.se" />
-
-      <button type="submit" class="black-button">Skicka inbjudan</button>
-    </form>
-  </div>
-</div>
-<script>
-  // MODAL: öppna/stäng
-  document.addEventListener("DOMContentLoaded", () => {
+    // Modal: inbjudan
     const openBtn = document.getElementById("openInviteModal");
     const modalOverlay = document.getElementById("inviteModalOverlay");
     const closeBtn = document.getElementById("closeInviteModal");
 
-    // Öppna modal
-    openBtn.addEventListener("click", () => {
-      modalOverlay.style.display = "flex";
-    });
+    openBtn.addEventListener("click", () => { modalOverlay.style.display = "flex"; });
+    closeBtn.addEventListener("click", () => { modalOverlay.style.display = "none"; });
+    window.addEventListener("click", (e) => { if (e.target === modalOverlay) modalOverlay.style.display = "none"; });
 
-    // Stäng modal med X
-    closeBtn.addEventListener("click", () => {
-      modalOverlay.style.display = "none";
-    });
-
-    // Klick utanför modalen stänger den
-    window.addEventListener("click", (e) => {
-      if (e.target === modalOverlay) {
-        modalOverlay.style.display = "none";
-      }
-    });
-  });
-</script>
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("inviteUserForm");
-    const modalOverlay = document.getElementById("inviteModalOverlay");
-
-    form.addEventListener("submit", async (e) => {
+    document.getElementById("inviteUserForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-
       const name = document.getElementById("inviteName").value.trim();
       const email = document.getElementById("inviteEmail").value.trim();
-
-      if (!name || !email) {
-        showToast("⚠️ Fyll i namn och e-post.");
-        return;
-      }
+      if (!name || !email) return showToast("⚠️ Fyll i namn och e-post.");
 
       try {
         const res = await fetch("/api/invites/send", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email }),
-          credentials: "include" // Viktigt för sessionshantering
+          credentials: "include"
         });
-
         const data = await res.json();
-
         if (data.success) {
           showToast("✅ Inbjudan skickad!");
-          form.reset();
+          e.target.reset();
           modalOverlay.style.display = "none";
-        } else {
-          showToast("❌ " + (data.message || "Fel vid inbjudan."));
-        }
+          loadUserList();
+        } else showToast("❌ " + (data.message || "Fel vid inbjudan."));
       } catch (err) {
-        console.error("Fel vid inbjudan:", err);
+        console.error(err);
         showToast("❌ Något gick fel.");
       }
     });
-  });
-</script>
-<script src="/js/logout.js"></script>
+  </script>
+
+  <!-- (valfritt) logout.js om du använder den globalt -->
+  <script src="/js/logout.js"></script>
 </body>
 </html>

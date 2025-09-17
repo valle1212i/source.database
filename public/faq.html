@@ -4,71 +4,203 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FAQ – Kundportal</title>
+
+  <!-- Ikoner -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <!-- Sidans CSS (lägg dina accordion-/chip-/kort-stilar i CSS/faq.css) -->
   <link rel="stylesheet" href="CSS/faq.css" />
 </head>
 <body>
 
-  <header class="header">
-    <div class="logo-container">
+  <!-- Hamburger (mobil) -->
+  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny" onclick="toggleSidebar()">☰</button>
+
+  <!-- SIDOPANEL – identisk struktur/klasser som övriga sidor -->
+  <div class="sidebar">
+    <div class="logo">
       <a href="customerportal.html">
-        <img src="Customerportalimage/Sesede.png" alt="Logotyp" />
+        <img src="images/logo.png" alt="Logotyp" class="logo-img"/>
       </a>
     </div>
-    <div class="menu-toggle" onclick="toggleMenu()">
-      <span></span><span></span><span></span>
-    </div>
-    <div class="menu-content" id="menuContent">
-        <a href="betalningar.html">💳 Betalningar</a>
-        <a href="kontakt.html">📞 Kontakt med oss</a>
-        <a href="rapporter.html">📊 Rapporter</a>
-        <a href="Fakturor.html">📄 Fakturor</a>
-        <a href="kunder.html">💬 Kunder</a>
-        <a href="analytics.html">💡Analyser</a>
-        <a href="kampanjer.html">📣 Kampanj</a>
-        <a href="inventarier.html">📦 Inventarier</a>
-        <a href="faq.html">🗨️  Support 24/7</a>
-        <a href="installningar.html">⚙️ Inställningar</a>
-    </div>
-  </header>
+    <ul class="nav-menu">
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+      <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+      <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+      <li><a href="betalningslank.html"><i class="fas fa-link"></i> Betalningslänk</a></li>
+      <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+      <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+      <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+      <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+      <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+      <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+    </ul>
 
-  <main class="faq-container">
-    <h1>❓ Vanliga frågor</h1>
-    <input type="text" id="faqSearch" placeholder="Sök i FAQ...">
+    <div class="help">
+      <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
+        <i class="fas fa-circle-question"></i> Hjälp / FAQ
+      </a>
+    </div>
+  </div>
 
-    <div class="faq-list">
-      <div class="faq-item">
-        <h3>Hur lägger jag till en ny kund?</h3>
-        <p>Gå till Kunder → Lägg till ny och fyll i formuläret.</p>
+  <!-- INNEHÅLL -->
+  <main class="main">
+    <h1 class="page-title"><i class="fas fa-circle-question"></i> Vanliga frågor</h1>
+    <p class="subtitle">Sök efter svar, filtrera på kategori eller kontakta oss om du inte hittar det du söker.</p>
+
+    <!-- Sök & filter -->
+    <div class="faq-controls card" role="region" aria-label="Sök och filter">
+      <div class="faq-search-wrap">
+        <i class="fas fa-magnifying-glass"></i>
+        <input type="text" id="faqSearch" placeholder="Sök i FAQ … (t.ex. faktura, språk, återbetalning)" aria-label="Sök i FAQ"/>
       </div>
-      <div class="faq-item">
-        <h3>Hur byter jag språk i portalen?</h3>
-        <p>Gå till Inställningar → Språkval.</p>
-      </div>
-      <div class="faq-item">
-        <h3>Hur fungerar Capture och Refund?</h3>
-        <p>Capture debiterar beloppet, Refund återbetalar kunden helt eller delvis.</p>
+      <div class="faq-chips" id="faqChips" role="tablist" aria-label="Filter kategorier">
+        <button class="chip active" data-filter="alla" role="tab" aria-selected="true">Alla</button>
+        <button class="chip" data-filter="konto" role="tab">Konto</button>
+        <button class="chip" data-filter="betalningar" role="tab">Betalningar</button>
+        <button class="chip" data-filter="fakturor" role="tab">Fakturor</button>
+        <button class="chip" data-filter="marknadsforing" role="tab">Marknadsföring</button>
+        <button class="chip" data-filter="teknik" role="tab">Teknik</button>
+        <button class="chip" data-filter="ovrigt" role="tab">Övrigt</button>
       </div>
     </div>
+
+    <!-- FAQ-lista -->
+    <section class="faq-list card" aria-label="Frågor och svar">
+      <!-- Post -->
+      <article class="faq-item" data-tags="konto ovrigt">
+        <button class="faq-q" aria-expanded="false">
+          <span>Hur byter jag språk i portalen?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-a" hidden>
+          <p>Gå till <strong>Inställningar → Språk</strong> och välj önskat språk. Dina val sparas direkt.</p>
+        </div>
+      </article>
+
+      <article class="faq-item" data-tags="kunder marknadsforing">
+        <button class="faq-q" aria-expanded="false">
+          <span>Hur lägger jag till en ny kund?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-a" hidden>
+          <p>Öppna <strong>Kunder</strong> och klicka på <em>Lägg till ny</em>. Fyll i formuläret och spara.</p>
+        </div>
+      </article>
+
+      <article class="faq-item" data-tags="betalningar fakturor">
+        <button class="faq-q" aria-expanded="false">
+          <span>Hur fungerar Capture och Refund?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-a" hidden>
+          <p><strong>Capture</strong> debiterar det reserverade beloppet. <strong>Refund</strong> återbetalar kunden helt eller delvis. Du hittar båda i <em>Betalningar</em> → välj transaktion → åtgärd.</p>
+        </div>
+      </article>
+
+      <article class="faq-item" data-tags="betalningar">
+        <button class="faq-q" aria-expanded="false">
+          <span>Kan jag skapa en delbar betalningslänk?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-a" hidden>
+          <p>Ja. Gå till <strong>Betalningslänk</strong>, fyll i belopp/beskrivning och klicka <em>Skapa länk</em>. Dela den via e-post eller kopiera URL:en.</p>
+        </div>
+      </article>
+
+      <article class="faq-item" data-tags="fakturor">
+        <button class="faq-q" aria-expanded="false">
+          <span>Hur laddar jag ner en faktura?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-a" hidden>
+          <p>Öppna <strong>Fakturor</strong>, välj din faktura och klicka på <em>Ladda ned PDF</em>.</p>
+        </div>
+      </article>
+
+      <article class="faq-item" data-tags="teknik ovrigt">
+        <button class="faq-q" aria-expanded="false">
+          <span>Jag får felmeddelande vid inloggning – vad gör jag?</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="faq-a" hidden>
+          <p>Testa att rensa cookies/cache och logga in igen. Om problemet kvarstår, kontakta supporten via <a href="kontakt.html">Kontakt</a> så hjälper vi dig.</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- CTA-kort -->
+    <section class="card support-cta" aria-label="Behöver du mer hjälp?">
+      <div class="support-cta-inner">
+        <div class="support-cta-text">
+          <h3><i class="fas fa-headset"></i> Behöver du mer hjälp?</h3>
+          <p>Vårt team svarar vanligtvis inom några timmar. Skicka ärende eller boka ett samtal.</p>
+        </div>
+        <div class="support-cta-actions">
+          <a class="btn brand" href="kontakt.html"><i class="fas fa-paper-plane"></i> Kontakta support</a>
+          <a class="btn" href="customerportal.html"><i class="fas fa-arrow-left"></i> Tillbaka till översikt</a>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <div style="position: fixed; bottom: 20px; right: 20px;">
-    <a href="https://chat.openai.com/" target="_blank" class="chat-btn">💬 Fråga vår AI</a>
-  </div>
-  
-
+  <!-- JS -->
   <script>
-    function toggleMenu() {
-      document.getElementById("menuContent").classList.toggle("show");
+    // Mobilmeny
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('active');
+      document.body.classList.toggle('menu-open');
     }
 
-    document.getElementById("faqSearch").addEventListener("input", function () {
-      const value = this.value.toLowerCase();
-      const items = document.querySelectorAll(".faq-item");
-
-      items.forEach(item => {
-        const question = item.querySelector("h3").textContent.toLowerCase();
-        item.style.display = question.includes(value) ? "block" : "none";
+    // Accordion
+    const items = document.querySelectorAll('.faq-item');
+    items.forEach(it => {
+      const btn = it.querySelector('.faq-q');
+      const panel = it.querySelector('.faq-a');
+      btn.addEventListener('click', () => {
+        const expanded = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!expanded));
+        if (expanded) {
+          panel.hidden = true;
+        } else {
+          // stäng andra öppna
+          items.forEach(other => {
+            if (other !== it) {
+              other.querySelector('.faq-q').setAttribute('aria-expanded','false');
+              other.querySelector('.faq-a').hidden = true;
+            }
+          });
+          panel.hidden = false;
+        }
       });
+    });
+
+    // Sök + filter
+    const search = document.getElementById('faqSearch');
+    const chips = document.getElementById('faqChips');
+    let activeFilter = 'alla';
+
+    function applyFilter() {
+      const q = (search.value || '').toLowerCase();
+      document.querySelectorAll('.faq-item').forEach(it => {
+        const tags = (it.getAttribute('data-tags') || '').toLowerCase();
+        const text = it.querySelector('.faq-q span').textContent.toLowerCase();
+        const matchText = !q || text.includes(q);
+        const matchTag = activeFilter === 'alla' || tags.includes(activeFilter);
+        it.style.display = (matchText && matchTag) ? '' : 'none';
+      });
+    }
+
+    search.addEventListener('input', applyFilter);
+
+    chips.addEventListener('click', (e) => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      activeFilter = chip.getAttribute('data-filter') || 'alla';
+      applyFilter();
     });
   </script>
 </body>

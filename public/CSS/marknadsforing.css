@@ -1,4 +1,4 @@
-/* === Reset och grundstil === */
+/* Reset och grundstil */
 * {
   margin: 0;
   padding: 0;
@@ -8,11 +8,11 @@
 body {
   font-family: 'Segoe UI', sans-serif;
   background-color: #f4f5f7;
-  color: #333;
   display: flex;
+  color: #333;
 }
 
-/* === Sidopanel === */
+/* Sidopanel */
 .sidebar {
   width: 240px;
   background-color: #111827;
@@ -24,7 +24,6 @@ body {
   left: 0;
   display: flex;
   flex-direction: column;
-  z-index: 2500;
 }
 
 .logo {
@@ -34,10 +33,12 @@ body {
 
 .logo-img {
   max-width: 120px;
-  margin-top: -35px;
+  height: auto;
+  margin-top: -35px; /* Justerar höjden uppåt */
 }
 
-/* === Meny === */
+
+/* Navigationsmeny */
 .nav-menu {
   list-style: none;
   flex-grow: 1;
@@ -45,10 +46,12 @@ body {
   margin: 0;
 }
 
+/* Om du använder <li><a></a></li> */
 .nav-menu li {
   list-style: none;
 }
 
+/* Styling för länkar i menyn */
 .nav-menu a {
   color: white;
   text-decoration: none;
@@ -61,25 +64,26 @@ body {
   transition: all 0.3s ease;
 }
 
+/* Hover och aktiv */
 .nav-menu a:hover,
 .nav-menu .active a {
   background-color: #1f2937;
   border-left: 4px solid #3b82f6;
+  color: white;
   font-weight: bold;
 }
 
-/* === Hjälp längst ner === */
-.help {
-  margin-top: auto;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #9ca3af;
-  cursor: pointer;
-  padding-left: 10px;
-  padding-top: 20px;
+/* Hjälp-länken längst ner */
+
+.help{
+  margin-top:auto;
+  font-size:16px;
+  display:flex; align-items:center; gap:10px;
+  color:var(--sidebar-muted);
+  cursor:pointer;
+  padding-left:10px; padding-top:20px;
 }
+
 
 /* === Huvudinnehåll === */
 .main {

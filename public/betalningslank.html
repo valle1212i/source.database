@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Betalningar</title>
+
+  <!-- Din befintliga meny/CSS -->
+  <link rel="stylesheet" href="CSS/betalninglank.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+ 
+
+  <!-- HAMBURGER -->
+  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny" onclick="toggleSidebar()">☰</button>
+
+  <!-- SIDOPANEL (DIN MENY) -->
+  <div class="sidebar">
+    <div class="logo">
+      <a href="customerportal.html">
+        <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+      </a>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="betalningar.html"><i class="fas fa-home"></i> Betalningar</a></li>
+      <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+      <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+      <li class="active"><a href="betalningslank.html"><i class="fas fa-link"></i> Betalningslänk</a></li>
+      <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+      <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+      <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+      <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+      <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+      <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+    </ul>
+   <div class="help">
+      <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
+        <i class="fas fa-circle-question"></i> Hjälp / FAQ
+      </a>
+    </div>
+  </div>
+
+  <!-- INNEHÅLL -->
+  <main class="main">
+    <h1 class="title">💳 Betalningslänk</h1>
+    <p class="subtitle">Skapa en betallänk som du kan dela. Senare kan “Betala nu” kopplas till en riktig checkout-session (Stripe/Swish/Klarna).</p>
+
+    <div class="grid">
+      <!-- Skapa betalning -->
+      <section class="card">
+        <h3>Skapa betallänk</h3>
+
+        <div class="row">
+          <div class="col">
+            <label for="amount">Belopp (SEK)</label>
+            <input id="amount" type="number" min="1" step="1" placeholder="Ex: 2495" />
+          </div>
+          <div class="col">
+            <label for="reference">Referens (valfritt)</label>
+            <input id="reference" type="text" placeholder="Ex: Offert #2025-014" />
+          </div>
+        </div>
+
+        <label for="description">Beskrivning (visas för kunden)</label>
+        <textarea id="description" placeholder="Ex: Marknadsföringspaket – Q2 kampanj"></textarea>
+
+        <div class="row">
+          <div class="col">
+            <label for="receiptEmail">Kvitto till (e-post)</label>
+            <input id="receiptEmail" type="email" placeholder="kund@exempel.se" />
+          </div>
+          <div class="col">
+            <label for="coupon">Kupongkod (valfritt)</label>
+            <input id="coupon" type="text" placeholder="Ex: SPRING15" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn brand" id="buildLinkBtn"><i class="fas fa-link"></i> Skapa betallänk</button>
+          <button class="btn ghost" id="copyBtn" disabled><i class="fas fa-copy"></i> Kopiera länk</button>
+          <a class="btn ok" id="payNowBtn" href="#" target="_blank" rel="noopener" aria-disabled="true">Betala nu</a>
+          <a class="btn" id="emailBtn" href="#" aria-disabled="true"><i class="fas fa-envelope"></i> Maila länk</a>
+        </div>
+
+        <div class="note">När backend är klart kan “Betala nu” anropa <code>/api/pay/checkout</code> och navigera till en riktig <code>checkout_url</code>.</div>
+      </section>
+
+      <!-- Länk/preview -->
+      <section class="card">
+        <h3>Förhandslänk</h3>
+        <div id="linkPreview" class="preview">Ingen länk skapad ännu.</div>
+        <div class="note">Detta är en lokal förhandslänk (dummy). Byt lätt mot din riktiga betalningssida senare.</div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // === Menytoggle (mobil) ===
+    function toggleSidebar() {
+      document.querySelector('.sidebar')?.classList.toggle('open');
+      document.body.classList.toggle('menu-open');
+    }
+
+    // === Förifyll e-post från profil (om inloggad) ===
+    (async () => {
+      try {
+        const r = await fetch('/api/profile/me', { credentials: 'include' });
+        if (r.ok) {
+          const j = await r.json();
+          if (j?.email) document.getElementById('receiptEmail').value = j.email;
+        }
+      } catch {}
+    })();
+
+    // === CSRF-token (för framtida riktig checkout) ===
+    let csrfTokenPromise = fetch('/csrf-token', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d?.csrfToken || null)
+      .catch(() => null);
+
+    // === Dummy-länkbyggare ===
+    const buildLinkBtn = document.getElementById('buildLinkBtn');
+    const linkPreview = document.getElementById('linkPreview');
+    const copyBtn = document.getElementById('copyBtn');
+    const payNowBtn = document.getElementById('payNowBtn');
+    const emailBtn = document.getElementById('emailBtn');
+
+    function buildLocalPaymentUrl() {
+      const amt = Math.max(0, parseInt(document.getElementById('amount').value || '0', 10));
+      if (!amt) { alert('Ange ett belopp i SEK.'); return null; }
+
+      const params = new URLSearchParams();
+      params.set('amount_sek', String(amt));
+      const desc = document.getElementById('description').value.trim();
+      const ref  = document.getElementById('reference').value.trim();
+      const mail = document.getElementById('receiptEmail').value.trim();
+      const coup = document.getElementById('coupon').value.trim();
+      if (desc) params.set('description', desc);
+      if (ref)  params.set('reference', ref);
+      if (mail) params.set('receipt_email', mail);
+      if (coup) params.set('coupon', coup);
+
+      // Lokal “betalningssida” – byt mot din riktiga checkout senare
+      const base = `${location.origin}/pay/checkout-demo`;
+      return `${base}?${params.toString()}`;
+    }
+
+    buildLinkBtn.addEventListener('click', () => {
+      const url = buildLocalPaymentUrl();
+      if (!url) return;
+
+      linkPreview.textContent = url;
+      copyBtn.disabled = false;
+
+      payNowBtn.href = url;
+      payNowBtn.setAttribute('aria-disabled', 'false');
+
+      emailBtn.href = `mailto:?subject=Betalningslänk&body=${encodeURIComponent(url)}`;
+      emailBtn.setAttribute('aria-disabled', 'false');
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const txt = linkPreview.textContent.trim();
+      if (!txt || txt.startsWith('Ingen länk')) return;
+      try {
+        await navigator.clipboard.writeText(txt);
+        copyBtn.textContent = 'Kopierad!';
+        setTimeout(()=>copyBtn.textContent='Kopiera länk',1500);
+      } catch {
+        alert('Kunde inte kopiera länken.');
+      }
+    });
+
+    // === (Valfritt) Koppla riktig checkout senare ===
+    async function createCheckoutSession() {
+      const amt = Math.max(0, parseInt(document.getElementById('amount').value || '0', 10));
+      if (!amt) { alert('Ange ett belopp i SEK.'); return; }
+
+      const payload = {
+        currency: 'SEK',
+        amount: amt,
+        description: document.getElementById('description').value.trim() || undefined,
+        reference: document.getElementById('reference').value.trim() || undefined,
+        receipt_email: document.getElementById('receiptEmail').value.trim() || undefined,
+        coupon: document.getElementById('coupon').value.trim() || undefined,
+        success_url: `${location.origin}/betalningar.html?status=success`,
+        cancel_url:  `${location.origin}/betalningar.html?status=cancel`
+      };
+
+      try {
+        const token = await csrfTokenPromise;
+        const r = await fetch('/api/pay/checkout', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', ...(token ? { 'x-csrf-token': token } : {}) },
+          body: JSON.stringify(payload)
+        });
+        if (!r.ok) throw new Error('Checkout misslyckades');
+        const j = await r.json();
+        if (j?.url) window.location.href = j.url;
+        else alert('Kunde inte skapa checkout-länk.');
+      } catch (e) {
+        console.error(e);
+        alert('Kunde inte skapa betalning just nu.');
+      }
+    }
+
+    // När backend är klar, avkommentera detta för att använda riktig checkout:
+    // payNowBtn.addEventListener('click', (e) => {
+    //   e.preventDefault();
+    //   createCheckoutSession();
+    // });
+  </script>
+</body>
+</html>

@@ -74,16 +74,14 @@ body {
 }
 
 /* Hjälp-länken längst ner */
-.help {
-  margin-top: auto;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #9ca3af;
-  cursor: pointer;
-  padding-left: 10px;
-  padding-top: 20px;
+
+.help{
+  margin-top:auto;
+  font-size:16px;
+  display:flex; align-items:center; gap:10px;
+  color:var(--sidebar-muted);
+  cursor:pointer;
+  padding-left:10px; padding-top:20px;
 }
 
 /* ====== MAIN CONTENT ====== */
