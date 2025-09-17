@@ -28,24 +28,24 @@
     <a href="marknadsföring.html" class="back-link">&larr; Tillbaka</a>
 
     <form id="stepForm">
-  <div class="progress-text" id="progressText">Steg 1 av 4</div>
-  <div class="progress-container">
-    <div class="progress-bar" id="progressBar"></div>
-  </div>
+      <div class="progress-text" id="progressText">Steg 1 av 4</div>
+      <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
 
+      <!-- Steg 1 -->
       <div class="form-step active">
-    <h2>Vad är målet med kampanjen?</h2>
-    <div class="options">
-      <label><input type="radio" name="objective" value="awareness" required /> Varumärkesmedvetenhet</label>
-      <label><input type="radio" name="objective" value="traffic" /> Webbplatstrafik</label>
-      <label><input type="radio" name="objective" value="conversions" /> Konverteringar</label>
-      <label><input type="radio" name="objective" value="followers" /> Fler följare</label>
-    </div>
-    <div class="form-buttons">
-      <button type="button" onclick="nextStep()">Nästa</button>
-    </div>
-  </div>
-
+        <h2>Vad är målet med kampanjen?</h2>
+        <div class="options">
+          <label><input type="radio" name="objective" value="awareness" required /> Varumärkesmedvetenhet</label>
+          <label><input type="radio" name="objective" value="traffic" /> Webbplatstrafik</label>
+          <label><input type="radio" name="objective" value="conversions" /> Konverteringar</label>
+          <label><input type="radio" name="objective" value="followers" /> Fler följare</label>
+        </div>
+        <div class="form-buttons">
+          <button type="button" onclick="nextStep()">Nästa</button>
+        </div>
+      </div>
 
       <!-- Steg 2 -->
       <div class="form-step">
@@ -77,6 +77,7 @@
           <option value="humor">Humoristisk</option>
           <option value="storytelling">Berättande/storytelling</option>
         </select>
+
         <label for="hashtag">Föreslagna hashtags (valfritt):</label>
         <input type="text" name="hashtag" placeholder="#dinhashtag"/>
 
@@ -95,7 +96,7 @@
         </div>
       </div>
 
-     <!-- Tack -->
+      <!-- Tack -->
       <div class="form-step" id="thankYouStep">
         <h2>Tack för din förfrågan! 🎉</h2>
         <p style="margin-top: 16px; font-size: 16px; line-height: 1.6; text-align: center;">
@@ -108,84 +109,115 @@
   </div>
 
   <script>
-document.addEventListener("DOMContentLoaded", () => {
-  let currentStep = 0;
-  const steps = document.querySelectorAll(".form-step");
+  document.addEventListener("DOMContentLoaded", () => {
+    let currentStep = 0;
+    const steps = document.querySelectorAll(".form-step");
 
-  function showStep(index, direction) {
-    steps[currentStep].classList.remove("active", "slide-up", "slide-down");
-    if (direction === "next") {
-      steps[index].classList.add("slide-up");
-    } else {
-      steps[index].classList.add("slide-down");
+    // CSRF-token med cookies
+    let csrfTokenPromise = fetch("/csrf-token", { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d?.csrfToken || null)
+      .catch(() => null);
+
+    function showStep(index, direction) {
+      steps[currentStep].classList.remove("active", "slide-up", "slide-down");
+      if (direction === "next") steps[index].classList.add("slide-up");
+      else steps[index].classList.add("slide-down");
+      steps[index].classList.add("active");
+      currentStep = index;
+      updateProgressBar();
     }
-    steps[index].classList.add("active");
-    currentStep = index;
-    updateProgressBar();
-  }
 
-  function nextStep() {
-    const current = steps[currentStep];
-    const inputs = current.querySelectorAll("input, textarea, select");
+    function nextStep() {
+      const current = steps[currentStep];
+      const inputs = current.querySelectorAll("input, textarea, select");
 
-    for (const input of inputs) {
-      if (input.hasAttribute("required") && !input.value.trim() && !input.checked) {
-        alert("Vänligen fyll i fältet innan du går vidare.");
-        return;
+      // Validera radio-grupper och required inputs
+      const radiosByName = new Map();
+      inputs.forEach(i => { if (i.type === "radio") radiosByName.set(i.name, true); });
+
+      for (const [name] of radiosByName) {
+        const group = current.querySelectorAll(`input[type="radio"][name="${name}"]`);
+        if (![...group].some(i => i.checked)) {
+          alert("Välj ett alternativ innan du går vidare.");
+          return;
+        }
       }
+      for (const input of inputs) {
+        if (input.tagName === "TEXTAREA" && input.hasAttribute("required") && input.value.trim() === "") {
+          alert("Fyll i ett svar innan du går vidare.");
+          return;
+        }
+      }
+
+      if (currentStep < steps.length - 2) showStep(currentStep + 1, "next");
     }
 
-    if (currentStep < steps.length - 2) {
-      showStep(currentStep + 1, "next");
+    function prevStep() {
+      if (currentStep > 0) showStep(currentStep - 1, "prev");
     }
-  }
 
-  function prevStep() {
-    if (currentStep > 0) {
-      showStep(currentStep - 1, "prev");
+    function updateProgressBar() {
+      const total = steps.length - 1; // sista = tack
+      const percent = Math.min((currentStep / total) * 100, 100);
+      document.getElementById("progressBar").style.width = percent + "%";
+      document.getElementById("progressText").innerText = `Steg ${Math.min(currentStep + 1, total)} av ${total}`;
     }
-  }
 
-  function updateProgressBar() {
-    const total = steps.length - 1;
-    const percent = (currentStep / total) * 100;
-    document.getElementById("progressBar").style.width = percent + "%";
-    document.getElementById("progressText").innerText = `Steg ${currentStep + 1} av ${total}`;
-  }
+    // 🟢 Skicka till servern
+    document.getElementById("stepForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
 
-  // 🟢 Skicka till servern
-  document.getElementById("stepForm").addEventListener("submit", function (e) {
-    e.preventDefault();
+      const data = Object.fromEntries(new FormData(this).entries());
 
-    const data = Object.fromEntries(new FormData(this).entries());
+      // Mappa till backend/admin-format
+      const payload = {
+        marketing: {
+          tiktokAds: {
+            goals: data.objective || "",          // admin-HTML använder ".goals"
+            objective: data.objective || "",
+            target: data.target || "",
+            message: data.message || "",
+            style: data.style || "",
+            hashtag: data.hashtag || "",
+            cta: data.cta || "",
+            updatedAt: new Date().toISOString()
+          }
+        }
+      };
 
-    fetch("/api/ads/tiktok", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    })
-    .then(res => res.ok ? res.json() : Promise.reject("Serverfel"))
-    .then(() => {
-      showStep(currentStep + 1, "next"); // visa tack-sidan
-    })
-    .catch(err => {
-      alert("❌ Kunde inte skicka formuläret. Försök igen.");
-      console.error(err);
+      try {
+        const token = await csrfTokenPromise;
+        const res = await fetch("/api/customers/marketing/tiktok", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { "x-csrf-token": token } : {})
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          let msg = `Serverfel ${res.status}`;
+          try {
+            const j = await res.json();
+            if (j?.message || j?.error) msg = j.message || j.error;
+          } catch {}
+          throw new Error(msg);
+        }
+
+        showStep(currentStep + 1, "next"); // visa tack-sidan
+      } catch (err) {
+        alert("❌ Kunde inte skicka formuläret. " + (err?.message || "Försök igen."));
+        console.error(err);
+      }
     });
+
+    window.nextStep = nextStep;
+    window.prevStep = prevStep;
+    updateProgressBar();
   });
-
-  // CSP-härdning: ta bort inline onclick och bind säkert
-document.querySelectorAll('button[onclick="nextStep()"]').forEach(btn => {
-  btn.removeAttribute('onclick');
-  btn.addEventListener('click', nextStep);
-});
-document.querySelectorAll('button[onclick="prevStep()"]').forEach(btn => {
-  btn.removeAttribute('onclick');
-  btn.addEventListener('click', prevStep);
-});
-
-  updateProgressBar();
-});
-</script>
+  </script>
 </body>
 </html>

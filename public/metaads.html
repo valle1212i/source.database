@@ -9,122 +9,120 @@
 </head>
 <body>
   <div class="sidebar">
-  <div class="logo">
-    <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+    <div class="logo">
+      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+    </div>
+    <ul class="nav-menu">
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="googleads.html"><i class="fab fa-google"></i> Google Ads</a></li>
+      <li class="active"><a href="metaads.html"><i class="fab fa-facebook"></i> Meta Ads</a></li>
+      <li><a href="tiktokads.html"><i class="fab fa-tiktok"></i> TikTok Ads</a></li>
+      <li><a href="linkedin.html"><i class="fab fa-linkedin"></i> Linkedin Ads</a></li>
+      <li><a href="aimarknadsstudio.html"><i class="fas fa-magic"></i> AI Studio</a></li>
+      <li><a href="radgivning.html"><i class="fas fa-headset"></i> Rådgivning</a></li>
+    </ul>
+    <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
   </div>
-  <ul class="nav-menu">
-    <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
-    <li><a href="googleads.html"><i class="fab fa-google"></i> Google Ads</a></li>
-    <li class="active"><a href="metaads.html"><i class="fab fa-facebook"></i> Meta Ads</a></li>
-    <li><a href="tiktokads.html"><i class="fab fa-tiktok"></i> TikTok Ads</a></li>
-    <li><a href="linkedin.html"><i class="fab fa-linkedin"></i> Linkedin Ads</a></li>
-    <li><a href="aimarknadsstudio.html"><i class="fas fa-magic"></i> AI Studio</a></li>
-    <li><a href="radgivning.html"><i class="fas fa-headset"></i> Rådgivning</a></li>
-  </ul>
-  <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
-</div>
-
 
   <div class="main-content">
-  <a href="marknadsföring.html" class="back-link">← Tillbaka</a>
+    <a href="marknadsföring.html" class="back-link">← Tillbaka</a>
 
-  <form id="stepForm">
-    <div class="progress-text" id="progressText">Steg 1 av 7</div>
-    <div class="progress-container">
-      <div class="progress-bar" id="progressBar"></div>
-    </div>
+    <form id="stepForm">
+      <div class="progress-text" id="progressText">Steg 1 av 7</div>
+      <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
 
-  <!-- STEG 1 -->
-<div class="form-step active">
-  <h2>1. Vilken typ av kampanj vill du skapa?</h2>
-  <div class="options">
-    <label><input type="radio" name="q1" value="Räckvidd"> Räckvidd</label>
-    <label><input type="radio" name="q1" value="Engagemang"> Engagemang</label>
-    <label><input type="radio" name="q1" value="Konverteringar"> Konverteringar</label>
-  </div>
-  <div class="form-buttons">
-    <button type="button" onclick="nextStep()">Nästa</button>
-  </div>
-</div>
+      <!-- STEG 1 -->
+      <div class="form-step active">
+        <h2>1. Vilken typ av kampanj vill du skapa?</h2>
+        <div class="options">
+          <label><input type="radio" name="q1" value="Räckvidd" required> Räckvidd</label>
+          <label><input type="radio" name="q1" value="Engagemang"> Engagemang</label>
+          <label><input type="radio" name="q1" value="Konverteringar"> Konverteringar</label>
+        </div>
+        <div class="form-buttons">
+          <button type="button" onclick="nextStep()">Nästa</button>
+        </div>
+      </div>
 
-<!-- STEG 2 -->
-<div class="form-step">
-  <h2>2. Vilken är din målgrupp?</h2>
-  <div class="options">
-    <label><input type="radio" name="q2" value="B2B"> B2B</label>
-    <label><input type="radio" name="q2" value="B2C"> B2C</label>
-    <label><input type="radio" name="q2" value="Lokalt"> Lokalt</label>
-  </div>
-  <div class="form-buttons">
-    <button type="button" onclick="prevStep()">Föregående</button>
-    <button type="button" onclick="nextStep()">Nästa</button>
-  </div>
-</div>
+      <!-- STEG 2 -->
+      <div class="form-step">
+        <h2>2. Vilken är din målgrupp?</h2>
+        <div class="options">
+          <label><input type="radio" name="q2" value="B2B" required> B2B</label>
+          <label><input type="radio" name="q2" value="B2C"> B2C</label>
+          <label><input type="radio" name="q2" value="Lokalt"> Lokalt</label>
+        </div>
+        <div class="form-buttons">
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
+        </div>
+      </div>
 
-<!-- STEG 3 -->
-<div class="form-step">
-  <h2>3. Vad är ditt huvudmål?</h2>
-  <div class="options">
-    <label><input type="radio" name="huvudmal" value="Webbplatsbesök"> Webbplatsbesök</label>
-    <label><input type="radio" name="huvudmal" value="Meddelanden"> Meddelanden</label>
-    <label><input type="radio" name="huvudmal" value="Appinstallationer"> Appinstallationer</label>
-  </div>
-  <div class="form-buttons">
-    <button type="button" onclick="prevStep()">Föregående</button>
-    <button type="button" onclick="nextStep()">Nästa</button>
-  </div>
-</div>
+      <!-- STEG 3 -->
+      <div class="form-step">
+        <h2>3. Vad är ditt huvudmål?</h2>
+        <div class="options">
+          <label><input type="radio" name="huvudmal" value="Webbplatsbesök" required> Webbplatsbesök</label>
+          <label><input type="radio" name="huvudmal" value="Meddelanden"> Meddelanden</label>
+          <label><input type="radio" name="huvudmal" value="Appinstallationer"> Appinstallationer</label>
+        </div>
+        <div class="form-buttons">
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
+        </div>
+      </div>
 
-<!-- STEG 4 -->
-<div class="form-step">
-  <h2>4. Vilken typ av media vill du annonsera med?</h2>
-  <div class="options">
-    <label><input type="radio" name="media" value="Bild"> Bild</label>
-    <label><input type="radio" name="media" value="Video"> Video</label>
-    <label><input type="radio" name="media" value="Karusell"> Karusell</label>
-  </div>
-  <div class="form-buttons">
-    <button type="button" onclick="prevStep()">Föregående</button>
-    <button type="button" onclick="nextStep()">Nästa</button>
-  </div>
-</div>
+      <!-- STEG 4 -->
+      <div class="form-step">
+        <h2>4. Vilken typ av media vill du annonsera med?</h2>
+        <div class="options">
+          <label><input type="radio" name="media" value="Bild" required> Bild</label>
+          <label><input type="radio" name="media" value="Video"> Video</label>
+          <label><input type="radio" name="media" value="Karusell"> Karusell</label>
+        </div>
+        <div class="form-buttons">
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
+        </div>
+      </div>
 
-<!-- STEG 5 -->
-<div class="form-step">
-  <h2>5. Vad är din budgetnivå?</h2>
-  <div class="options">
-    <label><input type="radio" name="budget" value="Låg"> Låg</label>
-    <label><input type="radio" name="budget" value="Medel"> Medel</label>
-    <label><input type="radio" name="budget" value="Hög"> Hög</label>
-  </div>
-  <div class="form-buttons">
-    <button type="button" onclick="prevStep()">Föregående</button>
-    <button type="button" onclick="nextStep()">Nästa</button>
-  </div>
-</div>
+      <!-- STEG 5 -->
+      <div class="form-step">
+        <h2>5. Vad är din budgetnivå?</h2>
+        <div class="options">
+          <label><input type="radio" name="budget" value="Låg" required> Låg</label>
+          <label><input type="radio" name="budget" value="Medel"> Medel</label>
+          <label><input type="radio" name="budget" value="Hög"> Hög</label>
+        </div>
+        <div class="form-buttons">
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
+        </div>
+      </div>
 
-<!-- STEG 6 -->
-<div class="form-step">
-  <h2>6. Beskriv kort din verksamhet:</h2>
-  <textarea name="verksamhet" required placeholder="T.ex. Vi säljer ekologiska hudvårdsprodukter för känslig hy."></textarea>
-  <div class="form-buttons">
-    <button type="button" onclick="prevStep()">Föregående</button>
-    <button type="button" onclick="nextStep()">Nästa</button>
-  </div>
-</div>
+      <!-- STEG 6 -->
+      <div class="form-step">
+        <h2>6. Beskriv kort din verksamhet:</h2>
+        <textarea name="verksamhet" required placeholder="T.ex. Vi säljer ekologiska hudvårdsprodukter för känslig hy."></textarea>
+        <div class="form-buttons">
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
+        </div>
+      </div>
 
-<!-- STEG 7 -->
-<div class="form-step">
-  <h2>7. Vad vill du att AI:n ska förmedla i din annons?</h2>
-  <textarea name="budskap" required placeholder="T.ex. Visa att vi är ett hållbart alternativ med snabb leverans."></textarea>
-  <div class="form-buttons">
-    <button type="button" onclick="prevStep()">Föregående</button>
-    <button type="submit">Skicka in</button>
-  </div>
-</div>
+      <!-- STEG 7 -->
+      <div class="form-step">
+        <h2>7. Vad vill du att AI:n ska förmedla i din annons?</h2>
+        <textarea name="budskap" required placeholder="T.ex. Visa att vi är ett hållbart alternativ med snabb leverans."></textarea>
+        <div class="form-buttons">
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="submit">Skicka in</button>
+        </div>
+      </div>
 
-
-     <!-- Tack -->
+      <!-- TACK -->
       <div class="form-step" id="thankYouStep">
         <h2>Tack för din förfrågan! 🎉</h2>
         <p style="margin-top: 16px; font-size: 16px; line-height: 1.6; text-align: center;">
@@ -140,6 +138,19 @@
     document.addEventListener("DOMContentLoaded", () => {
       let currentStep = 0;
       const steps = document.querySelectorAll(".form-step");
+
+      // CSRF-token (med cookies)
+      let csrfTokenPromise = fetch("/csrf-token", { credentials: "include" })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => d?.csrfToken || null)
+        .catch(() => null);
+
+      function updateProgressBar() {
+        const total = steps.length - 1; // sista steget är tack
+        const percent = Math.min((currentStep / total) * 100, 100);
+        document.getElementById("progressBar").style.width = percent + "%";
+        document.getElementById("progressText").innerText = `Steg ${Math.min(currentStep + 1, total)} av ${total}`;
+      }
 
       function nextStep() {
         const current = steps[currentStep];
@@ -166,51 +177,75 @@
           updateProgressBar();
         }
       }
-function prevStep() {
-  if (currentStep > 0) {
-    steps[currentStep].classList.remove("active");
-    currentStep--;
-    steps[currentStep].classList.add("active");
-    updateProgressBar();
-  }
-}
-      document.getElementById("stepForm").addEventListener("submit", function (e) {
+
+      function prevStep() {
+        if (currentStep > 0) {
+          steps[currentStep].classList.remove("active");
+          currentStep--;
+          steps[currentStep].classList.add("active");
+          updateProgressBar();
+        }
+      }
+      window.prevStep = prevStep;
+      window.nextStep = nextStep;
+
+      document.getElementById("stepForm").addEventListener("submit", async function (e) {
         e.preventDefault();
+
         const data = Object.fromEntries(new FormData(this).entries());
 
-        fetch("/api/ads/meta", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        })
-        .then(res => res.ok ? res.json() : Promise.reject("Fel vid inskickning"))
-        .then(() => {
+        // Mappa till backend/admin-format
+        const payload = {
+          marketing: {
+            metaAds: {
+              goals: data.huvudmal || data.q1 || "", // admin-HTML tittar på ".goals"
+              campaignType: data.q1 || "",
+              audience: data.q2 || "",
+              objective: data.huvudmal || "",
+              media: data.media || "",
+              budget: data.budget || "",
+              businessDesc: data.verksamhet || "",
+              message: data.budskap || "",
+              updatedAt: new Date().toISOString()
+            }
+          }
+        };
+
+        try {
+          const token = await csrfTokenPromise;
+          const res = await fetch("/api/customers/marketing/meta", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { "x-csrf-token": token } : {})
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            let msg = `Serverfel ${res.status}`;
+            try {
+              const j = await res.json();
+              if (j?.message || j?.error) msg = j.message || j.error;
+            } catch {}
+            throw new Error(msg);
+          }
+
+          // Visa tack
           steps[currentStep].classList.remove("active");
           currentStep++;
-          steps[currentStep].classList.add("active");
-        })
-        .catch(err => {
-          alert("Något gick fel. Försök igen.");
-          console.error(err);
-        });
-        // ⬇️ CSP-härdning: ta bort inline onclick och bind säkert
-document.querySelectorAll('button[onclick="nextStep()"]').forEach(btn => {
-  btn.removeAttribute('onclick');
-  btn.addEventListener('click', nextStep);
-});
-document.querySelectorAll('button[onclick="prevStep()"]').forEach(btn => {
-  btn.removeAttribute('onclick');
-  btn.addEventListener('click', prevStep);
-});
+          if (steps[currentStep]) {
+            steps[currentStep].classList.add("active");
+            updateProgressBar();
+          }
+        } catch (err) {
+          console.error("Fel vid inskickning:", err);
+          alert("❌ Kunde inte skicka in formuläret. " + (err?.message || ""));
+        }
       });
 
-      function updateProgressBar() {
-  const total = steps.length - 1; // sista steget är tack-sidan
-  const percent = (currentStep / total) * 100;
-  document.getElementById("progressBar").style.width = percent + "%";
-  document.getElementById("progressText").innerText = `Steg ${currentStep + 1} av ${total}`;
-}
-
+      updateProgressBar();
     });
   </script>
 </body>

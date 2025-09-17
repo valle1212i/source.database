@@ -30,104 +30,216 @@
   <div class="main-content">
     <h1 class="page-title"><i class="fas fa-brain"></i> Rådgivning & Support</h1>
     <p class="subtitle">
-      Vill du ha hjälp av en designexpert? Kontakta våra marknadsrådgivare för personlig vägledning kring annonser, kampanjer eller visuellt material.
+      Vill du ha hjälp av en designexpert? Skicka in ett ärende så återkommer våra marknadsrådgivare snabbt med vägledning kring annonser, kampanjer och visuellt material.
     </p>
 
     <div class="advice-section">
       <div class="advice-card">
         <div class="advice-text">
           <h2>Boka ett kostnadsfritt möte</h2>
-          <p>Vi hjälper dig att ta fram professionellt innehåll, AI-strategier och kampanjdesign. Klicka nedan för att skicka in ett ärende eller boka ett samtal!</p>
-          <button class="ai-button" id="toggleFormBtn"><i class="fas fa-envelope-open-text"></i> Skicka in ärende</button>
+          <p>Vi hjälper dig med professionellt innehåll, AI-strategier och kampanjdesign. Klicka nedan för att skicka ditt ärende.</p>
+          <button class="ai-button" id="toggleFormBtn">
+            <i class="fas fa-envelope-open-text"></i> Skicka in ärende
+          </button>
         </div>
         <div class="advice-image">
-          <img src="uploads/ff071c5e-045a-44e0-87b2-e6a0187e5113.png" alt="AI rådgivning" />
+          <img src="images/consulting.webp" alt="AI rådgivning" />
         </div>
       </div>
     </div>
 
-    <form id="contactForm" class="contact-form" style="display: none;">
-  <h3>📬 Kontakta rådgivningsteamet</h3>
+    <!-- FORMULÄR (förenklat: inga personuppgifter krävs) -->
+    <form id="contactForm" class="contact-form" style="display:none;">
+      <h3>📬 Kontakta rådgivningsteamet</h3>
 
-  <div class="form-group">
-    <label for="name">Namn</label>
-    <input type="text" id="name" name="name" required />
-  </div>
+      <div class="form-group">
+        <label for="message">Beskriv kort vad du behöver hjälp med</label>
+        <textarea id="message" name="message" rows="4" required
+          placeholder="Ex: Jag vill ha hjälp att ta fram en annonslayout för vår lansering i april, och vill stämma av en AI-baserad bildproduktion."></textarea>
+      </div>
 
-  <div class="form-group">
-    <label for="email">E-post</label>
-    <input type="email" id="email" name="email" required />
-  </div>
+      <div class="form-group">
+        <p><strong>Hur kan vi hjälpa dig?</strong></p>
 
-  <div class="form-group">
-    <label for="company">Företag (valfritt)</label>
-    <input type="text" id="company" name="company" />
-  </div>
+        <label>Behöver du hjälp att ta fram en designstrategi?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="designStrategy" value="Ja" required /> Ja</label>
+          <label><input type="radio" name="designStrategy" value="Nej" /> Nej</label>
+        </div>
 
-  <div class="form-group">
-    <label for="phone">Telefonnummer</label>
-    <input type="tel" id="phone" name="phone" />
-  </div>
+        <label>Vill du ha löpande rådgivning under din kampanj?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="ongoingSupport" value="Ja" required /> Ja</label>
+          <label><input type="radio" name="ongoingSupport" value="Nej" /> Nej</label>
+        </div>
 
-  <div class="form-group">
-    <label for="message">Beskriv kort vad du behöver hjälp med</label>
-    <textarea id="message" name="message" rows="4" placeholder="Ex: Jag vill ha hjälp att skapa annonser för min nya produkt..."></textarea>
-  </div>
+        <label>Behöver du hjälp med AI-baserad bild- eller videoproduktion?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="aiMediaHelp" value="Ja" required /> Ja</label>
+          <label><input type="radio" name="aiMediaHelp" value="Nej" /> Nej</label>
+        </div>
+      </div>
 
-  <div class="form-group">
-    <p><strong>Hur kan vi hjälpa dig?</strong></p>
+      <div class="form-group">
+        <label for="extra">Övriga kommentarer (valfritt)</label>
+        <textarea id="extra" name="extra" rows="3" placeholder="T.ex. föreslagna tider eller länk till material."></textarea>
+      </div>
 
-    <label>Behöver du hjälp att ta fram en designstrategi?</label>
-    <div class="radio-group">
-      <label><input type="radio" name="designStrategy" value="Ja" required /> Ja</label>
-      <label><input type="radio" name="designStrategy" value="Nej" /> Nej</label>
+      <button type="submit" class="ai-button" id="submitBtn">
+        <i class="fas fa-paper-plane"></i> Skicka meddelande
+      </button>
+
+      <div id="formHint" class="form-hint" style="display:none;margin-top:8px;">Skickar ...</div>
+    </form>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+      <h3><i class="fas fa-question-circle"></i> Vanliga frågor</h3>
+      <ul>
+        <li><strong>💰 Vad kostar rådgivningen?</strong><br>Det är kostnadsfritt att boka första mötet.</li>
+        <li><strong>⏱ Hur lång tid tar ett möte?</strong><br>Ca 15–30 minuter beroende på ditt behov.</li>
+        <li><strong>📂 Behöver jag ha något färdigt?</strong><br>Nej, vi hjälper dig från grunden!</li>
+      </ul>
     </div>
-
-    <label>Vill du ha löpande rådgivning under din kampanj?</label>
-    <div class="radio-group">
-      <label><input type="radio" name="ongoingSupport" value="Ja" required /> Ja</label>
-      <label><input type="radio" name="ongoingSupport" value="Nej" /> Nej</label>
-    </div>
-
-    <label>Behöver du hjälp med AI-baserad bild- eller videoproduktion?</label>
-    <div class="radio-group">
-      <label><input type="radio" name="aiMediaHelp" value="Ja" required /> Ja</label>
-      <label><input type="radio" name="aiMediaHelp" value="Nej" /> Nej</label>
-    </div>
   </div>
-
-  <div class="form-group">
-    <label for="extra">Övriga kommentarer eller behov</label>
-    <textarea id="extra" name="extra" rows="3" placeholder="T.ex. jag vill boka ett Zoom-möte en torsdag..."></textarea>
-  </div>
-
-  <button type="submit" class="ai-button"><i class="fas fa-paper-plane"></i> Skicka meddelande</button>
-</form>
-
-
-    <!-- FAQ-SEKTION -->
-<div class="faq-section">
-  <h3><i class="fas fa-question-circle"></i> Vanliga frågor</h3>
-  <ul>
-    <li><strong>💰 Vad kostar rådgivningen?</strong><br>Det är kostnadsfritt att boka första mötet.</li>
-    <li><strong>⏱ Hur lång tid tar ett möte?</strong><br>Ca 15–30 minuter beroende på ditt behov.</li>
-    <li><strong>📂 Behöver jag ha något färdigt?</strong><br>Nej, vi hjälper dig från grunden!</li>
-  </ul>
-</div>
-
 
   <script>
+    // Visa/dölj formulär
     document.getElementById("toggleFormBtn").addEventListener("click", () => {
       const form = document.getElementById("contactForm");
       form.style.display = form.style.display === "none" ? "block" : "none";
     });
 
-    document.getElementById("contactForm").addEventListener("submit", (e) => {
+    // CSRF (om din server använder den)
+    let csrfTokenPromise = fetch("/csrf-token", { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d?.csrfToken || null)
+      .catch(() => null);
+
+    // Hämta ev. inloggad användare (om backenden kopplar ärendet till konto)
+    async function getMe() {
+      try {
+        const r = await fetch("/api/me", { credentials: "include" });
+        if (r.ok) return r.json();
+      } catch {}
+      return null;
+    }
+
+    // Robust inskickning: prova flera payloads och även PUT som fallback
+    async function postSupport(url, method, body, token) {
+      const res = await fetch(url, {
+        method,
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "x-csrf-token": token } : {})
+        },
+        body: JSON.stringify(body)
+      });
+      const text = await res.text().catch(() => "");
+      if (!res.ok) {
+        const err = new Error(`HTTP ${res.status} ${res.statusText} — ${text.slice(0, 300)}`);
+        err.status = res.status;
+        throw err;
+      }
+      try { return JSON.parse(text) } catch { return {} }
+    }
+
+    async function trySubmit(payloadVariants) {
+      const token = await csrfTokenPromise;
+      // prova POST med variant 1..n
+      for (const p of payloadVariants) {
+        try { return await postSupport("/api/customers/marketing/support", "POST", p, token); }
+        catch (e) {
+          console.warn("POST variant misslyckades:", e.message);
+          if (e.status && e.status !== 400 && e.status !== 405) throw e; // andra fel -> avbryt
+        }
+      }
+      // prova PUT med variant 1..n
+      for (const p of payloadVariants) {
+        try { return await postSupport("/api/customers/marketing/support", "PUT", p, token); }
+        catch (e) {
+          console.warn("PUT variant misslyckades:", e.message);
+          if (e.status && e.status !== 400 && e.status !== 405) throw e;
+        }
+      }
+      throw new Error("Servern avvisade alla payload-varianter (400/405). Se konsol för detaljer.");
+    }
+
+    document.getElementById("contactForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      alert("Tack för ditt meddelande! Vi kontaktar dig snart.");
-      e.target.reset();
+      const btn = document.getElementById("submitBtn");
+      const hint = document.getElementById("formHint");
+
+      // hämta fält
+      const message = (document.getElementById("message").value || "").trim();
+      const extra = (document.getElementById("extra").value || "").trim();
+      const designStrategy = (document.querySelector('input[name="designStrategy"]:checked') || {}).value || "";
+      const ongoingSupport = (document.querySelector('input[name="ongoingSupport"]:checked') || {}).value || "";
+      const aiMediaHelp = (document.querySelector('input[name="aiMediaHelp"]:checked') || {}).value || "";
+
+      if (!message) {
+        alert("Skriv en kort beskrivning av ditt behov.");
+        return;
+      }
+
+      btn.disabled = true;
+      hint.style.display = "block";
+      hint.textContent = "Skickar ...";
+
+      try {
+        const me = await getMe();
+        const userEmail = me?.email || me?.user?.email || undefined;
+
+        const ticket = {
+          createdAt: new Date().toISOString(),
+          status: "open",
+          message,
+          choices: { designStrategy, ongoingSupport, aiMediaHelp },
+          notes: extra || null
+        };
+
+        // Flera payload-varianter (för att matcha ev. olika backend-scheman)
+        const variants = [
+          // v1: full marketing.support wrapper
+          {
+            ...(userEmail ? { userEmail } : {}),
+            marketing: {
+              support: {
+                status: "open",
+                meetings: [],
+                tickets: [ticket],
+                notes: ticket.notes,
+                updatedAt: new Date().toISOString()
+              }
+            }
+          },
+          // v2: support wrapper direkt
+          {
+            ...(userEmail ? { userEmail } : {}),
+            support: { status: "open", tickets: [ticket], notes: ticket.notes }
+          },
+          // v3: minimalt
+          {
+            ...(userEmail ? { userEmail } : {}),
+            ticket
+          }
+        ];
+
+        await trySubmit(variants);
+
+        hint.textContent = "✅ Tack! Ditt ärende har skickats.";
+        setTimeout(() => { hint.style.display = "none"; }, 2500);
+        e.target.reset();
+
+      } catch (err) {
+        console.error("Inskickningsfel:", err);
+        hint.textContent = "❌ Kunde inte skicka ärendet. Se konsolen för detaljer.";
+        alert("Kunde inte skicka ärendet just nu. Försök igen om en stund.");
+      } finally {
+        btn.disabled = false;
+      }
     });
   </script>
-
 </body>
 </html>

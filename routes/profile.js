@@ -1,31 +1,50 @@
+// routes/profile.js
 const express = require('express');
 const router = express.Router();
-const { requireAuth } = require('./security'); // byt från verifyToken till requireAuth
+
+const { requireAuth } = require('./security'); // använder session/cookie
 const Customer = require('../models/Customer');
 
 // GET /api/profile/me
 router.get('/me', requireAuth, async (req, res) => {
   try {
-    const customer = await Customer.findById(req.session.user._id); // använd session-data
-    if (!customer) {
-      return res.status(404).json({ success: false, message: "Kund hittades inte" });
+    // Hämta inloggad användare från auth-middleware (req.user) eller session
+    const sessionUser = req.user || req.session?.user;
+    if (!sessionUser || !sessionUser._id) {
+      return res.status(401).json({ success: false, message: 'Inte inloggad' });
     }
 
-const language = (customer.settings && customer.settings.language) || customer.language;
-const profileImage = customer.profileImage;
+    // Slå upp kunden
+    const customer = await Customer.findById(sessionUser._id).lean();
+    if (!customer) {
+      return res.status(404).json({ success: false, message: 'Kund hittades inte' });
+    }
 
-res.json({
-  success: true,
-  _id: customer._id,
-  name: customer.name,
-  email: customer.email,
-  language,
-  profileImage,
-  supportHistory: customer.supportHistory || []
-});
+    // Bestäm tenant från DB (enda sanningen) och spara även i sessionen
+    const tenant = customer.tenant ? String(customer.tenant).trim().toLowerCase() : null;
+       if (tenant && req.session) {
+            req.session.tenant = tenant;
+            req.tenant = tenant; // 👈 direkt till request också
+       }
+
+    const language = customer.settings?.language || customer.language || null;
+
+    // Svara med det frontend behöver
+    return res.json({
+      success: true,
+      id: String(customer._id),
+      name: customer.name || '',
+      email: customer.email || '',
+      role: customer.role || null,
+      plan: customer.plan || null,
+      tenant,                 // ⭐ viktigt för frontend
+      language,
+      profileImage: customer.profileImage || null,
+      supportHistory: customer.supportHistory || []
+    });
   } catch (err) {
-    console.error("❌ Fel i /profile/me:", err);
-    res.status(500).json({ success: false, message: "Serverfel" });
+    console.error('❌ /api/profile/me error:', err);
+    return res.status(500).json({ success: false, message: 'Serverfel' });
   }
 });
 

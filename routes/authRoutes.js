@@ -5,6 +5,10 @@ const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
 const LoginEvent = require('../models/LoginEvent');
 const zxcvbn = require('zxcvbn');
+const csrf = require('csurf');
+
+// skapar en token och lägger den i/validerar mot cookie
+const csrfProtection = csrf({ cookie: true });
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,     // 15 minuter
@@ -68,8 +72,13 @@ function isPasswordStrong(pw, { email, name }) {
   }
 });
 
+// Hämta CSRF-token för klient/curl
+router.get('/csrf', csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
 // 🔑 Logga in användare
-router.post('/login', loginLimiter, async (req, res) => {
+router.post('/login', loginLimiter, csrfProtection, async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await Customer.findOne({ email });

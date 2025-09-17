@@ -10,120 +10,116 @@
 </head>
 <body>
   <div class="sidebar">
-  <div class="logo">
-    <a href="customerportal.html">
-      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
-    </a>
+    <div class="logo">
+      <a href="customerportal.html">
+        <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+      </a>
+    </div>
+    <ul class="nav-menu">
+      <li class="active"><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+      <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+      <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+      <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+      <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+      <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+      <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+      <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+      <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+    </ul>
+    <div class="help">
+      <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
+    </div>
   </div>
-<ul class="nav-menu">
-  <li class="active"><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
-  <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
-  <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
-  <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
-  <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
-  <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
-  <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
-  <li><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
-  <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
-  <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
-</ul>
-<div class="help">
-  <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
-</div>
-</div>
 
-<!-- Hamburger-meny (visas bara på små skärmar) -->
-<button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">
-  &#9776;
-</button>
+  <!-- Hamburger-meny (visas bara på små skärmar) -->
+  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">
+    &#9776;
+  </button>
 
   <div class="main">
-  <div class="header">Välkommen tillbaka!</div>
+    <div class="header">Välkommen tillbaka!</div>
 
-  <script>
-    async function loadUserGreeting() {
-      try {
-        const res = await fetch('/api/profile/me', { credentials: 'include' });
-        if (!res.ok) throw new Error('Inte inloggad');
+    <script>
+      async function loadUserGreeting() {
+        try {
+          const res = await fetch('/api/auth/me', { credentials: 'include' });
+          if (!res.ok) throw new Error('Inte inloggad');
 
-        const data = await res.json();
-        const fullName = data.name || "användare";
-        const firstName = fullName.trim().split(" ")[0];
+          const data = await res.json();
+          const fullName = data.name || "användare";
+          const firstName = fullName.trim().split(" ")[0];
 
-        const header = document.querySelector(".header");
-        if (header) {
-          header.textContent = `Välkommen tillbaka, ${firstName}!`;
-        }
-      } catch (err) {
-        console.error("Kunde inte hämta användarinformation:", err);
-        const header = document.querySelector(".header");
-        if (header) {
-          header.textContent = "Välkommen tillbaka!";
+          const header = document.querySelector(".header");
+          if (header) {
+            header.textContent = `Välkommen tillbaka, ${firstName}!`;
+          }
+        } catch (err) {
+          console.error("Kunde inte hämta användarinformation:", err);
+          const header = document.querySelector(".header");
+          if (header) {
+            header.textContent = "Välkommen tillbaka!";
+          }
         }
       }
-    }
 
-    document.addEventListener("DOMContentLoaded", loadUserGreeting);
-  </script>
+      document.addEventListener("DOMContentLoaded", loadUserGreeting);
+    </script>
 
-  <!-- Profilikonen ska ligga utanför grid -->
-  <div class="profile-wrapper">
-    <div class="profile-icon" id="profileToggle"></div>
-    <div class="profile-dropdown" id="profileMenu">
-      <div class="profile-email" id="userEmail">Laddar...</div>
-      <hr />
-      <a href="#" id="switchAccount">Byt konto</a>
-      <a href="#" id="openSettings">Profilinställningar</a>
-      <a href="#" id="logout">Logga ut</a>
-    </div>
-  </div>
-
-  <!-- Huvudinnehåll -->
-  <div class="dashboard-container">
-
-   <!-- Diagramkort -->
-<div class="card sales-card wide-3">
-  <div class="circle-widget">
-    <div class="chart-area">
-      <canvas id="salesChart" height="140"></canvas>
-    </div>
-    <div class="sales-info">
-      <h3>Försäljning senaste 7 dagarna</h3>
-      <hr class="title-underline">
-      <div class="amount">752,000 SEK</div>
-      <hr class="amount-underline">
-    </div>
-  </div>
-</div>
-
-
-    <!-- Supportärenden -->
-    <div class="card">
-      <h3>Tidigare äreden via vår support</h3>
-      <div class="table-container">
-        <table class="support-table">
-          <thead>
-            <tr>
-              <th>Ärende-ID</th>
-              <th>Datum</th>
-              <th>Kundnamn</th>
-              <th>Ärende</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+    <!-- Profilikonen ska ligga utanför grid -->
+    <div class="profile-wrapper">
+      <div class="profile-icon" id="profileToggle"></div>
+      <div class="profile-dropdown" id="profileMenu">
+        <div class="profile-email" id="userEmail">Laddar...</div>
+        <hr />
+        <a href="#" id="switchAccount">Byt konto</a>
+        <a href="#" id="openSettings">Profilinställningar</a>
+        <a href="#" id="logout">Logga ut</a>
       </div>
     </div>
 
-  
-  <!-- AI Insights (ny version) -->
-<div class="card" id="aiInsightsCard">
-  <h3>📈 AI Insights</h3>
-  <div id="aiInsightsContent">Laddar AI-insikter...</div>
-</div>
+    <!-- Huvudinnehåll -->
+    <div class="dashboard-container">
 
+      <!-- Diagramkort -->
+      <div class="card sales-card wide-3">
+        <div class="circle-widget">
+          <div class="chart-area">
+            <canvas id="salesChart" height="140"></canvas>
+          </div>
+          <div class="sales-info">
+            <h3>Försäljning senaste 7 dagarna</h3>
+            <hr class="title-underline">
+            <div class="amount">752,000 SEK</div>
+            <hr class="amount-underline">
+          </div>
+        </div>
+      </div>
 
+      <!-- Supportärenden -->
+      <div class="card">
+        <h3>Tidigare äreden via vår support</h3>
+        <div class="table-container">
+          <table class="support-table">
+            <thead>
+              <tr>
+                <th>Ärende-ID</th>
+                <th>Datum</th>
+                <th>Kundnamn</th>
+                <th>Ärende</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- AI Insights (ny version) -->
+      <div class="card" id="aiInsightsCard">
+        <h3>📈 AI Insights</h3>
+        <div id="aiInsightsContent">Laddar AI-insikter...</div>
+      </div>
 
       <div class="card latest-message">
         <div class="card-header aligned">
@@ -140,22 +136,21 @@
       </div>
 
       <div class="card">
-  <h3>Visningar på hemsidan</h3>
-  <div class="mini-chart-container">
-    <canvas id="websiteViewsMiniChart" height="60"></canvas>
-  </div>
-  <div class="chart-indicator-box">
-    <span id="change" class="change">Laddar...</span>
-    <span id="todayCount" class="total"><strong>...</strong></span>
-  </div>
-</div>
+        <h3>Visningar på hemsidan</h3>
+        <div class="mini-chart-container">
+          <canvas id="websiteViewsMiniChart" height="60"></canvas>
+        </div>
+        <div class="chart-indicator-box">
+          <span id="change" class="change">Laddar...</span>
+          <span id="todayCount" class="total"><strong>...</strong></span>
+        </div>
+      </div>
+
       <div class="card"><h3>Mest köpt produkt</h3><p>Pro Plus-paketet</p></div>
       <div class="card"><h3>Totalt antal ordrar</h3><p>1 820 ordrar registrerade</p></div>
       <div class="card"><h3>Utbetalningar</h3><p>Senaste: 215 000 SEK den 20 juni</p></div>
       <div class="card"><h3>Senaste order</h3><p>Order #1820 - levererad 24 juni</p></div>
 
-      
-      
       <div class="card"><h3>Kommande möten</h3><p>Nästa möte: 27 juni kl. 14:00</p><p>Möte med marknadsteamet</p></div>
 
       <div class="card live-chat dark">
@@ -174,596 +169,608 @@
       </div>
 
       <div class="card ai-assistant">
-  <div class="ai-header">
-    <i class="fas fa-robot ai-icon"></i>
-    <div>
-      <h3>AI Assistent</h3>
-      <p class="ai-subtext">Föreslår svar, analyser och hjälp i realtid.</p>
-    </div>
-  </div>
+        <div class="ai-header">
+          <i class="fas fa-robot ai-icon"></i>
+          <div>
+            <h3>AI Assistent</h3>
+            <p class="ai-subtext">Föreslår svar, analyser och hjälp i realtid.</p>
+          </div>
+        </div>
 
-  <textarea id="aiMessage" rows="3" placeholder="Ställ en fråga till AI..."></textarea>
-  
-  <button class="ai-button" onclick="askAI()">Skicka fråga</button>
-  
-  <div id="aiResponse">
-  <div id="loadingAnimation" class="loader" style="display: none;"></div>
-</div>
+        <textarea id="aiMessage" rows="3" placeholder="Ställ en fråga till AI..."></textarea>
+        <button class="ai-button" onclick="askAI()">Skicka fråga</button>
 
+        <div id="aiResponse">
+          <div id="loadingAnimation" class="loader" style="display: none;"></div>
+        </div>
+      </div>
 
-  <!-- Chart.js -->
-  <script>
-  async function renderPageViewChart() {
-    try {
-      const res = await fetch("/api/pageviews/summary");
-      const data = await res.json();
+      <!-- Chart.js: UPPDATERAD renderPageViewChart (behåller funktionsnamnet) -->
+      <script>
+        let websiteChart = null;
+        let summaryCache = null;
 
-      const ctx = document.getElementById("websiteViewsMiniChart").getContext("2d");
-      new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: data.labels.map(date =>
-  new Date(date).toLocaleDateString("sv-SE", {
-    weekday: "short",
-    day: "numeric",
-    month: "short"
-  })
-),
-          datasets: [{
-            label: "Visningar",
-            data: data.counts,
-            borderColor: "#3b82f6",
-            backgroundColor: "rgba(59, 130, 246, 0.08)",
-            fill: true,
-            tension: 0.4,
-            pointRadius: 0,
-            pointHitRadius: 10,
-            borderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              enabled: true,
-              backgroundColor: '#111827',
-              titleColor: '#ffffff',
-              bodyColor: '#d1d5db',
-              callbacks: {
-                label: function (context) {
-                  return context.parsed.y + " visningar";
+        async function renderPageViewChart() {
+          try {
+            // Säkerställ kund-ID
+            let siteId = window.customerId;
+            if (!siteId && typeof fetchCustomerId === 'function') {
+              siteId = await fetchCustomerId();
+            }
+
+            // Hämta summary (inkludera siteId när vi har det)
+            const url = siteId
+              ? `/api/pageviews/summary?siteId=${encodeURIComponent(siteId)}&days=7`
+              : `/api/pageviews/summary?days=7`;
+
+            const res = await fetch(url, { credentials: 'include' });
+            const data = await res.json();
+            summaryCache = data;
+
+            const canvas = document.getElementById("websiteViewsMiniChart");
+            if (!canvas) return;
+            const ctx = canvas.getContext("2d");
+
+            const labels = (data.labels || []).map(date =>
+              new Date(date).toLocaleDateString("sv-SE", {
+                weekday: "short",
+                day: "numeric",
+                month: "short"
+              })
+            );
+
+            // Förstör ev. gammalt diagram för att undvika dubletter
+            if (websiteChart) { websiteChart.destroy(); }
+
+            websiteChart = new Chart(ctx, {
+              type: "line",
+              data: {
+                labels,
+                datasets: [{
+                  label: "Visningar",
+                  data: data.counts || [],
+                  borderColor: "#3b82f6",
+                  backgroundColor: "rgba(59, 130, 246, 0.08)",
+                  fill: true,
+                  tension: 0.4,
+                  pointRadius: 0,
+                  pointHitRadius: 10,
+                  borderWidth: 2
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    enabled: true,
+                    backgroundColor: '#111827',
+                    titleColor: '#ffffff',
+                    bodyColor: '#d1d5db',
+                    callbacks: {
+                      label: function (context) {
+                        return context.parsed.y + " visningar";
+                      }
+                    }
+                  }
+                },
+                scales: {
+                  x: {
+                    ticks: {
+                      color: "#6b7280",
+                      maxRotation: 0,
+                      autoSkip: true,
+                      callback: function (val) {
+                        return this.getLabelForValue(val);
+                      }
+                    },
+                    grid: { display: false }
+                  },
+                  y: { display: false }
+                }
+              }
+            });
+
+            // UI-uppdatering
+            const todays = data.todaysCount || 0;
+            document.getElementById("todayCount").innerHTML = `<strong>${todays} visningar idag</strong>`;
+
+            const prev = (data.counts || [])[Math.max(0, (data.counts || []).length - 2)] || 0;
+            const percent = prev > 0 ? Math.round(((todays - prev) / prev) * 100) : null;
+            const changeElem = document.getElementById("change");
+            if (percent === null) {
+              changeElem.textContent = "Ingen jämförelsedata ännu";
+              changeElem.style.color = "#10b981";
+            } else {
+              changeElem.textContent = `${percent >= 0 ? '+' : ''}${percent}% senaste veckan`;
+              changeElem.style.color = percent >= 0 ? "#10b981" : "#ef4444";
+            }
+          } catch (err) {
+            console.warn("Kunde inte ladda visningsdiagram:", err.message);
+          }
+        }
+
+        // Behåll samma init som tidigare
+        document.addEventListener("DOMContentLoaded", renderPageViewChart);
+      </script>
+
+      <script>
+        let isAsking = false;
+
+        async function askAI() {
+          if (isAsking) return;        // 🔒 Blockera om en fråga redan pågår
+          isAsking = true;
+
+          const message = document.getElementById("aiMessage").value.trim();
+          const responseDiv = document.getElementById("aiResponse");
+
+          if (!message) {
+            responseDiv.textContent = "⚠️ Vänligen skriv en fråga först.";
+            isAsking = false;
+            return;
+          }
+
+          responseDiv.innerHTML = '<div id="loadingAnimation" class="loader"></div>';
+
+          try {
+            const csrf = await getCsrfToken();
+            const res = await fetch("/api/chat/ask", {
+              method: "POST",
+              headers: { 
+                "Content-Type": "application/json",
+                "CSRF-Token": csrf
+              },
+              body: JSON.stringify({ message }),
+              credentials: "include"
+            });
+
+            const data = await res.json();
+            const reply = data.reply || "❌ Inget svar från AI.";
+
+            responseDiv.innerHTML = "";
+            const paragraphs = reply.split('\n\n');
+            let i = 0;
+            const delay = 200;
+
+            function typeParagraph() {
+              if (i < paragraphs.length) {
+                const p = document.createElement('p');
+                p.textContent = paragraphs[i];
+                responseDiv.appendChild(p);
+                i++;
+                setTimeout(typeParagraph, delay);
+                isAsking = false;
+              }
+            }
+            typeParagraph();
+
+          } catch (err) {
+            responseDiv.textContent = "❌ Det gick inte att kontakta AI-agenten.";
+            console.error(err);
+          }
+        }
+
+        const textarea = document.getElementById("aiMessage");
+        textarea.addEventListener("keydown", function (event) {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            askAI();
+          }
+        });
+      </script>
+
+      <script>
+        window.customerId = null;
+
+        async function fetchCustomerId() {
+          try {
+            const res = await fetch("/api/profile/me", { credentials: "include" });
+            const data = await res.json();
+            console.log("👤 /api/profile/me svar:", data); // DEBUG
+
+            if (!res.ok || !data.success || !data._id) {
+              console.warn("❌ Kunde inte hämta kund-ID");
+              window.customerId = null;
+              return null;
+            }
+
+            window.customerId = data._id;
+            return data._id;
+          } catch (err) {
+            console.warn("❌ Kunde inte hämta kund-ID:", err.message);
+            window.customerId = null;
+            return null;
+          }
+        }
+
+        async function loadSupportHistory() {
+          try {
+            const res = await fetch("/api/profile/me", { credentials: "include" });
+            const data = await res.json();
+
+            const tbody = document.querySelector(".support-table tbody");
+            if (!tbody) return;
+
+            const history = data.supportHistory || [];
+
+            if (history.length === 0) {
+              tbody.innerHTML = `
+                <tr><td colspan="5">Inga tidigare ärenden hittades.</td></tr>
+              `;
+              return;
+            }
+
+            // Rensa gammal data
+            tbody.innerHTML = "";
+
+            // Sortera nyast först
+            history.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            for (const item of history) {
+              const tr = document.createElement("tr");
+
+              const formattedDate = new Date(item.date).toLocaleDateString("sv-SE", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit"
+              });
+
+              tr.innerHTML = `
+                <td>${item.caseId || "-"}</td>
+                <td>${formattedDate}</td>
+                <td>${data.name || "Okänd"}</td>
+                <td>${item.topic}</td>
+                <td><span class="status-text ${item.status.toLowerCase().replace(/\s/g, '')}">${item.status}</span></td>
+              `;
+
+              tbody.appendChild(tr);
+            }
+          } catch (err) {
+            console.error("❌ Kunde inte hämta supporthistorik:", err);
+          }
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const id = await fetchCustomerId();
+
+    // 🟢 Ladda supporthistorik oavsett om vi fick ett ID eller inte
+    loadSupportHistory();
+
+    if (id) {
+      // 🟢 Bara ladda AI-insikter om vi faktiskt fick ett kund-ID
+      loadAIInsights();
+
+      // 🟢 Koppla även in realtidsuppdateringar för sidvisningar
+      const socket = io({ withCredentials: false });
+      socket.emit("join_site", id);
+      socket.on("pageview:new", () => {
+        renderPageViewChart(); // uppdatera grafen vid nya visningar
+      });
+    } else {
+      console.warn("⚠️ Ingen kund inloggad, hoppar över AI-insikter & socket-anslutning");
+      // Här kan du visa ett fallback-meddelande i UI:t om du vill
+    }
+  } catch (err) {
+    console.error("❌ Kunde inte initiera dashboard:", err);
+  }
+});
+
+      </script>
+
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          const chatBtn = document.getElementById("startChatBtn");
+          const chatWindow = document.getElementById("chatWindow");
+
+          if (chatBtn && chatWindow) {
+            chatBtn.addEventListener("click", () => {
+              chatWindow.style.display = "block";
+            });
+          }
+        });
+      </script>
+
+      <!-- ... Resten av filen (chatWindow-div, scripts, avslutande taggar) ... -->
+
+      <div id="chatWindow" style="display:none; position:fixed; bottom:20px; right:20px; width:300px; height:400px; background:#fff; border:1px solid #ccc; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1); z-index:1000; padding:10px;">
+        <h4>Chatt med support</h4>
+        <div id="chatMessages" style="height:300px; overflow-y:auto; margin-bottom:10px;"></div>
+        <form id="chatForm">
+          <input type="text" id="chatInput" placeholder="Skriv ett meddelande..." style="width:100%; padding:5px;" />
+        </form>  
+      </div>
+
+      <script src="/socket.io/socket.io.js"></script>
+      <script>
+        // Live-uppdateringar via Socket.IO – behåller allt annat orört
+        document.addEventListener("DOMContentLoaded", async () => {
+          // Försök använda existerande customerId, annars hämta
+          let siteId = window.customerId;
+          if (!siteId && typeof fetchCustomerId === 'function') {
+            siteId = await fetchCustomerId();
+          }
+          if (!siteId) return;
+
+          const socket = io({ withCredentials: false });
+          socket.emit('join_site', siteId);
+
+          socket.on('pageview:new', () => {
+            // uppdatera cache + graf + UI om de finns
+            if (!summaryCache || !websiteChart) return;
+            const lastIdx = summaryCache.counts.length - 1;
+            summaryCache.counts[lastIdx] += 1;
+            summaryCache.todaysCount += 1;
+
+            websiteChart.data.datasets[0].data[lastIdx] = summaryCache.counts[lastIdx];
+            websiteChart.update('none');
+            const todayEl = document.getElementById("todayCount");
+            if (todayEl) {
+              todayEl.innerHTML = `<strong>${summaryCache.todaysCount} visningar idag</strong>`;
+            }
+          });
+
+          // Fallback: polla var 60:e sekund ifall socket tappas
+          setInterval(renderPageViewChart, 60_000);
+        });
+      </script>
+
+      <script src="/js/chat.js"></script>
+
+      <!-- Din hamburgermenyfunktion (redan inlagd) -->
+      <script>
+        const menuBtn = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+
+        menuBtn.addEventListener('click', () => {
+          const isActive = sidebar.classList.toggle('active');
+          document.body.classList.toggle('menu-open', isActive);
+        });
+
+        window.addEventListener('click', (e) => {
+          const isClickInsideMenu = sidebar.contains(e.target);
+          const isClickOnToggle = menuBtn.contains(e.target);
+          const isMobile = window.innerWidth <= 768;
+
+          if (!isClickInsideMenu && !isClickOnToggle && isMobile) {
+            sidebar.classList.remove('active');
+            document.body.classList.remove('menu-open');
+          }
+        });
+      </script>
+
+      <!-- 🔧 showToast -->
+      <script>
+        function showToast(message) {
+          const container = document.getElementById("toast-container");
+          const toast = document.createElement("div");
+          toast.className = "toast";
+          toast.textContent = message;
+
+          container.appendChild(toast);
+
+          setTimeout(() => {
+            toast.remove();
+          }, 3000);
+        }
+      </script>
+
+      <!-- Toast-container -->
+      <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+      <script>
+        document.getElementById("chatForm").addEventListener("submit", function (e) {
+          e.preventDefault(); // stoppar reload
+          sendMessage();      // från chat.js
+        });
+      </script>
+
+      <script>
+        const toggle = document.getElementById('profileToggle');
+        const menu = document.getElementById('profileMenu');
+
+        toggle.addEventListener('click', () => {
+          const isOpen = menu.style.display === 'flex';
+          menu.style.display = isOpen ? 'none' : 'flex';
+          toggle.classList.toggle('open', !isOpen);
+        });
+
+        window.addEventListener('click', function (e) {
+          if (!document.querySelector('.profile-wrapper').contains(e.target)) {
+            menu.style.display = 'none';
+            toggle.classList.remove('open');
+          }
+        });
+
+        document.getElementById("switchAccount").addEventListener("click", function (e) {
+          e.preventDefault();
+          if (confirm("Vill du logga ut och byta konto?")) {
+            window.location.href = "login.html";
+          }
+        });
+
+        document.getElementById("openSettings").addEventListener("click", function (e) {
+          e.preventDefault();
+          window.location.href = "profile.html";
+        });
+
+        async function loadUserProfile() {
+          try {
+            const res = await fetch("/api/auth/me", { credentials: "include" });
+            const data = await res.json();
+
+            if (data.success) {
+              const name = data.name || '';
+              const email = data.email || '';
+              const image = data.profileImage;
+
+              if (image) {
+                document.getElementById("profileToggle").innerHTML = `
+                  <img src="${image}" alt="Profilbild" style="width: 32px; height: 32px; border-radius: 50%;" />
+                `;
+              } else {
+                const initials = name
+                  .split(' ')
+                  .map(part => part.charAt(0).toUpperCase())
+                  .join('')
+                  .substring(0, 2);
+                if (!name) return;
+                document.getElementById("profileToggle").textContent = initials;
+              }
+
+              document.getElementById("userEmail").textContent = email;
+            } else {
+              document.getElementById("profileToggle").textContent = "??";
+              document.getElementById("userEmail").textContent = "Ej inloggad";
+            }
+          } catch (err) {
+            console.error("Fel vid hämtning av användarprofil:", err);
+          }
+        }
+
+        loadUserProfile();
+      </script>
+
+      <script>
+        // Behåll befintlig procent/indikator-funktion men gör den siteId-medveten
+        async function fetchPageViewInsights() {
+          try {
+            let siteId = window.customerId;
+            if (!siteId && typeof fetchCustomerId === 'function') {
+              siteId = await fetchCustomerId();
+            }
+            const url = siteId
+              ? `/api/pageviews/summary?siteId=${encodeURIComponent(siteId)}&days=7`
+              : `/api/pageviews/summary?days=7`;
+
+            const res = await fetch(url, { credentials: "include" });
+            const data = await res.json();
+
+            const today = data.todaysCount || 0;
+            const weekBefore = data.counts?.[0] || 0;
+            const percent = weekBefore > 0 ? Math.round(((today - weekBefore) / weekBefore) * 100) : null;
+
+            document.getElementById("todayCount").innerHTML = `<strong>${today} visningar idag</strong>`;
+
+            const changeElem = document.getElementById("change");
+            if (percent === null) {
+              changeElem.textContent = "Ingen jämförelsedata ännu";
+              changeElem.style.color = "#10b981"; // grön
+            } else {
+              const sign = percent >= 0 ? "+" : "";
+              changeElem.textContent = `${sign}${percent}% senaste veckan`;
+              changeElem.style.color = percent >= 0 ? "#10b981" : "#ef4444"; // grön eller röd
+            }
+          } catch (err) {
+            console.warn("Kunde inte hämta sidvisningsdata:", err.message);
+          }
+        }
+
+        document.addEventListener("DOMContentLoaded", fetchPageViewInsights);
+      </script>
+
+      <script>
+        const ctx = document.getElementById('salesChart')?.getContext('2d');
+        if (ctx) {
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ['Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör', 'Sön'],
+              datasets: [{
+                label: 'Försäljning (SEK)',
+                data: [120000, 95000, 110000, 87000, 98000, 102000, 140000],
+                backgroundColor: '#111827'
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { ticks: { color: '#6b7280' } },
+                y: {
+                  beginAtZero: true,
+                  ticks: { color: '#6b7280' }
                 }
               }
             }
-          },
-          scales: {
-            x: {
-              ticks: {
-                color: "#6b7280",  // Tailwind text-gray-500
-                maxRotation: 0,
-                autoSkip: true,
-                callback: function (val, index, ticks) {
-                  const label = this.getLabelForValue(val);
-                  return label; // redan formaterat som "Tis 29 juli"
-                }
-              },
-              grid: { display: false }
-            },
-            y: { display: false }
-        }
-        }
-      });
-    } catch (err) {
-      console.warn("Kunde inte ladda visningsdiagram:", err.message);
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", renderPageViewChart);
-</script>
-
-<script>
-  // Hämtar CSRF-token från servern och returnerar strängen
-  async function getCsrfToken() {
-    try {
-      const res = await fetch('/csrf-token', { credentials: 'include' });
-      if (!res.ok) throw new Error('Kunde inte hämta CSRF-token');
-      const data = await res.json();
-      if (!data?.csrfToken) throw new Error('Saknar csrfToken i svar');
-      return data.csrfToken;
-    } catch (err) {
-      console.error('CSRF-token fel:', err);
-      throw err;
-    }
-  }
-</script>
-
-  <script>
-  let isAsking = false;
-
-  async function askAI() {
-  if (isAsking) return;        // 🔒 Blockera om en fråga redan pågår
-  isAsking = true;
-
-  const message = document.getElementById("aiMessage").value.trim();
-  const responseDiv = document.getElementById("aiResponse");
-
-  if (!message) {
-    responseDiv.textContent = "⚠️ Vänligen skriv en fråga först.";
-    isAsking = false;
-    return;
-  }
-
-    while (responseDiv.firstChild) responseDiv.removeChild(responseDiv.firstChild);
-  const loading = document.createElement("div");
-  loading.id = "loadingAnimation";
-  loading.className = "loader";
-  responseDiv.appendChild(loading);
-
-  try {
-    const csrf = await getCsrfToken();
-const res = await fetch("/api/chat/ask", {
-  method: "POST",
-  headers: { 
-    "Content-Type": "application/json",
-    "CSRF-Token": csrf
-  },
-  body: JSON.stringify({ message }),
-  credentials: "include"
-});
-
-
-    const data = await res.json();
-    const reply = data.reply || "❌ Inget svar från AI.";
-
-            while (responseDiv.firstChild) responseDiv.removeChild(responseDiv.firstChild);
-const paragraphs = reply.split('\n\n'); // Dela upp i stycken
-let i = 0;
-const delay = 200; // Millisekunder mellan varje stycke
-
-function typeParagraph() {
-  if (i < paragraphs.length) {
-    const p = document.createElement('p');
-    p.textContent = paragraphs[i];
-    responseDiv.appendChild(p);
-    i++;
-    setTimeout(typeParagraph, delay);
-    isAsking = false;
-  }
-}
-
-typeParagraph();
-
-
-    } catch (err) {
-      responseDiv.textContent = "❌ Det gick inte att kontakta AI-agenten.";
-      console.error(err);
-    }
-  }
-
-  const textarea = document.getElementById("aiMessage");
-  textarea.addEventListener("keydown", function (event) {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      askAI();
-    }
-  });
-</script>
-<script>
-window.customerId = null;
-
-async function fetchCustomerId() {
-  try {
-    const res = await fetch("/api/profile/me", { credentials: "include" });
-    const data = await res.json();
-    console.log("👤 /api/profile/me svar:", data); // DEBUG
-
-    if (!res.ok || !data.success || !data._id) {
-      console.warn("❌ Kunde inte hämta kund-ID");
-      window.customerId = null;
-      return null;
-    }
-
-    window.customerId = data._id;
-    return data._id;
-  } catch (err) {
-    console.warn("❌ Kunde inte hämta kund-ID:", err.message);
-    window.customerId = null;
-    return null;
-  }
-}
-
-
-  async function loadSupportHistory() {
-  try {
-    const res = await fetch("/api/profile/me", { credentials: "include" });
-    const data = await res.json();
-
-    const tbody = document.querySelector(".support-table tbody");
-    if (!tbody) return;
-
-    const history = data.supportHistory || [];
-
-        if (history.length === 0) {
-      while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-
-      const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.colSpan = 5;
-      td.appendChild(document.createTextNode("Inga tidigare ärenden hittades."));
-      tr.appendChild(td);
-      tbody.appendChild(tr);
-      return;
-    }
-
-    // Rensa gammal data
-    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-
-
-    // Sortera nyast först
-    history.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    for (const item of history) {
-      const tr = document.createElement("tr");
-
-      const formattedDate = new Date(item.date).toLocaleDateString("sv-SE", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      });
-
-            //Bygg celler
-      const tdId = document.createElement("td");
-      tdId.appendChild(document.createTextNode(item.caseId || "-"));
-
-      const tdDate = document.createElement("td");
-      tdDate.appendChild(document.createTextNode(formattedDate));
-
-      const tdName = document.createElement("td");
-      tdName.appendChild(document.createTextNode(data.name || "Okänd"));
-
-      const tdTopic = document.createElement("td");
-      tdTopic.appendChild(document.createTextNode(item.topic ?? ""));
-
-      const tdStatus = document.createElement("td");
-      const spanStatus = document.createElement("span");
-      spanStatus.className = "status-text " + (item.status || "").toLowerCase().replace(/\s/g, "");
-      spanStatus.appendChild(document.createTextNode(item.status ?? ""));
-      tdStatus.appendChild(spanStatus);
-
-      tr.append(tdId, tdDate, tdName, tdTopic, tdStatus);
-      tbody.appendChild(tr);
-    }
-  } catch (err) {
-    console.error("❌ Kunde inte hämta supporthistorik:", err);
-  }
-}
-
-
-document.addEventListener("DOMContentLoaded", async () => {
-  const id = await fetchCustomerId(); // vänta tills ID finns
-  loadSupportHistory();               // kan köras oavsett
-  if (id) {
-    loadAIInsights();                 // körs bara om vi fick ID
-  }
-});
-
-
-
-</script>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const chatBtn = document.getElementById("startChatBtn");
-    const chatWindow = document.getElementById("chatWindow");
-
-    if (chatBtn && chatWindow) {
-      chatBtn.addEventListener("click", () => {
-        chatWindow.style.display = "block";
-      });
-    }
-  });
-</script>
-
-
-<!-- ... Resten av filen (chatWindow-div, scripts, avslutande taggar) ... -->
-
-<div id="chatWindow" style="display:none; position:fixed; bottom:20px; right:20px; width:300px; height:400px; background:#fff; border:1px solid #ccc; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1); z-index:1000; padding:10px;">
-  <h4>Chatt med support</h4>
-  <div id="chatMessages" style="height:300px; overflow-y:auto; margin-bottom:10px;"></div>
-  <form id="chatForm">
-    <input type="text" id="chatInput" placeholder="Skriv ett meddelande..." style="width:100%; padding:5px;" />
-  </form>  
-
-</div>
-<script src="/socket.io/socket.io.js"></script>
-<script src="/js/chat.js"></script>
-
-
-<!-- Din hamburgermenyfunktion (redan inlagd) -->
-<script>
-  const menuBtn = document.getElementById('menuToggle');
-  const sidebar = document.querySelector('.sidebar');
-
-  menuBtn.addEventListener('click', () => {
-    const isActive = sidebar.classList.toggle('active');
-    document.body.classList.toggle('menu-open', isActive);
-  });
-
-  window.addEventListener('click', (e) => {
-    const isClickInsideMenu = sidebar.contains(e.target);
-    const isClickOnToggle = menuBtn.contains(e.target);
-    const isMobile = window.innerWidth <= 768;
-
-    if (!isClickInsideMenu && !isClickOnToggle && isMobile) {
-      sidebar.classList.remove('active');
-      document.body.classList.remove('menu-open');
-    }
-  });
-</script>
-
-<!-- 🔧 LÄGG IN showToast HÄR -->
-<script>
-  function showToast(message) {
-    const container = document.getElementById("toast-container");
-    const toast = document.createElement("div");
-    toast.className = "toast";
-    toast.textContent = message;
-
-    container.appendChild(toast);
-
-    setTimeout(() => {
-      toast.remove();
-    }, 3000);
-  }
-</script>
-
-<!-- Toast-container -->
-<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
-
-</body>
-</html>
-
-<script>
-  document.getElementById("chatForm").addEventListener("submit", function (e) {
-    e.preventDefault(); // stoppar reload
-    sendMessage();      // från chat.js
-  });
-</script>
-<script>
-  const toggle = document.getElementById('profileToggle');
-  const menu = document.getElementById('profileMenu');
-
-  toggle.addEventListener('click', () => {
-    const isOpen = menu.style.display === 'flex';
-    menu.style.display = isOpen ? 'none' : 'flex';
-    toggle.classList.toggle('open', !isOpen);
-  });
-
-  window.addEventListener('click', function (e) {
-    if (!document.querySelector('.profile-wrapper').contains(e.target)) {
-      menu.style.display = 'none';
-      toggle.classList.remove('open');
-    }
-  });
-
-  document.getElementById("switchAccount").addEventListener("click", function (e) {
-    e.preventDefault();
-    if (confirm("Vill du logga ut och byta konto?")) {
-      window.location.href = "login.html";
-    }
-  });
-
-  document.getElementById("openSettings").addEventListener("click", function (e) {
-    e.preventDefault();
-    window.location.href = "profile.html";
-  });
-
-  async function loadUserProfile() {
-    try {
-      const res = await fetch("/api/profile/me", { credentials: "include" });
-      const data = await res.json();
-
-      if (data.success) {
-        const name = data.name || '';
-        const email = data.email || '';
-        const image = data.profileImage;
-
-                const profileToggle = document.getElementById("profileToggle");
-        
-        while (profileToggle.firstChild) profileToggle.removeChild(profileToggle.firstChild);
-
-        if (image) {
-          const img = document.createElement("img");
-          img.src = image;
-          img.alt = "Profilbild";
-          img.style.width = "32px";
-          img.style.height = "32px";
-          img.style.borderRadius = "50%";
-          profileToggle.appendChild(img);
+          });
         } else {
-          if (!name) return;
-          const initials = name
-            .split(" ")
-            .map(part => part.charAt(0).toUpperCase())
-            .join("")
-            .substring(0, 2);
-          profileToggle.textContent = initials;
+          console.error("🛑 Kunde inte hitta elementet #salesChart");
         }
+      </script>
 
-        document.getElementById("userEmail").textContent = email;
-      } else {
-        document.getElementById("profileToggle").textContent = "??";
-        document.getElementById("userEmail").textContent = "Ej inloggad";
-      }
-    } catch (err) {
-      console.error("Fel vid hämtning av användarprofil:", err);
-    }
-  }
-
-  loadUserProfile();
-</script>
-
-
-<script>
-  async function fetchPageViewInsights() {
-    try {
-      const res = await fetch("/api/pageviews/summary", { credentials: "include" });
-      const data = await res.json();
-
-      const today = data.todaysCount || 0;
-      const weekBefore = data.counts[0] || 0;
-      const percent = weekBefore > 0 ? Math.round(((today - weekBefore) / weekBefore) * 100) : null;
-
-            const todayCountEl = document.getElementById("todayCount");
-      while (todayCountEl.firstChild) todayCountEl.removeChild(todayCountEl.firstChild);
-      const strong = document.createElement("strong");
-      strong.appendChild(document.createTextNode(`${today} visningar idag`));
-      todayCountEl.appendChild(strong);
-
-      const changeElem = document.getElementById("change");
-      if (percent === null) {
-        changeElem.textContent = "Ingen jämförelsedata ännu";
-        changeElem.style.color = "#10b981"; // grön
-      } else {
-        const sign = percent >= 0 ? "+" : "";
-        changeElem.textContent = `${sign}${percent}% senaste veckan`;
-        changeElem.style.color = percent >= 0 ? "#10b981" : "#ef4444"; // grön eller röd
-      }
-    } catch (err) {
-      console.warn("Kunde inte hämta sidvisningsdata:", err.message);
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", fetchPageViewInsights);
-</script>
-<script>
-  const ctx = document.getElementById('salesChart')?.getContext('2d');
-  if (ctx) {
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör', 'Sön'],
-        datasets: [{
-          label: 'Försäljning (SEK)',
-          data: [120000, 95000, 110000, 87000, 98000, 102000, 140000],
-          backgroundColor: '#111827'
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color: '#6b7280' } },
-          y: {
-            beginAtZero: true,
-            ticks: { color: '#6b7280' }
+      <script>
+        async function loadAIInsights() {
+          const container = document.getElementById("aiInsightsContent");
+          if (!window.customerId) {
+            container.textContent = "Kunde inte ladda kunddata.";
+            return;
+          }
+        
+          try {
+            // 1) Försök hämta sparade insikter
+            let res = await fetch(`/api/insights/by-customer/${window.customerId}`, {
+              credentials: "include"
+            });
+            let data = await res.json();
+        
+            // 2) Om det inte finns några: trigga generering och hämta resultatet
+            if (!data?.success || !Array.isArray(data.insights) || data.insights.length === 0) {
+              container.innerHTML = "<p>Genererar AI-insikter…</p>";
+        
+              const genRes = await fetch(`/api/insights/${window.customerId}`, {
+                credentials: "include"
+              });
+              const genData = await genRes.json();
+        
+              if (Array.isArray(genData.insights) && genData.insights.length > 0) {
+                data = { success: true, insights: genData.insights };
+              } else {
+                container.innerHTML = "<p>Inga AI-insikter ännu.</p>";
+                return;
+              }
+            }
+        
+            // 3) Rendera insikter
+            const colors = {
+              "Annonsering": "#E3F2FD",
+              "Konvertering": "#FCE4EC",
+              "Strategi": "#E8F5E9",
+              "Engagemang": "#FFF8E1"
+            };
+        
+            container.innerHTML = "";
+            data.insights.forEach(tip => {
+              const card = document.createElement("div");
+              card.style.border = "1px solid #ccc";
+              card.style.borderRadius = "1rem";
+              card.style.padding = "1rem";
+              card.style.marginBottom = "1rem";
+              card.style.backgroundColor = colors[tip.category] || "#f4f4f4";
+        
+              card.innerHTML = `
+                <h4>${tip.title ?? ""} ${tip.priority ? "🔥" : ""}</h4>
+                <p><strong>Kategori:</strong> ${tip.category ?? "-"}</p>
+                <p><strong>Varför:</strong> ${tip.reason ?? "-"}</p>
+                <p><strong>Åtgärd:</strong> ${tip.action ?? "-"}</p>
+              `;
+              container.appendChild(card);
+            });
+        
+          } catch (err) {
+            console.error("❌ Kunde inte ladda/generera AI-insikter:", err);
+            container.innerHTML = "<p>Fel vid hämtning av insikter.</p>";
           }
         }
-      }
-    });
-  } else {
-    console.error("🛑 Kunde inte hitta elementet #salesChart");
-  }
-</script>
-<script>
-  async function loadAIInsights() {
-    const container = document.getElementById("aiInsightsContent");
-    if (!window.customerId) {
-      container.textContent = "Kunde inte ladda kunddata.";
-      return;
-    }
-  
-    try {
-      // 1) Försök hämta sparade insikter
-      let res = await fetch(`/api/insights/by-customer/${window.customerId}`, {
-        credentials: "include"
-      });
-      let data = await res.json();
-  
-      // 2) Om det inte finns några: trigga generering och hämta resultatet
-      if (!data?.success || !Array.isArray(data.insights) || data.insights.length === 0) {
-                while (container.firstChild) container.removeChild(container.firstChild);
-        {
-          const p = document.createElement("p");
-          p.appendChild(document.createTextNode("Genererar AI-insikter…"));
-          container.appendChild(p);
-        }
-  
-        const genRes = await fetch(`/api/insights/${window.customerId}`, {
-          credentials: "include"
-        });
-        const genData = await genRes.json();
-  
-        if (Array.isArray(genData.insights) && genData.insights.length > 0) {
-          data = { success: true, insights: genData.insights };
-        } else {
-                  while (container.firstChild) container.removeChild(container.firstChild);
-        {
-          const p = document.createElement("p");
-          p.appendChild(document.createTextNode("Inga AI-insikter ännu."));
-          container.appendChild(p);
-        }
-          return;
-        }
-      }
-  
-      // 3) Rendera insikter
-      const colors = {
-        "Annonsering": "#E3F2FD",
-        "Konvertering": "#FCE4EC",
-        "Strategi": "#E8F5E9",
-        "Engagemang": "#FFF8E1"
-      };
-  
-            while (container.firstChild) container.removeChild(container.firstChild);
-      data.insights.forEach(tip => {
-        const card = document.createElement("div");
-        card.style.border = "1px solid #ccc";
-        card.style.borderRadius = "1rem";
-        card.style.padding = "1rem";
-        card.style.marginBottom = "1rem";
-        card.style.backgroundColor = colors[tip.category] || "#f4f4f4";
-  
-        const h4 = document.createElement("h4");
-        h4.appendChild(document.createTextNode(tip.title ?? ""));
-        if (tip.priority) h4.appendChild(document.createTextNode(" 🔥"));
+      </script>
 
-        const pCat = document.createElement("p");
-        const bCat = document.createElement("strong");
-        bCat.textContent = "Kategori:";
-        pCat.appendChild(bCat);
-        pCat.appendChild(document.createTextNode(" " + (tip.category ?? "-")));
+      <script src="/js/logout.js"></script>
+    </div> <!-- /dashboard-container -->
+  </div> <!-- /main -->
 
-        const pWhy = document.createElement("p");
-        const bWhy = document.createElement("strong");
-        bWhy.textContent = "Varför:";
-        pWhy.appendChild(bWhy);
-        pWhy.appendChild(document.createTextNode(" " + (tip.reason ?? "-")));
-
-        const pAct = document.createElement("p");
-        const bAct = document.createElement("strong");
-        bAct.textContent = "Åtgärd:";
-        pAct.appendChild(bAct);
-        pAct.appendChild(document.createTextNode(" " + (tip.action ?? "-")));
-
-        card.append(h4, pCat, pWhy, pAct);
-        container.appendChild(card);
-
-      });
-  
-    } catch (err) {
-      console.error("❌ Kunde inte ladda/generera AI-insikter:", err);
-            while (container.firstChild) container.removeChild(container.firstChild);
-      const p = document.createElement("p");
-      p.appendChild(document.createTextNode("Fel vid hämtning av insikter."));
-      container.appendChild(p);
-    }
-  }
-  </script>
-  
-<script src="/js/logout.js"></script>
+  <!-- Toast-container (behålls) -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
 </body>
 </html>

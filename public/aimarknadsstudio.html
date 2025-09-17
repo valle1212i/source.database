@@ -21,7 +21,8 @@
       <li><a href="metaads.html"><i class="fab fa-facebook"></i> Meta Ads</a></li>
       <li><a href="tiktokads.html"><i class="fab fa-tiktok"></i> TikTok Ads</a></li>
       <li><a href="linkedin.html"><i class="fab fa-linkedin"></i> LinkedIn Ads</a></li>
-      <li><a href="ai-marknadsstudio.html" class="active"><i class="fas fa-magic"></i> AI Studio</a></li>
+      <!-- 👇 Se till att detta matchar filnamnet (ingen bindestreck i denna version) -->
+      <li><a href="aimarknadsstudio.html" class="active"><i class="fas fa-magic"></i> AI Studio</a></li>
       <li><a href="radgivning.html"><i class="fas fa-headset"></i> Rådgivning</a></li>
     </ul>
     <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
@@ -31,7 +32,7 @@
   <div class="main-content">
     <h1 class="page-title">🎨 AI Marknadsstudio</h1>
     <p class="subtitle">
-      Skapa affischer, annonser eller videos med hjälp av AI.<br />
+      Skapa affischer eller annonser med hjälp av AI.<br />
       Ladda upp en bild eller skriv en beskrivning – vi skapar något unikt för dig.
     </p>
 
@@ -46,7 +47,7 @@
       <textarea
         id="prompt"
         name="prompt"
-        placeholder="Ex: Skapa en modern affisch för en sommarkampanj..."
+        placeholder="Ex: Skapa en modern affisch för vår kampanj om vattenskydd…"
         rows="4"
       ></textarea>
 
@@ -79,9 +80,7 @@
       </button>
     </form>
 
-    <div id="result" class="result-area">
-      <!-- Resultat visas här -->
-    </div>
+    <div id="result" class="result-area"></div>
   </div>
 
   <script>
@@ -92,7 +91,7 @@
   const fileInput = document.getElementById("image");
   const submitBtn = form.querySelector('button[type="submit"]');
 
-  // enable/disable CTA input based on checkbox
+  // Enable/disable CTA input
   const ctaEnabledEl = document.getElementById("ctaEnabled");
   const ctaEl = document.getElementById("cta");
   ctaEnabledEl.addEventListener("change", () => {
@@ -134,36 +133,30 @@
     const description = document.getElementById("prompt").value || "";
     const imageFile = fileInput.files[0];
 
-    // hämta användarval
+    // Användarval
     const overlayMode = document.getElementById("overlayMode")?.value || "logo";
     const ctaEnabled = document.getElementById("ctaEnabled")?.checked || false;
     const cta = document.getElementById("cta")?.value || "";
 
+    // FormData mot backend
     const formData = new FormData();
     formData.append("description", description);
     if (imageFile) formData.append("image", imageFile);
 
-    // Marknads-parametrar (exempel)
-    formData.append("platform", "Instagram Feed");
-    formData.append("goal", "lead generation");
-    formData.append("audience", "Women 25–45 in Stockholm");
-    formData.append("tone", "bold, friendly, high-contrast");
-    formData.append("brandName", "Acme Co");
-    formData.append("brandColors", "#0ea5e9,#111827");
-    formData.append("aspectRatio", "1080x1350");
-    formData.append("style", "clean, minimalist, studio lighting");
+    // Marknads-parametrar (exempelvärden – justera efter behov)
+   formData.append("platform", "digital advertising (no device or app UI)");
+   formData.append(
+  "style",
+  "flat 2D advertising artwork, full-bleed, print-ready, high-contrast; no frames, no borders, no walls, no mockups"
+);
 
     // nya val
     formData.append("overlayMode", overlayMode);       // none|logo|main
     formData.append("ctaEnabled", String(ctaEnabled)); // "true"/"false"
-    if (ctaEnabled && cta) {
-      formData.append("cta", cta); // bara om användaren valt
-    }
+    if (ctaEnabled && cta) formData.append("cta", cta);
 
-    // Skicka img2img-läge ENDAST om fil valts
-    if (imageFile) {
-      formData.append("generationMode", "img2img");
-    }
+    // Skicka img2img-läge ENDAST om fil valts (ok att servern ignorerar)
+    if (imageFile) formData.append("generationMode", "img2img");
 
     try {
       const token = await csrfTokenPromise;
@@ -191,61 +184,60 @@
 
       const data = await response.json();
 
-      if (data.imageUrl) {
-        const card = document.createElement("div");
-        card.className = "ai-result-card";
+      // Rendera resultatkort
+      const card = document.createElement("div");
+      card.className = "ai-result-card";
 
+      if (data.imageUrl) {
         const img = document.createElement("img");
         img.src = data.imageUrl;
         img.alt = "AI-resultat";
         img.className = "ai-result-img";
-        img.addEventListener("click", () => {
-          window.open(`/preview.html?imageUrl=${encodeURIComponent(data.imageUrl)}`, "_blank");
-        });
+        card.appendChild(img);
+      }
 
-        const actions = document.createElement("div");
-        actions.className = "ai-actions";
+      const actions = document.createElement("div");
+      actions.className = "ai-actions";
 
+      if (data.imageUrl) {
         const dlImg = document.createElement("a");
-        // Servern returnerar redan Content-Disposition: attachment via /generated
-        dlImg.href = data.imageUrl;
+        dlImg.href = `/api/ai-marknadsstudio/download-image?url=${encodeURIComponent(data.imageUrl)}`;
         dlImg.setAttribute("download", "ai-bild.jpg");
         dlImg.className = "btn";
         dlImg.textContent = "Ladda ned bild";
-
-
         actions.appendChild(dlImg);
-        card.appendChild(img);
+      }
+
+      if (data.pdfUrl) {
+        const dlPdf = document.createElement("a");
+        dlPdf.href = data.pdfUrl;
+        dlPdf.className = "btn outline";
+        dlPdf.textContent = "Ladda ned PDF";
+        dlPdf.setAttribute("download", "ai-affisch.pdf");
+        actions.appendChild(dlPdf);
+      }
+
+      if (!actions.children.length) {
+        const p = document.createElement("p");
+        p.textContent = "Inget resultat kunde genereras.";
+        card.appendChild(p);
+      } else {
         card.appendChild(actions);
-        resultArea.prepend(card);
+      }
 
-        const cards = resultArea.querySelectorAll(".ai-result-card");
-        if (cards.length > 3) cards[3].remove();
+      resultArea.prepend(card);
 
-      } else if (data.message) {
-  // Säkert: skapa noder i stället för att tolka HTML
-  while (resultArea.firstChild) resultArea.removeChild(resultArea.firstChild);
-  const p = document.createElement("p");
-  p.textContent = String(data.message);
-  resultArea.appendChild(p);
-} else {
-  while (resultArea.firstChild) resultArea.removeChild(resultArea.firstChild);
-  const p = document.createElement("p");
-  p.textContent = "❗ Inget resultat kunde genereras.";
-  resultArea.appendChild(p);
-}
+      // Högst tre kort synliga
+      const cards = resultArea.querySelectorAll(".ai-result-card");
+      if (cards.length > 3) cards[3].remove();
 
     } catch (err) {
       loadingBar.style.display = "none";
       submitBtn.disabled = false;
       console.error(err);
-      while (resultArea.firstChild) resultArea.removeChild(resultArea.firstChild);
-      const p = document.createElement("p");
-      p.textContent = "❌ " + (err?.message || "Något gick fel. Försök igen.");
-      resultArea.appendChild(p);
+      resultArea.innerHTML = "❌ " + (err?.message || "Något gick fel. Försök igen.");
     }
   });
   </script>
-
 </body>
 </html>

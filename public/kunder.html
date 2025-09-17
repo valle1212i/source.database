@@ -10,273 +10,341 @@
 </head>
 <body>
   <!-- Hamburgermeny för mobil -->
-<button class="hamburger-menu" onclick="toggleSidebar()">☰</button>
+  <button class="hamburger-menu" onclick="toggleSidebar()">☰</button>
+
   <!-- SIDOMENY -->
   <div class="sidebar">
-  <div class="logo">
-    <a href="customerportal.html">
-      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
-    </a>
+    <div class="logo">
+      <a href="customerportal.html">
+        <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+      </a>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+      <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+      <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+      <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+      <li class="active"><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+      <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+      <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+      <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+      <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+    </ul>
+    <div class="help">
+      <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
+    </div>
   </div>
-  <ul class="nav-menu">
-  <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
-  <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
-  <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
-  <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
-  <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
-  <li class="active"><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
-  <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
-  <li><a href="marknadsföring.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
-  <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
-  <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
-</ul>
-<div class="help">
-  <a href="faq.html"><i class="fas fa-question-circle"></i> Hjälp</a>
-</div>
-  </div>
-
 
   <!-- HUVUDINNEHÅLL -->
   <main class="main">
     <div class="profile-wrapper">
-  <div class="profile-icon" id="profileToggle">--</div>
+      <div class="profile-icon" id="profileToggle">--</div>
+      <div class="profile-dropdown" id="profileMenu">
+        <div class="profile-email" id="userEmail">Laddar...</div>
+        <hr />
+        <a href="#" id="switchAccount">Byt konto</a>
+        <a href="#" id="openSettings">Profilinställningar</a>
+        <a href="#" id="logout">Logga ut</a>
+      </div>
+    </div>
 
-  <div class="profile-dropdown" id="profileMenu">
-    <div class="profile-email" id="userEmail">Laddar...</div>
-    <hr />
-    <a href="#" id="switchAccount">Byt konto</a>
-    <a href="#" id="openSettings">Profilinställningar</a>
-    <a href="#" id="logout">Logga ut</a>
-  </div>
-</div>
     <h1 class="header">Kundmeddelanden</h1>
     <p class="subtitle">Här ser du alla inkommande kundärenden.</p>
 
     <!-- Sök och meddelandeknapp -->
-    <div class="table-header" style="display: flex; gap: 10px; align-items: center;">
-      <input type="text" placeholder="🔍 Sök kundmeddelande..." />
-      <button class="message-btn" onclick="openMessageModal()"> Skriv meddelande</button>
+    <div class="table-header" style="display:flex;gap:10px;align-items:center;">
+      <input id="searchInput" type="text" placeholder="🔍 Sök kundmeddelande..." />
+      <button class="message-btn" onclick="openMessageModal()">Skriv meddelande</button>
     </div>
 
     <!-- TABELL -->
     <table class="customer-table">
-  <thead>
-    <tr>
-      <th>Kund</th>
-      <th>Ämne</th>
-      <th>Senaste meddelande</th>
-      <th>Datum</th>
-    </tr>
-  </thead>
-  <tbody>
-    <!-- JS fyller detta -->
-  </tbody>
-</table>
+      <thead>
+        <tr>
+          <th>Kund</th>
+          <th>Ämne</th>
+          <th>Senaste meddelande</th>
+          <th>Datum</th>
+        </tr>
+      </thead>
+      <tbody><!-- JS fyller detta --></tbody>
+    </table>
 
-
-
-  <!-- MODAL: Skicka meddelande -->
-  <div id="messageModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeMessageModal()">&times;</span>
-      <h2>Skicka meddelande till kund</h2>
-      <form onsubmit="sendMessage(event)">
-        <label for="customer">Kund:</label>
-        <input type="text" id="customer" required placeholder="Ex. Anna Karlsson" />
-
-        <label for="subject">Ämne:</label>
-        <input type="text" id="subject" required placeholder="Ämne..." />
-
-        <label for="message">Meddelande:</label>
-        <textarea id="message" required placeholder="Skriv ditt meddelande här..."></textarea>
-
-        <button type="submit" class="send-btn">Skicka</button>
-      </form>
+    <!-- MODAL: Skicka meddelande -->
+    <div id="messageModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeMessageModal()">&times;</span>
+        <h2>Skicka meddelande till kund</h2>
+        <form onsubmit="sendMessage(event)">
+          <label for="customer">Kund:</label>
+          <input type="text" id="customer" required placeholder="Ex. Anna Karlsson" />
+          <label for="subject">Ämne:</label>
+          <input type="text" id="subject" required placeholder="Ämne..." />
+          <label for="message">Meddelande:</label>
+          <textarea id="message" required placeholder="Skriv ditt meddelande här..."></textarea>
+          <button type="submit" class="send-btn">Skicka</button>
+        </form>
+      </div>
     </div>
-  </div>
+  </main>
 
   <!-- JS -->
   <script>
-    const savedTheme = localStorage.getItem("theme") || "light";
-    document.body.classList.add(`${savedTheme}-theme`);
+    /** KONFIG **/
+    const CONFIG = (() => {
+      const API_BASE = ''; // eller 'https://source-database.onrender.com'
+      const sub = location.hostname.split('.')[0];
+      const tenantFromSub = (sub && sub !== 'www' && /^[a-z0-9-]+$/i.test(sub)) ? sub : null;
+      const tenantFromLS  = localStorage.getItem('tenant') || null;
+      let TENANT = tenantFromLS || tenantFromSub || null; // viktig: lokal var, inte CONFIG
+      return { API_BASE, TENANT, DEFAULT_LIMIT: 50 };
+    })();
 
-    function openMessageModal() {
-      document.getElementById("messageModal").style.display = "block";
+    /** Hjälpmetoder **/
+    const $  = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    function debounce(fn, ms=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+
+    const state = { page:1, limit:CONFIG.DEFAULT_LIMIT, sort:'desc', q:'', loading:false };
+
+    const els = {
+      tbody: $('.customer-table tbody'),
+      search: $('#searchInput'),
+      modal:  $('#messageModal'),
+      profileToggle: $('#profileToggle'),
+      profileMenu:   $('#profileMenu'),
+      userEmail:     $('#userEmail'),
+    };
+
+    /** URL-builder **/
+    function apiUrl(path, params={}) {
+      const base = CONFIG.API_BASE || '';
+      const url = new URL((base.endsWith('/') ? base.slice(0,-1) : base) + path, location.origin);
+      Object.entries(params).forEach(([k,v]) => {
+        if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
+      });
+      if (CONFIG.TENANT && !url.searchParams.has('tenant')) url.searchParams.set('tenant', CONFIG.TENANT);
+      return url.toString();
     }
 
-    function closeMessageModal() {
-      document.getElementById("messageModal").style.display = "none";
+    /** Cells, datum, trim **/
+    function td(text){ const c=document.createElement('td'); c.textContent=text ?? ''; return c; }
+    function fmtDate(value){ const d=new Date(value); return isNaN(d.getTime()) ? '' : d.toLocaleDateString(); }
+    function truncate(text, max=120){ if(!text) return ''; return text.length>max ? text.slice(0,max-1)+'…' : text; }
+
+    /** UI-states **/
+    function renderLoading(){
+      els.tbody.innerHTML='';
+      const tr=document.createElement('tr'); const c=document.createElement('td');
+      c.colSpan=4; c.textContent='Laddar...'; tr.appendChild(c); els.tbody.appendChild(tr);
+    }
+    function renderEmpty(){
+      els.tbody.innerHTML='';
+      const tr=document.createElement('tr'); const c=document.createElement('td');
+      c.colSpan=4; c.textContent= state.q ? 'Inga träffar på din sökning.' : 'Inga kundmeddelanden ännu.';
+      tr.appendChild(c); els.tbody.appendChild(tr);
     }
 
-    async function sendMessage(e) {
-  e.preventDefault();
-  const name = document.getElementById("customer").value;
-  const subject = document.getElementById("subject").value;
-  const message = document.getElementById("message").value;
+    /** API: hämta meddelanden **/
+    async function fetchMessages({page,limit,sort,q}){
+      const tryPrimary  = apiUrl('/api/messages',        { page, limit, sort, q });
+      const tryFallback = apiUrl('/api/messages/latest');
 
-  // Testdata: Karta med namn till e-post (byt ut mot riktiga data senare)
-  const emailMap = {
-    "Anna Karlsson": "anna@example.com",
-    "Johan Eriksson": "johan@example.com",
-    "Sara Nilsson": "sara@example.com"
-    // Lägg till fler testkunder här
-  };
+      const headers = { 'Accept':'application/json' };
+      if (CONFIG.TENANT) headers['X-Tenant'] = CONFIG.TENANT;
 
-  const to = emailMap[name];
-  if (!to) {
-    alert("⚠️ Kunde inte hitta e-postadress för kunden.");
-    return;
-  }
+      const opts = { method:'GET', headers, credentials:'include', cache:'no-store' };
 
-  try {
-    const res = await fetch('/api/email/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, subject, message })
-    });
+      let res = await fetch(tryPrimary, opts);
+      if (!res.ok) res = await fetch(tryFallback, opts);
 
-    const data = await res.json();
-    if (data.success) {
-      alert(`✅ Meddelande till ${name} har skickats!`);
-      closeMessageModal();
-    } else {
-      alert("❌ Det gick inte att skicka mejlet.");
-    }
-  } catch (err) {
-    console.error('❌ Fel vid e-post:', err);
-    alert("❌ Något gick fel vid mejlskick.");
-  }
-}
-
-  </script>
-    <script>
-    function viewMessage(name, subject, content, date) {
-      const params = new URLSearchParams({ name, subject, content, date });
-      window.location.href = `kundmeddelande.html?${params.toString()}`;
+      if (!res.ok) {
+        const text = await res.text().catch(()=> '');
+        throw new Error(`API-fel ${res.status}: ${text}`);
+      }
+      const data = await res.json();
+      return Array.isArray(data) ? data : (data.items ?? []);
     }
 
-    window.onload = async () => {
+    /** Rendera rader **/
+    function renderRows(rows){
+      els.tbody.innerHTML='';
+      if (!Array.isArray(rows) || rows.length===0) return renderEmpty();
+
+      rows.forEach(entry => {
+        const tr = document.createElement('tr');
+        tr.addEventListener('click', () => {
+          const params = new URLSearchParams({
+            name: entry.customerName ?? '',
+            subject: entry.subject ?? '',
+            content: entry.message ?? '',
+            date: fmtDate(entry.date)
+          });
+          location.href = `kundmeddelande.html?${params.toString()}`;
+        });
+
+        const name = entry.customerName ?? entry.name ?? entry.customer?.name ?? entry.email ?? 'Okänd';
+        const subj = entry.subject ?? entry.topic ?? '(Ej angivet)';
+        const msg  = truncate(entry.message ?? entry.lastMessage ?? entry.content ?? '');
+        const date = fmtDate(entry.date ?? entry.timestamp ?? entry.createdAt ?? entry.updatedAt);
+
+        tr.append(td(name), td(subj), td(msg), td(date));
+        els.tbody.appendChild(tr);
+      });
+    }
+
+    /** Ladda listan **/
+    async function loadMessages(){
+      if (state.loading) return;
+      state.loading = true;
+      console.log('🔵 loadMessages', { page:state.page, limit:state.limit, q:state.q, tenant:CONFIG.TENANT });
+      renderLoading();
       try {
-        const res = await fetch('/api/messages/latest');
-        const data = await res.json();
+        const rows = await fetchMessages(state);
+        console.log('🟢 rows:', Array.isArray(rows)? rows.length : rows);
+        renderRows(rows);
+      } catch(err){
+        console.error('🔴 loadMessages error:', err);
+        els.tbody.innerHTML='';
+        const tr=document.createElement('tr'); const c=document.createElement('td');
+        c.colSpan=4; c.textContent='Fel vid laddning av meddelanden. Försök igen.'; tr.appendChild(c); els.tbody.appendChild(tr);
+      } finally { state.loading=false; }
+    }
 
-            const tbody = document.querySelector(".customer-table tbody");
-    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+    /** Sök **/
+    els.search?.addEventListener('input', debounce(e=>{
+      state.q = e.target.value.trim(); state.page = 1; loadMessages();
+    }, 300));
 
-    data.forEach(entry => {
-      const tr = document.createElement("tr");
-      tr.addEventListener("click", () => {
-        viewMessage(
-          entry.customerName,
-          entry.subject,
-          entry.message,
-          new Date(entry.date).toLocaleDateString()
-        );
+    /** Modal **/
+    function openMessageModal(){ els.modal.style.display='block'; }
+    function closeMessageModal(){ els.modal.style.display='none'; }
+    window.openMessageModal = openMessageModal;
+    window.closeMessageModal = closeMessageModal;
+
+    /** Skicka meddelande **/
+    async function sendMessage(e){
+      e.preventDefault();
+      const name = $('#customer').value.trim();
+      const subject = $('#subject').value.trim();
+      const message = $('#message').value.trim();
+      if (!name || !subject || !message){ alert('Fyll i alla fält.'); return; }
+
+      const body = { name, subject, message, tenant: CONFIG.TENANT || undefined };
+
+      try{
+        const res = await fetch(apiUrl('/api/email/send'), {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'Accept':'application/json' },
+          credentials:'include',
+          cache:'no-store',
+          body: JSON.stringify(body)
+        });
+        const data = await res.json().catch(()=> ({}));
+        if (res.ok && (data.success !== false)){
+          alert('✅ Meddelandet har skickats!');
+          closeMessageModal();
+          loadMessages();
+        } else {
+          alert('❌ Kunde inte skicka meddelandet.');
+        }
+      }catch(err){
+        console.error('❌ Fel vid e-post:', err);
+        alert('❌ Något gick fel vid skick.');
+      }
+    }
+    window.sendMessage = sendMessage;
+
+    /** Profilmeny + profilinfo + laddning av lista **/
+    (function initProfile(){
+      const toggle = els.profileToggle;
+      const menu = els.profileMenu;
+
+      toggle?.addEventListener('click', ()=>{
+        const open = menu.style.display === 'flex';
+        menu.style.display = open ? 'none' : 'flex';
+        toggle.classList.toggle('open', !open);
+      });
+      window.addEventListener('click', (e)=>{
+        if (!document.querySelector('.profile-wrapper').contains(e.target)){
+          menu.style.display='none'; toggle.classList?.remove('open');
+        }
       });
 
-      const tdName = document.createElement("td");
-      tdName.appendChild(document.createTextNode(entry.customerName ?? ""));
+      $('#switchAccount')?.addEventListener('click', e=>{
+        e.preventDefault();
+        if (confirm('Vill du logga ut och byta konto?')) location.href='login.html';
+      });
+      $('#openSettings')?.addEventListener('click', e=>{
+        e.preventDefault(); location.href='profile.html';
+      });
 
-      const tdSubj = document.createElement("td");
-      tdSubj.appendChild(document.createTextNode(entry.subject ?? ""));
+      // Läs profil → sätt tenant → ladda lista
+      (async ()=>{
+        try{
+          const res = await fetch(apiUrl('/api/profile/me'), {
+            headers:{ 'Accept':'application/json' },
+            credentials:'include',
+            cache:'no-store'
+          });
+          const data = await res.json();
 
-      const tdMsg = document.createElement("td");
-      tdMsg.appendChild(document.createTextNode(entry.message ?? ""));
+          if (data && (data.success !== false)){
+            if (data.tenant){
+              CONFIG.TENANT = String(data.tenant).trim().toLowerCase();
+              console.log('🟢 Tenant från profil:', CONFIG.TENANT);
+            } else {
+              console.warn('⚠️ Ingen tenant i profil – använder serverns session-tenant i stället.');
+              CONFIG.TENANT = null; // låt serverns session styra
+            }
 
-      const tdDate = document.createElement("td");
-      tdDate.appendChild(document.createTextNode(
-        new Date(entry.date).toLocaleDateString()
-      ));
+            const name  = data.name || '';
+            const email = data.email || '';
+            const image = data.profileImage;
 
-      tr.append(tdName, tdSubj, tdMsg, tdDate);
-      tbody.appendChild(tr);
-    })
-      } catch (err) {
-        console.error("Kunde inte ladda meddelanden:", err);
-      }
-    };
-  </script>
-  <script>
-  const toggle = document.getElementById('profileToggle');
-  const menu = document.getElementById('profileMenu');
+            while (toggle.firstChild) toggle.removeChild(toggle.firstChild);
+            if (image){
+              const img = document.createElement('img');
+              img.src = image; img.alt = 'Profilbild';
+              img.style.width='32px'; img.style.height='32px'; img.style.borderRadius='50%';
+              toggle.appendChild(img);
+            } else {
+              const initials = name.split(' ').map(p=>p.charAt(0).toUpperCase()).join('').substring(0,2) || '--';
+              toggle.textContent = initials;
+            }
+            els.userEmail.textContent = email || 'Ej inloggad';
+          } else {
+            toggle.textContent='??';
+            els.userEmail.textContent='Ej inloggad';
+          }
 
-  toggle.addEventListener('click', () => {
-    const isOpen = menu.style.display === 'flex';
-    menu.style.display = isOpen ? 'none' : 'flex';
-    toggle.classList.toggle('open', !isOpen);
-  });
+          // Ladda efter profil/tenant
+          await loadMessages();
 
-  window.addEventListener('click', function (e) {
-    if (!document.querySelector('.profile-wrapper').contains(e.target)) {
-      menu.style.display = 'none';
-      toggle.classList.remove('open');
-    }
-  });
-
-  document.getElementById("switchAccount").addEventListener("click", function (e) {
-    e.preventDefault();
-    if (confirm("Vill du logga ut och byta konto?")) {
-      window.location.href = "login.html";
-    }
-  });
-
-  document.getElementById("openSettings").addEventListener("click", function (e) {
-    e.preventDefault();
-    window.location.href = "profile.html";
-  });
-
-  async function loadUserProfile() {
-    try {
-      const res = await fetch("/api/profile/me");
-      const data = await res.json();
-
-      if (data.success) {
-        const name = data.name || '';
-        const email = data.email || '';
-        const image = data.profileImage;
-
-               const profileToggle = document.getElementById("profileToggle");
-        while (profileToggle.firstChild) profileToggle.removeChild(profileToggle.firstChild);
-
-        if (image) {
-          const img = document.createElement("img");
-          img.src = image;
-          img.alt = "Profilbild";
-          img.style.width = "32px";
-          img.style.height = "32px";
-          img.style.borderRadius = "50%";
-          profileToggle.appendChild(img);
-        } else {
-          const initials = (name || "")
-            .split(" ")
-            .map(part => part.charAt(0).toUpperCase())
-            .join("")
-            .substring(0, 2);
-          profileToggle.textContent = initials || "--";
+        } catch(err){
+          console.error('Fel vid hämtning av användarprofil:', err);
+          els.userEmail.textContent='Ej inloggad';
         }
+      })();
+    })();
 
-        document.getElementById("userEmail").textContent = email;
-      } else {
+    /** Init: tema (listan laddas i initProfile) */
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.body.classList.add(`${savedTheme}-theme`);
+    });
+  </script>
 
-        document.getElementById("profileToggle").textContent = "??";
-        document.getElementById("userEmail").textContent = "Ej inloggad";
-      }
-    } catch (err) {
-      console.error("Fel vid hämtning av användarprofil:", err);
+  <script>
+    function toggleSidebar(){
+      const sidebar = document.querySelector('.sidebar');
+      const body = document.body;
+      sidebar.classList.toggle('active');
+      body.classList.toggle('menu-open');
     }
-  }
+  </script>
 
-  loadUserProfile();
-</script>
-<script>
-  function toggleSidebar() {
-    const sidebar = document.querySelector('.sidebar');
-    const body = document.body;
-
-    sidebar.classList.toggle('active');
-    body.classList.toggle('menu-open');
-  }
-</script>
-<script src="/js/logout.js"></script>
+  <script src="/js/logout.js"></script>
 </body>
 </html>

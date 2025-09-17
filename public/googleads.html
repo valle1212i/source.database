@@ -45,7 +45,7 @@
           <label><input type="radio" name="q1" value="Produkt" required> Produkt</label>
           <label><input type="radio" name="q1" value="Tjänst"> Tjänst</label>
         </div>
-        <button type="button" class="next-btn">Nästa</button>
+        <button type="button" onclick="nextStep()">Nästa</button>
       </div>
 
       <!-- Steg 2 -->
@@ -53,11 +53,11 @@
         <h2>2. Vad är målet med annonserna?</h2>
         <div class="options">
           <label><input type="radio" name="q2" value="Försäljning" required> Försäljning</label>
-          <label><input type="radio" name="q2" value="Kännedom"> Varumärkeskännedom</label>
+          <label><input type="radio" name="q2" value="Varumärkeskännedom"> Varumärkeskännedom</label>
         </div>
         <div class="button-group">
-          <button type="button" class="prev-btn">Föregående</button>
-          <button type="button" class="next-btn">Nästa</button>
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
         </div>
       </div>
 
@@ -71,8 +71,8 @@
           <label><input type="radio" name="q3" value="Shopping"> Shopping</label>
         </div>
         <div class="button-group">
-          <button type="button" class="prev-btn">Föregående</button>
-          <button type="button" class="next-btn">Nästa</button>
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
         </div>
       </div>
 
@@ -84,8 +84,8 @@
           <label><input type="radio" name="q4" value="Nationellt"> Nationellt</label>
         </div>
         <div class="button-group">
-          <button type="button" class="prev-btn">Föregående</button>
-          <button type="button" class="next-btn">Nästa</button>
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
         </div>
       </div>
 
@@ -97,8 +97,8 @@
           <label><input type="radio" name="q5" value="Nej"> Nej</label>
         </div>
         <div class="button-group">
-          <button type="button" class="prev-btn">Föregående</button>
-          <button type="button" class="next-btn">Nästa</button>
+          <button type="button" onclick="prevStep()">Föregående</button>
+          <button type="button" onclick="nextStep()">Nästa</button>
         </div>
       </div>
 
@@ -106,7 +106,7 @@
       <div class="form-step">
         <h2>6. Beskriv kort vad du vill annonsera:</h2>
         <textarea name="q6" required placeholder="T.ex. PT-tjänst för kvinnor 30–50 år i Stockholm..."></textarea>
-        <button type="button" class="next-btn">Nästa</button>
+        <button type="button" onclick="nextStep()">Nästa</button>
       </div>
 
       <!-- Steg 7 -->
@@ -121,7 +121,7 @@
         <h2>Tack för din förfrågan! 🎉</h2>
         <p style="margin-top: 16px; font-size: 16px; line-height: 1.6; text-align: center;">
           Din kampanjinfo har skickats till våra experter.<br />
-          Vi återkommer med ett Google Ads-förslag inom kort.<br />
+          Vi återkommer med ett Google-förslag inom kort.<br />
           Du hittar förfrågan under <strong>Analyser</strong>.
         </p>
       </div>
@@ -135,8 +135,14 @@
     const steps = document.querySelectorAll(".form-step");
     const progressText = document.getElementById("progressText");
 
+    // === CSRF: hämta token en gång, med cookies ===
+    let csrfTokenPromise = fetch("/csrf-token", { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d?.csrfToken || null)
+      .catch(() => null);
+
     function updateProgressBar() {
-      const totalSteps = steps.length - 1;
+      const totalSteps = steps.length - 1; // sista är "Tack"
       const percentage = Math.min((currentStep / totalSteps) * 100, 100);
       document.getElementById("progressBar").style.width = percentage + "%";
       progressText.textContent = `Steg ${Math.min(currentStep + 1, totalSteps)} av ${totalSteps}`;
@@ -177,43 +183,68 @@
       }
     }
 
-    document.getElementById("stepForm").addEventListener("submit", function (e) {
+    document.getElementById("stepForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
       const formData = new FormData(this);
       const data = Object.fromEntries(formData.entries());
 
-      fetch("/api/customers/marketing/google", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers: data })
-      })
-      .then(res => {
-        if (!res.ok) throw new Error("Något gick fel vid skick till servern.");
-        return res.json();
-      })
-      .then(() => {
+      // Mappa svaren till backend-formatet som adminportalen visar
+      const payload = {
+        // userEmail: "valfritt@fallback.se", // behövs inte om du har session → req.user.email
+        marketing: {
+          googleAds: {
+            // Admin-HTML tittar på ".goals"
+            goals: data.q2 || "",
+            // Övrig struktur (sparas också i DB)
+            type: data.q1 || "",
+            adType: data.q3 || "",
+            geography: data.q4 || "",
+            useImages: data.q5 || "",
+            brief: data.q6 || "",
+            offerOrDeadline: data.q7 || "",
+            updatedAt: new Date().toISOString()
+          }
+        }
+      };
+
+      try {
+        const token = await csrfTokenPromise;
+        const res = await fetch("/api/customers/marketing/google", {
+          method: "POST",                // <— backend-route bör vara POST
+          credentials: "include",        // <— skicka cookies
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { "x-csrf-token": token } : {})
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          let msg = `Serverfel ${res.status}`;
+          try {
+            const j = await res.json();
+            if (j?.message || j?.error) msg = j.message || j.error;
+          } catch {}
+          throw new Error(msg);
+        }
+
+        // Visa tack-skärmen
         steps[currentStep].classList.remove("active");
         currentStep++;
         if (steps[currentStep]) {
           steps[currentStep].classList.add("active");
           updateProgressBar();
         }
-      })
-      .catch(err => {
+      } catch (err) {
         console.error("Fel:", err);
-        alert("❌ Kunde inte skicka in formuläret. Försök igen.");
-      });
+        alert("❌ Kunde inte skicka in formuläret. " + (err?.message || "Försök igen."));
+      }
     });
 
-    // ⬇️ NYTT: ersätt inline onclick med säkra event listeners
-    document.querySelectorAll(".next-btn").forEach(btn => {
-      btn.addEventListener("click", nextStep);
-    });
-    document.querySelectorAll(".prev-btn").forEach(btn => {
-      btn.addEventListener("click", prevStep);
-    });
-
+    // Tillgängliggör i global scope
+    window.nextStep = nextStep;
+    window.prevStep = prevStep;
     updateProgressBar();
   });
 </script>
