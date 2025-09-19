@@ -351,7 +351,6 @@ app.use('/api/insights', insightsRoutes);
 app.use('/api/ai-marknadsstudio', require('./routes/aiMarknadsstudio'));
 app.use('/api/ads', require('./routes/adsRoutes'));
 app.use('/api/pageviews', require('./routes/pageviews_ext.js'));
-app.use('/api/pageviews', require('./routes/pageviews'));
 
 
 // Avvecklad legacy-login
