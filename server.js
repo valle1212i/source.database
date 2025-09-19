@@ -335,6 +335,8 @@ app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/support', require('./routes/support'));
 app.use('/api/support/inbound', require('./routes/supportInbound')); // separerad
 app.use('/api/email', require('./routes/emailRoutes'));
+app.use('/api/payments', require('./routes/payments'));
+
 let messagesRouter;
 try {
   messagesRouter = require('./routes/messagesRoutes'); // ✅ plural
