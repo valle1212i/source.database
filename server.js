@@ -89,9 +89,55 @@ app.use((req, res, next) => {
 });
 
 // ── Parsers & statics ────────────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true, limit: '200kb' }));
 app.use(express.json({ limit: '200kb' }));
+
+// ── HTML-sidor (skyddade) ────────────────────────────────────────────────────
+// En (1) definition av requireLogin
+function requireLogin(req, res, next) {
+  if (!req.session?.user) return res.redirect('/login.html');
+  next();
+}
+
+// Publika sidor
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+
+// Skyddade sidor (måste ligga FÖRE express.static)
+app.get('/analytics.html', requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'analytics.html'))
+);
+app.get('/chatwindow.html', requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'chatwindow.html'))
+);
+app.get('/customerportal.html', requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'customerportal.html'))
+);
+app.get('/fakturor.html', requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'fakturor.html'))
+);
+app.get('/rapporter.html', requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'rapporter.html'))
+);
+app.get('/inventarier.html', requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'inventarier.html'))
+);
+app.get('/kontakt.html', requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'kontakt.html'))
+);
+app.get('/kunder.html', requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'kunder.html'))
+);
+app.get('/admin-logins.html', requireLogin, (req, res) => {
+  const user = req.session?.user;
+  if (!user || user.role !== 'admin') return res.status(403).send('Åtkomst nekad');
+  res.sendFile(path.join(__dirname, 'public', 'admin-logins.html'));
+});
+
+// Statisk leverans av övriga assets (CSS/JS/bilder) – måste ligga EFTER routes ovan
+app.use(express.static(path.join(__dirname, 'public')));
+
+
 
 // ── Helmet (CSP i report-only) ───────────────────────────────────────────────
 app.use(helmet({
