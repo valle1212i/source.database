@@ -5,13 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Analyser – Kundportal</title>
   <link rel="stylesheet" href="CSS/analytics.css" />
+
+  <!-- Diagram -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <!-- Kartor (jsVectorMap) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/europe.js"></script>
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
   <style>
     .kpi-grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin: 12px 0 22px; }
     .kpi-card{ background: var(--card-bg,#fff); border-radius:16px; padding:18px; box-shadow: 0 6px 16px rgba(0,0,0,.06); position:relative; overflow:hidden;}
@@ -151,7 +156,6 @@
   }
 
   let ordersByHourChart, bestsellersChart;
-  let mapWorld, mapEurope;
 
   function buildOrdersByHourChart(perHour){
     const ctx = document.getElementById('ordersByHourChart');
@@ -228,36 +232,42 @@
 
     const wrap = document.getElementById('pvByDay');
     wrap.innerHTML = '';
-    d.byDay.forEach(row=>{
+    (d.byDay || []).forEach(row=>{
       const p = document.createElement('p');
       p.textContent = `${row._id}: ${row.count}`;
       wrap.appendChild(p);
     });
 
     const u = document.getElementById('pvTopUrls'); u.innerHTML='';
-    d.topUrls.forEach(x=>{
+    (d.topUrls || []).forEach(x=>{
       const li = document.createElement('li');
       li.textContent = `${x._id} — ${x.count}`;
       u.appendChild(li);
     });
 
     const rf = document.getElementById('pvTopRef'); rf.innerHTML='';
-    d.topRef.forEach(x=>{
+    (d.topRef || []).forEach(x=>{
       const li = document.createElement('li');
       li.textContent = `${x._id||'(direkt)'} — ${x.count}`;
       rf.appendChild(li);
     });
   }
 
-  // ---- Geo ----
+  // ---- Geo (stabil init + fallback om europe ej är laddad) ----
   function buildMap(elId, dataByCountry){
     const el = document.getElementById(elId);
     if (!el) return null;
+
+    // Städa ev. tidigare karta
     if (el._jvm && typeof el._jvm.destroy === 'function') {
       el._jvm.destroy();
       el._jvm = null;
     }
-    const mapName = elId === 'mapEurope' ? 'europe' : 'world';
+
+    const maps = (window.jsVectorMap && window.jsVectorMap.maps) || {};
+    const wantEurope = elId === 'mapEurope';
+    const mapName = (wantEurope && maps.europe) ? 'europe' : 'world';
+
     const map = new window.jsVectorMap({
       selector: `#${elId}`,
       map: mapName,
@@ -265,12 +275,13 @@
       regionStyle: { initial: { fill: '#dbeafe' } },
       visualizeData: { scale: ['#e8eefc', '#1d4ed8'], values: dataByCountry },
       labels: { regions: { render: c => c } },
-      onRegionTooltipShow: (tooltip, code) => {
+      onRegionTooltipShow: (tooltipEl, code) => {
         const val = dataByCountry[code] || 0;
-        // <— ändra denna rad:
-        tooltip.textContent = `${tooltip.textContent} — ${val}`;
+        // tooltipEl är ett DOM-element
+        tooltipEl.textContent = `${tooltipEl.textContent} — ${val}`;
       }
     });
+
     el._jvm = map;
     return map;
   }
@@ -280,7 +291,7 @@
     const d = await r.json();
     if (!d.success) throw new Error('Kunde inte hämta geo-data');
 
-    document.getElementById('geoTotal').textContent = String(d.totals?.total || 0);
+    document.getElementById('geoTotal').textContent  = String(d.totals?.total || 0);
     document.getElementById('geoUnique').textContent = String(d.totals?.uniqueVisitors || 0);
 
     const dataByCountry = {};
@@ -288,7 +299,7 @@
       if (row.country && row.country !== 'XX') dataByCountry[row.country] = row.count;
     });
 
-    buildMap('mapWorld', dataByCountry);
+    buildMap('mapWorld',  dataByCountry);
     buildMap('mapEurope', dataByCountry);
   }
 
@@ -323,7 +334,7 @@
         }
       }
     };
-    ev.onerror = () => { console.warn("SSE tappad, försöker igen om 3s..."); setTimeout(connectSSE, 3000); };
+    ev.onerror = () => { setTimeout(connectSSE, 3000); };
   }
 
   // ---- Boot ----
@@ -336,11 +347,12 @@
     const v = parseInt(e.target.value,10) || 7;
     document.getElementById('pvDaysLabel').textContent = v;
     loadPageviews(v).catch(err => console.error(err));
-    // Vill du synka geo-intervallet med valet ovan, kalla även loadGeo(v)
+    loadGeo(v).catch(err => console.error(err));
   });
 </script>
 
 <script>
+  // Profilmeny + initialer
   const toggle = document.getElementById('profileToggle');
   const menu = document.getElementById('profileMenu');
   toggle.addEventListener('click', () => {
@@ -389,24 +401,27 @@
       document.body.classList.remove("menu-open");
     }
   });
-</script>
-<script>
-  // Visa inloggad användare i profilmenyn
+
+  // Visa inloggad användare i profilmenyn + korrekta initialer
   (async () => {
     try {
       const r = await fetch('/api/profile/me', { credentials: 'include' });
-      if (!r.ok) throw new Error('not ok');
       const d = await r.json();
-      if (d.success) {
-        const el = document.getElementById('userEmail');
-        if (el) el.textContent = d.email || d.name || 'Inloggad';
-        // uppdatera även profil-ikonen om du vill:
-        const it = document.getElementById('profileToggle');
-        if (it && typeof d.name === 'string') it.textContent = d.name.slice(0,2).toUpperCase();
+      if (d?.success) {
+        const email = d.email || '';
+        const name  = d.name  || '';
+        const userEmailEl = document.getElementById('userEmail');
+        if (userEmailEl) userEmailEl.textContent = email || name || 'Inloggad';
+
+        const initialsFromName = (name || '')
+          .split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();
+        const initials = initialsFromName || (email ? (email[0] + (email.split('@')[1]?.[0] || '')).toUpperCase() : '--');
+
+        const badge = document.getElementById('profileToggle');
+        if (badge) badge.textContent = initials;
       }
-    } catch (e) {
-      // lämna "Laddar..." – men sidan är redan skyddad av /analytics.html route
-      console.warn('Kunde inte läsa profil:', e);
+    } catch(e) {
+      /* tyst */
     }
   })();
 </script>
