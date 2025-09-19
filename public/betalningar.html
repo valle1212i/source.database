@@ -468,25 +468,27 @@ const PAYMENTS_BASE =
   }
 
   async function reloadPayments() {
-    try {
-      const res = await fetch('/api/payments?limit=200', { credentials: 'include' });
-      const data = await res.json();
-      if (!data || data.success === false) {
-        throw new Error(data?.message || 'Kunde inte hämta betalningar');
-      }
-      allPayments = Array.isArray(data) ? data : (data.items || []);
-      allPayments.sort((a, b) => (b.stripe_created_ms || b.created || 0) - (a.stripe_created_ms || a.created || 0));
-      renderList(allPayments);
-    } catch (e) {
-      console.error('Fel vid hämtning av betalningar:', e);
-      const wrap = document.getElementById('paymentsList');
-      while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
-      const err = document.createElement('p');
-      err.className = 'info-text';
-      err.textContent = 'Kunde inte hämta betalningar. Försök igen senare.';
-      wrap.appendChild(err);
+  try {
+    const base = PAYMENTS_BASE; // från <meta name="payments-base">
+    const res = await fetch(`${base}/api/payments?limit=200`, { credentials: 'include' });
+    const data = await res.json();
+    if (!data || data.success === false) {
+      throw new Error(data?.message || 'Kunde inte hämta betalningar');
     }
+    allPayments = Array.isArray(data) ? data : (data.items || []);
+    allPayments.sort((a, b) => (b.stripe_created_ms || b.created || 0) - (a.stripe_created_ms || a.created || 0));
+    renderList(allPayments);
+  } catch (e) {
+    console.error('Fel vid hämtning av betalningar:', e);
+    const wrap = document.getElementById('paymentsList');
+    while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
+    const err = document.createElement('p');
+    err.className = 'info-text';
+    err.textContent = 'Kunde inte hämta betalningar. Försök igen senare.';
+    wrap.appendChild(err);
   }
+}
+
 
   // ---------------- Profil/meny ----------------
   const toggle = document.getElementById('profileToggle');
