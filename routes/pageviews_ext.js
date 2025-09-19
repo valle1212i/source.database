@@ -2,16 +2,16 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const PageviewEvent = require('../models/PageviewEvent');
-const Customer = require('../models/Customer'); // behövs för att läsa kundens domän
+const Customer = require('../models/Customer');
 
 // Försök ladda offline-geo (ingen extern trafik)
 let geoip;
 try { geoip = require('geoip-lite'); } catch { geoip = null; }
 
-// Enkel UA-botfilter (kan utökas vid behov)
+// Enkel UA-botfilter
 const BOT_UA = /(bot|spider|crawl|crawler|preview|fetch|monitor|uptime|pingdom|node\.js|axios|cf-|headless|scrapy|seo)/i;
 
-// Strikt origin-whitelist enligt spec (kompletterar global CORS)
+// Strikt origin-whitelist för track-endpoint (kompletterar global CORS)
 const ORIGIN_WHITELIST = new Set([
   'https://vattentrygg.se',
   'https://www.vattentrygg.se',
@@ -19,16 +19,12 @@ const ORIGIN_WHITELIST = new Set([
 
 function getClientIp(req) {
   const xff = req.headers['x-forwarded-for'];
-  if (typeof xff === 'string' && xff.length > 0) {
-    return xff.split(',')[0].trim();
-  }
+  if (typeof xff === 'string' && xff.length > 0) return xff.split(',')[0].trim();
   return req.connection?.remoteAddress || req.socket?.remoteAddress || req.ip || '';
 }
-
 function sha256Hex(str) {
   return crypto.createHash('sha256').update(str, 'utf8').digest('hex');
 }
-
 function toDayUTC(dateMs) {
   const d = new Date(typeof dateMs === 'number' ? dateMs : Date.now());
   const y = d.getUTCFullYear();
@@ -36,64 +32,60 @@ function toDayUTC(dateMs) {
   const day = String(d.getUTCDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
-
-// Minimal continents-mappning (kan byggas ut vid behov)
-const COUNTRY_TO_CONTINENT = {
-  SE:'EU', NO:'EU', DK:'EU', FI:'EU', IS:'EU', DE:'EU', FR:'EU', NL:'EU', BE:'EU', LU:'EU',
-  AT:'EU', CH:'EU', IT:'EU', ES:'EU', PT:'EU', IE:'EU', GB:'EU', PL:'EU', CZ:'EU', SK:'EU',
-  HU:'EU', SI:'EU', HR:'EU', BA:'EU', RS:'EU', BG:'EU', RO:'EU', GR:'EU', EE:'EU', LV:'EU',
-  LT:'EU', UA:'EU',
-  US:'NA', CA:'NA', MX:'NA',
-  BR:'SA', AR:'SA', CL:'SA', CO:'SA', PE:'SA', UY:'SA', PY:'SA', BO:'SA', VE:'SA', EC:'SA',
-  CN:'AS', JP:'AS', KR:'AS', IN:'AS', SG:'AS', HK:'AS', TW:'AS', TH:'AS', MY:'AS', ID:'AS', PH:'AS', SA:'AS', AE:'AS', IL:'AS', TR:'AS',
-  ZA:'AF', NG:'AF', EG:'AF', MA:'AF', KE:'AF', GH:'AF', DZ:'AF', TN:'AF', ET:'AF',
-  AU:'OC', NZ:'OC'
-};
-
 // Hjälper: extrahera hostname från text/URL
 function toHostname(v) {
   if (!v || typeof v !== 'string') return null;
   let s = v.trim();
-  // om det är en URL, använd URL-parser; annars gissa att det är hostname redan
   try { s = new URL(s).hostname; } catch {}
-  // ta bort ev. ledande www.
   s = s.replace(/^www\./i, '');
-  // enkel validering
   if (!/^[a-z0-9.-]+$/i.test(s)) return null;
   return s.toLowerCase();
 }
 
-// Härled kundens tillåtna domäner från kundprofilen (utan att gissa fältnamn för hårt)
-function extractCustomerSites(customer) {
+// -------- Robust domänupplockning från kundprofil --------
+function extractCustomerSites(customer, req) {
   const out = new Set();
 
-  // Kandidatfält (vanliga namn)
-  const candidates = [
+  // Vanliga enkla fält
+  const scalarCandidates = [
     customer.domain,
     customer.website,
     customer.site,
     customer.hostname,
     customer.host,
     customer.shopDomain,
+    customer?.settings?.domain,
+    customer?.settings?.website,
+    customer?.company?.domain,
+    customer?.company?.website,
+    // ibland sparas på session.user
+    req?.session?.user?.domain,
+    req?.session?.user?.site,
   ];
 
-  // Arrays med domäner
-  if (Array.isArray(customer.domains)) candidates.push(...customer.domains);
-  if (Array.isArray(customer.sites)) candidates.push(...customer.sites);
-  if (Array.isArray(customer.hostnames)) candidates.push(...customer.hostnames);
+  // Listor med domäner
+  const arrayCandidates = []
+    .concat(Array.isArray(customer.domains)   ? customer.domains   : [])
+    .concat(Array.isArray(customer.sites)     ? customer.sites     : [])
+    .concat(Array.isArray(customer.hostnames) ? customer.hostnames : [])
+    .concat(Array.isArray(customer.websites)  ? customer.websites  : [])
+    .concat(Array.isArray(customer?.settings?.domains) ? customer.settings.domains : []);
 
-  for (const v of candidates) {
+  for (const v of scalarCandidates) {
     const h = toHostname(v);
     if (h) out.add(h);
   }
-
+  for (const v of arrayCandidates) {
+    const h = toHostname(v);
+    if (h) out.add(h);
+  }
   return [...out];
 }
 
+// ===================== TRACK =====================
 // POST /api/pageviews/track
-// Tar emot events från vattentrygg.se (endast efter CMP-consent på klientsidan)
 router.post('/track', express.json({ limit: '32kb' }), async (req, res) => {
-  // Snabb origin-kontroll (server-side guard utöver CORS)
+  // Snabb origin-kontroll (utöver CORS)
   const origin = req.get('origin');
   if (origin && !ORIGIN_WHITELIST.has(origin)) {
     return res.status(403).json({ success: false, error: 'Origin ej tillåten' });
@@ -111,7 +103,7 @@ router.post('/track', express.json({ limit: '32kb' }), async (req, res) => {
       viewport = {}
     } = req.body || {};
 
-    // No-consent: släpp tyst (204) utan att spara
+    // Ingen consent → spara inte
     if (!consent) return res.status(204).end();
 
     // Botfilter
@@ -133,23 +125,29 @@ router.post('/track', express.json({ limit: '32kb' }), async (req, res) => {
     let country, region, city, continent;
     try {
       const cfCountry = req.headers['cf-ipcountry'];
-      if (typeof cfCountry === 'string' && cfCountry.length === 2) {
-        country = cfCountry.toUpperCase();
-      }
+      if (typeof cfCountry === 'string' && cfCountry.length === 2) country = cfCountry.toUpperCase();
       if (!country && geoip && ip) {
-        const g = geoip.lookup(ip); // { country, region, city, ll, ... }
+        const g = geoip.lookup(ip); // { country, region, city, ... }
         if (g) {
           country = g.country || country;
           region = g.region || undefined;
           city = g.city || undefined;
         }
       }
-      if (country) {
-        continent = COUNTRY_TO_CONTINENT[country];
-      }
-    } catch { /* tyst fail */ }
+      const COUNTRY_TO_CONTINENT = {
+        SE:'EU', NO:'EU', DK:'EU', FI:'EU', IS:'EU', DE:'EU', FR:'EU', NL:'EU', BE:'EU', LU:'EU',
+        AT:'EU', CH:'EU', IT:'EU', ES:'EU', PT:'EU', IE:'EU', GB:'EU', PL:'EU', CZ:'EU', SK:'EU',
+        HU:'EU', SI:'EU', HR:'EU', BA:'EU', RS:'EU', BG:'EU', RO:'EU', GR:'EU', EE:'EU', LV:'EU',
+        LT:'EU', UA:'EU',
+        US:'NA', CA:'NA', MX:'NA',
+        BR:'SA', AR:'SA', CL:'SA', CO:'SA', PE:'SA', UY:'SA', PY:'SA', BO:'SA', VE:'SA', EC:'SA',
+        CN:'AS', JP:'AS', KR:'AS', IN:'AS', SG:'AS', HK:'AS', TW:'AS', TH:'AS', MY:'AS', ID:'AS', PH:'AS', SA:'AS', AE:'AS', IL:'AS', TR:'AS',
+        ZA:'AF', NG:'AF', EG:'AF', MA:'AF', KE:'AF', GH:'AF', DZ:'AF', TN:'AF', ET:'AF',
+        AU:'OC', NZ:'OC'
+      };
+      if (country) continent = COUNTRY_TO_CONTINENT[country];
+    } catch { /* ignore */ }
 
-    // Grundvalidering
     if (!site || !url) {
       return res.status(400).json({ success: false, error: 'site och url krävs' });
     }
@@ -165,12 +163,8 @@ router.post('/track', express.json({ limit: '32kb' }), async (req, res) => {
       ua_hash,
       day,
       consent: true,
-      // Geo
-      country,
-      region,
-      city,
-      continent,
-      // viewport sparas ej (kan adderas i schema om du vill)
+      country, region, city, continent
+      // viewport sparas ej
     });
 
     return res.status(201).json({ success: true });
@@ -180,7 +174,7 @@ router.post('/track', express.json({ limit: '32kb' }), async (req, res) => {
   }
 });
 
-// ======== Hjälpfunktion för match-objekt (kundbunden) =========
+// ===================== Hjälpare för kundbunden match =====================
 async function buildCustomerMatch(req, daysDefault = 30) {
   const userId = req.session?.user?._id;
   if (!userId) {
@@ -196,7 +190,19 @@ async function buildCustomerMatch(req, daysDefault = 30) {
     throw err;
   }
 
-  const sites = extractCustomerSites(customer);
+  // Tillåt override via query eller header (bra vid test / multipla domäner)
+  const overrideSite = toHostname(req.query.site) || toHostname(req.get('X-Tenant'));
+
+  let sites = extractCustomerSites(customer, req);
+  if (overrideSite) sites = Array.from(new Set([...sites, overrideSite]));
+
+  // Fallback: maildomän
+  if (!sites.length) {
+    const emailDomain = (req.session?.user?.email || '').split('@')[1];
+    const h = toHostname(emailDomain);
+    if (h) sites.push(h);
+  }
+
   if (!sites.length) {
     const err = new Error('Ingen domän kopplad till detta konto');
     err.status = 400;
@@ -216,7 +222,7 @@ async function buildCustomerMatch(req, daysDefault = 30) {
   };
 }
 
-// ======== Kundbunden sammanfattning: /summary/me =========
+// ===================== Kundbunden API =====================
 // GET /api/pageviews/summary/me?days=7
 router.get('/summary/me', async (req, res) => {
   try {
@@ -252,7 +258,6 @@ router.get('/summary/me', async (req, res) => {
   }
 });
 
-// ======== Kundbunden geo: /geo/me =========
 // GET /api/pageviews/geo/me?days=30
 router.get('/geo/me', async (req, res) => {
   try {
@@ -286,8 +291,7 @@ router.get('/geo/me', async (req, res) => {
   }
 });
 
-// ======== Bakåtkompatibla endpoints (site-query) =========
-
+// ===================== Bakåtkompatibelt API =====================
 // GET /api/pageviews/summary?days=7&site=exempel.se
 router.get('/summary', async (req, res) => {
   try {
@@ -367,6 +371,28 @@ router.get('/geo', async (req, res) => {
   } catch (err) {
     console.error('❌ Fel i /api/pageviews/geo:', err);
     return res.status(500).json({ success: false, error: 'Serverfel' });
+  }
+});
+
+// -------- Debug (ta bort i prod om du vill) --------
+router.get('/me/debug-sites', async (req, res) => {
+  try {
+    const userId = req.session?.user?._id;
+    if (!userId) return res.status(401).json({ success:false, error:'Inte inloggad' });
+    const customer = await Customer.findById(userId).lean();
+    if (!customer) return res.status(404).json({ success:false, error:'Kund saknas' });
+    const sites = extractCustomerSites(customer, req);
+    const overrideSite = toHostname(req.query.site) || toHostname(req.get('X-Tenant'));
+    const emailDomain = (req.session?.user?.email || '').split('@')[1];
+    return res.json({
+      success:true,
+      sessionUser: req.session.user?.email,
+      sitesFromCustomer: sites,
+      overrideSite,
+      emailDomainFallback: toHostname(emailDomain)
+    });
+  } catch (e) {
+    return res.status(500).json({ success:false, error:'Serverfel' });
   }
 });
 
