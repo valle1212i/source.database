@@ -350,7 +350,8 @@ app.use("/api/security", securityRouter);
 app.use('/api/insights', insightsRoutes);
 app.use('/api/ai-marknadsstudio', require('./routes/aiMarknadsstudio'));
 app.use('/api/ads', require('./routes/adsRoutes'));
-app.use('/api/pageviews', require('./routes/pageviews')); // en router som hanterar /track & /summary
+app.use('/api/pageviews', require('./routes/pageviews_ext'));
+
 
 // Avvecklad legacy-login
 app.post('/login', (req, res) => {

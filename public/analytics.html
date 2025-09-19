@@ -6,9 +6,13 @@
   <title>Analyser – Kundportal</title>
   <link rel="stylesheet" href="CSS/analytics.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Kartor (jsVectorMap) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/europe.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <style>
-    /* Lätt finish om din CSS saknar detta */
     .kpi-grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin: 12px 0 22px; }
     .kpi-card{ background: var(--card-bg,#fff); border-radius:16px; padding:18px; box-shadow: 0 6px 16px rgba(0,0,0,.06); position:relative; overflow:hidden;}
     .kpi-card .icon{ position:absolute; right:14px; top:14px; opacity:.15; font-size:42px;}
@@ -18,13 +22,19 @@
     .chart-row{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
     .chart-card{ background: var(--card-bg,#fff); border-radius:16px; padding:18px; box-shadow: 0 6px 16px rgba(0,0,0,.06);}
     @media (max-width: 900px){ .chart-row{ grid-template-columns: 1fr; } }
+
+    .muted{ color:#64748b; font-size:12px; }
+    .map-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+    .map-card{ background: var(--card-bg,#fff); border-radius:16px; padding:18px; box-shadow: 0 6px 16px rgba(0,0,0,.06); }
+    .map{ width:100%; height:380px; }
+    .kv{ display:flex; gap:12px; align-items:center; margin-bottom:8px; }
+    .clean-select{ padding:6px 8px; border-radius:8px; }
+    .pv-list{ margin:6px 0 0; padding-left:18px; }
   </style>
 </head>
 <body>
-<!-- Hamburgermeny -->
 <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny" onclick="toggleSidebar()">☰</button>
 
-<!-- SIDOMENY -->
 <div class="sidebar">
   <div class="logo">
     <a href="customerportal.html"><img src="images/logo.png" alt="Logotyp" class="logo-img" /></a>
@@ -43,13 +53,12 @@
     <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
   </ul>
   <div class="help">
-      <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
-        <i class="fas fa-circle-question"></i> Hjälp / FAQ
-      </a>
-    </div>
+    <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
+      <i class="fas fa-circle-question"></i> Hjälp / FAQ
+    </a>
   </div>
+</div>
 
-<!-- PROFILMENY -->
 <div class="profile-wrapper">
   <div class="profile-icon" id="profileToggle">--</div>
   <div class="profile-dropdown" id="profileMenu">
@@ -61,11 +70,9 @@
   </div>
 </div>
 
-<!-- INNEHÅLL -->
 <main class="main">
   <div class="header-row"><h1>Analyser & Statistik</h1></div>
 
-  <!-- KPI:er -->
   <section class="kpi-grid">
     <div class="kpi-card">
       <div class="icon"><i class="fa-solid fa-basket-shopping"></i></div>
@@ -87,7 +94,6 @@
     </div>
   </section>
 
-  <!-- Diagram -->
   <section class="chart-row">
     <div class="chart-card">
       <h3>Ordrar per timme (senaste 24h)</h3>
@@ -98,22 +104,54 @@
       <canvas id="bestsellersChart" height="160"></canvas>
     </div>
   </section>
+
+  <section class="chart-row">
+    <div class="chart-card">
+      <h3>Sidvisningar (senaste <span id="pvDaysLabel">7</span> dagar)</h3>
+      <div class="kv">
+        <select id="pvDays" class="clean-select">
+          <option value="7" selected>7 dagar</option>
+          <option value="30">30 dagar</option>
+          <option value="90">90 dagar</option>
+        </select>
+        <span class="muted">Kundbunden filtrering via din inloggning</span>
+      </div>
+      <div id="pvByDay"></div>
+      <h4 style="margin-top:12px;">Topp-sidor</h4>
+      <ol id="pvTopUrls" class="pv-list"></ol>
+      <h4 style="margin-top:12px;">Topp-referrers</h4>
+      <ol id="pvTopRef" class="pv-list"></ol>
+    </div>
+
+    <div class="chart-card">
+      <h3>Geo-översikt</h3>
+      <p class="muted">Andel per land (visningar). Totalt: <span id="geoTotal">0</span> visningar – <span id="geoUnique">0</span> unika besökare.</p>
+      <div class="map-grid">
+        <div class="map-card">
+          <h4>Världen</h4>
+          <div id="mapWorld" class="map"></div>
+        </div>
+        <div class="map-card">
+          <h4>Europa</h4>
+          <div id="mapEurope" class="map"></div>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
-<!-- DATA & REALTID -->
 <script>
-  const API_BASE = ""; // samma origin
+  const API_BASE = "";
   const savedTheme = localStorage.getItem("theme") || "light";
   document.body.classList.add(`${savedTheme}-theme`);
 
-  // ---------- Helpers ----------
   function fmtTime(ts){
     const d = new Date(typeof ts === 'number' ? ts : Date.parse(ts));
     return d.toLocaleString('sv-SE', { hour:'2-digit', minute:'2-digit', year:'numeric', month:'2-digit', day:'2-digit' });
   }
 
-  // ---------- Charts ----------
   let ordersByHourChart, bestsellersChart;
+  let mapWorld, mapEurope;
 
   function buildOrdersByHourChart(perHour){
     const ctx = document.getElementById('ordersByHourChart');
@@ -122,10 +160,7 @@
     if (ordersByHourChart) ordersByHourChart.destroy();
     ordersByHourChart = new Chart(ctx, {
       type: 'line',
-      data: {
-        labels,
-        datasets: [{ label:'Antal ordrar', data, tension:.25, fill:false }]
-      },
+      data: { labels, datasets: [{ label:'Antal ordrar', data, tension:.25, fill:false }] },
       options: {
         responsive:true,
         plugins:{ legend:{ display:false }},
@@ -135,7 +170,7 @@
   }
 
   function buildBestsellersChart(items){
-    const top = items.slice(0,7); // topp 7
+    const top = items.slice(0,7);
     const ctx = document.getElementById('bestsellersChart');
     const labels = top.map(x=> x.name || x.sku);
     const data = top.map(x=> x.qty);
@@ -151,7 +186,6 @@
     });
   }
 
-  // ---------- KPIs ----------
   function renderKPIs(summary){
     const tot = summary.totalOrders || 0;
     document.getElementById('kpiTotalOrders').textContent = tot.toString();
@@ -175,7 +209,6 @@
     }
   }
 
-  // ---------- Init fetch ----------
   async function loadSummary(){
     const r = await fetch(API_BASE + "/api/orders/summary", { credentials:'include' });
     const data = await r.json();
@@ -185,36 +218,99 @@
     buildBestsellersChart(data.bestsellers || []);
   }
 
-  // ---------- Live via SSE ----------
+  // ---- Sidvisningar (kundbunden) ----
+  async function loadPageviews(days=7){
+    const r = await fetch(`/api/pageviews/summary/me?days=${days}`, { credentials:'include' });
+    const d = await r.json();
+    if(!d.success) throw new Error('Kunde inte hämta sidvisningar');
+
+    document.getElementById('pvDaysLabel').textContent = String(days);
+
+    const wrap = document.getElementById('pvByDay');
+    wrap.innerHTML = '';
+    d.byDay.forEach(row=>{
+      const p = document.createElement('p');
+      p.textContent = `${row._id}: ${row.count}`;
+      wrap.appendChild(p);
+    });
+
+    const u = document.getElementById('pvTopUrls'); u.innerHTML='';
+    d.topUrls.forEach(x=>{
+      const li = document.createElement('li');
+      li.textContent = `${x._id} — ${x.count}`;
+      u.appendChild(li);
+    });
+
+    const rf = document.getElementById('pvTopRef'); rf.innerHTML='';
+    d.topRef.forEach(x=>{
+      const li = document.createElement('li');
+      li.textContent = `${x._id||'(direkt)'} — ${x.count}`;
+      rf.appendChild(li);
+    });
+  }
+
+  // ---- Geo ----
+  function buildMap(elId, dataByCountry){
+    const el = document.getElementById(elId);
+    if (!el) return null;
+    if (el._jvm && typeof el._jvm.destroy === 'function') {
+      el._jvm.destroy();
+      el._jvm = null;
+    }
+    const mapName = elId === 'mapEurope' ? 'europe' : 'world';
+    const map = new window.jsVectorMap({
+      selector: `#${elId}`,
+      map: mapName,
+      zoomButtons: true,
+      regionStyle: { initial: { fill: '#dbeafe' } },
+      visualizeData: { scale: ['#e8eefc', '#1d4ed8'], values: dataByCountry },
+      labels: { regions: { render: c => c } },
+      onRegionTooltipShow: (tooltip, code) => {
+        const val = dataByCountry[code] || 0;
+        tooltip.text(`${tooltip.text()} — ${val}`);
+      }
+    });
+    el._jvm = map;
+    return map;
+  }
+
+  async function loadGeo(days=30){
+    const r = await fetch(`/api/pageviews/geo/me?days=${days}`, { credentials:'include' });
+    const d = await r.json();
+    if (!d.success) throw new Error('Kunde inte hämta geo-data');
+
+    document.getElementById('geoTotal').textContent = String(d.totals?.total || 0);
+    document.getElementById('geoUnique').textContent = String(d.totals?.uniqueVisitors || 0);
+
+    const dataByCountry = {};
+    (d.countries || []).forEach(row => {
+      if (row.country && row.country !== 'XX') dataByCountry[row.country] = row.count;
+    });
+
+    buildMap('mapWorld', dataByCountry);
+    buildMap('mapEurope', dataByCountry);
+  }
+
+  // ---- SSE (realtid ordrar) ----
   function connectSSE(){
     const ev = new EventSource(API_BASE + "/api/inventory/stream");
     ev.onmessage = (e) => {
       const p = JSON.parse(e.data || "{}");
       if (p.type === "order" && p.order){
-        // Uppdatera KPI “totalt”
         const val = Number(document.getElementById('kpiTotalOrders').textContent || 0);
         document.getElementById('kpiTotalOrders').textContent = String(val + p.order.qty);
-
-        // Senaste ordern
         document.getElementById('kpiLatestOrder').textContent = `${p.order.name} ×${p.order.qty}`;
         document.getElementById('kpiLatestTime').textContent = fmtTime(p.order.ts);
-
-        // Bumpa per-timme datapunkt (sista etiketten)
         if (ordersByHourChart){
-          // Om värdet gäller "nuvarande timme", öka sista punkten
           const idx = ordersByHourChart.data.labels.length - 1;
           ordersByHourChart.data.datasets[0].data[idx] = (ordersByHourChart.data.datasets[0].data[idx] || 0) + p.order.qty;
           ordersByHourChart.update('none');
         }
-
-        // Uppdatera toppsäljare (lägg till/öka)
         if (bestsellersChart){
           const name = p.order.name || p.order.sku;
           const i = bestsellersChart.data.labels.indexOf(name);
-          if (i >= 0) {
-            bestsellersChart.data.datasets[0].data[i] += p.order.qty;
-          } else {
-            // lägg längst bak (enkelt), ev. trimma till topp 7
+          if (i >= 0) bestsellersChart.data.datasets[0].data[i] += p.order.qty;
+          else {
             bestsellersChart.data.labels.push(name);
             bestsellersChart.data.datasets[0].data.push(p.order.qty);
             if (bestsellersChart.data.labels.length > 7){
@@ -229,12 +325,20 @@
     ev.onerror = () => { console.warn("SSE tappad, försöker igen om 3s..."); setTimeout(connectSSE, 3000); };
   }
 
-  // ---------- Boot ----------
+  // ---- Boot ----
   loadSummary().catch(err => console.error(err));
   connectSSE();
+  loadPageviews(7).catch(err => console.error(err));
+  loadGeo(30).catch(err => console.error(err));
+
+  document.getElementById('pvDays').addEventListener('change', e=>{
+    const v = parseInt(e.target.value,10) || 7;
+    document.getElementById('pvDaysLabel').textContent = v;
+    loadPageviews(v).catch(err => console.error(err));
+    // Vill du synka geo-intervallet med valet ovan, kalla även loadGeo(v)
+  });
 </script>
 
-<!-- PROFIL/MENY (oförändrat) -->
 <script>
   const toggle = document.getElementById('profileToggle');
   const menu = document.getElementById('profileMenu');
@@ -272,7 +376,6 @@
     document.body.classList.toggle("menu-open", !isActive);
   }
 
-  // Stäng menyn på mobil vid klick utanför
   window.addEventListener("click", (e) => {
     const sidebar = document.querySelector(".sidebar");
     const menuBtn = document.getElementById("menuToggle");
