@@ -6,6 +6,9 @@ const platformFormSchema = new mongoose.Schema({
   q1: String, q2: String, q3: String, q4: String, q5: String, q6: String, q7: String
 }, { _id: false });
 
+// Hjälpfunktion: enkel domänvalidering (ex: foo.se, www.foo.se, shop.foo.co.uk)
+const DOMAIN_REGEX = /^([a-z0-9-]+\.)+[a-z]{2,}$/i;
+
 const customerSchema = new mongoose.Schema({
   name: { type: String, trim: true },
 
@@ -22,9 +25,38 @@ const customerSchema = new mongoose.Schema({
   },
 
   // Nya fält (behålls)
-    campaigns: { type: [String], default: [], maxlength: 50 },
+  campaigns: { type: [String], default: [], maxlength: 50 },
   industry: { type: String, trim: true, maxlength: 200, default: 'Ej angivet' },
+
+  // Valfri webb-URL (fri text, används inte för filtrering)
   website: { type: String, trim: true, maxlength: 500, default: '' },
+
+  // 🔹 NYTT: primär domän (endast hostname, t.ex. "vattentrygg.se")
+  domain: {
+    type: String,
+    trim: true,
+    maxlength: 200,
+    default: '',
+    set: v => (typeof v === 'string' ? v.replace(/^https?:\/\//i, '').replace(/^www\./i, '').trim().toLowerCase() : v),
+    validate: {
+      validator: v => !v || DOMAIN_REGEX.test(v),
+      message: 'Ogiltig domän'
+    }
+  },
+
+  // 🔹 NYTT: alternativa domäner/subdomäner
+  domains: {
+    type: [String],
+    default: [],
+    set: arr => Array.isArray(arr)
+      ? arr.map(s => String(s).replace(/^https?:\/\//i, '').replace(/^www\./i, '').trim().toLowerCase()).filter(Boolean)
+      : [],
+    validate: {
+      validator: arr => Array.isArray(arr) && arr.length <= 50 && arr.every(d => DOMAIN_REGEX.test(d)),
+      message: 'En eller flera domäner i "domains" är ogiltiga'
+    }
+  },
+
   plan: { type: String, trim: true, maxlength: 100, default: 'Gratis' },
   notes: { type: String, trim: true, maxlength: 2000, default: '' },
 
@@ -62,7 +94,7 @@ const customerSchema = new mongoose.Schema({
       budget: { type: String, default: '' },
       goals: { type: String, default: '' }
     },
-        otherNotes: { type: String, trim: true, maxlength: 2000, default: '' }
+    otherNotes: { type: String, trim: true, maxlength: 2000, default: '' }
   },
 
   // ✅ SUPPORTHISTORIK
@@ -98,7 +130,7 @@ const customerSchema = new mongoose.Schema({
     aiLanguage: { type: String, default: 'sv' }
   },
 
-    profileImage: {
+  profileImage: {
     type: String,
     trim: true,
     maxlength: 500,
