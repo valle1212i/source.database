@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="payments-base" content="https://stripe-payment-oversvamningsskydd-kund1.onrender.com">
-
   <title>Kundportal – Betalningar</title>
 
   <link rel="stylesheet" href="CSS/betalningar.css" />
@@ -35,16 +33,14 @@
     <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
   </ul>
   <div class="help">
-      <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
-        <i class="fas fa-circle-question"></i> Hjälp / FAQ
-      </a>
-    </div>
+    <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
+      <i class="fas fa-circle-question"></i> Hjälp / FAQ
+    </a>
   </div>
+</div>
 
 <!-- HAMBURGERMENY (mobil) -->
-<button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">
-  &#9776;
-</button>
+<button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">&#9776;</button>
 
 <!-- PROFILMENY -->
 <div class="profile-wrapper">
@@ -212,9 +208,9 @@
       btn.className = 'black-button';
       btn.textContent = 'Visa detaljer';
       btn.addEventListener('click', () => {
-  if (!p.sessionId) return alert('Saknar sessionId');
-  window.location.href = `betalning.html?session=${encodeURIComponent(p.sessionId)}`;
-});
+        if (!p.sessionId) return alert('Saknar sessionId');
+        window.location.href = `betalning.html?session=${encodeURIComponent(p.sessionId)}`;
+      });
       actions.appendChild(btn);
 
       const rBtn = document.createElement('button');
@@ -374,13 +370,9 @@
     doc.save(`Kvitto_${safeOrder}.pdf`);
   }
 
-  /* ================== ÅTERBETALNING (med CSRF) ================== */
-  // Bas-URL för betalningsservern (hämtas från <meta>)
-const PAYMENTS_BASE =
-  (document.querySelector('meta[name="payments-base"]')?.content || '').replace(/\/$/, '');
+  /* ================== ÅTERBETALNING (via kundportalen + CSRF) ================== */
   async function requestRefund(sessionId, amountTotalOre) {
     if (!sessionId) return alert("Hittar inget sessionId på betalningen.");
-    
 
     const amountStr = prompt("Belopp att återbetala i SEK (lämna tomt för full återbetalning):", "");
     let amountOre = null;
@@ -400,33 +392,31 @@ const PAYMENTS_BASE =
     }
 
     try {
-  const base = PAYMENTS_BASE;
-  if (!base) {
-    alert("Kunde inte skapa återbetalning: PAYMENTS_BASE saknas eller är ogiltig");
-    return;
-  }
+      const res = await fetch(`/api/payments/refund`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': await getCsrfToken()
+        },
+        body: JSON.stringify({
+          sessionId,
+          amount: amountOre ?? undefined,
+          reason: reason || undefined
+        })
+      });
 
-  const res = await fetch(`${base}/api/payments/refund`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }, // inga CSRF/credentials här
-    body: JSON.stringify({
-      sessionId,
-      amount: amountOre ?? undefined,
-      reason: reason || undefined
-    })
-  });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.success === false) {
+        throw new Error(data?.message || `Återbetalning misslyckades (${res.status})`);
+      }
 
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || data.success === false) {
-    throw new Error(data?.message || `Återbetalning misslyckades (${res.status})`);
-  }
-
-  alert("Återbetalning skapad ✅");
-  reloadPayments();
-} catch (err) {
-  console.error("Refund error:", err);
-  alert("Kunde inte skapa återbetalning: " + (err.message || "okänt fel"));
-}
+      alert("Återbetalning skapad ✅");
+      reloadPayments();
+    } catch (err) {
+      console.error("Refund error:", err);
+      alert("Kunde inte skapa återbetalning: " + (err.message || "okänt fel"));
+    }
   }
 
   // ---------------- Filters ----------------
@@ -468,60 +458,36 @@ const PAYMENTS_BASE =
   }
 
   async function reloadPayments() {
-  const base = (document.querySelector('meta[name="payments-base"]')?.content || '').replace(/\/$/,'');
-  const wrap = document.getElementById('paymentsList');
+    const wrap = document.getElementById('paymentsList');
 
-  console.log('[betalningar] PAYMENTS_BASE =', base);
-  while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
-  const loading = document.createElement('p');
-  loading.className = 'info-text';
-  loading.textContent = 'Laddar...';
-  wrap.appendChild(loading);
-
-  if (!base) {
-    loading.textContent = 'Saknar <meta name="payments-base"> i <head>.';
-    return;
-  }
-
-  try {
-    const url = `${base}/api/payments?limit=200`;
-    console.log('[betalningar] GET', url);
-    const res = await fetch(url, {
-      // cross-origin: låt bli cookies om din payments-backend inte behöver dem
-      credentials: 'omit',
-      headers: { 'Accept': 'application/json' }
-    });
-
-    const raw = await res.text();
-    console.log('[betalningar] status', res.status, 'raw:', raw);
-
-    let data;
-    try { data = JSON.parse(raw); }
-    catch (e) {
-      throw new Error(`Ogiltig JSON från backend (status ${res.status}).`);
-    }
-
-    if (!res.ok || data?.success === false) {
-      throw new Error(data?.message || `Fel från backend (status ${res.status}).`);
-    }
-
-    // Stöder både {items: [...]} och ren array
-    allPayments = Array.isArray(data) ? data : (data.items || []);
-    console.log('[betalningar] antal:', allPayments.length);
-
-    allPayments.sort(
-      (a,b) => (b.stripe_created_ms || b.created || 0) - (a.stripe_created_ms || a.created || 0)
-    );
-
-    // ta bort "Laddar..."
     while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
-    renderList(allPayments);
-  } catch (e) {
-    console.error('Fel vid hämtning av betalningar:', e);
-    loading.textContent = 'Kunde inte hämta betalningar. ' + (e.message || 'Försök igen senare.');
-  }
-}
+    const loading = document.createElement('p');
+    loading.className = 'info-text';
+    loading.textContent = 'Laddar...';
+    wrap.appendChild(loading);
 
+    try {
+      const res = await fetch(`/api/payments?limit=200`, {
+        credentials: 'include',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data?.success === false) {
+        throw new Error(data?.message || `Fel från backend (status ${res.status}).`);
+      }
+
+      allPayments = Array.isArray(data) ? data : (data.items || []);
+      allPayments.sort((a,b) => (b.stripe_created_ms || b.created || 0) - (a.stripe_created_ms || a.created || 0));
+
+      while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
+      renderList(allPayments);
+    } catch (e) {
+      console.error('Fel vid hämtning av betalningar:', e);
+      loading.textContent = 'Kunde inte hämta betalningar. ' + (e.message || 'Försök igen senare.');
+    }
+  }
 
   // ---------------- Profil/meny ----------------
   const toggle = document.getElementById('profileToggle');
@@ -641,7 +607,6 @@ const PAYMENTS_BASE =
   document.getElementById('pdfBtn').addEventListener('click', exportReceiptAsPDF);
   document.getElementById('refundBtn').addEventListener('click', () => {
     if (!currentReceipt) return;
-    // order = sessionId i normalizeForReceipt
     const sessionId = String(currentReceipt.order || '').replace(/^#/, '');
     requestRefund(sessionId, currentReceipt.amount_total || 0);
   });
