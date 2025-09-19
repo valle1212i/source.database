@@ -267,7 +267,8 @@
       labels: { regions: { render: c => c } },
       onRegionTooltipShow: (tooltip, code) => {
         const val = dataByCountry[code] || 0;
-        tooltip.text(`${tooltip.text()} — ${val}`);
+        // <— ändra denna rad:
+        tooltip.textContent = `${tooltip.textContent} — ${val}`;
       }
     });
     el._jvm = map;
@@ -389,6 +390,27 @@
     }
   });
 </script>
+<script>
+  // Visa inloggad användare i profilmenyn
+  (async () => {
+    try {
+      const r = await fetch('/api/profile/me', { credentials: 'include' });
+      if (!r.ok) throw new Error('not ok');
+      const d = await r.json();
+      if (d.success) {
+        const el = document.getElementById('userEmail');
+        if (el) el.textContent = d.email || d.name || 'Inloggad';
+        // uppdatera även profil-ikonen om du vill:
+        const it = document.getElementById('profileToggle');
+        if (it && typeof d.name === 'string') it.textContent = d.name.slice(0,2).toUpperCase();
+      }
+    } catch (e) {
+      // lämna "Laddar..." – men sidan är redan skyddad av /analytics.html route
+      console.warn('Kunde inte läsa profil:', e);
+    }
+  })();
+</script>
+
 <script src="/js/logout.js"></script>
 </body>
 </html>
