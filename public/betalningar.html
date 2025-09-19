@@ -468,24 +468,57 @@ const PAYMENTS_BASE =
   }
 
   async function reloadPayments() {
+  const base = (document.querySelector('meta[name="payments-base"]')?.content || '').replace(/\/$/,'');
+  const wrap = document.getElementById('paymentsList');
+
+  console.log('[betalningar] PAYMENTS_BASE =', base);
+  while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
+  const loading = document.createElement('p');
+  loading.className = 'info-text';
+  loading.textContent = 'Laddar...';
+  wrap.appendChild(loading);
+
+  if (!base) {
+    loading.textContent = 'Saknar <meta name="payments-base"> i <head>.';
+    return;
+  }
+
   try {
-    const base = PAYMENTS_BASE; // från <meta name="payments-base">
-    const res = await fetch(`${base}/api/payments?limit=200`, { credentials: 'include' });
-    const data = await res.json();
-    if (!data || data.success === false) {
-      throw new Error(data?.message || 'Kunde inte hämta betalningar');
+    const url = `${base}/api/payments?limit=200`;
+    console.log('[betalningar] GET', url);
+    const res = await fetch(url, {
+      // cross-origin: låt bli cookies om din payments-backend inte behöver dem
+      credentials: 'omit',
+      headers: { 'Accept': 'application/json' }
+    });
+
+    const raw = await res.text();
+    console.log('[betalningar] status', res.status, 'raw:', raw);
+
+    let data;
+    try { data = JSON.parse(raw); }
+    catch (e) {
+      throw new Error(`Ogiltig JSON från backend (status ${res.status}).`);
     }
+
+    if (!res.ok || data?.success === false) {
+      throw new Error(data?.message || `Fel från backend (status ${res.status}).`);
+    }
+
+    // Stöder både {items: [...]} och ren array
     allPayments = Array.isArray(data) ? data : (data.items || []);
-    allPayments.sort((a, b) => (b.stripe_created_ms || b.created || 0) - (a.stripe_created_ms || a.created || 0));
+    console.log('[betalningar] antal:', allPayments.length);
+
+    allPayments.sort(
+      (a,b) => (b.stripe_created_ms || b.created || 0) - (a.stripe_created_ms || a.created || 0)
+    );
+
+    // ta bort "Laddar..."
+    while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
     renderList(allPayments);
   } catch (e) {
     console.error('Fel vid hämtning av betalningar:', e);
-    const wrap = document.getElementById('paymentsList');
-    while (wrap.firstChild) wrap.removeChild(wrap.firstChild);
-    const err = document.createElement('p');
-    err.className = 'info-text';
-    err.textContent = 'Kunde inte hämta betalningar. Försök igen senare.';
-    wrap.appendChild(err);
+    loading.textContent = 'Kunde inte hämta betalningar. ' + (e.message || 'Försök igen senare.');
   }
 }
 
