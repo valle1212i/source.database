@@ -407,6 +407,32 @@ ro.observe(container);
   el._jvm = jvm;
 }
 
+  async function loadGeo(days = 30) {
+    try {
+      const res = await fetch(`/api/pageviews/geo/me?days=${days}`, { credentials: 'include' });
+      const d = await res.json();
+      if (!d.success) throw new Error('Kunde inte hämta geo-data');
+
+      // KPI
+      document.getElementById('geoTotal').textContent  = String(d.totals?.total || 0);
+      document.getElementById('geoUnique').textContent = String(d.totals?.uniqueVisitors || 0);
+
+      // Gör om listan till { ISO2: count }
+      const counts = {};
+      (d.countries || []).forEach(row => {
+        const code = (row.country || '').toUpperCase();
+        if (code && code !== 'XX') counts[code] = row.count || 0;
+      });
+
+      // Bygg visualiseringarna
+      await buildSpinningGlobe(counts);
+      buildEuropeMap(counts);
+    } catch (e) {
+      console.error('loadGeo error:', e);
+    }
+  }
+
+
   // ====== SSE (realtid ordrar) ======
   function connectSSE(){
     const ev = new EventSource(API_BASE + "/api/inventory/stream");
