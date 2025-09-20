@@ -332,3 +332,53 @@ body.dark-theme .nav-menu li.active a {
   /* Behåll färgbyte om menyn är öppen */
   body.menu-open .hamburger-menu { color: white; }
 }
+/* PV – ny layout */
+.pv-head{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:12px}
+.pv-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
+.pv-kpi{background:var(--card-bg,#fff);border:1px solid rgba(0,0,0,.05);border-radius:14px;padding:14px}
+.pv-kpi-title{font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:.03em}
+.pv-kpi-value{font-size:30px;font-weight:800;margin-top:4px}
+.pv-kpi-sub{font-size:12px;color:#94a3b8;margin-top:2px}
+.pv-block{margin-top:14px}
+.pv-block-title{font-weight:600;margin:0 0 8px}
+.pv-table-wrap{max-height:260px;overflow:auto;border:1px solid rgba(0,0,0,.06);border-radius:10px}
+.pv-table{width:100%;border-collapse:collapse;font-size:14px}
+.pv-table th,.pv-table td{padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.05)}
+.pv-table tbody tr:hover{background:rgba(0,0,0,.02)}
+.pv-empty{color:#94a3b8;text-align:center}
+/* === Legacy KPI look (remove card boxes & stack vertically) === */
+.kpi-grid{
+  grid-template-columns: 1fr;   /* one column like before */
+  gap: 8px;
+  margin: 6px 0 12px;
+}
+
+.kpi-card{
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+  position: static;
+}
+
+.kpi-card .icon{ display: none; }   /* hide corner icon */
+
+.kpi-title{
+  margin: 0 0 2px;
+  font-size: 14px;
+  color: #111827;                  /* darker like old */
+  text-transform: none;            /* no ALL CAPS */
+  letter-spacing: 0;
+}
+
+.big-number{
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.subtle{
+  color: #6b7280;
+  font-size: 12px;
+  margin-top: 4px;
+}
