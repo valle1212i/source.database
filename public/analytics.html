@@ -302,10 +302,11 @@
     const maxVal  = Math.max(1, ...Object.values(countryCounts));
     const colorOf = makeColorScale(maxVal);
     const capColor = f => colorOf(countryCounts[NAME_TO_ISO2[f.properties.name] || ''] || 0);
-    const altitude = f => {
-      const v = countryCounts[NAME_TO_ISO2[f.properties.name] || ''] || 0;
-      return v ? 0.02 + Math.min(0.08, v/maxVal*0.08) : 0.005;
-    };
+    const altitude = feat => {
+  const v = countryCounts[NAME_TO_ISO2[feat.properties.name] || ''] || 0;
+  // lägre max-altitude för snyggare look
+  return v ? 0.01 + Math.min(0.05, (v / (maxVal || 1)) * 0.05) : 0.004;
+};
     const el = document.getElementById('globeContainer');
     if (!globeInstance){
       globeInstance = Globe()(el)
@@ -331,6 +332,17 @@
       globeInstance.polygonAltitude(altitude);
     }
   }
+  // Efter att du skapat globeInstance i buildSpinningGlobe:
+const container = document.getElementById('globeContainer');
+
+// ... när globeInstance skapats:
+const ro = new ResizeObserver(() => {
+  if (!globeInstance) return;
+  globeInstance.width(container.clientWidth)
+               .height(container.clientHeight);
+});
+ro.observe(container);
+
   function showGlobeTooltip(feat, counts, container){
     const tip = document.getElementById('globeTooltip');
     if (!feat){ tip.style.display='none'; return; }
@@ -452,12 +464,18 @@
   loadPageviews(7).catch(console.error);
   loadGeo(30).catch(console.error);
 
+
   (function initPv(){
     const select = document.getElementById('pvRange');
     const load = () => loadPageviews(parseInt(select.value,10)).catch(console.error);
     select.addEventListener('change', load);
   })();
 </script>
+<script>
+  document.getElementById('globeContainer').style.height ||= '360px';
+  document.getElementById('mapEurope').style.height ||= '360px';
+</script>
+
 
 <script src="/js/logout.js"></script>
 </body>
