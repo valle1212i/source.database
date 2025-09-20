@@ -14,13 +14,13 @@
   <!-- Chart.js för diagram -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- jsVectorMap (Europa-karta) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/europe.js"></script>
+ <!-- jsVectorMap (PINNED version + europe map) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe.js"></script>
+
 
   <!-- 3D-glob -->
-  <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
   <script src="https://unpkg.com/globe.gl@2.32.6/dist/globe.gl.min.js"></script>
   <script src="https://unpkg.com/topojson-client@3"></script>
 </head>
@@ -157,7 +157,7 @@
       </div>
       <div class="map-card">
         <h4>Europa</h4>
-        <div id="mapEurope" class="map"></div>
+        <div id="mapEurope" class="map" style="height:360px;"></div>
       </div>
     </div>
   </section>
@@ -366,35 +366,46 @@ ro.observe(container);
     if (tip._h){ window.removeEventListener('mousemove', tip._h); tip._h = null; }
   }
   function buildEuropeMap(countryCounts){
-    const el = document.getElementById('mapEurope');
-    if (!el) return;
-    if (el._jvm?.destroy) { el._jvm.destroy(); el._jvm = null; }
-    const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
-    const values = {};
-    for (const [k,v] of Object.entries(countryCounts)) if (EURO.has(k)) values[k]=v;
-    new window.jsVectorMap({
-      selector: '#mapEurope',
-      map: 'europe',
-      zoomButtons: true,
-      regionStyle: { initial: { fill: '#dbeafe' } },
-      series: { regions: [{ values, scale: ['#e8eefc', '#1d4ed8'], normalizeFunction: v => v / Math.max(1, ...Object.values(values)) }] },
-      labels: { regions: { render: c => c } },
-      onRegionTooltipShow: (elTip, code) => { elTip.textContent = `${elTip.textContent} — ${values[code] || 0} visningar`; }
-    });
+  const el = document.getElementById('mapEurope');
+  if (!el) return;
+
+  // clean old instance
+  if (el._jvm && typeof el._jvm.destroy === 'function') {
+    el._jvm.destroy();
+    el._jvm = null;
   }
-  async function loadGeo(days=30){
-    const r = await fetch(`/api/pageviews/geo/me?days=${days}`, { credentials:'include' });
-    const d = await r.json();
-    if (!d.success) return;
-    document.getElementById('geoTotal').textContent  = d.totals?.total || 0;
-    document.getElementById('geoUnique').textContent = d.totals?.uniqueVisitors || 0;
-    const counts = {};
-    for (const row of (d.countries || [])){
-      if (row.country && row.country !== 'XX') counts[row.country.toUpperCase()] = row.count;
+
+  // only keep European ISO2 codes
+  const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
+  const values = {};
+  Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
+
+  // is the europe map actually loaded?
+  const hasEurope = !!(window.jsVectorMap && window.jsVectorMap.maps && window.jsVectorMap.maps.europe);
+  const mapName   = hasEurope ? 'europe' : 'world';
+  if (!hasEurope) console.warn('Europe map not loaded – falling back to world.');
+
+  const jvm = new window.jsVectorMap({
+    selector: '#mapEurope',
+    map: mapName,
+    zoomButtons: true,
+    regionStyle: { initial: { fill: '#dbeafe' } },
+    series: {
+      regions: [{
+        values,
+        scale: ['#e8eefc', '#1d4ed8'],
+        normalizeFunction: 'polynomial'   // <- supported normalizer
+      }]
+    },
+    labels: { regions: { render: c => c } },
+    onRegionTooltipShow: (tipEl, code) => {
+      const val = values[code] || 0;
+      tipEl.textContent = `${tipEl.textContent} — ${val} visningar`;
     }
-    await buildSpinningGlobe(counts);
-    buildEuropeMap(counts);
-  }
+  });
+
+  el._jvm = jvm;
+}
 
   // ====== SSE (realtid ordrar) ======
   function connectSSE(){
