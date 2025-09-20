@@ -15,9 +15,14 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
  <!-- jsVectorMap (PINNED version + europe map) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe.js"></script>
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css" />
+ <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3"></script>
+ <!-- load both, so fallback always works -->
+ <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe.js"></script>
+ <!-- some CDNs ship the Mercator variant; this makes it bullet-proof -->
+ <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe-merc.js"></script>
+ 
 
 
   <!-- 3D-glob -->
@@ -369,32 +374,43 @@ ro.observe(container);
   const el = document.getElementById('mapEurope');
   if (!el) return;
 
-  // clean old instance
+  // Clean any old instance
   if (el._jvm && typeof el._jvm.destroy === 'function') {
     el._jvm.destroy();
     el._jvm = null;
   }
 
-  // only keep European ISO2 codes
+  // Keep only European ISO2
   const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
   const values = {};
   Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
 
-  // is the europe map actually loaded?
-  const hasEurope = !!(window.jsVectorMap && window.jsVectorMap.maps && window.jsVectorMap.maps.europe);
-  const mapName   = hasEurope ? 'europe' : 'world';
-  if (!hasEurope) console.warn('Europe map not loaded – falling back to world.');
+  // Pick the first available Europe map id
+  const maps = (window.jsVectorMap && window.jsVectorMap.maps) || {};
+  const MAP_ID =
+    (maps['europe'] && 'europe') ||
+    (maps['europe_merc'] && 'europe_merc') ||
+    (maps['europe-merc'] && 'europe-merc') ||
+    (maps['world'] && 'world'); // last-resort fallback
+
+  if (!MAP_ID) {
+    console.error('jsVectorMap maps are not loaded.');
+    return;
+  }
+  if (MAP_ID !== 'europe' && MAP_ID !== 'europe_merc' && MAP_ID !== 'europe-merc') {
+    console.warn('Europe map not found, using world as fallback.');
+  }
 
   const jvm = new window.jsVectorMap({
     selector: '#mapEurope',
-    map: mapName,
+    map: MAP_ID,
     zoomButtons: true,
     regionStyle: { initial: { fill: '#dbeafe' } },
     series: {
       regions: [{
         values,
         scale: ['#e8eefc', '#1d4ed8'],
-        normalizeFunction: 'polynomial'   // <- supported normalizer
+        normalizeFunction: 'polynomial'
       }]
     },
     labels: { regions: { render: c => c } },
@@ -406,6 +422,7 @@ ro.observe(container);
 
   el._jvm = jvm;
 }
+
 
   async function loadGeo(days = 30) {
     try {

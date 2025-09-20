@@ -416,3 +416,4 @@ body.dark-theme .nav-menu li.active a {
 /* runda kanter även på canvas */
 #globeContainer canvas{ border-radius:16px; }
 
+#mapEurope, #globeContainer { min-height: 360px; }
