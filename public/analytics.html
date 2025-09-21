@@ -281,6 +281,34 @@
   }
 
   // ====== GEO ======
+  async function ensureJvmMap(mapId) {
+    const isReady = () => (
+      window.jsVectorMap &&
+      window.jsVectorMap.maps &&
+      Object.prototype.hasOwnProperty.call(window.jsVectorMap.maps, mapId)
+    );
+    if (isReady()) return true;
+
+    const sources = {
+      'europe':      'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe.js',
+      'europe-merc': 'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe-merc.js',
+      'world':       'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js'
+    };
+    const src = sources[mapId];
+    if (!src) return false;
+
+    await new Promise((resolve) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      s.onload = resolve;
+      s.onerror = resolve;
+      document.head.appendChild(s);
+    });
+
+    return isReady();
+  }
+
   function makeColorScale(maxVal){
     const from = [198,218,255], to = [29,78,216];
     return v => {
@@ -370,40 +398,48 @@
 
   // ✅ KORREKT OCH STÄNGD buildEuropeMap (inget mer ligger "inuti" den)
   async function buildEuropeMap(countryCounts){
-    const el = document.getElementById('mapEurope');
-    if (!el) return;
+  const el = document.getElementById('mapEurope');
+  if (!el) return;
 
-    // städa ev. tidigare instans
-    if (el._jvm && typeof el._jvm.destroy === 'function') {
-      el._jvm.destroy(); el._jvm = null;
-    }
-
-    // plocka bara europeiska länder
-    const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
-    const values = {};
-    Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
-
-    const jvm = new window.jsVectorMap({
-      selector: '#mapEurope',
-      map: 'europe',
-      zoomButtons: true,
-      regionStyle: { initial: { fill: '#dbeafe' } },
-      series: {
-        regions: [{
-          values,
-          scale: ['#e8eefc', '#1d4ed8'],
-          normalizeFunction: 'polynomial'
-        }]
-      },
-      labels: { regions: { render: c => c } },
-      onRegionTooltipShow: (tipEl, code) => {
-        const val = values[code] || 0;
-        tipEl.textContent = `${tipEl.textContent} — ${val} visningar`;
-      }
-    });
-
-    el._jvm = jvm;
+  // Städa ev. tidigare instans
+  if (el._jvm && typeof el._jvm.destroy === 'function') {
+    el._jvm.destroy(); el._jvm = null;
   }
+
+  // Filtrera Europa
+  const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
+  const values = {};
+  Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
+
+  // Säkerställ karta; prova europe -> europe-merc -> world
+  let mapId = 'europe';
+  let ok = await ensureJvmMap(mapId);
+  if (!ok) { mapId = 'europe-merc'; ok = await ensureJvmMap(mapId); }
+  if (!ok) { mapId = 'world';       ok = await ensureJvmMap(mapId);   }
+  if (!ok) { console.error('jsVectorMap map could not be loaded.'); return; }
+  if (mapId === 'world') console.warn('Föll tillbaka till world-kartan (europe saknades).');
+
+  const jvm = new window.jsVectorMap({
+    selector: '#mapEurope',
+    map: mapId,
+    zoomButtons: true,
+    regionStyle: { initial: { fill: '#dbeafe' } },
+    series: {
+      regions: [{
+        values,
+        scale: ['#e8eefc', '#1d4ed8'],
+        normalizeFunction: 'polynomial'
+      }]
+    },
+    labels: { regions: { render: c => c } },
+    onRegionTooltipShow: (tipEl, code) => {
+      const val = values[code] || 0;
+      tipEl.textContent = `${tipEl.textContent} — ${val} visningar`;
+    }
+  });
+
+  el._jvm = jvm;
+}
 
   // ✅ loadGeo som top-level-funktion (inte inuti buildEuropeMap)
   async function loadGeo(days = 30) {
