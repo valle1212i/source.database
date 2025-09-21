@@ -14,7 +14,7 @@
   <!-- Chart.js för diagram -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- jsVectorMap (PINNED version + europe map) -->
+  <!-- jsVectorMap (PINNED version + mappar) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js"></script>
@@ -36,7 +36,7 @@
 <!-- SIDOMENY -->
 <div class="sidebar">
   <div class="logo">
-    <a href="customerportal.html"><img src="images/logo.png" alt="Logotyp" class="logo-img" /></a>
+    <a href="customerportal.html"><img src="./images/logo.png" alt="Logotyp" class="logo-img" /></a>
   </div>
   <ul class="nav-menu">
     <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
@@ -174,6 +174,16 @@
   const savedTheme = localStorage.getItem("theme") || "light";
   document.body.classList.add(`${savedTheme}-theme`);
 
+  // Sidebar-toggle (hamburger)
+  function toggleSidebar(force) {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+    const active = (typeof force === 'boolean') ? force : !sidebar.classList.contains('active');
+    sidebar.classList.toggle('active', active);
+    document.body.classList.toggle('menu-open', active);
+  }
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleSidebar(false); });
+
   function fmtTime(ts){
     const d = new Date(typeof ts === 'number' ? ts : Date.parse(ts));
     return d.toLocaleString('sv-SE', { hour:'2-digit', minute:'2-digit', year:'numeric', month:'2-digit', day:'2-digit' });
@@ -280,64 +290,53 @@
     buildPvLineChart(labels, values);
   }
 
-  // ====== GEO ======
+  // ====== GEO ====== (robust laddning av jsvectormap)
   async function ensureJvmCore(timeoutMs = 4000) {
-  const start = performance.now();
-  return await new Promise(resolve => {
-    (function waitLoop(){
-      const has = (typeof window.jsVectorMap === 'function') || (typeof window.JSVectorMap === 'function');
-      if (has) return resolve(true);
-      if (performance.now() - start > timeoutMs) return resolve(false);
-      requestAnimationFrame(waitLoop);
-    })();
-  });
-}
-
-function getJvmMapsRegistry() {
-  // Hantera olika builds/globaler
-  const ctor = (window.jsVectorMap || window.JSVectorMap);
-  const maps = ctor && ctor.maps ? ctor.maps : (window.jsVectorMap && window.jsVectorMap.maps) || (window.JSVectorMap && window.JSVectorMap.maps) || {};
-  return maps;
-}
-
-async function ensureJvmMap(mapId) {
-  // 1) Säkerställ att kärnan finns
-  const coreReady = await ensureJvmCore();
-  if (!coreReady) {
-    console.error('jsVectorMap core is not available.');
-    return false;
+    const start = performance.now();
+    return await new Promise(resolve => {
+      (function loop(){
+        const has = (typeof window.jsVectorMap === 'function') || (typeof window.JSVectorMap === 'function');
+        if (has) return resolve(true);
+        if (performance.now() - start > timeoutMs) return resolve(false);
+        requestAnimationFrame(loop);
+      })();
+    });
   }
-
-  // 2) Finns kartan redan?
-  let maps = getJvmMapsRegistry();
-  if (Object.prototype.hasOwnProperty.call(maps, mapId)) return true;
-
-  // 3) Ladda kartfilen dynamiskt
-  const sources = {
-    'europe':      'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe.js',
-    'europe-merc': 'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe-merc.js',
-    'world':       'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js'
-  };
-  const src = sources[mapId];
-  if (!src) return false;
-
-  await new Promise((resolve) => {
-    const s = document.createElement('script');
-    s.src = src;
-    s.async = true;
-    s.onload = resolve;
-    s.onerror = resolve;
-    document.head.appendChild(s);
-  });
-
-  // 4) Kolla igen
-  maps = getJvmMapsRegistry();
-  const ok = Object.prototype.hasOwnProperty.call(maps, mapId);
-  if (!ok) {
-    console.warn('Tillgängliga jsvectormap-kartor just nu:', Object.keys(maps));
+  function getJvmCtor(){ return (window.jsVectorMap || window.JSVectorMap); }
+  function getJvmMaps(){ const C = getJvmCtor(); return (C && C.maps) ? C.maps : {}; }
+  async function ensureJvmMapById(mapId, srcUrl){
+    if (Object.prototype.hasOwnProperty.call(getJvmMaps(), mapId)) return true;
+    await new Promise(res => {
+      const s = document.createElement('script');
+      s.src = srcUrl; s.async = true; s.onload = res; s.onerror = res;
+      document.head.appendChild(s);
+    });
+    return Object.prototype.hasOwnProperty.call(getJvmMaps(), mapId);
   }
-  return ok;
-}
+  async function ensureJvmMapAny() {
+    const okCore = await ensureJvmCore();
+    if (!okCore) return { ok:false };
+    const CDN = 'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/';
+    const candidates = [
+      { id:'europe',      src: CDN + 'europe.js' },
+      { id:'europe_merc', src: CDN + 'europe-merc.js' },
+      { id:'world',       src: CDN + 'world.js' },
+      { id:'world_merc',  src: CDN + 'world-merc.js' }
+    ];
+    for (const c of candidates) {
+      const ok = await ensureJvmMapById(c.id, c.src);
+      if (ok) return { ok:true, id:c.id };
+    }
+    console.warn('Tillgängliga jsvectormap-kartor just nu:', Object.keys(getJvmMaps()));
+    return { ok:false };
+  }
+  // Init-vakt: se till att minst en karta finns innan geo byggs
+  (async () => {
+    const ok = await ensureJvmCore();
+    if (ok && !Object.keys(getJvmMaps()).length) {
+      await ensureJvmMapById('europe', 'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe.js');
+    }
+  })();
 
   function makeColorScale(maxVal){
     const from = [198,218,255], to = [29,78,216];
@@ -398,8 +397,7 @@ async function ensureJvmMap(mapId) {
   const container = document.getElementById('globeContainer');
   const ro = new ResizeObserver(() => {
     if (!globeInstance) return;
-    globeInstance.width(container.clientWidth)
-                 .height(container.clientHeight);
+    globeInstance.width(container.clientWidth).height(container.clientHeight);
   });
   ro.observe(container);
 
@@ -426,83 +424,63 @@ async function ensureJvmMap(mapId) {
     if (tip._h){ window.removeEventListener('mousemove', tip._h); tip._h = null; }
   }
 
-  // ✅ KORREKT OCH STÄNGD buildEuropeMap (inget mer ligger "inuti" den)
-async function buildEuropeMap(countryCounts){
-  const el = document.getElementById('mapEurope');
-  if (!el) return;
+  // Europa-karta (robust, provar flera kart-ID:n)
+  async function buildEuropeMap(countryCounts){
+    const el = document.getElementById('mapEurope');
+    if (!el) return;
 
-  // Städa ev. tidigare instans
-  if (el._jvm && typeof el._jvm.destroy === 'function') {
-    el._jvm.destroy(); el._jvm = null;
+    if (el._jvm && typeof el._jvm.destroy === 'function') { el._jvm.destroy(); el._jvm = null; }
+
+    const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
+    const values = {};
+    Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
+
+    const got = await ensureJvmMapAny();
+    if (!got.ok) { console.error('jsVectorMap map could not be loaded.'); return; }
+    const mapId = got.id;
+    if (mapId.startsWith('world')) console.warn('Föll tillbaka till världskarta (Europa ej hittad).');
+
+    const Ctor = (window.jsVectorMap || window.JSVectorMap);
+    const jvm = new Ctor({
+      selector: '#mapEurope',
+      map: mapId,
+      zoomButtons: true,
+      regionStyle: { initial: { fill: '#dbeafe' } },
+      series: {
+        regions: [{
+          values,
+          scale: ['#e8eefc', '#1d4ed8'],
+          normalizeFunction: 'polynomial'
+        }]
+      },
+      labels: { regions: { render: c => c } },
+      onRegionTooltipShow: (tipEl, code) => {
+        const val = values[code] || 0;
+        tipEl.textContent = `${tipEl.textContent} — ${val} visningar`;
+      }
+    });
+
+    el._jvm = jvm;
   }
 
-  // Filtrera Europa
-  const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
-  const values = {};
-  Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
-
-  // Vänta in kärnan först
-  const coreReady = await ensureJvmCore();
-  if (!coreReady) { console.error('jsVectorMap core saknas.'); return; }
-
-  // Prova europe -> europe-merc -> world
-  let mapId = 'europe';
-  let ok = await ensureJvmMap(mapId);
-  if (!ok) { mapId = 'europe-merc'; ok = await ensureJvmMap(mapId); }
-  if (!ok) { mapId = 'world';       ok = await ensureJvmMap(mapId);   }
-
-  if (!ok) {
-    console.error('jsVectorMap map could not be loaded.');
-    console.warn('Tillgängliga jsvectormap-kartor:', Object.keys(getJvmMapsRegistry()));
-    return;
-  }
-  if (mapId === 'world') {
-    console.warn('Föll tillbaka till world-kartan (europe saknades).');
-  }
-
-  const jvm = new (window.jsVectorMap || window.JSVectorMap)({
-    selector: '#mapEurope',
-    map: mapId,
-    zoomButtons: true,
-    regionStyle: { initial: { fill: '#dbeafe' } },
-    series: {
-      regions: [{
-        values,
-        scale: ['#e8eefc', '#1d4ed8'],
-        normalizeFunction: 'polynomial'
-      }]
-    },
-    labels: { regions: { render: c => c } },
-    onRegionTooltipShow: (tipEl, code) => {
-      const val = values[code] || 0;
-      tipEl.textContent = `${tipEl.textContent} — ${val} visningar`;
-    }
-  });
-
-  el._jvm = jvm;
-}
-
-  // ✅ loadGeo som top-level-funktion (inte inuti buildEuropeMap)
+  // Hämta geo och bygg visualiseringar
   async function loadGeo(days = 30) {
     try {
       const res = await fetch(`/api/pageviews/geo/me?days=${days}`, { credentials: 'include' });
       const d = await res.json();
       if (!d.success) throw new Error('Kunde inte hämta geo-data');
 
-      // KPI
       const elTotal  = document.getElementById('geoTotal');
       const elUnique = document.getElementById('geoUnique');
       if (elTotal)  elTotal.textContent  = String(d.totals?.total || 0);
       if (elUnique) elUnique.textContent = String(d.totals?.uniqueVisitors || 0);
 
-      // Gör om listan till { ISO2: count }
       const counts = {};
       (d.countries || []).forEach(row => {
         const code = (row.country || '').toUpperCase();
         if (code && code !== 'XX') counts[code] = row.count || 0;
       });
 
-      // Bygg visualiseringarna
       await buildSpinningGlobe(counts);
       buildEuropeMap(counts);
     } catch (e) {
@@ -512,7 +490,7 @@ async function buildEuropeMap(countryCounts){
 
   // ====== SSE (realtid ordrar) ======
   function connectSSE(){
-    const ev = new EventSource(API_BASE + "/api/inventory/stream");
+    const ev = new EventSource(API_BASE + "/api/inventory/stream", { withCredentials: true });
     ev.onmessage = (e) => {
       const p = JSON.parse(e.data || "{}");
       if (p.type === "order" && p.order){
@@ -553,7 +531,8 @@ async function buildEuropeMap(countryCounts){
     toggle.classList.toggle('open', !isOpen);
   });
   window.addEventListener('click', (e) => {
-    if (!document.querySelector('.profile-wrapper').contains(e.target)) {
+    const wrap = document.querySelector('.profile-wrapper');
+    if (wrap && !wrap.contains(e.target)) {
       menu.style.display = 'none'; toggle.classList.remove('open');
     }
   });
@@ -563,17 +542,27 @@ async function buildEuropeMap(countryCounts){
   document.getElementById("openSettings").addEventListener("click", (e) => {
     e.preventDefault(); window.location.href = "profile.html";
   });
+
+  async function doLogout(){
+    try {
+      const res = await fetch('/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'CSRF-Token': window.CSRF_TOKEN || '' }
+      });
+      const data = await res.json();
+      if (data.success) { localStorage.clear(); window.location.href = "/login.html"; }
+      else { alert("Utloggning misslyckades."); }
+    } catch (err) {
+      console.error("Fel vid utloggning:", err); alert("Kunde inte logga ut.");
+    }
+  }
   document.getElementById("logout").addEventListener("click", (e) => {
     e.preventDefault();
-    if (confirm("Är du säker på att du vill logga ut?")) {
-      fetch('/logout', { method: 'GET', credentials: 'include' })
-        .then(res => res.json())
-        .then(data => { if (data.success) { localStorage.clear(); window.location.href = "/login.html"; } else { alert("Utloggning misslyckades."); }})
-        .catch(err => { console.error("Fel vid utloggning:", err); alert("Kunde inte logga ut."); });
-    }
+    if (confirm("Är du säker på att du vill logga ut?")) doLogout();
   });
 
-  // ✅ Visa inloggad användare + initialer (profilens IIFE)
+  // Visa inloggad användare + initialer
   (async () => {
     try {
       const r = await fetch('/api/profile/me', { credentials: 'include' });
@@ -605,18 +594,16 @@ async function buildEuropeMap(countryCounts){
   loadPageviews(7).catch(console.error);
   loadGeo(30).catch(console.error);
 
-  // ✅ Rätt IIFE, ingen extra "}" efteråt
+  // PV-range IIFE
   (function initPv(){
     const select = document.getElementById('pvRange');
     const load = () => loadPageviews(parseInt(select.value,10)).catch(console.error);
-    if (select) {
-      select.addEventListener('change', load);
-      // load(); // avkommentera om du vill trigga direkt
-    }
+    if (select) select.addEventListener('change', load);
   })();
 </script>
 
 <script>
+  // Sista fallback för höjder
   document.getElementById('globeContainer').style.height ||= '360px';
   document.getElementById('mapEurope').style.height ||= '360px';
 </script>
