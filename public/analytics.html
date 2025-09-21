@@ -368,34 +368,40 @@ ro.observe(container);
     tip.style.display = 'none';
     if (tip._h){ window.removeEventListener('mousemove', tip._h); tip._h = null; }
   }
-  function buildEuropeMap(countryCounts){
+  async function buildEuropeMap(countryCounts){
   const el = document.getElementById('mapEurope');
   if (!el) return;
 
+  // städa ev. tidigare instans
   if (el._jvm && typeof el._jvm.destroy === 'function') {
     el._jvm.destroy(); el._jvm = null;
   }
 
+  // plocka bara europeiska länder
   const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
   const values = {};
   Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
 
-  const maps = (window.jsVectorMap && window.jsVectorMap.maps) || {};
-  const MAP_ID =
-    (maps['europe'] && 'europe') ||
-    (maps['europe_merc'] && 'europe_merc') ||
-    (maps['europe-merc'] && 'europe-merc') ||
-    (maps['world'] && 'world');
-
-  if (!MAP_ID) { console.error('jsVectorMap maps are not loaded.'); return; }
-  if (!/europe/.test(MAP_ID)) console.warn('Europe map not found, using world as fallback.');
+  // se till att kartan verkligen finns – prova europe -> europe-merc -> world
+  let mapId = 'europe';
+  let ok = await ensureJvmMap(mapId);
+  if (!ok) { mapId = 'europe-merc'; ok = await ensureJvmMap(mapId); }
+  if (!ok) { mapId = 'world';       ok = await ensureJvmMap(mapId);   }
+  if (!ok) { console.error('jsVectorMap maps are not loaded.'); return; }
+  if (mapId === 'world') console.warn('Hittade ingen Europa-karta, faller tillbaka till world.');
 
   const jvm = new window.jsVectorMap({
     selector: '#mapEurope',
-    map: MAP_ID,
+    map: mapId,
     zoomButtons: true,
     regionStyle: { initial: { fill: '#dbeafe' } },
-    series: { regions: [{ values, scale: ['#e8eefc', '#1d4ed8'], normalizeFunction: 'polynomial' }] },
+    series: {
+      regions: [{
+        values,
+        scale: ['#e8eefc', '#1d4ed8'],
+        normalizeFunction: 'polynomial'
+      }]
+    },
     labels: { regions: { render: c => c } },
     onRegionTooltipShow: (tipEl, code) => {
       const val = values[code] || 0;
@@ -404,9 +410,6 @@ ro.observe(container);
   });
 
   el._jvm = jvm;
-}
-
-
 
   async function loadGeo(days = 30) {
     try {
@@ -507,7 +510,8 @@ ro.observe(container);
     const select = document.getElementById('pvRange');
     const load = () => loadPageviews(parseInt(select.value,10)).catch(console.error);
     select.addEventListener('change', load);
-  })();
+  })(); // Close the initPv function
+}
 </script>
 <script>
   document.getElementById('globeContainer').style.height ||= '360px';
