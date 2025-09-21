@@ -281,33 +281,63 @@
   }
 
   // ====== GEO ======
-  async function ensureJvmMap(mapId) {
-    const isReady = () => (
-      window.jsVectorMap &&
-      window.jsVectorMap.maps &&
-      Object.prototype.hasOwnProperty.call(window.jsVectorMap.maps, mapId)
-    );
-    if (isReady()) return true;
+  async function ensureJvmCore(timeoutMs = 4000) {
+  const start = performance.now();
+  return await new Promise(resolve => {
+    (function waitLoop(){
+      const has = (typeof window.jsVectorMap === 'function') || (typeof window.JSVectorMap === 'function');
+      if (has) return resolve(true);
+      if (performance.now() - start > timeoutMs) return resolve(false);
+      requestAnimationFrame(waitLoop);
+    })();
+  });
+}
 
-    const sources = {
-      'europe':      'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe.js',
-      'europe-merc': 'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe-merc.js',
-      'world':       'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js'
-    };
-    const src = sources[mapId];
-    if (!src) return false;
+function getJvmMapsRegistry() {
+  // Hantera olika builds/globaler
+  const ctor = (window.jsVectorMap || window.JSVectorMap);
+  const maps = ctor && ctor.maps ? ctor.maps : (window.jsVectorMap && window.jsVectorMap.maps) || (window.JSVectorMap && window.JSVectorMap.maps) || {};
+  return maps;
+}
 
-    await new Promise((resolve) => {
-      const s = document.createElement('script');
-      s.src = src;
-      s.async = true;
-      s.onload = resolve;
-      s.onerror = resolve;
-      document.head.appendChild(s);
-    });
-
-    return isReady();
+async function ensureJvmMap(mapId) {
+  // 1) Säkerställ att kärnan finns
+  const coreReady = await ensureJvmCore();
+  if (!coreReady) {
+    console.error('jsVectorMap core is not available.');
+    return false;
   }
+
+  // 2) Finns kartan redan?
+  let maps = getJvmMapsRegistry();
+  if (Object.prototype.hasOwnProperty.call(maps, mapId)) return true;
+
+  // 3) Ladda kartfilen dynamiskt
+  const sources = {
+    'europe':      'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe.js',
+    'europe-merc': 'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe-merc.js',
+    'world':       'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js'
+  };
+  const src = sources[mapId];
+  if (!src) return false;
+
+  await new Promise((resolve) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.onload = resolve;
+    s.onerror = resolve;
+    document.head.appendChild(s);
+  });
+
+  // 4) Kolla igen
+  maps = getJvmMapsRegistry();
+  const ok = Object.prototype.hasOwnProperty.call(maps, mapId);
+  if (!ok) {
+    console.warn('Tillgängliga jsvectormap-kartor just nu:', Object.keys(maps));
+  }
+  return ok;
+}
 
   function makeColorScale(maxVal){
     const from = [198,218,255], to = [29,78,216];
@@ -397,7 +427,7 @@
   }
 
   // ✅ KORREKT OCH STÄNGD buildEuropeMap (inget mer ligger "inuti" den)
-  async function buildEuropeMap(countryCounts){
+async function buildEuropeMap(countryCounts){
   const el = document.getElementById('mapEurope');
   if (!el) return;
 
@@ -411,15 +441,26 @@
   const values = {};
   Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
 
-  // Säkerställ karta; prova europe -> europe-merc -> world
+  // Vänta in kärnan först
+  const coreReady = await ensureJvmCore();
+  if (!coreReady) { console.error('jsVectorMap core saknas.'); return; }
+
+  // Prova europe -> europe-merc -> world
   let mapId = 'europe';
   let ok = await ensureJvmMap(mapId);
   if (!ok) { mapId = 'europe-merc'; ok = await ensureJvmMap(mapId); }
   if (!ok) { mapId = 'world';       ok = await ensureJvmMap(mapId);   }
-  if (!ok) { console.error('jsVectorMap map could not be loaded.'); return; }
-  if (mapId === 'world') console.warn('Föll tillbaka till world-kartan (europe saknades).');
 
-  const jvm = new window.jsVectorMap({
+  if (!ok) {
+    console.error('jsVectorMap map could not be loaded.');
+    console.warn('Tillgängliga jsvectormap-kartor:', Object.keys(getJvmMapsRegistry()));
+    return;
+  }
+  if (mapId === 'world') {
+    console.warn('Föll tillbaka till world-kartan (europe saknades).');
+  }
+
+  const jvm = new (window.jsVectorMap || window.JSVectorMap)({
     selector: '#mapEurope',
     map: mapId,
     zoomButtons: true,
