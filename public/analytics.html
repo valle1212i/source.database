@@ -24,7 +24,7 @@
   <script src="https://unpkg.com/globe.gl@2.32.6/dist/globe.gl.min.js"></script>
   <script src="https://unpkg.com/topojson-client@3"></script>
 
-  <!-- (valfritt) säker höjd om CSS-filen inte sätter det -->
+  <!-- (valfritt) säker höjd om CSS-filen inte sätter det) -->
   <style>
     #mapEurope, #globeContainer { min-height: 360px; height: 360px; }
   </style>
@@ -174,7 +174,7 @@
   const savedTheme = localStorage.getItem("theme") || "light";
   document.body.classList.add(`${savedTheme}-theme`);
 
-  // Sidebar-toggle (hamburger)
+  // Sidebar-toggle
   function toggleSidebar(force) {
     const sidebar = document.querySelector('.sidebar');
     if (!sidebar) return;
@@ -290,7 +290,7 @@
     buildPvLineChart(labels, values);
   }
 
-  // ====== GEO ====== (robust laddning av jsvectormap)
+  /* ====== GEO (robust jsVectorMap-laddning) ====== */
   async function ensureJvmCore(timeoutMs = 4000) {
     const start = performance.now();
     return await new Promise(resolve => {
@@ -303,7 +303,12 @@
     });
   }
   function getJvmCtor(){ return (window.jsVectorMap || window.JSVectorMap); }
-  function getJvmMaps(){ const C = getJvmCtor(); return (C && C.maps) ? C.maps : {}; }
+  function getJvmMaps(){
+    const m1 = (window.jsVectorMap && window.jsVectorMap.maps) || {};
+    const m2 = (window.JSVectorMap && window.JSVectorMap.maps) || {};
+    // slå ihop båda registren – vissa kartfiler skriver till jsVectorMap.maps fast ctor är JSVectorMap
+    return Object.assign({}, m1, m2);
+  }
   async function ensureJvmMapById(mapId, srcUrl){
     if (Object.prototype.hasOwnProperty.call(getJvmMaps(), mapId)) return true;
     await new Promise(res => {
@@ -311,6 +316,8 @@
       s.src = srcUrl; s.async = true; s.onload = res; s.onerror = res;
       document.head.appendChild(s);
     });
+    // kort mikropausering innan läsning (säkerställer att addMap hunnit köras i vissa webviews)
+    await new Promise(r => setTimeout(r, 0));
     return Object.prototype.hasOwnProperty.call(getJvmMaps(), mapId);
   }
   async function ensureJvmMapAny() {
@@ -393,7 +400,7 @@
       globeInstance.polygonAltitude(altitude);
     }
   }
-  // ResizeObserver för globen (säkerställer korrekt storlek)
+  // ResizeObserver för globen
   const container = document.getElementById('globeContainer');
   const ro = new ResizeObserver(() => {
     if (!globeInstance) return;
@@ -424,7 +431,7 @@
     if (tip._h){ window.removeEventListener('mousemove', tip._h); tip._h = null; }
   }
 
-  // Europa-karta (robust, provar flera kart-ID:n)
+  // Europa-karta
   async function buildEuropeMap(countryCounts){
     const el = document.getElementById('mapEurope');
     if (!el) return;
@@ -493,7 +500,7 @@
     const ev = new EventSource(API_BASE + "/api/inventory/stream", { withCredentials: true });
     ev.onmessage = (e) => {
       const p = JSON.parse(e.data || "{}");
-      if (p.type === "order" && p.order){
+      if (p.type === "order" och p.order){
         const val = Number(document.getElementById('kpiTotalOrders').textContent || 0);
         document.getElementById('kpiTotalOrders').textContent = String(val + p.order.qty);
         document.getElementById('kpiLatestOrder').textContent = `${p.order.name} ×${p.order.qty}`;
