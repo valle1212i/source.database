@@ -12,19 +12,19 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
   <!-- Chart.js för diagram -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
-  <!-- jsVectorMap (PINNED version + mappar) -->
+  <!-- jsVectorMap (PINNED version + mappar), laddas med defer i rätt ordning -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe.js" defer></script>
 
   <!-- 3D-glob -->
-  <script src="https://unpkg.com/globe.gl@2.32.6/dist/globe.gl.min.js"></script>
-  <script src="https://unpkg.com/topojson-client@3"></script>
+  <script src="https://unpkg.com/globe.gl@2.32.6/dist/globe.gl.min.js" defer></script>
+  <script src="https://unpkg.com/topojson-client@3" defer></script>
 
-  <!-- (valfritt) säker höjd om CSS-filen inte sätter det) -->
+  <!-- (valfritt) säker höjd om CSS-filen inte sätter det -->
   <style>
     #mapEurope, #globeContainer { min-height: 360px; height: 360px; }
   </style>
@@ -335,6 +335,7 @@
     console.warn('Tillgängliga jsvectormap-kartor just nu:', Object.keys(getJvmMaps()));
     return { ok:false };
   }
+  // Kicka igång en tidig säkerladdning
   (async () => {
     const ok = await ensureJvmCore();
     if (ok && !Object.keys(getJvmMaps()).length) {
@@ -592,11 +593,13 @@
     }
   })();
 
-  // Init
-  loadSummary().catch(console.error);
-  connectSSE();
-  loadPageviews(7).catch(console.error);
-  loadGeo(30).catch(console.error);
+  // Init (vänta tills alla defer-skript laddats klart)
+  window.addEventListener('load', () => {
+    loadSummary().catch(console.error);
+    connectSSE();
+    loadPageviews(7).catch(console.error);
+    loadGeo(30).catch(console.error);
+  });
 
   // PV-range IIFE
   (function initPv(){
