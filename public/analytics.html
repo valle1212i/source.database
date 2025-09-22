@@ -294,14 +294,14 @@
 
   // Ladda ett script exakt en gång och vänta på onload
   async function loadScriptOnce(src) {
-    if ([...document.scripts].some(s => s.src === src)) return;
-    await new Promise((resolve) => {
+    if ([...document.scripts].some(s => s.src === src)) return true;
+    return await new Promise((resolve) => {
       const s = document.createElement('script');
       s.src = src;
       s.async = true;
       s.crossOrigin = 'anonymous';
-      s.onload = resolve;
-      s.onerror = () => { console.warn('Misslyckades ladda script:', src); resolve(); };
+      s.onload = () => resolve(true);
+      s.onerror = () => resolve(false);
       document.head.appendChild(s);
     });
   }
@@ -309,13 +309,11 @@
   // Säkerställ att jsVectorMap-kärnan finns
   async function ensureJvmCoreReady() {
     if (typeof window.jsVectorMap === 'function' || typeof window.JSVectorMap === 'function') return true;
-    await loadScriptOnce('https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js');
-    const t0 = performance.now();
-    while (performance.now() - t0 < 2000) {
-      if (typeof window.jsVectorMap === 'function' || typeof window.JSVectorMap === 'function') return true;
-      await new Promise(r => setTimeout(r, 16));
-    }
-    return false;
+    // primär + sekundär CDN
+    const ok1 = await loadScriptOnce('https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js');
+    if (ok1 && (typeof window.jsVectorMap === 'function' || typeof window.JSVectorMap === 'function')) return true;
+    const ok2 = await loadScriptOnce('https://unpkg.com/jsvectormap@1.5.3/dist/js/jsvectormap.min.js');
+    return (typeof window.jsVectorMap === 'function' || typeof window.JSVectorMap === 'function');
   }
 
   function getJvmCtor(){ return (window.jsVectorMap || window.JSVectorMap); }
@@ -327,23 +325,37 @@
 
   // Säkerställ att Europa-kartan finns (fallback world)
   async function ensureEuropeMapReady() {
-    const CDN = 'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/';
+    const maps = getJvmMaps();
+    const has = id => Object.prototype.hasOwnProperty.call(getJvmMaps(), id);
 
-    if (Object.prototype.hasOwnProperty.call(getJvmMaps(), 'europe')) return 'europe';
+    const candidates = [
+      { id:'europe',      files:['europe.js'] },
+      { id:'europe_merc', files:['europe-merc.js'] },
+      { id:'world',       files:['world.js'] },
+      { id:'world_merc',  files:['world-merc.js'] },
+    ];
 
-    await loadScriptOnce(CDN + 'europe.js');
+    const cdns = [
+      'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/',
+      'https://unpkg.com/jsvectormap@1.5.3/dist/maps/'
+    ];
 
-    const t0 = performance.now();
-    while (performance.now() - t0 < 1500) {
-      if (Object.prototype.hasOwnProperty.call(getJvmMaps(), 'europe')) return 'europe';
-      await new Promise(r => setTimeout(r, 16));
+    // redan laddad?
+    for (const c of candidates) if (has(c.id)) return c.id;
+
+    // ladda i tur och ordning från två CDN:er
+    for (const c of candidates) {
+      for (const cdn of cdns) {
+        const ok = await loadScriptOnce(cdn + c.files[0]);
+        if (ok) {
+          // ge motorn en microtask att registrera kartan
+          await new Promise(r => setTimeout(r, 0));
+          if (has(c.id)) return c.id;
+        }
+      }
     }
 
-    if (!Object.prototype.hasOwnProperty.call(getJvmMaps(), 'world')) {
-      await loadScriptOnce(CDN + 'world.js');
-    }
-    if (Object.prototype.hasOwnProperty.call(getJvmMaps(), 'world')) return 'world';
-
+    console.warn('Tillgängliga jsvectormap-kartor just nu:', Object.keys(getJvmMaps()));
     return null;
   }
 
