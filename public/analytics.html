@@ -306,7 +306,6 @@
   function getJvmMaps(){
     const m1 = (window.jsVectorMap && window.jsVectorMap.maps) || {};
     const m2 = (window.JSVectorMap && window.JSVectorMap.maps) || {};
-    // slå ihop båda registren – vissa kartfiler skriver till jsVectorMap.maps fast ctor är JSVectorMap
     return Object.assign({}, m1, m2);
   }
   async function ensureJvmMapById(mapId, srcUrl){
@@ -316,7 +315,6 @@
       s.src = srcUrl; s.async = true; s.onload = res; s.onerror = res;
       document.head.appendChild(s);
     });
-    // kort mikropausering innan läsning (säkerställer att addMap hunnit köras i vissa webviews)
     await new Promise(r => setTimeout(r, 0));
     return Object.prototype.hasOwnProperty.call(getJvmMaps(), mapId);
   }
@@ -337,7 +335,6 @@
     console.warn('Tillgängliga jsvectormap-kartor just nu:', Object.keys(getJvmMaps()));
     return { ok:false };
   }
-  // Init-vakt: se till att minst en karta finns innan geo byggs
   (async () => {
     const ok = await ensureJvmCore();
     if (ok && !Object.keys(getJvmMaps()).length) {
@@ -500,7 +497,7 @@
     const ev = new EventSource(API_BASE + "/api/inventory/stream", { withCredentials: true });
     ev.onmessage = (e) => {
       const p = JSON.parse(e.data || "{}");
-      if (p.type === "order" och p.order){
+      if (p.type === "order" && p.order){
         const val = Number(document.getElementById('kpiTotalOrders').textContent || 0);
         document.getElementById('kpiTotalOrders').textContent = String(val + p.order.qty);
         document.getElementById('kpiLatestOrder').textContent = `${p.order.name} ×${p.order.qty}`;
