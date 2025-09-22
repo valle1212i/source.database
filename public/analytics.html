@@ -325,39 +325,45 @@
 
   // Säkerställ att Europa-kartan finns (fallback world)
   async function ensureEuropeMapReady() {
-    const maps = getJvmMaps();
-    const has = id => Object.prototype.hasOwnProperty.call(getJvmMaps(), id);
+  const has = id => Object.prototype.hasOwnProperty.call(getJvmMaps(), id);
 
-    const candidates = [
-      { id:'europe',      files:['europe.js'] },
-      { id:'europe_merc', files:['europe-merc.js'] },
-      { id:'world',       files:['world.js'] },
-      { id:'world_merc',  files:['world-merc.js'] },
-    ];
+  // Om redan laddad
+  for (const id of ['europe','europe_merc','world','world_merc']) {
+    if (has(id)) return id;
+  }
 
-    const cdns = [
-      'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/',
-      'https://unpkg.com/jsvectormap@1.5.3/dist/maps/'
-    ];
+  const cdns = [
+    'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/',
+    'https://unpkg.com/jsvectormap@1.5.3/dist/maps/'
+  ];
+  const files = {
+    europe: 'europe.js',
+    europe_merc: 'europe-merc.js',
+    world: 'world.js',
+    world_merc: 'world-merc.js'
+  };
 
-    // redan laddad?
-    for (const c of candidates) if (has(c.id)) return c.id;
-
-    // ladda i tur och ordning från två CDN:er
-    for (const c of candidates) {
-      for (const cdn of cdns) {
-        const ok = await loadScriptOnce(cdn + c.files[0]);
-        if (ok) {
-          // ge motorn en microtask att registrera kartan
-          await new Promise(r => setTimeout(r, 0));
-          if (has(c.id)) return c.id;
+  // Försök ladda i turordning
+  for (const id of Object.keys(files)) {
+    for (const cdn of cdns) {
+      const ok = await loadScriptOnce(cdn + files[id]);
+      if (ok) {
+        // vänta lite på att registret ska uppdateras
+        for (let i=0;i<20;i++) {
+          if (has(id)) {
+            console.log("✅ Laddade kartan:", id, "från", cdn+files[id]);
+            return id;
+          }
+          await new Promise(r=>setTimeout(r,50));
         }
       }
     }
-
-    console.warn('Tillgängliga jsvectormap-kartor just nu:', Object.keys(getJvmMaps()));
-    return null;
   }
+
+  console.warn("❌ Ingen karta registrerades. Tillgängliga just nu:", Object.keys(getJvmMaps()));
+  return null;
+}
+
 
   // Bygg 3D-glob
   const NAME_TO_ISO2 = {
@@ -449,6 +455,7 @@
   // Bygg Europa-kartan (fallback world)
   async function buildEuropeMap(countryCounts){
     const el = document.getElementById('mapEurope');
+    console.error('jsVectorMap map kunde inte laddas. Kartor i registret:', Object.keys(getJvmMaps()));
     if (!el) return;
 
     // Städa tidigare instans
