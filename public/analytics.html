@@ -11,10 +11,10 @@
   <!-- Ikoner -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
-  <!-- Chart.js för diagram -->
+  <!-- Chart.js (diagram) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
-  <!-- jsVectorMap (PINNED version + mappar), laddas med defer i rätt ordning -->
+  <!-- jsVectorMap (pin: 1.5.3). Vi laddar dessutom säkert via JS nedan om något saknas. -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js" defer></script>
@@ -290,67 +290,64 @@
     buildPvLineChart(labels, values);
   }
 
-  /* ====== GEO (robust jsVectorMap-laddning) ====== */
-  async function ensureJvmCore(timeoutMs = 4000) {
-    const start = performance.now();
-    return await new Promise(resolve => {
-      (function loop(){
-        const has = (typeof window.jsVectorMap === 'function') || (typeof window.JSVectorMap === 'function');
-        if (has) return resolve(true);
-        if (performance.now() - start > timeoutMs) return resolve(false);
-        requestAnimationFrame(loop);
-      })();
+  /* ====== GEO: robust jsVectorMap-laddning (kärna + kartor) ====== */
+
+  // Ladda ett script exakt en gång och vänta på onload
+  async function loadScriptOnce(src) {
+    if ([...document.scripts].some(s => s.src === src)) return;
+    await new Promise((resolve) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      s.crossOrigin = 'anonymous';
+      s.onload = resolve;
+      s.onerror = () => { console.warn('Misslyckades ladda script:', src); resolve(); };
+      document.head.appendChild(s);
     });
   }
+
+  // Säkerställ att jsVectorMap-kärnan finns
+  async function ensureJvmCoreReady() {
+    if (typeof window.jsVectorMap === 'function' || typeof window.JSVectorMap === 'function') return true;
+    await loadScriptOnce('https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js');
+    const t0 = performance.now();
+    while (performance.now() - t0 < 2000) {
+      if (typeof window.jsVectorMap === 'function' || typeof window.JSVectorMap === 'function') return true;
+      await new Promise(r => setTimeout(r, 16));
+    }
+    return false;
+  }
+
   function getJvmCtor(){ return (window.jsVectorMap || window.JSVectorMap); }
   function getJvmMaps(){
     const m1 = (window.jsVectorMap && window.jsVectorMap.maps) || {};
     const m2 = (window.JSVectorMap && window.JSVectorMap.maps) || {};
     return Object.assign({}, m1, m2);
   }
-  async function ensureJvmMapById(mapId, srcUrl){
-    if (Object.prototype.hasOwnProperty.call(getJvmMaps(), mapId)) return true;
-    await new Promise(res => {
-      const s = document.createElement('script');
-      s.src = srcUrl; s.async = true; s.onload = res; s.onerror = res;
-      document.head.appendChild(s);
-    });
-    await new Promise(r => setTimeout(r, 0));
-    return Object.prototype.hasOwnProperty.call(getJvmMaps(), mapId);
-  }
-  async function ensureJvmMapAny() {
-    const okCore = await ensureJvmCore();
-    if (!okCore) return { ok:false };
-    const CDN = 'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/';
-    const candidates = [
-      { id:'europe',      src: CDN + 'europe.js' },
-      { id:'europe_merc', src: CDN + 'europe-merc.js' },
-      { id:'world',       src: CDN + 'world.js' },
-      { id:'world_merc',  src: CDN + 'world-merc.js' }
-    ];
-    for (const c of candidates) {
-      const ok = await ensureJvmMapById(c.id, c.src);
-      if (ok) return { ok:true, id:c.id };
-    }
-    console.warn('Tillgängliga jsvectormap-kartor just nu:', Object.keys(getJvmMaps()));
-    return { ok:false };
-  }
-  // Kicka igång en tidig säkerladdning
-  (async () => {
-    const ok = await ensureJvmCore();
-    if (ok && !Object.keys(getJvmMaps()).length) {
-      await ensureJvmMapById('europe', 'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe.js');
-    }
-  })();
 
-  function makeColorScale(maxVal){
-    const from = [198,218,255], to = [29,78,216];
-    return v => {
-      const t = Math.min(1, (maxVal ? v/maxVal : 0));
-      const ch = i => Math.round(from[i] + t*(to[i]-from[i]));
-      return `rgb(${ch(0)},${ch(1)},${ch(2)})`;
-    };
+  // Säkerställ att Europa-kartan finns (fallback world)
+  async function ensureEuropeMapReady() {
+    const CDN = 'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/';
+
+    if (Object.prototype.hasOwnProperty.call(getJvmMaps(), 'europe')) return 'europe';
+
+    await loadScriptOnce(CDN + 'europe.js');
+
+    const t0 = performance.now();
+    while (performance.now() - t0 < 1500) {
+      if (Object.prototype.hasOwnProperty.call(getJvmMaps(), 'europe')) return 'europe';
+      await new Promise(r => setTimeout(r, 16));
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(getJvmMaps(), 'world')) {
+      await loadScriptOnce(CDN + 'world.js');
+    }
+    if (Object.prototype.hasOwnProperty.call(getJvmMaps(), 'world')) return 'world';
+
+    return null;
   }
+
+  // Bygg 3D-glob
   const NAME_TO_ISO2 = {
     'Sweden':'SE','Norway':'NO','Denmark':'DK','Finland':'FI','Iceland':'IS','Germany':'DE','France':'FR',
     'Netherlands':'NL','Belgium':'BE','Luxembourg':'LU','Austria':'AT','Switzerland':'CH','Italy':'IT','Spain':'ES','Portugal':'PT',
@@ -362,6 +359,14 @@
     'Türkiye':'TR','Turkey':'TR','South Africa':'ZA','Nigeria':'NG','Egypt':'EG','Morocco':'MA','Kenya':'KE','Ghana':'GH','Algeria':'DZ',
     'Tunisia':'TN','Ethiopia':'ET','Australia':'AU','New Zealand':'NZ','Russia':'RU'
   };
+  function makeColorScale(maxVal){
+    const from = [198,218,255], to = [29,78,216];
+    return v => {
+      const t = Math.min(1, (maxVal ? v/maxVal : 0));
+      const ch = i => Math.round(from[i] + t*(to[i]-from[i]));
+      return `rgb(${ch(0)},${ch(1)},${ch(2)})`;
+    };
+  }
   let globeInstance;
   async function buildSpinningGlobe(countryCounts){
     const worldTopo = await fetch('https://unpkg.com/world-atlas@2/countries-110m.json').then(r=>r.json());
@@ -429,23 +434,30 @@
     if (tip._h){ window.removeEventListener('mousemove', tip._h); tip._h = null; }
   }
 
-  // Europa-karta
+  // Bygg Europa-kartan (fallback world)
   async function buildEuropeMap(countryCounts){
     const el = document.getElementById('mapEurope');
     if (!el) return;
 
+    // Städa tidigare instans
     if (el._jvm && typeof el._jvm.destroy === 'function') { el._jvm.destroy(); el._jvm = null; }
 
+    // Säkerställ kärna + karta
+    const coreReady = await ensureJvmCoreReady();
+    if (!coreReady) { console.error('jsVectorMap core kunde inte laddas.'); return; }
+
+    const mapId = await ensureEuropeMapReady();
+    console.log('JSVectorMap tillgängliga kartor nu:', Object.keys(getJvmMaps()));
+    if (!mapId) { console.error('jsVectorMap map kunde inte laddas.'); return; }
+    if (mapId === 'world') console.warn('Föll tillbaka till world-kartan (Europa ej hittad).');
+
+    // Plocka bara europeiska länder
     const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
     const values = {};
     Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
 
-    const got = await ensureJvmMapAny();
-    if (!got.ok) { console.error('jsVectorMap map could not be loaded.'); return; }
-    const mapId = got.id;
-    if (mapId.startsWith('world')) console.warn('Föll tillbaka till världskarta (Europa ej hittad).');
-
-    const Ctor = (window.jsVectorMap || window.JSVectorMap);
+    // Skapa karta
+    const Ctor = getJvmCtor();
     const jvm = new Ctor({
       selector: '#mapEurope',
       map: mapId,
@@ -593,7 +605,7 @@
     }
   })();
 
-  // Init (vänta tills alla defer-skript laddats klart)
+  // Init – kör efter att defer-skript laddats
   window.addEventListener('load', () => {
     loadSummary().catch(console.error);
     connectSSE();
