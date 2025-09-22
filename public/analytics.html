@@ -11,20 +11,18 @@
   <!-- Ikoner -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
-  <!-- Chart.js (diagram) -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
-  <!-- jsVectorMap (pin: 1.5.3). Vi laddar dessutom säkert via JS nedan om något saknas. -->
+  <!-- jsVectorMap CORE (endast kärnan; kartfiler laddas dynamiskt i JS) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe.js" defer></script>
 
   <!-- 3D-glob -->
   <script src="https://unpkg.com/globe.gl@2.32.6/dist/globe.gl.min.js" defer></script>
   <script src="https://unpkg.com/topojson-client@3" defer></script>
 
-  <!-- (valfritt) säker höjd om CSS-filen inte sätter det -->
+  <!-- Säkra minhöjder så ytor inte kollapsar -->
   <style>
     #mapEurope, #globeContainer { min-height: 360px; height: 360px; }
   </style>
@@ -290,30 +288,30 @@
     buildPvLineChart(labels, values);
   }
 
-  /* ====== GEO: robust jsVectorMap-laddning (kärna + kartor) ====== */
+  /* ====== GEO – robust laddning av jsVectorMap-kartor ====== */
 
-  // Ladda ett script exakt en gång och vänta på onload
-  async function loadScriptOnce(src) {
-    if ([...document.scripts].some(s => s.src === src)) return true;
-    return await new Promise((resolve) => {
+  // Hjälpare: promisifierad script-laddare
+  function loadScriptOnce(src) {
+    return new Promise(resolve => {
       const s = document.createElement('script');
-      s.src = src;
-      s.async = true;
-      s.crossOrigin = 'anonymous';
+      s.src = src; s.async = true; s.crossOrigin = 'anonymous';
       s.onload = () => resolve(true);
       s.onerror = () => resolve(false);
       document.head.appendChild(s);
     });
   }
 
-  // Säkerställ att jsVectorMap-kärnan finns
-  async function ensureJvmCoreReady() {
-    if (typeof window.jsVectorMap === 'function' || typeof window.JSVectorMap === 'function') return true;
-    // primär + sekundär CDN
-    const ok1 = await loadScriptOnce('https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js');
-    if (ok1 && (typeof window.jsVectorMap === 'function' || typeof window.JSVectorMap === 'function')) return true;
-    const ok2 = await loadScriptOnce('https://unpkg.com/jsvectormap@1.5.3/dist/js/jsvectormap.min.js');
-    return (typeof window.jsVectorMap === 'function' || typeof window.JSVectorMap === 'function');
+  // Vänta in att kärnan existerar
+  async function ensureJvmCore(timeoutMs = 5000) {
+    const t0 = performance.now();
+    return await new Promise(resolve => {
+      (function loop(){
+        const ok = (typeof window.jsVectorMap === 'function') || (typeof window.JSVectorMap === 'function');
+        if (ok) return resolve(true);
+        if (performance.now() - t0 > timeoutMs) return resolve(false);
+        requestAnimationFrame(loop);
+      })();
+    });
   }
 
   function getJvmCtor(){ return (window.jsVectorMap || window.JSVectorMap); }
@@ -323,49 +321,48 @@
     return Object.assign({}, m1, m2);
   }
 
-  // Säkerställ att Europa-kartan finns (fallback world)
+  // Försök ladda europe.js (fallback: world.js) från två CDN:er
   async function ensureEuropeMapReady() {
-  const has = id => Object.prototype.hasOwnProperty.call(getJvmMaps(), id);
+    const has = id => Object.prototype.hasOwnProperty.call(getJvmMaps(), id);
 
-  // Om redan laddad
-  for (const id of ['europe','europe_merc','world','world_merc']) {
-    if (has(id)) return id;
-  }
+    for (const id of ['europe','world']) {
+      if (has(id)) return id;
+    }
 
-  const cdns = [
-    'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/',
-    'https://unpkg.com/jsvectormap@1.5.3/dist/maps/'
-  ];
-  const files = {
-    europe: 'europe.js',
-    europe_merc: 'europe-merc.js',
-    world: 'world.js',
-    world_merc: 'world-merc.js'
-  };
+    const cdns = [
+      'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/',
+      'https://unpkg.com/jsvectormap@1.5.3/dist/maps/'
+    ];
+    const files = { europe: 'europe.js', world: 'world.js' };
 
-  // Försök ladda i turordning
-  for (const id of Object.keys(files)) {
-    for (const cdn of cdns) {
-      const ok = await loadScriptOnce(cdn + files[id]);
-      if (ok) {
-        // vänta lite på att registret ska uppdateras
-        for (let i=0;i<20;i++) {
-          if (has(id)) {
-            console.log("✅ Laddade kartan:", id, "från", cdn+files[id]);
-            return id;
-          }
+    for (const [id, file] of Object.entries(files)) {
+      for (const base of cdns) {
+        const url = base + file;
+        const ok = await loadScriptOnce(url);
+        if (!ok) { console.warn('⏭️ Misslyckades ladda:', url); continue; }
+
+        // vänta kort för att registret ska uppdateras
+        for (let i=0;i<20;i++){
+          if (has(id)) { console.log('✅ Laddade kartan', id, 'från', url); return id; }
           await new Promise(r=>setTimeout(r,50));
         }
+        console.warn('❗ Script hämtades men registret uppdaterades inte:', url);
       }
     }
+
+    console.warn('❌ Ingen karta registrerades. Tillgängliga just nu:', Object.keys(getJvmMaps()));
+    return null;
   }
 
-  console.warn("❌ Ingen karta registrerades. Tillgängliga just nu:", Object.keys(getJvmMaps()));
-  return null;
-}
+  function makeColorScale(maxVal){
+    const from = [198,218,255], to = [29,78,216];
+    return v => {
+      const t = Math.min(1, (maxVal ? v/maxVal : 0));
+      const ch = i => Math.round(from[i] + t*(to[i]-from[i]));
+      return `rgb(${ch(0)},${ch(1)},${ch(2)})`;
+    };
+  }
 
-
-  // Bygg 3D-glob
   const NAME_TO_ISO2 = {
     'Sweden':'SE','Norway':'NO','Denmark':'DK','Finland':'FI','Iceland':'IS','Germany':'DE','France':'FR',
     'Netherlands':'NL','Belgium':'BE','Luxembourg':'LU','Austria':'AT','Switzerland':'CH','Italy':'IT','Spain':'ES','Portugal':'PT',
@@ -377,14 +374,7 @@
     'Türkiye':'TR','Turkey':'TR','South Africa':'ZA','Nigeria':'NG','Egypt':'EG','Morocco':'MA','Kenya':'KE','Ghana':'GH','Algeria':'DZ',
     'Tunisia':'TN','Ethiopia':'ET','Australia':'AU','New Zealand':'NZ','Russia':'RU'
   };
-  function makeColorScale(maxVal){
-    const from = [198,218,255], to = [29,78,216];
-    return v => {
-      const t = Math.min(1, (maxVal ? v/maxVal : 0));
-      const ch = i => Math.round(from[i] + t*(to[i]-from[i]));
-      return `rgb(${ch(0)},${ch(1)},${ch(2)})`;
-    };
-  }
+
   let globeInstance;
   async function buildSpinningGlobe(countryCounts){
     const worldTopo = await fetch('https://unpkg.com/world-atlas@2/countries-110m.json').then(r=>r.json());
@@ -421,6 +411,7 @@
       globeInstance.polygonAltitude(altitude);
     }
   }
+
   // ResizeObserver för globen
   const container = document.getElementById('globeContainer');
   const ro = new ResizeObserver(() => {
@@ -452,25 +443,27 @@
     if (tip._h){ window.removeEventListener('mousemove', tip._h); tip._h = null; }
   }
 
-  // Bygg Europa-kartan (fallback world)
+  // Europa-karta
   async function buildEuropeMap(countryCounts){
     const el = document.getElementById('mapEurope');
-    console.error('jsVectorMap map kunde inte laddas. Kartor i registret:', Object.keys(getJvmMaps()));
     if (!el) return;
 
     // Städa tidigare instans
     if (el._jvm && typeof el._jvm.destroy === 'function') { el._jvm.destroy(); el._jvm = null; }
 
-    // Säkerställ kärna + karta
-    const coreReady = await ensureJvmCoreReady();
+    // Vänta in core
+    const coreReady = await ensureJvmCore();
     if (!coreReady) { console.error('jsVectorMap core kunde inte laddas.'); return; }
 
+    // Ladda europe.js (fallback world.js)
     const mapId = await ensureEuropeMapReady();
-    console.log('JSVectorMap tillgängliga kartor nu:', Object.keys(getJvmMaps()));
-    if (!mapId) { console.error('jsVectorMap map kunde inte laddas.'); return; }
+    if (!mapId) {
+      console.error('jsVectorMap map kunde inte laddas. Kartor i minnet:', Object.keys(getJvmMaps()));
+      return;
+    }
     if (mapId === 'world') console.warn('Föll tillbaka till world-kartan (Europa ej hittad).');
 
-    // Plocka bara europeiska länder
+    // Filtrera till Europa
     const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
     const values = {};
     Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
@@ -624,7 +617,7 @@
     }
   })();
 
-  // Init – kör efter att defer-skript laddats
+  // Init – kör efter att alla defer-skript laddats
   window.addEventListener('load', () => {
     loadSummary().catch(console.error);
     connectSSE();
@@ -641,7 +634,7 @@
 </script>
 
 <script>
-  // Sista fallback för höjder
+  // Fallback för höjder (om CSS saknas)
   document.getElementById('globeContainer').style.height ||= '360px';
   document.getElementById('mapEurope').style.height ||= '360px';
 </script>
