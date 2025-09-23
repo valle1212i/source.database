@@ -5,49 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Analyser – Kundportal</title>
 
-  <!-- CSP (meta) -->
-  <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
-    script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com;
-    style-src  'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
-    img-src    'self' data: https://cdn.jsdelivr.net https://unpkg.com;
-    font-src   'self' data: https://cdnjs.cloudflare.com;
-    connect-src 'self' https://unpkg.com;
-    frame-ancestors 'self';
-    object-src 'none';
-    base-uri 'self';
-    upgrade-insecure-requests;
-  ">
-
-  <!-- Prestanda (valfritt men bra) -->
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://unpkg.com" crossorigin>
-  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-  <link rel="dns-prefetch" href="https://unpkg.com">
-
   <!-- Din globala stylesheet -->
   <link rel="stylesheet" href="CSS/analytics.css" />
 
   <!-- Ikoner -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
   <!-- Chart.js för diagram -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- jsVectorMap (PINNED version + mappar), med crossorigin -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css" crossorigin="anonymous" />
-  <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js" defer crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js" defer crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe.js" defer crossorigin="anonymous"></script>
+<!-- jsVectorMap: LOKALA FILER -->
+<link rel="stylesheet" href="/vendor/jsvectormap/jsvectormap.min.css" />
+<script src="/vendor/jsvectormap/jsvectormap.min.js" defer></script>
+<script src="/vendor/jsvectormap/maps/world.js" defer></script>
+<script src="/vendor/jsvectormap/maps/europe.js" defer></script>
+
+
+ 
+ 
+
 
   <!-- 3D-glob -->
-  <script src="https://unpkg.com/globe.gl@2.32.6/dist/globe.gl.min.js" defer crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/topojson-client@3" defer crossorigin="anonymous"></script>
-
-  <!-- (valfritt) säker höjd om CSS-filen inte sätter det -->
-  <style>
-    #mapEurope, #globeContainer { min-height: 360px; height: 360px; }
-  </style>
+  <script src="https://unpkg.com/globe.gl@2.32.6/dist/globe.gl.min.js"></script>
+  <script src="https://unpkg.com/topojson-client@3"></script>
 </head>
 
 <body>
@@ -56,7 +36,7 @@
 <!-- SIDOMENY -->
 <div class="sidebar">
   <div class="logo">
-    <a href="customerportal.html"><img src="./images/logo.png" alt="Logotyp" class="logo-img" /></a>
+    <a href="customerportal.html"><img src="images/logo.png" alt="Logotyp" class="logo-img" /></a>
   </div>
   <ul class="nav-menu">
     <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
@@ -194,16 +174,6 @@
   const savedTheme = localStorage.getItem("theme") || "light";
   document.body.classList.add(`${savedTheme}-theme`);
 
-  // Sidebar-toggle
-  function toggleSidebar(force) {
-    const sidebar = document.querySelector('.sidebar');
-    if (!sidebar) return;
-    const active = (typeof force === 'boolean') ? force : !sidebar.classList.contains('active');
-    sidebar.classList.toggle('active', active);
-    document.body.classList.toggle('menu-open', active);
-  }
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleSidebar(false); });
-
   function fmtTime(ts){
     const d = new Date(typeof ts === 'number' ? ts : Date.parse(ts));
     return d.toLocaleString('sv-SE', { hour:'2-digit', minute:'2-digit', year:'numeric', month:'2-digit', day:'2-digit' });
@@ -310,60 +280,7 @@
     buildPvLineChart(labels, values);
   }
 
-  /* ====== GEO (robust jsVectorMap-laddning) ====== */
-  async function ensureJvmCore(timeoutMs = 4000) {
-    const start = performance.now();
-    return await new Promise(resolve => {
-      (function loop(){
-        const has = (typeof window.jsVectorMap === 'function') || (typeof window.JSVectorMap === 'function');
-        if (has) return resolve(true);
-        if (performance.now() - start > timeoutMs) return resolve(false);
-        requestAnimationFrame(loop);
-      })();
-    });
-  }
-  function getJvmCtor(){ return (window.jsVectorMap || window.JSVectorMap); }
-  function getJvmMaps(){
-    const m1 = (window.jsVectorMap && window.jsVectorMap.maps) || {};
-    const m2 = (window.JSVectorMap && window.JSVectorMap.maps) || {};
-    return Object.assign({}, m1, m2);
-  }
-  async function ensureJvmMapById(mapId, srcUrl){
-    if (Object.prototype.hasOwnProperty.call(getJvmMaps(), mapId)) return true;
-    await new Promise(res => {
-      const s = document.createElement('script');
-      s.src = srcUrl; s.async = true; s.onload = res; s.onerror = res;
-      s.crossOrigin = 'anonymous';
-      document.head.appendChild(s);
-    });
-    await new Promise(r => setTimeout(r, 0));
-    return Object.prototype.hasOwnProperty.call(getJvmMaps(), mapId);
-  }
-  async function ensureJvmMapAny() {
-    const okCore = await ensureJvmCore();
-    if (!okCore) return { ok:false };
-    const CDN = 'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/';
-    const candidates = [
-      { id:'europe',      src: CDN + 'europe.js' },
-      { id:'europe_merc', src: CDN + 'europe-merc.js' },
-      { id:'world',       src: CDN + 'world.js' },
-      { id:'world_merc',  src: CDN + 'world-merc.js' }
-    ];
-    for (const c of candidates) {
-      const ok = await ensureJvmMapById(c.id, c.src);
-      if (ok) return { ok:true, id:c.id };
-    }
-    console.warn('Tillgängliga jsvectormap-kartor just nu:', Object.keys(getJvmMaps()));
-    return { ok:false };
-  }
-  // Tidig säkerladdning av europa-karta
-  (async () => {
-    const ok = await ensureJvmCore();
-    if (ok && !Object.keys(getJvmMaps()).length) {
-      await ensureJvmMapById('europe', 'https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/europe.js');
-    }
-  })();
-
+  // ====== GEO ======
   function makeColorScale(maxVal){
     const from = [198,218,255], to = [29,78,216];
     return v => {
@@ -391,9 +308,10 @@
     const colorOf = makeColorScale(maxVal);
     const capColor = f => colorOf(countryCounts[NAME_TO_ISO2[f.properties.name] || ''] || 0);
     const altitude = feat => {
-      const v = countryCounts[NAME_TO_ISO2[feat.properties.name] || ''] || 0;
-      return v ? 0.01 + Math.min(0.05, (v / (maxVal || 1)) * 0.05) : 0.004;
-    };
+  const v = countryCounts[NAME_TO_ISO2[feat.properties.name] || ''] || 0;
+  // lägre max-altitude för snyggare look
+  return v ? 0.01 + Math.min(0.05, (v / (maxVal || 1)) * 0.05) : 0.004;
+};
     const el = document.getElementById('globeContainer');
     if (!globeInstance){
       globeInstance = Globe()(el)
@@ -419,13 +337,16 @@
       globeInstance.polygonAltitude(altitude);
     }
   }
-  // ResizeObserver för globen
-  const container = document.getElementById('globeContainer');
-  const ro = new ResizeObserver(() => {
-    if (!globeInstance) return;
-    globeInstance.width(container.clientWidth).height(container.clientHeight);
-  });
-  ro.observe(container);
+  // Efter att du skapat globeInstance i buildSpinningGlobe:
+const container = document.getElementById('globeContainer');
+
+// ... när globeInstance skapats:
+const ro = new ResizeObserver(() => {
+  if (!globeInstance) return;
+  globeInstance.width(container.clientWidth)
+               .height(container.clientHeight);
+});
+ro.observe(container);
 
   function showGlobeTooltip(feat, counts, container){
     const tip = document.getElementById('globeTooltip');
@@ -449,74 +370,74 @@
     tip.style.display = 'none';
     if (tip._h){ window.removeEventListener('mousemove', tip._h); tip._h = null; }
   }
-
-  // Europa-karta
   async function buildEuropeMap(countryCounts){
-    const el = document.getElementById('mapEurope');
-    if (!el) return;
+  const el = document.getElementById('mapEurope');
+  if (!el) return;
 
-    // Städa tidigare instans
-    if (el._jvm && typeof el._jvm.destroy === 'function') { el._jvm.destroy(); el._jvm = null; }
-
-    // Säkerställ kärna + karta
-    const got = await ensureJvmMapAny();
-    if (!got.ok) { console.error('jsVectorMap map kunde inte laddas.'); return; }
-    const mapId = got.id;
-    if (mapId.startsWith('world')) console.warn('Föll tillbaka till world-kartan (Europa ej hittad).');
-
-    // Plocka bara europeiska länder
-    const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
-    const values = {};
-    Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
-
-    // Skapa karta
-    const Ctor = getJvmCtor();
-    const jvm = new Ctor({
-      selector: '#mapEurope',
-      map: mapId,
-      zoomButtons: true,
-      regionStyle: { initial: { fill: '#dbeafe' } },
-      series: {
-        regions: [{
-          values,
-          scale: ['#e8eefc', '#1d4ed8'],
-          normalizeFunction: 'polynomial'
-        }]
-      },
-      labels: { regions: { render: c => c } },
-      onRegionTooltipShow: (tipEl, code) => {
-        const val = values[code] || 0;
-        tipEl.textContent = `${tipEl.textContent} — ${val} visningar`;
-      }
-    });
-
-    el._jvm = jvm;
+  // städa ev. tidigare instans
+  if (el._jvm && typeof el._jvm.destroy === 'function') {
+    el._jvm.destroy(); el._jvm = null;
   }
 
-  // Hämta geo och bygg visualiseringar
+  // plocka bara europeiska länder
+  const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
+  const values = {};
+  Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
+
+  // se till att kartan verkligen finns – prova europe -> europe-merc -> world
+  let mapId = 'europe';
+  let ok = await ensureJvmMap(mapId);
+  if (!ok) { mapId = 'europe-merc'; ok = await ensureJvmMap(mapId); }
+  if (!ok) { mapId = 'world';       ok = await ensureJvmMap(mapId);   }
+  if (!ok) { console.error('jsVectorMap maps are not loaded.'); return; }
+  if (mapId === 'world') console.warn('Hittade ingen Europa-karta, faller tillbaka till world.');
+
+  const jvm = new window.jsVectorMap({
+    selector: '#mapEurope',
+    map: mapId,
+    zoomButtons: true,
+    regionStyle: { initial: { fill: '#dbeafe' } },
+    series: {
+      regions: [{
+        values,
+        scale: ['#e8eefc', '#1d4ed8'],
+        normalizeFunction: 'polynomial'
+      }]
+    },
+    labels: { regions: { render: c => c } },
+    onRegionTooltipShow: (tipEl, code) => {
+      const val = values[code] || 0;
+      tipEl.textContent = `${tipEl.textContent} — ${val} visningar`;
+    }
+  });
+
+  el._jvm = jvm;
+
   async function loadGeo(days = 30) {
     try {
       const res = await fetch(`/api/pageviews/geo/me?days=${days}`, { credentials: 'include' });
       const d = await res.json();
       if (!d.success) throw new Error('Kunde inte hämta geo-data');
 
-      const elTotal  = document.getElementById('geoTotal');
-      const elUnique = document.getElementById('geoUnique');
-      if (elTotal)  elTotal.textContent  = String(d.totals?.total || 0);
-      if (elUnique) elUnique.textContent = String(d.totals?.uniqueVisitors || 0);
+      // KPI
+      document.getElementById('geoTotal').textContent  = String(d.totals?.total || 0);
+      document.getElementById('geoUnique').textContent = String(d.totals?.uniqueVisitors || 0);
 
+      // Gör om listan till { ISO2: count }
       const counts = {};
       (d.countries || []).forEach(row => {
         const code = (row.country || '').toUpperCase();
         if (code && code !== 'XX') counts[code] = row.count || 0;
       });
 
+      // Bygg visualiseringarna
       await buildSpinningGlobe(counts);
       buildEuropeMap(counts);
     } catch (e) {
       console.error('loadGeo error:', e);
     }
   }
+
 
   // ====== SSE (realtid ordrar) ======
   function connectSSE(){
@@ -561,8 +482,7 @@
     toggle.classList.toggle('open', !isOpen);
   });
   window.addEventListener('click', (e) => {
-    const wrap = document.querySelector('.profile-wrapper');
-    if (wrap && !wrap.contains(e.target)) {
+    if (!document.querySelector('.profile-wrapper').contains(e.target)) {
       menu.style.display = 'none'; toggle.classList.remove('open');
     }
   });
@@ -572,69 +492,34 @@
   document.getElementById("openSettings").addEventListener("click", (e) => {
     e.preventDefault(); window.location.href = "profile.html";
   });
-
-  async function doLogout(){
-    try {
-      const res = await fetch('/logout', { method: 'POST', credentials: 'include' });
-      const data = await res.json();
-      if (data.success) { localStorage.clear(); window.location.href = "/login.html"; }
-      else { alert("Utloggning misslyckades."); }
-    } catch (err) {
-      console.error("Fel vid utloggning:", err); alert("Kunde inte logga ut.");
-    }
-  }
   document.getElementById("logout").addEventListener("click", (e) => {
     e.preventDefault();
-    if (confirm("Är du säker på att du vill logga ut?")) doLogout();
-  });
-
-  // Visa inloggad användare + initialer
-  (async () => {
-    try {
-      const r = await fetch('/api/profile/me', { credentials: 'include' });
-      if (!r.ok) throw new Error('Auth misslyckades');
-      const d = await r.json();
-
-      if (d?.success) {
-        const email = d.email || '';
-        theName  = d.name  || '';
-        const userEmailEl = document.getElementById('userEmail');
-        if (userEmailEl) userEmailEl.textContent = email || theName || 'Inloggad';
-
-        const initialsFromName = (theName || '')
-          .split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();
-        const initials = initialsFromName || (email ? (email[0] + (email.split('@')[1]?.[0] || '')).toUpperCase() : '--');
-        const badge = document.getElementById('profileToggle');
-        if (badge) badge.textContent = initials;
-      } else {
-        window.location.href = '/login.html';
-      }
-    } catch(e) {
-      window.location.href = '/login.html';
+    if (confirm("Är du säker på att du vill logga ut?")) {
+      fetch('/logout', { method: 'GET', credentials: 'include' })
+        .then(res => res.json())
+        .then(data => { if (data.success) { localStorage.clear(); window.location.href = "/login.html"; } else { alert("Utloggning misslyckades."); }})
+        .catch(err => { console.error("Fel vid utloggning:", err); alert("Kunde inte logga ut."); });
     }
-  })();
-
-  // Init (vänta tills alla defer-skript laddats klart)
-  window.addEventListener('load', () => {
-    loadSummary().catch(console.error);
-    connectSSE();
-    loadPageviews(7).catch(console.error);
-    loadGeo(30).catch(console.error);
   });
 
-  // PV-range IIFE
+  loadSummary().catch(console.error);
+  connectSSE();
+  loadPageviews(7).catch(console.error);
+  loadGeo(30).catch(console.error);
+
+
   (function initPv(){
     const select = document.getElementById('pvRange');
     const load = () => loadPageviews(parseInt(select.value,10)).catch(console.error);
-    if (select) select.addEventListener('change', load);
-  })();
+    select.addEventListener('change', load);
+  })(); // Ensure this is properly closed
+    } // Add this closing brace
 </script>
-
 <script>
-  // Sista fallback för höjder
   document.getElementById('globeContainer').style.height ||= '360px';
   document.getElementById('mapEurope').style.height ||= '360px';
 </script>
+
 
 <script src="/js/logout.js"></script>
 </body>
