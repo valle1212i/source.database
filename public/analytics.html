@@ -18,8 +18,6 @@
 <link rel="stylesheet" href="/vendor/jsvectormap/jsvectormap.min.css" />
 <script src="/vendor/jsvectormap/jsvectormap.min.js" defer></script>
 <script src="/vendor/jsvectormap/maps/world.js" defer></script>
-<script src="/vendor/jsvectormap/maps/europe.js" defer></script>
-
 
  
  
@@ -374,29 +372,24 @@ ro.observe(container);
   const el = document.getElementById('mapEurope');
   if (!el) return;
 
-  // städa ev. tidigare instans
+  // Städa ev. tidigare instans
   if (el._jvm && typeof el._jvm.destroy === 'function') {
     el._jvm.destroy(); el._jvm = null;
   }
 
-  // plocka bara europeiska länder
+  // Europa-ISO2
   const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
+
+  // Filtrera till Europa
   const values = {};
   Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
 
-  // se till att kartan verkligen finns – prova europe -> europe-merc -> world
-  let mapId = 'europe';
-  let ok = await ensureJvmMap(mapId);
-  if (!ok) { mapId = 'europe-merc'; ok = await ensureJvmMap(mapId); }
-  if (!ok) { mapId = 'world';       ok = await ensureJvmMap(mapId);   }
-  if (!ok) { console.error('jsVectorMap maps are not loaded.'); return; }
-  if (mapId === 'world') console.warn('Hittade ingen Europa-karta, faller tillbaka till world.');
-
-  const jvm = new window.jsVectorMap({
+  // Initiera världskarta (lokal world.js måste vara laddad)
+  const jvm = new (window.jsVectorMap || window.JSVectorMap)({
     selector: '#mapEurope',
-    map: mapId,
+    map: 'world',
     zoomButtons: true,
-    regionStyle: { initial: { fill: '#dbeafe' } },
+    regionStyle: { initial: { fill: '#dbeafe', stroke: '#9fb7f3' } },
     series: {
       regions: [{
         values,
@@ -406,12 +399,27 @@ ro.observe(container);
     },
     labels: { regions: { render: c => c } },
     onRegionTooltipShow: (tipEl, code) => {
+      if (!EURO.has(code)) { tipEl.style.display = 'none'; return; }
       const val = values[code] || 0;
       tipEl.textContent = `${tipEl.textContent} — ${val} visningar`;
+      tipEl.style.display = 'block';
+    }
+  });
+
+  // Zooma/fokusera Europa (ungefärlig vy)
+  jvm.setFocus({ region: 'EU', animate: true }); // funkar i 1.5.x
+  // Om 'EU' inte finns i din version, använd bounding-box:
+  // jvm.setFocus({ x: 0.62, y: 0.32, scale: 2.2, animate: true });
+
+  // Maskera alla icke-EURO-regioner (gör dem "osynliga")
+  Object.keys(jvm.regions).forEach(code => {
+    if (!EURO.has(code)) {
+      jvm.setStyle(code, 'region', 'initial', { fill: '#0b1220', stroke: '#0b1220', fillOpacity: 1, strokeOpacity: 1 });
     }
   });
 
   el._jvm = jvm;
+
 
   async function loadGeo(days = 30) {
     try {
