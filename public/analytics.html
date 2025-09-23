@@ -5,23 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Analyser – Kundportal</title>
 
-  <!-- Din globala stylesheet -->
+  <!-- Styles -->
   <link rel="stylesheet" href="CSS/analytics.css" />
-
-  <!-- Ikoner -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
-  <!-- Chart.js för diagram -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- jsVectorMap: LOKALA FILER -->
-<link rel="stylesheet" href="/vendor/jsvectormap/jsvectormap.min.css" />
-<script src="/vendor/jsvectormap/jsvectormap.min.js" defer></script>
-<script src="/vendor/jsvectormap/maps/world.js" defer></script>
-
- 
- 
-
+  <!-- jsVectorMap (lokalt, inga CDN-problem) -->
+  <link rel="stylesheet" href="/vendor/jsvectormap/jsvectormap.min.css" />
+  <script src="/vendor/jsvectormap/jsvectormap.min.js" defer></script>
+  <script src="/vendor/jsvectormap/maps/world.js" defer></script>
 
   <!-- 3D-glob -->
   <script src="https://unpkg.com/globe.gl@2.32.6/dist/globe.gl.min.js"></script>
@@ -155,7 +149,7 @@
     <div class="map-grid" style="grid-template-columns:1fr 400px;">
       <div class="map-card" style="position:relative;">
         <h4>Världen</h4>
-        <div id="globeContainer" class="map" style="background:#0b1220;border-radius:16px;"></div>
+        <div id="globeContainer" class="map" style="background:#0b1220;border-radius:16px;height:360px;"></div>
         <div id="globeTooltip" style="position:absolute;pointer-events:none;padding:6px 8px;background:#111827;color:#fff;font-size:12px;border-radius:8px;display:none;transform:translate(-50%,-120%);z-index:10;"></div>
       </div>
       <div class="map-card">
@@ -172,13 +166,23 @@
   const savedTheme = localStorage.getItem("theme") || "light";
   document.body.classList.add(`${savedTheme}-theme`);
 
+  /* ==== Sidebar ==== */
+  function toggleSidebar(force) {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+    const active = (typeof force === 'boolean') ? force : !sidebar.classList.contains('active');
+    sidebar.classList.toggle('active', active);
+    document.body.classList.toggle('menu-open', active);
+  }
+
+  /* ==== Helpers ==== */
   function fmtTime(ts){
     const d = new Date(typeof ts === 'number' ? ts : Date.parse(ts));
     return d.toLocaleString('sv-SE', { hour:'2-digit', minute:'2-digit', year:'numeric', month:'2-digit', day:'2-digit' });
   }
   function numberFormat(n){ try{ return n.toLocaleString('sv-SE'); } catch { return String(n); } }
 
-  // ====== ORDER ======
+  /* ==== Orders (Chart.js) ==== */
   let ordersByHourChart, bestsellersChart;
   function buildOrdersByHourChart(perHour){
     const ctx = document.getElementById('ordersByHourChart');
@@ -232,7 +236,7 @@
     buildBestsellersChart(data.bestsellers || []);
   }
 
-  // ====== SIDVISNINGAR ======
+  /* ==== Pageviews ==== */
   let pvChart;
   function buildPvLineChart(labels, values){
     const ctx = document.getElementById('pvLineChart');
@@ -278,7 +282,7 @@
     buildPvLineChart(labels, values);
   }
 
-  // ====== GEO ======
+  /* ==== GEO (Globe + "Europa via world.js") ==== */
   function makeColorScale(maxVal){
     const from = [198,218,255], to = [29,78,216];
     return v => {
@@ -287,17 +291,8 @@
       return `rgb(${ch(0)},${ch(1)},${ch(2)})`;
     };
   }
-  const NAME_TO_ISO2 = {
-    'Sweden':'SE','Norway':'NO','Denmark':'DK','Finland':'FI','Iceland':'IS','Germany':'DE','France':'FR',
-    'Netherlands':'NL','Belgium':'BE','Luxembourg':'LU','Austria':'AT','Switzerland':'CH','Italy':'IT','Spain':'ES','Portugal':'PT',
-    'Ireland':'IE','United Kingdom':'GB','Poland':'PL','Czechia':'CZ','Czech Republic':'CZ','Slovakia':'SK','Hungary':'HU','Slovenia':'SI',
-    'Croatia':'HR','Bosnia and Herz.':'BA','Serbia':'RS','Bulgaria':'BG','Romania':'RO','Greece':'GR','Estonia':'EE','Latvia':'LV','Lithuania':'LT',
-    'Ukraine':'UA','United States of America':'US','United States':'US','Canada':'CA','Mexico':'MX','Brazil':'BR','Argentina':'AR','Chile':'CL',
-    'Colombia':'CO','Peru':'PE','China':'CN','Japan':'JP','South Korea':'KR','Korea':'KR','India':'IN','Singapore':'SG','Hong Kong':'HK',
-    'Taiwan':'TW','Thailand':'TH','Malaysia':'MY','Indonesia':'ID','Philippines':'PH','Saudi Arabia':'SA','United Arab Emirates':'AE','Israel':'IL',
-    'Türkiye':'TR','Turkey':'TR','South Africa':'ZA','Nigeria':'NG','Egypt':'EG','Morocco':'MA','Kenya':'KE','Ghana':'GH','Algeria':'DZ',
-    'Tunisia':'TN','Ethiopia':'ET','Australia':'AU','New Zealand':'NZ','Russia':'RU'
-  };
+  const NAME_TO_ISO2 = { 'Sweden':'SE','Norway':'NO','Denmark':'DK','Finland':'FI','Iceland':'IS','Germany':'DE','France':'FR','Netherlands':'NL','Belgium':'BE','Luxembourg':'LU','Austria':'AT','Switzerland':'CH','Italy':'IT','Spain':'ES','Portugal':'PT','Ireland':'IE','United Kingdom':'GB','Poland':'PL','Czechia':'CZ','Czech Republic':'CZ','Slovakia':'SK','Hungary':'HU','Slovenia':'SI','Croatia':'HR','Bosnia and Herz.':'BA','Serbia':'RS','Bulgaria':'BG','Romania':'RO','Greece':'GR','Estonia':'EE','Latvia':'LV','Lithuania':'LT','Ukraine':'UA','United States of America':'US','United States':'US','Canada':'CA','Mexico':'MX','Brazil':'BR','Argentina':'AR','Chile':'CL','Colombia':'CO','Peru':'PE','China':'CN','Japan':'JP','South Korea':'KR','Korea':'KR','India':'IN','Singapore':'SG','Hong Kong':'HK','Taiwan':'TW','Thailand':'TH','Malaysia':'MY','Indonesia':'ID','Philippines':'PH','Saudi Arabia':'SA','United Arab Emirates':'AE','Israel':'IL','Türkiye':'TR','Turkey':'TR','South Africa':'ZA','Nigeria':'NG','Egypt':'EG','Morocco':'MA','Kenya':'KE','Ghana':'GH','Algeria':'DZ','Tunisia':'TN','Ethiopia':'ET','Australia':'AU','New Zealand':'NZ','Russia':'RU' };
+
   let globeInstance;
   async function buildSpinningGlobe(countryCounts){
     const worldTopo = await fetch('https://unpkg.com/world-atlas@2/countries-110m.json').then(r=>r.json());
@@ -306,10 +301,9 @@
     const colorOf = makeColorScale(maxVal);
     const capColor = f => colorOf(countryCounts[NAME_TO_ISO2[f.properties.name] || ''] || 0);
     const altitude = feat => {
-  const v = countryCounts[NAME_TO_ISO2[feat.properties.name] || ''] || 0;
-  // lägre max-altitude för snyggare look
-  return v ? 0.01 + Math.min(0.05, (v / (maxVal || 1)) * 0.05) : 0.004;
-};
+      const v = countryCounts[NAME_TO_ISO2[feat.properties.name] || ''] || 0;
+      return v ? 0.01 + Math.min(0.05, (v / (maxVal || 1)) * 0.05) : 0.004;
+    };
     const el = document.getElementById('globeContainer');
     if (!globeInstance){
       globeInstance = Globe()(el)
@@ -335,16 +329,11 @@
       globeInstance.polygonAltitude(altitude);
     }
   }
-  // Efter att du skapat globeInstance i buildSpinningGlobe:
-const container = document.getElementById('globeContainer');
-
-// ... när globeInstance skapats:
-const ro = new ResizeObserver(() => {
-  if (!globeInstance) return;
-  globeInstance.width(container.clientWidth)
-               .height(container.clientHeight);
-});
-ro.observe(container);
+  const globeContainer = document.getElementById('globeContainer');
+  new ResizeObserver(() => {
+    if (!globeInstance) return;
+    globeInstance.width(globeContainer.clientWidth).height(globeContainer.clientHeight);
+  }).observe(globeContainer);
 
   function showGlobeTooltip(feat, counts, container){
     const tip = document.getElementById('globeTooltip');
@@ -368,58 +357,44 @@ ro.observe(container);
     tip.style.display = 'none';
     if (tip._h){ window.removeEventListener('mousemove', tip._h); tip._h = null; }
   }
+
+  // Europa via world.js (zoom+mask)
   async function buildEuropeMap(countryCounts){
-  const el = document.getElementById('mapEurope');
-  if (!el) return;
+    const el = document.getElementById('mapEurope');
+    if (!el) return;
 
-  // Städa ev. tidigare instans
-  if (el._jvm && typeof el._jvm.destroy === 'function') {
-    el._jvm.destroy(); el._jvm = null;
+    if (el._jvm && typeof el._jvm.destroy === 'function') { el._jvm.destroy(); el._jvm = null; }
+
+    const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
+    const values = {};
+    Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
+
+    const jvm = new (window.jsVectorMap || window.JSVectorMap)({
+      selector: '#mapEurope',
+      map: 'world',
+      zoomButtons: true,
+      regionStyle: { initial: { fill: '#dbeafe', stroke: '#9fb7f3' } },
+      series: { regions: [{ values, scale: ['#e8eefc', '#1d4ed8'], normalizeFunction: 'polynomial' }] },
+      labels: { regions: { render: c => c } },
+      onRegionTooltipShow: (tipEl, code) => {
+        if (!EURO.has(code)) { tipEl.style.display = 'none'; return; }
+        const val = values[code] || 0;
+        tipEl.textContent = `${tipEl.textContent} — ${val} visningar`;
+        tipEl.style.display = 'block';
+      }
+    });
+
+    try { jvm.setFocus({ region: 'EU', animate: true }); }
+    catch { jvm.setFocus({ x: 0.62, y: 0.32, scale: 2.2, animate: true }); }
+
+    Object.keys(jvm.regions).forEach(code => {
+      if (!EURO.has(code)) {
+        jvm.setStyle(code, 'region', 'initial', { fill: '#0b1220', stroke: '#0b1220', fillOpacity: 1, strokeOpacity: 1 });
+      }
+    });
+
+    el._jvm = jvm;
   }
-
-  // Europa-ISO2
-  const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
-
-  // Filtrera till Europa
-  const values = {};
-  Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
-
-  // Initiera världskarta (lokal world.js måste vara laddad)
-  const jvm = new (window.jsVectorMap || window.JSVectorMap)({
-    selector: '#mapEurope',
-    map: 'world',
-    zoomButtons: true,
-    regionStyle: { initial: { fill: '#dbeafe', stroke: '#9fb7f3' } },
-    series: {
-      regions: [{
-        values,
-        scale: ['#e8eefc', '#1d4ed8'],
-        normalizeFunction: 'polynomial'
-      }]
-    },
-    labels: { regions: { render: c => c } },
-    onRegionTooltipShow: (tipEl, code) => {
-      if (!EURO.has(code)) { tipEl.style.display = 'none'; return; }
-      const val = values[code] || 0;
-      tipEl.textContent = `${tipEl.textContent} — ${val} visningar`;
-      tipEl.style.display = 'block';
-    }
-  });
-
-  // Zooma/fokusera Europa (ungefärlig vy)
-  jvm.setFocus({ region: 'EU', animate: true }); // funkar i 1.5.x
-  // Om 'EU' inte finns i din version, använd bounding-box:
-  // jvm.setFocus({ x: 0.62, y: 0.32, scale: 2.2, animate: true });
-
-  // Maskera alla icke-EURO-regioner (gör dem "osynliga")
-  Object.keys(jvm.regions).forEach(code => {
-    if (!EURO.has(code)) {
-      jvm.setStyle(code, 'region', 'initial', { fill: '#0b1220', stroke: '#0b1220', fillOpacity: 1, strokeOpacity: 1 });
-    }
-  });
-
-  el._jvm = jvm;
-
 
   async function loadGeo(days = 30) {
     try {
@@ -427,18 +402,15 @@ ro.observe(container);
       const d = await res.json();
       if (!d.success) throw new Error('Kunde inte hämta geo-data');
 
-      // KPI
       document.getElementById('geoTotal').textContent  = String(d.totals?.total || 0);
       document.getElementById('geoUnique').textContent = String(d.totals?.uniqueVisitors || 0);
 
-      // Gör om listan till { ISO2: count }
       const counts = {};
       (d.countries || []).forEach(row => {
         const code = (row.country || '').toUpperCase();
         if (code && code !== 'XX') counts[code] = row.count || 0;
       });
 
-      // Bygg visualiseringarna
       await buildSpinningGlobe(counts);
       buildEuropeMap(counts);
     } catch (e) {
@@ -446,8 +418,7 @@ ro.observe(container);
     }
   }
 
-
-  // ====== SSE (realtid ordrar) ======
+  /* ==== SSE ==== */
   function connectSSE(){
     const ev = new EventSource(API_BASE + "/api/inventory/stream");
     ev.onmessage = (e) => {
@@ -457,9 +428,11 @@ ro.observe(container);
         document.getElementById('kpiTotalOrders').textContent = String(val + p.order.qty);
         document.getElementById('kpiLatestOrder').textContent = `${p.order.name} ×${p.order.qty}`;
         document.getElementById('kpiLatestTime').textContent = fmtTime(p.order.ts);
+
         if (ordersByHourChart){
           const idx = ordersByHourChart.data.labels.length - 1;
-          ordersByHourChart.data.datasets[0].data[idx] = (ordersByHourChart.data.datasets[0].data[idx] || 0) + p.order.qty;
+          ordersByHourChart.data.datasets[0].data[idx] =
+            (ordersByHourChart.data.datasets[0].data[idx] || 0) + p.order.qty;
           ordersByHourChart.update('none');
         }
         if (bestsellersChart){
@@ -481,7 +454,46 @@ ro.observe(container);
     ev.onerror = () => { setTimeout(connectSSE, 3000); };
   }
 
-  // ====== PROFILMENY + BOOT ======
+  /* ==== Auth + profilbrickan ==== */
+  (async () => {
+    try {
+      const r = await fetch('/api/profile/me', { credentials: 'include' });
+      if (!r.ok) throw new Error('Auth misslyckades');
+      const d = await r.json();
+      if (d?.success) {
+        const email = d.email || '';
+        const name  = d.name  || '';
+        const userEmailEl = document.getElementById('userEmail');
+        if (userEmailEl) userEmailEl.textContent = email || name || 'Inloggad';
+
+        const initialsFromName = (name || '').split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();
+        const initials = initialsFromName || (email ? (email[0] + (email.split('@')[1]?.[0] || '')).toUpperCase() : '--');
+        const badge = document.getElementById('profileToggle');
+        if (badge) badge.textContent = initials;
+      } else {
+        window.location.href = '/login.html';
+      }
+    } catch(e) {
+      window.location.href = '/login.html';
+    }
+  })();
+
+  /* ==== Init ==== */
+  (function initPv(){
+    const select = document.getElementById('pvRange');
+    if (select) {
+      const load = () => loadPageviews(parseInt(select.value,10)).catch(console.error);
+      select.addEventListener('change', load);
+    }
+  })();
+
+  // Starta EN gång
+  loadSummary().catch(console.error);
+  connectSSE();
+  loadPageviews(7).catch(console.error);
+  loadGeo(30).catch(console.error);
+
+  /* ==== Profilmenyknappar ==== */
   const toggle = document.getElementById('profileToggle');
   const menu = document.getElementById('profileMenu');
   toggle.addEventListener('click', () => {
@@ -490,8 +502,10 @@ ro.observe(container);
     toggle.classList.toggle('open', !isOpen);
   });
   window.addEventListener('click', (e) => {
-    if (!document.querySelector('.profile-wrapper').contains(e.target)) {
-      menu.style.display = 'none'; toggle.classList.remove('open');
+    const wrap = document.querySelector('.profile-wrapper');
+    if (wrap && !wrap.contains(e.target)) {
+      menu.style.display = 'none';
+      toggle.classList.remove('open');
     }
   });
   document.getElementById("switchAccount").addEventListener("click", (e) => {
@@ -509,25 +523,7 @@ ro.observe(container);
         .catch(err => { console.error("Fel vid utloggning:", err); alert("Kunde inte logga ut."); });
     }
   });
-
-  loadSummary().catch(console.error);
-  connectSSE();
-  loadPageviews(7).catch(console.error);
-  loadGeo(30).catch(console.error);
-
-
-  (function initPv(){
-    const select = document.getElementById('pvRange');
-    const load = () => loadPageviews(parseInt(select.value,10)).catch(console.error);
-    select.addEventListener('change', load);
-  })(); // Ensure this is properly closed
-    } // Add this closing brace
 </script>
-<script>
-  document.getElementById('globeContainer').style.height ||= '360px';
-  document.getElementById('mapEurope').style.height ||= '360px';
-</script>
-
 
 <script src="/js/logout.js"></script>
 </body>
