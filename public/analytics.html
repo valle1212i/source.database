@@ -5,6 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Analyser – Kundportal</title>
 
+  <script>
+    // === fetch-wrapper som alltid skickar cookies + CSRF och hanterar 401 ===
+    function getCsrfToken(){
+      // Hämtar CSRF-token från <meta name="csrf-token" content="..."> om den finns
+      var meta = document.querySelector('meta[name="csrf-token"]');
+      return meta ? meta.getAttribute('content') : null;
+    }
+  
+    async function authedFetch(url, opts){
+      opts = opts || {};
+      opts.credentials = 'include'; // skicka session-cookies
+      opts.headers = Object.assign({}, opts.headers);
+      var csrf = getCsrfToken();
+      if (csrf) opts.headers['X-CSRF-Token'] = csrf;
+  
+      const res = await authedFetch(url, opts);
+      if (res.status === 401) {
+        const next = encodeURIComponent(location.pathname + location.search + location.hash);
+        location.href = 'login.html?next=' + next;
+        return Promise.reject(new Error('Unauthorized'));
+      }
+      return res;
+    }
+  </script>
+  
+
   <!-- Styles -->
   <link rel="stylesheet" href="CSS/analytics.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -17,7 +43,28 @@
 
   <!-- 3D-glob -->
   <script src="https://unpkg.com/globe.gl@2.32.6/dist/globe.gl.min.js"></script>
-  <script src="https://unpkg.com/topojson-client@3"></script>
+  <script src="https://unpkg.com/topojson-client@3"></script>'
+  <script>
+  (async function ensureSignedIn(){
+    try {
+      const r = await authedFetch('/api/me', { credentials: 'include' }); // BYT om ert endpoint heter annat
+      if (!r.ok) throw new Error('not ok ' + r.status);
+      const me = await r.json();
+
+      // Visa e-post i profilen om den finns
+      if (me && me.email && document.getElementById('userEmail')) {
+        document.getElementById('userEmail').textContent = me.email;
+      }
+
+      // Exponera globalt om du vill använda i fler script
+      window.currentUser = me;
+    } catch (e) {
+      // Skicka till login och behåll "next" så man kommer tillbaka hit efteråt
+      const next = encodeURIComponent(location.pathname + location.search + location.hash);
+      location.href = 'login.html?next=' + next;
+    }
+  })();
+</script>
   <script>
     // Undvik dubletter: om globalerna redan finns, skriv inte över dem.
     window.NAME_TO_ISO2 = window.NAME_TO_ISO2 || {};
@@ -35,7 +82,7 @@
   
     if (typeof window.buildColorOf !== 'function') {
       window.buildColorOf = function(byIso){
-        const vals = Object.values(byIso||{});
+        const vals = byIso ? Object.values(byIso) : [];
         const maxVal = Math.max(1, ...(vals.length ? vals : [0]));
         const scale = window.makeColorScale(maxVal);
         return function colorOf(countryOrIso){
@@ -360,7 +407,7 @@
     }
   }
   async function loadSummary(){
-    const r = await fetch(API_BASE + "/api/orders/summary", { credentials:'include' });
+    const r = await authedFetch(API_BASE + "/api/orders/summary", { credentials:'include' });
     const data = await r.json();
     if (!data.success) throw new Error("Kunde inte hämta orderdata");
     renderOrderKPIs(data);
@@ -403,7 +450,7 @@
     return { labels: s.map(r=>r._id), values: s.map(r=>r.count||0) };
   }
   async function loadPageviews(days){
-    const r = await fetch(`/api/pageviews/summary/me?days=${days}`, { credentials:'include' });
+    const r = await authedFetch(`/api/pageviews/summary/me?days=${days}`, { credentials:'include' });
     const d = await r.json();
     if (!d.success) throw new Error('Kunde inte hämta sidvisningar');
     const total = (d.byDay||[]).reduce((s,r)=>s+(r.count||0),0);
@@ -514,7 +561,7 @@ window.makeColorScale = window.makeColorScale || function(maxVal){
 
   let globeInstance;
   async function buildSpinningGlobe(countryCounts){
-    const worldTopo = await fetch('https://unpkg.com/world-atlas@2/countries-110m.json').then(r=>r.json());
+    const worldTopo = await authedFetch('https://unpkg.com/world-atlas@2/countries-110m.json').then(r=>r.json());
     const worldGeo  = topojson.feature(worldTopo, worldTopo.objects.countries);
     const maxVal  = Math.max(1, ...Object.values(countryCounts));
   // Remove the duplicate declaration of NAME_TO_ISO2
@@ -618,7 +665,7 @@ window.makeColorScale = window.makeColorScale || function(maxVal){
 
   async function loadGeo(days = 30) {
     try {
-      const res = await fetch(`/api/pageviews/geo/me?days=${days}`, { credentials: 'include' });
+      const res = await authedFetch(`/api/pageviews/geo/me?days=${days}`, { credentials: 'include' });
       const d = await res.json();
       if (!d.success) throw new Error('Kunde inte hämta geo-data');
 
@@ -677,7 +724,7 @@ window.makeColorScale = window.makeColorScale || function(maxVal){
   /* ==== Auth + profilbrickan ==== */
   (async () => {
     try {
-      const r = await fetch('/api/profile/me', { credentials: 'include' });
+      const r = await authedFetch('/api/profile/me', { credentials: 'include' });
       if (!r.ok) throw new Error('Auth misslyckades');
       const d = await r.json();
       if (d?.success) {
@@ -737,7 +784,7 @@ window.makeColorScale = window.makeColorScale || function(maxVal){
   document.getElementById("logout").addEventListener("click", (e) => {
     e.preventDefault();
     if (confirm("Är du säker på att du vill logga ut?")) {
-      fetch('/logout', { method: 'GET', credentials: 'include' })
+      authedFetch('/logout', { method: 'GET', credentials: 'include' })
         .then(res => res.json())
         .then(data => { if (data.success) { localStorage.clear(); window.location.href = "/login.html"; } else { alert("Utloggning misslyckades."); }})
         .catch(err => { console.error("Fel vid utloggning:", err); alert("Kunde inte logga ut."); });
