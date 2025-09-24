@@ -417,3 +417,12 @@ body.dark-theme .nav-menu li.active a {
 #globeContainer canvas{ border-radius:16px; }
 
 #mapEurope, #globeContainer { min-height: 360px; }
+
+  #europeMapSvg { width: 100%; height: auto; display: block; }
+  #europeMapSvg .eu-region { cursor: pointer; transition: fill 160ms ease; }
+  #europeMapSvg .eu-region:hover { filter: brightness(0.95); }
+  #svgTooltip {
+    position:absolute; pointer-events:none; padding:6px 8px; background:#111827;
+    color:#fff; font-size:12px; border-radius:8px; display:none; z-index:20;
+  }
+
