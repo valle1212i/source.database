@@ -24,6 +24,7 @@ const inviteRoutes = require('./routes/inviteRoutes');
 const insightsRoutes = require('./routes/insights');
 const { router: securityRouter, requireAuth } = require("./routes/security");
 const payoutsRoutes = require('./routes/payouts');
+const reportRoutes = require('./routes/reportRoutes');
 
 // ── App & HTTP/Socket.IO ──────────────────────────────────────────────────────
 const app = express();
@@ -384,6 +385,7 @@ app.use('/api/support/inbound', require('./routes/supportInbound')); // separera
 app.use('/api/email', require('./routes/emailRoutes'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/payouts', payoutsRoutes);
+app.use('/api/reports', requireAuth, reportRoutes);
 let messagesRouter;
 try {
   messagesRouter = require('./routes/messagesRoutes'); // ✅ plural

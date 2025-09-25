@@ -39,21 +39,20 @@
   </div>
   <div class="main">
     <div class="profile-wrapper">
-  <div class="profile-icon" id="profileToggle">--</div>
-
-  <div class="profile-dropdown" id="profileMenu">
-    <div class="profile-email" id="userEmail">Laddar...</div>
-    <hr />
-    <a href="#" id="switchAccount">Byt konto</a>
-    <a href="#" id="openSettings">Profilinställningar</a>
-    <a href="#" id="logout">Logga ut</a>
-  </div>
-</div>
+      <div class="profile-icon" id="profileToggle">--</div>
+      <div class="profile-dropdown" id="profileMenu">
+        <div class="profile-email" id="userEmail">Laddar...</div>
+        <hr />
+        <a href="#" id="switchAccount">Byt konto</a>
+        <a href="#" id="openSettings">Profilinställningar</a>
+        <a href="#" id="logout">Logga ut</a>
+      </div>
+    </div>
 
     <!-- Hamburgermeny för mobil -->
-<button class="hamburger-menu" onclick="toggleSidebar()">☰</button>
+    <button class="hamburger-menu">☰</button>
 
-<h2 class="page-title">Utbetalningsrapporter</h2>
+    <h2 class="page-title">Utbetalningsrapporter</h2>
     <a href="customerportal.html" class="back-button">← Tillbaka till översikt</a>
     <p class="info-text">Här visas senaste genomförda utbetalningar.</p>
 
@@ -70,56 +69,7 @@
       <button class="black-button" onclick="exportReports()">Exportera som Excel</button>
     </div>
 
-    <div id="paymentsList">
-      <!-- Exempelrapporter -->
-      <div class="card">
-        <div class="card-top">
-          <div>
-            <strong>Utbetalning</strong>
-            <p class="amount">215 000 SEK</p>
-          </div>
-          <div class="status open">
-            <i class="fas fa-check-circle"></i> Genomförd
-          </div>
-        </div>
-        <div class="card-details">
-          <p>Datum: 2025-06-25</p>
-          <p>Referens-ID: UTXN-001</p>
-        </div>
-        <div class="actions">
-          <button class="black-button" onclick='showReport({
-            amount: "215 000 SEK",
-            status: "Genomförd",
-            date: "2025-06-25",
-            id: "UTXN-001"
-          })'>Visa detaljer</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-top">
-          <div>
-            <strong>Utbetalning</strong>
-            <p class="amount">180 500 SEK</p>
-          </div>
-          <div class="status open">
-            <i class="fas fa-check-circle"></i> Genomförd
-          </div>
-        </div>
-        <div class="card-details">
-          <p>Datum: 2025-06-18</p>
-          <p>Referens-ID: UTXN-002</p>
-        </div>
-        <div class="actions">
-          <button class="black-button" onclick='showReport({
-            amount: "180 500 SEK",
-            status: "Genomförd",
-            date: "2025-06-18",
-            id: "UTXN-002"
-          })'>Visa detaljer</button>
-        </div>
-      </div>
-    </div>
+    <div id="paymentsList"></div>
   </div>
 
   <!-- Modal -->
@@ -128,163 +78,325 @@
       <span class="close" onclick="closeModal()">&times;</span>
       <h2>Utbetalningsdetaljer</h2>
       <div id="modalDetails"></div>
-      <button class="black-button" onclick="exportPDF()">Exportera som PDF</button>
+      <!-- Server-PDF -->
+      <button id="pdfBtn" class="black-button" disabled>Ladda ner PDF</button>
     </div>
   </div>
 
   <script>
-    let currentReport = {};
+    /** ========= UTBETALNINGSRAPPORTER ========= **/
+    const TENANT = 'vattentrygg';
 
-    function showReport(report) {
-  currentReport = report;
+    // DOM refs
+    const listEl = document.getElementById('paymentsList');
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const startDate = document.getElementById('startDate');
+    const modal = document.getElementById('receiptModal');
+    const modalDetails = document.getElementById('modalDetails');
 
-  const details = document.getElementById("modalDetails");
-  // Rensa befintligt innehåll utan att tolka HTML
-  details.textContent = "";
+    // State
+    let allPayouts = [];
+    let filtered = [];
+    let nextCursor = null;
+    let loading = false;
 
-  const rows = [
-    ["Belopp:", report.amount],
-    ["Status:", report.status],
-    ["Datum:", report.date],
-    ["Referens-ID:", report.id],
-  ];
+    // Helpers
+    function minorToCurrency(n, cur='SEK'){
+      const val = (Number(n||0)/100).toFixed(2);
+      return `${val} ${cur?.toUpperCase?.() || 'SEK'}`;
+    }
+    function fmtDate(sec){ return sec ? new Date(sec*1000).toLocaleDateString('sv-SE') : '-' }
+    function fmtDateTime(sec){ return sec ? new Date(sec*1000).toLocaleString('sv-SE') : '-' }
 
-  for (const [label, value] of rows) {
-    const p = document.createElement("p");
-    const strong = document.createElement("strong");
-    strong.textContent = label + " ";
-    p.appendChild(strong);
-    p.appendChild(document.createTextNode(String(value ?? "")));
-    details.appendChild(p);
-  }
-
-  document.getElementById("receiptModal").style.display = "block";
-}
-
-    function closeModal() {
-      document.getElementById("receiptModal").style.display = "none";
+    function statusMap(s){
+      switch (s) {
+        case 'paid':       return { label: 'Genomförd', cls: 'open' };
+        case 'canceled':   return { label: 'Avvisad',   cls: 'closed' };
+        case 'pending':    return { label: 'Avvaktar',  cls: 'pending' };
+        case 'in_transit': return { label: 'På väg',    cls: 'pending' };
+        default:           return { label: s || 'Okänd', cls: 'pending' };
+      }
     }
 
-    function exportPDF() {
+    function cardTemplate(p){
+      const st = statusMap(p.status);
+      return `
+        <div class="card">
+          <div class="card-top">
+            <div>
+              <strong>Utbetalning</strong>
+              <p class="amount">${minorToCurrency(p.amount, p.currency)}</p>
+            </div>
+            <div class="status ${st.cls}">
+              <i class="fas fa-check-circle"></i> ${st.label}
+            </div>
+          </div>
+          <div class="card-details">
+            <p>Datum: ${fmtDate(p.created)}</p>
+            <p>Referens-ID: ${p.id}</p>
+          </div>
+          <div class="actions">
+            <button class="black-button" data-open="${p.id}">Visa detaljer</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderList(){
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div class="card"><div class="card-details"><p>Inga utbetalningar ännu.</p></div></div>`;
+        return;
+      }
+      listEl.innerHTML = filtered.map(cardTemplate).join('');
+      listEl.querySelectorAll('button[data-open]').forEach(btn=>{
+        const id = btn.getAttribute('data-open');
+        btn.addEventListener('click', ()=> openDetail(id));
+      });
+    }
+
+    function applyFilters(){
+      const q = (searchInput.value || '').toLowerCase().trim();
+      const st = statusFilter.value;
+      const fromStr = startDate.value;
+
+      filtered = allPayouts.filter(p=>{
+        const label = statusMap(p.status).label.toLowerCase();
+        if (st !== 'all') {
+          if (st === 'genomförd' && label !== 'genomförd') return false;
+          if (st === 'avvisad'   && label !== 'avvisad')   return false;
+        }
+        if (fromStr) {
+          const fromMs = new Date(fromStr + 'T00:00:00').getTime();
+          const pMs = (p.created || 0) * 1000;
+          if (!(pMs >= fromMs)) return false;
+        }
+        if (q) {
+          const hay = [
+            String(p.id||'').toLowerCase(),
+            fmtDate(p.created).toLowerCase(),
+            minorToCurrency(p.amount, p.currency).toLowerCase()
+          ].join(' | ');
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      renderList();
+    }
+
+    function sortByDate(){
+      filtered.sort((a,b)=> (b.created||0) - (a.created||0));
+      renderList();
+    }
+
+    // CSV-export (nuvarande vy)
+    function exportReports(){
+      if (filtered.length === 0) {
+        alert('Inget att exportera.');
+        return;
+      }
+      const rows = [['id','created','status_sv','amount','currency']];
+      for (const p of filtered) {
+        rows.push([
+          p.id,
+          fmtDateTime(p.created),
+          statusMap(p.status).label,
+          (Number(p.amount||0)/100).toFixed(2),
+          (p.currency||'SEK').toUpperCase()
+        ]);
+      }
+      const csv = rows.map(r => r.map(v=>{
+        const s = String(v??'');
+        return /[",;\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+      }).join(';')).join('\n');
+
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `utbetalningar_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    window.exportReports = exportReports;
+
+    // Server-PDF (centralt renderad)
+    function downloadPayoutPdf(payoutId) {
+      if (!payoutId) return alert('Ingen utbetalning vald.');
+      const url = `/api/reports/payout/${encodeURIComponent(payoutId)}.pdf?tenant=${encodeURIComponent(TENANT)}`;
+      window.open(url, '_blank', 'noopener');
+    }
+
+    // Modal-detalj
+    async function openDetail(payoutId){
+      try{
+        const r1 = await fetch(`/api/payouts/${encodeURIComponent(payoutId)}`, {
+          credentials: 'include',
+          headers: { 'Accept':'application/json', 'X-Tenant': TENANT }
+        });
+        const d1 = await r1.json();
+        const p = d1?.payout || {};
+
+        const r2 = await fetch(`/api/payouts/${encodeURIComponent(payoutId)}/transactions`, {
+          credentials: 'include',
+          headers: { 'Accept':'application/json', 'X-Tenant': TENANT }
+        });
+        const d2 = await r2.json();
+        const txns = Array.isArray(d2?.data) ? d2.data : [];
+
+        let gross=0, fees=0, net=0;
+        for (const t of txns) {
+          gross += (t.amount||0);
+          fees  += (t.fee||0);
+          net   += (t.net||0);
+        }
+
+        modalDetails.textContent = '';
+        const rows = [
+          ['Utbetalning', p.id || '–'],
+          ['Status', statusMap(p.status).label],
+          ['Skapad', fmtDateTime(p.created)],
+          ['Ankomst', fmtDateTime(p.arrival_date)],
+          ['Belopp', minorToCurrency(p.amount, p.currency)],
+          ['Brutto (txn)', minorToCurrency(gross, p.currency)],
+          ['Avgifter (txn)', minorToCurrency(fees, p.currency)],
+          ['Netto (txn)', minorToCurrency(net, p.currency)],
+        ];
+        for (const [label,val] of rows) {
+          const pEl = document.createElement('p');
+          const strong = document.createElement('strong');
+          strong.textContent = label + ': ';
+          pEl.appendChild(strong);
+          pEl.appendChild(document.createTextNode(String(val ?? '')));
+          modalDetails.appendChild(pEl);
+        }
+
+        if (txns.length > 0) {
+          const tbl = document.createElement('table');
+          tbl.style.width = '100%';
+          tbl.style.borderCollapse = 'collapse';
+          tbl.innerHTML = `
+            <thead>
+              <tr>
+                <th style="text-align:left">Typ</th>
+                <th style="text-align:left">Kategori</th>
+                <th style="text-align:left">Datum</th>
+                <th style="text-align:right">Belopp</th>
+                <th style="text-align:right">Avgift</th>
+                <th style="text-align:right">Netto</th>
+                <th style="text-align:left">Källa</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          `;
+          const tb = tbl.querySelector('tbody');
+          for (const t of txns) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${t.type || '-'}</td>
+              <td>${t.reporting_category || '-'}</td>
+              <td>${fmtDateTime(t.created)}</td>
+              <td style="text-align:right">${minorToCurrency(t.amount, t.currency)}</td>
+              <td style="text-align:right">${minorToCurrency(t.fee, t.currency)}</td>
+              <td style="text-align:right">${minorToCurrency(t.net, t.currency)}</td>
+              <td><code>${t.source || ''}</code></td>
+            `;
+            tb.appendChild(tr);
+          }
+          modalDetails.appendChild(tbl);
+        }
+
+        // Visa modal
+        modal.style.display = 'block';
+
+        // Klient-PDF (lämnas kvar som alternativ)
+        window.currentReport = {
+          amount: minorToCurrency(p.amount, p.currency),
+          status: statusMap(p.status).label,
+          date: fmtDateTime(p.created),
+          id: p.id,
+          gross: minorToCurrency(gross, p.currency),
+          fees: minorToCurrency(fees, p.currency),
+          net: minorToCurrency(net, p.currency)
+        };
+
+        // Aktivera server-PDF-knapp
+        const pdfBtn = document.getElementById('pdfBtn');
+        pdfBtn.disabled = false;
+        pdfBtn.onclick = () => downloadPayoutPdf(p.id);
+
+      } catch(err){
+        console.error('openDetail error', err);
+        alert('Kunde inte ladda utbetalningsdetaljer.');
+      }
+    }
+
+    function closeModal(){ modal.style.display = 'none'; }
+    window.closeModal = closeModal;
+
+    // Klient-PDF (behålls som extra)
+    function exportPDF(){
+      const rep = window.currentReport || null;
+      if (!rep) return alert('Ingen rapport laddad ännu.');
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       doc.setFontSize(16);
-      doc.text("Utbetalningsrapport", 20, 20);
+      doc.text('Utbetalningsrapport', 20, 20);
       doc.setFontSize(12);
-      doc.text(`Belopp: ${currentReport.amount}`, 20, 35);
-      doc.text(`Status: ${currentReport.status}`, 20, 45);
-      doc.text(`Datum: ${currentReport.date}`, 20, 55);
-      doc.text(`Referens-ID: ${currentReport.id}`, 20, 65);
-      doc.save(`Utbetalning_${currentReport.id}.pdf`);
+      const lines = [
+        `Utbetalning: ${rep.id}`,
+        `Status: ${rep.status}`,
+        `Datum: ${rep.date}`,
+        `Belopp: ${rep.amount}`,
+        `Brutto (txn): ${rep.gross}`,
+        `Avgifter (txn): ${rep.fees}`,
+        `Netto (txn): ${rep.net}`,
+      ];
+      let y = 35;
+      lines.forEach(l => { doc.text(l, 20, y); y += 8; });
+      doc.save(`Utbetalning_${rep.id}.pdf`);
     }
+    window.exportPDF = exportPDF;
 
-    function filterReports() {
-      alert("Filtreringslogik här");
-    }
-
-    function sortByDate() {
-      alert("Sortering implementeras här");
-    }
-
-    function exportReports() {
-      alert("Exportera till Excel implementeras här");
-    }
-  </script>
-  <script>
-  const toggle = document.getElementById('profileToggle');
-  const menu = document.getElementById('profileMenu');
-
-  toggle.addEventListener('click', () => {
-    const isOpen = menu.style.display === 'flex';
-    menu.style.display = isOpen ? 'none' : 'flex';
-    toggle.classList.toggle('open', !isOpen);
-  });
-
-  window.addEventListener('click', function (e) {
-    if (!document.querySelector('.profile-wrapper').contains(e.target)) {
-      menu.style.display = 'none';
-      toggle.classList.remove('open');
-    }
-  });
-
-  document.getElementById("switchAccount").addEventListener("click", function (e) {
-    e.preventDefault();
-    if (confirm("Vill du logga ut och byta konto?")) {
-      window.location.href = "login.html";
-    }
-  });
-
-  document.getElementById("openSettings").addEventListener("click", function (e) {
-    e.preventDefault();
-    window.location.href = "profile.html";
-  });
-
-  async function loadUserProfile() {
-    try {
-      const res = await fetch("/api/profile/me");
-      const data = await res.json();
-
-      if (data.success) {
-        const name = data.name || '';
-        const email = data.email || '';
-        const image = data.profileImage;
-
-        if (image) {
-  try {
-    const u = new URL(image, window.location.origin);
-    if (u.protocol === "http:" || u.protocol === "https:" || u.protocol === "data:") {
-      const container = document.getElementById("profileToggle");
-      container.textContent = "";
-      const img = document.createElement("img");
-      img.src = u.href;
-      img.alt = "Profilbild";
-      img.width = 32;
-      img.height = 32;
-      img.style.borderRadius = "50%";
-      container.appendChild(img);
-    } else {
-      document.getElementById("profileToggle").textContent = "--";
-    }
-  } catch {
-    document.getElementById("profileToggle").textContent = "--";
-  }
-} else {
-          const initials = name
-            .split(' ')
-            .map(part => part.charAt(0).toUpperCase())
-            .join('')
-            .substring(0, 2);
-          document.getElementById("profileToggle").textContent = initials;
-        }
-
-        document.getElementById("userEmail").textContent = email;
-      } else {
-        document.getElementById("profileToggle").textContent = "??";
-        document.getElementById("userEmail").textContent = "Ej inloggad";
+    // Ladda första sidan
+    async function loadPayoutsPage(){
+      if (loading) return;
+      loading = true;
+      try {
+        const url = nextCursor ? `/api/payouts?starting_after=${encodeURIComponent(nextCursor)}` : '/api/payouts';
+        const r = await fetch(url, {
+          credentials: 'include',
+          headers: { 'Accept':'application/json', 'X-Tenant': TENANT }
+        });
+        const data = await r.json();
+        const items = Array.isArray(data.data) ? data.data : [];
+        allPayouts = allPayouts.concat(items);
+        nextCursor = items.length > 0 ? items[items.length - 1].id : null;
+        filtered = allPayouts.slice().sort((a,b)=> (b.created||0) - (a.created||0));
+        renderList();
+      } catch(e){
+        console.error('loadPayoutsPage error', e);
+        listEl.innerHTML = `<div class="card"><div class="card-details"><p>Kunde inte ladda utbetalningar.</p></div></div>`;
+      } finally {
+        loading = false;
       }
-    } catch (err) {
-      console.error("Fel vid hämtning av användarprofil:", err);
     }
-  }
 
-  loadUserProfile();
-</script>
-<script>
-  function toggleSidebar() {
-    const sidebar = document.querySelector(".sidebar");
-    const isActive = sidebar.classList.contains("active");
+    // Filter-events
+    document.querySelector('#statusFilter').addEventListener('change', applyFilters);
+    document.querySelector('#searchInput').addEventListener('input', applyFilters);
+    document.querySelector('#startDate').addEventListener('change', applyFilters);
 
-    sidebar.classList.toggle("active", !isActive);
-    document.body.classList.toggle("menu-open", !isActive);
-  }
-</script>
-<script>
-  // Hantera hamburgermeny-klick
-  document.getElementById("hamburgerBtn").addEventListener("click", function () {
-    document.querySelector(".sidebar").classList.toggle("active");
-    document.body.classList.toggle("menu-open");
-  });
-</script>
-<script src="/js/logout.js"></script>
+    // Hamburgare
+    document.querySelector(".hamburger-menu").addEventListener("click", function () {
+      document.querySelector(".sidebar").classList.toggle("active");
+      document.body.classList.toggle("menu-open");
+    });
+
+    // Start
+    loadPayoutsPage();
+  </script>
+
+  <script src="/js/logout.js"></script>
 </body>
 </html>
