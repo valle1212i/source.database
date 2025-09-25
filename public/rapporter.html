@@ -360,27 +360,36 @@
 
     // Ladda första sidan
     async function loadPayoutsPage(){
-      if (loading) return;
-      loading = true;
-      try {
-        const url = nextCursor ? `/api/payouts?starting_after=${encodeURIComponent(nextCursor)}` : '/api/payouts';
-        const r = await fetch(url, {
-          credentials: 'include',
-          headers: { 'Accept':'application/json', 'X-Tenant': TENANT }
-        });
-        const data = await r.json();
-        const items = Array.isArray(data.data) ? data.data : [];
-        allPayouts = allPayouts.concat(items);
-        nextCursor = items.length > 0 ? items[items.length - 1].id : null;
-        filtered = allPayouts.slice().sort((a,b)=> (b.created||0) - (a.created||0));
-        renderList();
-      } catch(e){
-        console.error('loadPayoutsPage error', e);
-        listEl.innerHTML = `<div class="card"><div class="card-details"><p>Kunde inte ladda utbetalningar.</p></div></div>`;
-      } finally {
-        loading = false;
-      }
+  if (loading) return;
+  loading = true;
+  try {
+    const url = nextCursor ? `/api/payouts?starting_after=${encodeURIComponent(nextCursor)}` : '/api/payouts';
+    const r = await fetch(url, {
+      credentials: 'include',
+      headers: { 'Accept':'application/json', 'X-Tenant': TENANT }
+    });
+
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch {
+      console.error('Upstream gav inte JSON:', text.slice(0,200));
+      throw new Error('Kunde inte läsa data (ej JSON).');
     }
+
+    const items = Array.isArray(data.data) ? data.data : [];
+    allPayouts = allPayouts.concat(items);
+    nextCursor = items.length > 0 ? items[items.length - 1].id : null;
+    filtered = allPayouts.slice().sort((a,b)=> (b.created||0) - (a.created||0));
+    renderList();
+  } catch(e){
+    console.error('loadPayoutsPage error', e);
+    listEl.innerHTML = `<div class="card"><div class="card-details"><p>Kunde inte ladda utbetalningar.</p></div></div>`;
+  } finally {
+    loading = false;
+  }
+}
+
 
     // Filter-events
     document.querySelector('#statusFilter').addEventListener('change', applyFilters);
