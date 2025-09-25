@@ -2,7 +2,6 @@
 const express = require('express');
 const router = express.Router();
 const pdfService = require('../services/pdfService');
-const fetch = require('node-fetch');
 
 // Hämta en PDF för en payout
 router.get('/payout/:id.pdf', async (req, res) => {
