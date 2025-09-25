@@ -1,5 +1,5 @@
 // controllers/payoutsProxyController.js (CommonJS)
-const fetch = require('node-fetch'); // v2 (CJS). Om du har v3: byt till ESM import i hela projektet.
+
 
 const PAYMENTS_BASE = 'https://stripe-payment-oversvamningsskydd-kund1.onrender.com';     // t.ex. https://stripe-payment-oversvamningsskydd-kund1.onrender.com
 const SHARED_SECRET = '6820e7bbda77c3b03c2e00fc5ea23f745f02906cc8cb87bfd2a64b011bfbc0cc'; // samma som i Vattentrygg (payments)
