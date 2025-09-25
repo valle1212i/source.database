@@ -9,18 +9,23 @@ const Stripe = require('stripe');
  * Primärt: process.env["STRIPE_SECRET__" + TENANT_UPPER]
  * Alternativ: koppla mot DB Settings om/ när ni inför det (lämnat som TODO).
  */
-function getStripeSecretForTenant(tenant) {
-  if (!tenant) throw new Error('Tenant saknas (X-Tenant-header).');
-
-  const envKey = `STRIPE_SECRET__${String(tenant).toUpperCase()}`;
-  const key = process.env[envKey];
-
-  // TODO: Hämta från DB Settings om key saknas i env (frivilligt steg).
-  if (!key) {
-    throw new Error(`Stripe key saknas för tenant=${tenant} (förväntad env: ${envKey}).`);
+if (!tenant) throw new Error('Tenant saknas (X-Tenant-header).');
+ const envKeyTenant = `STRIPE_SECRET__${String(tenant).toUpperCase()}`;
+  const keyTenant = process.env[envKeyTenant];
+  if (keyTenant) return keyTenant;
+  // Fallback till global nyckel – matchar hur payments troligen funkar idag.
+  const keyGlobal = process.env.STRIPE_SECRET || process.env.STRIPE_API_KEY;
+  if (keyGlobal) {
+    console.warn(`[stripeService] Fallback till STRIPE_SECRET för tenant=${tenant} (saknar ${envKeyTenant}).`);
+    return keyGlobal;
   }
-  return key;
-}
+  console.error('[stripeService] Ingen Stripe-nyckel hittad', {
+    tenant,
+    expectedEnvKey: envKeyTenant,
+    hasGlobal: Boolean(process.env.STRIPE_SECRET || process.env.STRIPE_API_KEY),
+    envKeysPresent: Object.keys(process.env).filter(k => k.startsWith('STRIPE_SECRET')),
+  });
+  throw new Error(`Stripe key saknas för tenant=${tenant} (förväntad ${envKeyTenant} eller STRIPE_SECRET).`);
 
 /**
  * Returnerar en Stripe-klient låst till tenantens nyckel.
