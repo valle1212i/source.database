@@ -1,25 +1,19 @@
-// services/pdfService.js
 const puppeteer = require('puppeteer');
-const payoutReportHtml = require('../templates/payoutReportHtml');
 
-async function renderPayoutReport(data) {
+async function renderPdfFromHtml(html) {
   const browser = await puppeteer.launch({
-    headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    headless: 'new', // funkar i Puppeteer 20+
   });
   const page = await browser.newPage();
-
-  // Rendera HTML-mall
-  const html = payoutReportHtml(data);
   await page.setContent(html, { waitUntil: 'networkidle0' });
-
-  const buffer = await page.pdf({
+  const pdf = await page.pdf({
     format: 'A4',
-    margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' }
+    printBackground: true,
+    margin: { top: '20mm', right: '16mm', bottom: '20mm', left: '16mm' }
   });
-
   await browser.close();
-  return buffer;
+  return pdf;
 }
 
-module.exports = { renderPayoutReport };
+module.exports = { renderPdfFromHtml };
