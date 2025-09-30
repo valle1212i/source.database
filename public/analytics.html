@@ -395,6 +395,89 @@
     </article>
   </div>
 </section>
+<!-- STATISTISKA SIFFROR -->
+<section class="ms-wrap">
+  <div class="ms-head">
+    <div class="ms-head-left">
+      <i class="fa-solid fa-hashtag"></i>
+      <span>Statistiska siffror</span>
+    </div>
+    <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
+  </div>
+
+  <!-- VIKTIGT: EN (1) grid-container som INNEHÅLLER ALLA 4 kort -->
+  <div class="ms-grid stats-grid">
+
+    <!-- Mest visade sidor (VÄNSTER, rad 1) -->
+    <article class="ms-card">
+      <header>
+        <div class="title"><i class="fa-regular fa-file-lines"></i><span>Mest visade sidor</span></div>
+        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
+      </header>
+      <p class="eyebrow">Vilka sidor har setts flest gånger?</p>
+      <table class="pv-table">
+        <thead><tr><th>Sida</th><th>Visningar</th><th>Andel</th></tr></thead>
+        <tbody id="tblTopPages"><tr><td colspan="3" class="subtle">Uppdateras dagligen.</td></tr></tbody>
+      </table>
+    </article>
+
+    <!-- Webbläsare (HÖGER, rad 1) -->
+    <article class="ms-card">
+      <header>
+        <div class="title"><i class="fa-solid fa-globe"></i><span>Webbläsare</span></div>
+        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
+      </header>
+      <p class="eyebrow">Varifrån kommer trafiken tekniskt?</p>
+      <table class="pv-table">
+        <thead><tr><th>Webbläsare</th><th>Visningar</th><th>Andel</th></tr></thead>
+        <tbody id="tblBrowsers"><tr><td colspan="3" class="subtle">Summerar ≈100%.</td></tr></tbody>
+      </table>
+    </article>
+
+    <!-- Trafikkällor (VÄNSTER, rad 2) -->
+    <article class="ms-card">
+      <header>
+        <div class="title"><i class="fa-solid fa-share-nodes"></i><span>Trafikkällor</span></div>
+        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
+      </header>
+      <p class="eyebrow">Vilka källor driver mest trafik?</p>
+      <table class="pv-table">
+        <thead><tr><th>Källa</th><th>Visningar</th><th>Andel</th></tr></thead>
+        <tbody id="tblSources"><tr><td colspan="3" class="subtle">Summerar ≈100%.</td></tr></tbody>
+      </table>
+    </article>
+
+    <!-- Exakta siffror (HÖGER, rad 2) -->
+    <article class="ms-card">
+      <header>
+        <div class="title"><i class="fa-solid fa-hashtag"></i><span>Exakta siffror</span></div>
+
+        <!-- Dropdown för datumintervall -->
+        <div class="menu" style="position:relative">
+          <button class="icon-btn" id="exactMenuBtn" aria-label="Datumintervall"><i class="fa-solid fa-ellipsis"></i></button>
+          <div class="menu-dropdown" id="exactMenu" style="display:none; position:absolute; right:0; top:100%; background:#fff; border:1px solid #e5e7eb; border-radius:10px; box-shadow:0 8px 20px rgba(0,0,0,.08); min-width:180px; padding:6px;">
+            <button class="menu-item" data-range="today" role="menuitem">Idag</button>
+            <button class="menu-item" data-range="7d" role="menuitem">Senaste 7 dagarna</button>
+            <button class="menu-item" data-range="month" role="menuitem">Denna månad</button>
+            <button class="menu-item" data-range="all" role="menuitem">Sedan start</button>
+          </div>
+        </div>
+      </header>
+
+      <p class="eyebrow">Exakt antal sidvisningar för vald period.</p>
+      <div class="kpi-row">
+        <div class="kpi-value">
+          <span id="exactTotalValue">0</span> <span class="muted">visningar</span>
+        </div>
+      </div>
+      <footer class="tiny muted"><span id="exactFooter">Period: —</span></footer>
+    </article>
+
+  </div> <!-- /ms-grid stats-grid -->
+</section>
+
+
+
 
 
   <!-- GEO -->
