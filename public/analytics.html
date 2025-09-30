@@ -6,29 +6,36 @@
   <title>Analyser – Kundportal</title>
 
   <script>
-    // === fetch-wrapper som alltid skickar cookies + CSRF och hanterar 401 ===
+    const API_BASE  = "";                  // sätt till t.ex. 'http://127.0.0.1:3000' om backend kör där
+    const LOGIN_PATH = "/public/login.html";
+    
     function getCsrfToken(){
-      // Hämtar CSRF-token från <meta name="csrf-token" content="..."> om den finns
-      var meta = document.querySelector('meta[name="csrf-token"]');
+      const meta = document.querySelector('meta[name="csrf-token"]');
       return meta ? meta.getAttribute('content') : null;
     }
-  
-    async function authedFetch(url, opts){
-      opts = opts || {};
-      opts.credentials = 'include'; // skicka session-cookies
-      opts.headers = Object.assign({}, opts.headers);
-      var csrf = getCsrfToken();
-      if (csrf) opts.headers['X-CSRF-Token'] = csrf;
-  
-      const res = await authedFetch(url, opts);
-      if (res.status === 401) {
+    
+    async function authedFetch(url, opts = {}) {
+      // prefixa med API_BASE om url är relativ
+      const absoluteUrl = /^https?:\/\//i.test(url) ? url : (API_BASE + url);
+    
+      const headers = new Headers(opts.headers || {});
+      const csrf = getCsrfToken();
+      if (csrf) headers.set('X-CSRF-Token', csrf);
+    
+      const res = await fetch(absoluteUrl, { ...opts, credentials: 'include', headers });
+    
+      // redirecta BARA på 401/403
+      if (res.status === 401 || res.status === 403) {
         const next = encodeURIComponent(location.pathname + location.search + location.hash);
-        location.href = 'login.html?next=' + next;
-        return Promise.reject(new Error('Unauthorized'));
+        location.href = `${LOGIN_PATH}?next=${next}`;
+        throw new Error('Unauthorized');
       }
-      return res;
+    
+      return res; // låt 404/500 bubbla upp utan redirect-loop
     }
-  </script>
+    </script>
+    
+  
   
 
   <!-- Styles -->
@@ -39,31 +46,150 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
-
+  <script>
+    /** Hjälpare */
+    const MONTH_LABELS = ['Jan','Feb','Mar','Apr','Maj','Jun'];
+    
+    function formatNumber(n){ return (n ?? 0).toLocaleString('sv-SE'); }
+    function formatCurrency(n, unit){ return `${formatNumber(n)} ${unit||''}`.trim(); }
+    
+    function setDeltaBadge(el, deltaPct){
+      const n = Number.isFinite(deltaPct) ? deltaPct : 0;
+      el.textContent = `${n>0?'+':''}${n.toFixed(1)}%`;
+      el.classList.remove('up','down','neutral');
+      el.classList.add(n>0 ? 'up' : n<0 ? 'down' : 'neutral');
+    }
+    
+    /** Ritar minigraferna (6 staplar) */
+    function renderMiniBars(root, values){
+      const vals = Array.isArray(values) ? values.slice(0,6) : [];
+      while (root.firstChild) root.removeChild(root.firstChild);
+    
+      const padded = [...vals];
+      while (padded.length < 6) padded.push(0); // fyll till 6 månader
+    
+      const max = Math.max(1, ...padded);
+      padded.forEach((v,i)=>{
+        const bar = document.createElement('div');
+        bar.className = 'bar' + (v===0 ? ' zero' : '');
+        const fill = document.createElement('div');
+        fill.className = 'fill';
+        const h = v===0 ? 6 : Math.max(8, Math.round((v/max)*100)); // alltid synlig
+        fill.style.height = h + '%';
+        bar.appendChild(fill);
+        root.appendChild(bar);
+      });
+    
+      // liten “Jan–Jun” etikett under staplarna
+      const footer = root.nextElementSibling?.matches('.tiny') ? root.nextElementSibling : null;
+      if (footer) footer.textContent = MONTH_LABELS.join('   ');
+    }
+    
+    /** Render-funktion per KPI-kort */
+    function renderKPI({ idPrefix, total, unit, deltaPct, monthly, footerText }){
+      // värde + enhet
+      const vEl = document.getElementById(`${idPrefix}_value`);
+      const uEl = document.getElementById(`${idPrefix}_unit`);
+      if (vEl) vEl.textContent = unit ? formatCurrency(total, unit) : formatNumber(total);
+      if (uEl) uEl.textContent = unit || '';
+    
+      // badge
+      const dEl = document.getElementById(`${idPrefix}_delta`);
+      if (dEl) setDeltaBadge(dEl, deltaPct);
+    
+      // minigraf
+      const sEl = document.getElementById(`${idPrefix}_spark`);
+      if (sEl) renderMiniBars(sEl, monthly);
+    
+      // footer
+      const fEl = document.getElementById(`${idPrefix}_footer`);
+      if (fEl) fEl.textContent = footerText || '';
+    }
+    
+    /* --------- EXEMPEL-ANROP (byt till dina API-värden) --------- */
+    renderKPI({
+      idPrefix:'kpi_spend',
+      total: 164234,
+      unit: 'SEK',
+      deltaPct: 12.2,
+      monthly: [21000,18000,24000,26000,30000,35234],
+      footerText: ''
+    });
+    
+    renderKPI({
+      idPrefix:'kpi_impressions',
+      total: 6010555,
+      deltaPct: 21.4,
+      monthly: [0,0,1200000,980000,1100000,1720555],
+    });
+    
+    renderKPI({
+      idPrefix:'kpi_clicks',
+      total: 21917,
+      deltaPct: -16.7,
+      monthly: [5400,5100,4800,3900,3700,3017],
+    });
+    
+    renderKPI({
+      idPrefix:'kpi_ctr',
+      total: 4.23,
+      deltaPct: 18.9,
+      monthly: [3.8,3.7,3.9,4.0,4.2,4.5],
+      footerText: ''
+    });
+    
+    renderKPI({
+      idPrefix:'kpi_conv',
+      total: 2060,
+      deltaPct: 8.3,
+      monthly: [280,300,320,310,380,470],
+    });
+    
+    renderKPI({
+      idPrefix:'kpi_conv_value',
+      total: 428644,
+      unit:'SEK',
+      deltaPct: 2.1,
+      monthly: [60000,64000,68000,67000,83000,88000],
+    });
+    </script>
+    
 
   <!-- 3D-glob -->
   <script src="https://unpkg.com/globe.gl@2.32.6/dist/globe.gl.min.js"></script>
   <script src="https://unpkg.com/topojson-client@3"></script>'
   <script>
-  (async function ensureSignedIn(){
-    try {
-      const r = await authedFetch('/api/me', { credentials: 'include' }); // BYT om ert endpoint heter annat
-      if (!r.ok) throw new Error('not ok ' + r.status);
-      const me = await r.json();
+  (async () => {
+  try {
+    const r = await authedFetch('/api/profile/me', { method: 'GET' });
+    // 401/403 tas redan av authedFetch och redirectar till LOGIN_PATH
 
-      // Visa e-post i profilen om den finns
-      if (me && me.email && document.getElementById('userEmail')) {
-        document.getElementById('userEmail').textContent = me.email;
-      }
-
-      // Exponera globalt om du vill använda i fler script
-      window.currentUser = me;
-    } catch (e) {
-      // Skicka till login och behåll "next" så man kommer tillbaka hit efteråt
-      const next = encodeURIComponent(location.pathname + location.search + location.hash);
-      location.href = 'login.html?next=' + next;
+    if (!r.ok) {
+      console.warn('Profilkoll misslyckades (status):', r.status);
+      return; // visa sidan ändå så du kan felsöka API:t
     }
-  })();
+
+    const d = await r.json();
+    if (!d || d.success === false) {
+      console.warn('API svarade success:false – ingen auto-redirect.');
+      return;
+    }
+
+    const email = d.email || '';
+    const name  = d.name  || '';
+    const userEmailEl = document.getElementById('userEmail');
+    if (userEmailEl) userEmailEl.textContent = email || name || 'Inloggad';
+
+    const initialsFromName = (name || '')
+      .split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();
+    const initials = initialsFromName || (email ? (email[0] + (email.split('@')[1]?.[0] || '')).toUpperCase() : '--');
+    const badge = document.getElementById('profileToggle');
+    if (badge) badge.textContent = initials;
+  } catch (e) {
+    console.error('Auth IIFE error:', e);
+    // ingen redirect här; authedFetch sköter 401/403
+  }
+})();
 </script>
   <script>
     // Undvik dubletter: om globalerna redan finns, skriv inte över dem.
@@ -144,84 +270,135 @@
 </div>
 
 <!-- INNEHÅLL -->
-<main class="main">
-  <div class="header-row"><h1>Analyser & Statistik</h1></div>
+<!-- HERO -->
+<section class="dash-hero">
+  <div class="dash-hello">
+    <h1>Översikt <span class="wave" aria-hidden="true">👋</span></h1>
+    <p>Sammanfattning av marknadsföringen</p>
+  </div>
 
-  <!-- ORDER-KPIs -->
-  <section class="kpi-grid">
-    <div class="kpi-card">
-      <div class="icon"><i class="fa-solid fa-basket-shopping"></i></div>
-      <p class="kpi-title">Totalt antal ordrar</p>
-      <p class="big-number" id="kpiTotalOrders">0</p>
-      <p class="subtle" id="kpiTotalSub">Senaste 24 timmar</p>
-    </div>
-    <div class="kpi-card">
-      <div class="icon"><i class="fa-solid fa-crown"></i></div>
-      <p class="kpi-title">Mest köpt produkt</p>
-      <p class="big-number" id="kpiTopProduct">–</p>
-      <p class="subtle" id="kpiTopProductQty"></p>
-    </div>
-    <div class="kpi-card">
-      <div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
-      <p class="kpi-title">Senaste ordern</p>
-      <p class="big-number" id="kpiLatestOrder">–</p>
-      <p class="subtle" id="kpiLatestTime"></p>
-    </div>
-  </section>
+  <div class="dash-actions">
+    <button class="chip" id="periodPicker">
+      <i class="fa-regular fa-calendar"></i>
+      <span id="uiPeriodLabel">Januari</span>
+      <i class="fa-solid fa-caret-down"></i>
+    </button>
+    <button class="icon-btn" id="uiShare" aria-label="Dela"><i class="fa-solid fa-share-nodes"></i></button>
+    <button class="icon-btn" id="uiInvite" aria-label="Bjud in"><i class="fa-regular fa-paper-plane"></i></button>
+    <button class="icon-btn" id="uiInfo" aria-label="Info"><i class="fa-regular fa-circle-question"></i></button>
+  </div>
+</section>
 
-  <!-- ORDER-DIAGRAM -->
-  <section class="chart-row">
-    <div class="chart-card">
-      <h3>Ordrar per timme (senaste 24h)</h3>
-      <canvas id="ordersByHourChart" height="160"></canvas>
+<!-- MARKNADSFÖRINGSÖVERSIKT -->
+<section class="ms-wrap" id="summaryRoot">
+  <div class="ms-head">
+    <div class="ms-head-left">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>Marknadsöversikt</span>
     </div>
-    <div class="chart-card">
-      <h3>Mest sålda produkter</h3>
-      <canvas id="bestsellersChart" height="160"></canvas>
-    </div>
-  </section>
+    <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
+  </div>
 
-  <!-- SIDVISNINGAR -->
-  <section class="chart-card" id="pvSection">
-    <div class="pv-head">
-      <h3>Sidvisningar</h3>
-      <select id="pvRange" class="clean-select">
-        <option value="7" selected>Senaste 7 dagar</option>
-        <option value="30">Senaste 30 dagar</option>
-        <option value="180">Senaste 6 månader</option>
-      </select>
-    </div>
-
-    <div class="pv-kpis">
-      <div class="pv-kpi">
-        <div class="pv-kpi-title">Totalt (period)</div>
-        <div class="pv-kpi-value" id="pvTotal">0</div>
-        <div class="pv-kpi-sub" id="pvRangeLabel">7 dagar</div>
+  <div class="ms-grid">
+    <!-- Kostnader -->
+    <article class="ms-card" data-kpi="spend">
+      <header>
+        <div class="title"><i class="fa-regular fa-credit-card"></i><span>Kostnader</span></div>
+        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
+      </header>
+      <p class="eyebrow">Hur mycket investerade du?</p>
+      <div class="kpi-row">
+        <div class="kpi-value">
+          <span id="kpi_spend_value"></span> <span class="muted" id="kpi_spend_unit"></span>
+        </div>
+        <div class="kpi-badge" id="kpi_spend_delta"></div>
       </div>
-    </div>
+      <div class="mini-bars" id="kpi_spend_spark"></div>
+      <footer class="tiny muted"><span id="kpi_spend_footer"></span></footer>
+    </article>
 
-    <div class="pv-block">
-      <div class="pv-block-title">Sidvisningar per sida</div>
-      <div class="pv-table-wrap">
-        <table class="pv-table">
-          <thead>
-            <tr><th style="width:50px;">#</th><th>Sida (URL)</th><th style="text-align:right;">Visningar</th></tr>
-          </thead>
-          <tbody id="pvPagesBody">
-            <tr><td colspan="3" class="pv-empty">Inga data ännu</td></tr>
-          </tbody>
-        </table>
+    <!-- Visningar -->
+    <article class="ms-card" data-kpi="impressions">
+      <header>
+        <div class="title"><i class="fa-regular fa-eye"></i><span>Visningar</span></div>
+        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
+      </header>
+      <p class="eyebrow">Hur många gånger visades dina annonser?</p>
+      <div class="kpi-row">
+        <div class="kpi-value"><span id="kpi_impressions_value"></span></div>
+        <div class="kpi-badge" id="kpi_impressions_delta"></div>
       </div>
-    </div>
+      <div class="mini-bars" id="kpi_impressions_spark"></div>
+      <footer class="tiny muted"><span id="kpi_impressions_footer"></span></footer>
+    </article>
 
-    <div class="pv-block">
-      <div class="pv-block-title">Utveckling över tid</div>
-      <canvas id="pvLineChart" height="160"></canvas>
-    </div>
-  </section>
+    <!-- Klick -->
+    <article class="ms-card" data-kpi="clicks">
+      <header>
+        <div class="title"><i class="fa-regular fa-hand-pointer"></i><span>Klick</span></div>
+        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
+      </header>
+      <p class="eyebrow">Hur många klick fick dina annonser?</p>
+      <div class="kpi-row">
+        <div class="kpi-value"><span id="kpi_clicks_value"></span></div>
+        <div class="kpi-badge" id="kpi_clicks_delta"></div>
+      </div>
+      <div class="mini-bars" id="kpi_clicks_spark"></div>
+      <footer class="tiny muted"><span id="kpi_clicks_footer"></span></footer>
+    </article>
+
+    <!-- Klickfrekvens -->
+    <article class="ms-card" data-kpi="ctr">
+      <header>
+        <div class="title"><i class="fa-solid fa-chart-line"></i><span>Klickfrekvens</span></div>
+        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
+      </header>
+      <p class="eyebrow">Hur ofta klickade användare på dina annonser?</p>
+      <div class="kpi-row">
+        <div class="kpi-value"><span id="kpi_ctr_value"></span></div>
+        <div class="kpi-badge" id="kpi_ctr_delta"></div>
+      </div>
+      <div class="mini-bars" id="kpi_ctr_spark"></div>
+      <footer class="tiny muted"><span id="kpi_ctr_footer"></span></footer>
+    </article>
+
+    <!-- Konverteringar -->
+    <article class="ms-card" data-kpi="conversions">
+      <header>
+        <div class="title"><i class="fa-solid fa-trophy"></i><span>Konverteringar</span></div>
+        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
+      </header>
+      <p class="eyebrow">Hur många användare slutförde ett mål?</p>
+      <div class="kpi-row">
+        <div class="kpi-value"><span id="kpi_conv_value"></span></div>
+        <div class="kpi-badge" id="kpi_conv_delta"></div>
+      </div>
+      <div class="mini-bars" id="kpi_conv_spark"></div>
+      <footer class="tiny muted"><span id="kpi_conv_footer"></span></footer>
+    </article>
+
+    <!-- Konverteringsvärde -->
+    <article class="ms-card" data-kpi="conv_value">
+      <header>
+        <div class="title"><i class="fa-solid fa-coins"></i><span>Konverteringsvärde</span></div>
+        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
+      </header>
+      <p class="eyebrow">Hur mycket försäljning genererade marknadsföringen?</p>
+      <div class="kpi-row">
+        <div class="kpi-value">
+          <span id="kpi_conv_value_value"></span> <span class="muted" id="kpi_conv_value_unit"></span>
+        </div>
+        <div class="kpi-badge" id="kpi_conv_value_delta"></div>
+      </div>
+      <div class="mini-bars" id="kpi_conv_value_spark"></div>
+      <footer class="tiny muted"><span id="kpi_conv_value_footer"></span></footer>
+    </article>
+  </div>
+</section>
+
 
   <!-- GEO -->
-  <section class="chart-card">
+  <section class="chart-card geo-full">
     <h3>Geo-översikt</h3>
     <p class="muted">
       Andel per land (visningar). Totalt: <span id="geoTotal">0</span> visningar –
@@ -341,7 +518,7 @@
 
 <!-- ====== SCRIPT ====== -->
 <script>
-  const API_BASE = "";
+  // const API_BASE = ""; // Commented out to avoid redeclaration
   const savedTheme = localStorage.getItem("theme") || "light";
   document.body.classList.add(`${savedTheme}-theme`);
 

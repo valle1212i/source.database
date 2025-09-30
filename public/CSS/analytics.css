@@ -425,4 +425,160 @@ body.dark-theme .nav-menu li.active a {
     position:absolute; pointer-events:none; padding:6px 8px; background:#111827;
     color:#fff; font-size:12px; border-radius:8px; display:none; z-index:20;
   }
+  :root{
+    --card-bg:#fff; --card-border:#e9e9ef; --ink:#0f1222; --muted:#6b7280;
+    --shadow:0 10px 22px rgba(16,24,40,.06); --radius:16px;
+  }
+  
+  /* hero */
+  .dash-hero{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:12px 0 18px}
+  .dash-hello h1{font-size:24px;margin:0;color:var(--ink)}
+  .dash-hello p{margin:6px 0 0;color:var(--muted)}
+  .dash-actions{display:flex;align-items:center;gap:10px}
+  .chip,.icon-btn{border:1px solid var(--card-border);background:#fff;cursor:pointer}
+  .chip{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px}
+  .icon-btn{width:36px;height:36px;border-radius:10px;display:grid;place-items:center}
+  .icon-btn:hover,.chip:hover{box-shadow:var(--shadow)}
+  
+  /* summary */
+  .ms-wrap{background:#f7f7fb;border-radius:22px;padding:16px;margin-bottom:22px}
+  .ms-head{display:flex;justify-content:space-between;align-items:center}
+  .ms-head-left{display:flex;align-items:center;gap:10px;font-weight:600}
+  .ms-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:14px}
+  @media (max-width:1100px){.ms-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:680px){.ms-grid{grid-template-columns:1fr}}
+  
+  .ms-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+  .ms-card header{display:flex;justify-content:space-between;align-items:center}
+  .ms-card .title{display:flex;align-items:center;gap:8px;font-weight:700}
+  .ms-card .eyebrow{margin:8px 0 10px;color:var(--muted);font-size:12px}
+  .kpi-row{display:flex;align-items:center;justify-content:space-between}
+  .kpi-value{font-size:28px;font-weight:800;letter-spacing:.2px}
+  .kpi-value .muted{font-size:16px;font-weight:600;color:var(--muted);margin-left:6px}
+  .kpi-badge{font-size:12px;padding:6px 8px;border-radius:10px;font-weight:700;border:1px dashed var(--card-border);background:#fff;color:var(--muted)} /* tom badge-look */
+  
+  /* mini spark bars container – fylls av JS senare */
+  .mini-bars{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:14px}
+  .mini-bars::before{content:"";grid-column:1/-1;height:0} /* behåll höjd utan data */
+  .mini-bars .bar{height:44px;background:#eef2ff;border-radius:10px;border:1px solid #e6e9ff}
+  .tiny{font-size:12px}.muted{color:var(--muted)}
+  /* --- KPI-grid --- */
+.ms-grid{
+  display:grid;
+  gap:24px;
+  grid-template-columns:repeat(3,minmax(260px,1fr));
+}
+@media (max-width:1100px){ .ms-grid{ grid-template-columns:repeat(2,minmax(260px,1fr)); } }
+@media (max-width:720px){ .ms-grid{ grid-template-columns:1fr; } }
+
+/* --- Badge uppe till höger --- */
+.kpi-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.kpi-badge{
+  font-weight:600; font-size:.875rem;
+  padding:.25rem .5rem; border-radius:10px;
+  background:#F3F4F6; color:#6B7280;   /* neutral/0% */
+}
+.kpi-badge.up{ background:#E7F7EF; color:#0F9D58; }    /* grön */
+.kpi-badge.down{ background:#FDE8E8; color:#D93025; }  /* röd */
+
+/* --- Mini-bars (små månadsstaplar) --- */
+.mini-bars{
+  display:flex; align-items:flex-end; gap:8px;
+  height:56px; margin-top:8px;
+}
+.mini-bars .bar{
+  flex:1; background:#E5E7EB; border-radius:8px; position:relative;
+  overflow:hidden; height:100%;
+}
+.mini-bars .bar .fill{
+  position:absolute; bottom:0; left:0; right:0;
+  border-radius:8px;
+  background:#A5B4FC;                 /* samma blå som i exemplet */
+  min-height:6px;                      /* visar “något” även för 0 */
+}
+.mini-bars .bar.zero .fill{ background:#E5E7EB; min-height:6px; } /* 0 = ljusgrå topp */
+.mini-bars + .tiny{ margin-top:8px; }
+
+/* Gör geo-kortet fullbrett när det ligger under gridet */
+.geo-wrap, .geo-card{ margin-top:28px; }
+.geo-card{ border-radius:16px; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.06); padding:16px; }
+/* --- Tvinga GEO under KPI-korten och i full bredd --- */
+.chart-card{
+  display:block;
+  width:100%;
+  margin-top:24px;
+
+  /* Om föräldern är CSS Grid: spänn hela raden */
+  grid-column: 1 / -1;
+
+  /* Om föräldern är Flex: ta hela raden */
+  flex-basis: 100%;
+}
+
+/* Säkerställ att KPI-blocket också beter sig som en hel rad */
+.ms-wrap{
+  display:block;
+  width:100%;
+}
+
+/* Om du råkar ha floats någonstans: bryt under dem */
+.chart-card{ clear: both; }
+/* standard: 2 kort per rad */
+.chart-row > .chart-card { flex: 1 1 calc(50% - 15px); }
+
+/* GEO ska bryta raden och vara fullbredd */
+.chart-row > .chart-card.geo-full{
+  flex: 0 0 100%;      /* viktig: överskriv grow/shrink OCH basis */
+  width: 100%;
+  grid-column: 1 / -1; /* om behålls i grid */
+  clear: both;
+}
+/* gör GEO 100% i alla lägen */
+.chart-card.geo-full{
+  display:block;
+  width:100%;
+  clear:both;
+  flex:0 0 100% !important;   /* om förälder är flex */
+  grid-column:1 / -1 !important; /* om förälder är grid */
+}
+.chart-card.geo-full {
+  width: 100%;
+  flex: 0 0 100% !important;   /* om föräldern använder flexbox */
+  grid-column: 1 / -1 !important; /* om föräldern använder grid */
+  clear: both;  /* om föräldern använder float-layout */
+  margin-top: 24px;
+}
+.chart-card.geo-full{
+  width:100%;
+  flex:0 0 100% !important;      /* om föräldern är flex (.chart-row) */
+  grid-column:1 / -1 !important;  /* om föräldern är grid */
+  clear:both;
+  margin-top:24px;
+}
+/* Stäng av flex-layouten på body */
+body { display: block !important; }
+
+/* Hindra att sidan kan skrolla horisontellt om något sticker ut */
+html, body { overflow-x: hidden; }
+/* Se till att huvudinnehållet inte ligger under menyn */
+.main {
+  margin-left: 240px !important;
+  width: calc(100% - 240px) !important;
+}
+/* ===== FIX: Gör plats för den fasta sidomenyn på desktop ===== */
+@media (min-width: 769px) {
+  /* Skjut hela sidan till höger så den inte hamnar under menyn */
+  body { padding-left: 240px !important; }
+
+  /* Neutralisera ev. gamla regler på .main som bråkar */
+  .main { margin-left: 0 !important; width: auto !important; }
+}
+
+/* Ingen vänsterpadding på mobil */
+@media (max-width: 768px) {
+  body { padding-left: 0 !important; }
+}
+
+/* Stoppa horisontell scroll/”dra åt höger”-problemet */
+html, body { max-width: 100%; overflow-x: hidden; }
 
