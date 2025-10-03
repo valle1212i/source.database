@@ -5,33 +5,51 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Analyser – Kundportal</title>
 <script>
-    const LOGIN_PATH = "/public/login.html";
-    
-    function getCsrfToken(){
-      const meta = document.querySelector('meta[name="csrf-token"]');
-      return meta ? meta.getAttribute('content') : null;
+  if (!('API_BASE' in window)) window.API_BASE = '';
+  const LOGIN_PATH = "/public/login.html";
+
+  function getCsrfToken(){
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : null;
+  }
+
+  function toAbsolute(url){
+    return /^https?:\/\//i.test(url) ? url : (window.API_BASE + url);
+  }
+
+  function isSameAuthOrigin(url){
+    try{
+      const u = new URL(url, location.origin);
+      const a = new URL(window.API_BASE || '', location.origin);
+      return u.origin === a.origin;
+    }catch{ return true; }
+  }
+
+  // Justera authedFetch så att credentials bara skickas till ditt API
+  async function authedFetch(url, opts = {}) {
+    const absoluteUrl = /^https?:\/\//i.test(url) ? url : (window.API_BASE + url);
+    const headers = new Headers(opts.headers || {});
+    const csrf = (document.querySelector('meta[name="csrf-token"]')||{}).content;
+    if (csrf) headers.set('X-CSRF-Token', csrf);
+    const credentials = opts.credentials ?? (isSameAuthOrigin(absoluteUrl) ? 'include' : 'omit');
+    return fetch(absoluteUrl, { ...opts, headers, credentials });
+  }
+
+  // NY: säker JSON-hämtare
+  async function fetchJSON(url, opts = {}) {
+    const res = await authedFetch(url, opts);
+    if (!res.ok) {
+      const body = await res.text().catch(()=> '');
+      throw new Error(`HTTP ${res.status} ${res.statusText} at ${url}\nBody: ${body.slice(0,120)}`);
     }
-    
-    async function authedFetch(url, opts = {}) {
-      // prefixa med API_BASE om url är relativ
-      const absoluteUrl = /^https?:\/\//i.test(url) ? url : (API_BASE + url);
-    
-      const headers = new Headers(opts.headers || {});
-      const csrf = getCsrfToken();
-      if (csrf) headers.set('X-CSRF-Token', csrf);
-    
-      const res = await fetch(absoluteUrl, { ...opts, credentials: 'include', headers });
-    
-      // redirecta BARA på 401/403
-      if (res.status === 401 || res.status === 403) {
-        const next = encodeURIComponent(location.pathname + location.search + location.hash);
-        location.href = `${LOGIN_PATH}?next=${next}`;
-        throw new Error('Unauthorized');
-      }
-    
-      return res; // låt 404/500 bubbla upp utan redirect-loop
+    const ct = res.headers.get('content-type') || '';
+    if (!/application\/json/i.test(ct)) {
+      const body = await res.text().catch(()=> '');
+      throw new Error(`Expected JSON but got "${ct}" from ${url}\nBody: ${body.slice(0,120)}`);
     }
-    </script>
+    return res.json();
+  }
+</script>
 <!-- Styles -->
 <link href="CSS/analytics.css" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
@@ -665,6 +683,7 @@
   let ordersByHourChart, bestsellersChart;
   function buildOrdersByHourChart(perHour){
     const ctx = document.getElementById('ordersByHourChart');
+    if (!ctx) return;
     const labels = (perHour||[]).map(b => b.label);
     const data = (perHour||[]).map(b => b.count);
     if (ordersByHourChart) ordersByHourChart.destroy();
@@ -687,105 +706,72 @@
     });
   }
   function renderOrderKPIs(summary){
-    const tot = summary.totalOrders || 0;
-    document.getElementById('kpiTotalOrders').textContent = tot.toString();
-    const top = (summary.bestsellers || [])[0];
-    if (top){
-      document.getElementById('kpiTopProduct').textContent = top.name || top.sku;
-      document.getElementById('kpiTopProductQty').textContent = `${top.qty} st totalt`;
-    } else {
-      document.getElementById('kpiTopProduct').textContent = '–';
-      document.getElementById('kpiTopProductQty').textContent = '';
-    }
-    const last = summary.latestOrder;
-    if (last){
-      document.getElementById('kpiLatestOrder').textContent = `${last.name} ×${last.qty}`;
-      document.getElementById('kpiLatestTime').textContent = fmtTime(last.ts);
-    } else {
-      document.getElementById('kpiLatestOrder').textContent = '–';
-      document.getElementById('kpiLatestTime').textContent = '';
-    }
-  }
-  async function loadSummary(){
-    const r = await authedFetch(API_BASE + "/api/orders/summary", { credentials:'include' });
-    const data = await r.json();
-    if (!data.success) throw new Error("Kunde inte hämta orderdata");
-    renderOrderKPIs(data);
-    buildOrdersByHourChart(data.perHour || []);
-    buildBestsellersChart(data.bestsellers || []);
+  const tot = summary.totalOrders || 0;
+  setText('kpiTotalOrders', String(tot));
+
+  const top = (summary.bestsellers || [])[0];
+  if (top){
+    setText('kpiTopProduct', top.name || top.sku);
+    setText('kpiTopProductQty', `${top.qty} st totalt`);
+  } else {
+    setText('kpiTopProduct', '–');
+    setText('kpiTopProductQty', '');
   }
 
-  /* ==== Pageviews ==== */
-  let pvChart;
-  function buildPvLineChart(labels, values){
-    const ctx = document.getElementById('pvLineChart');
-    if (pvChart) pvChart.destroy();
-    pvChart = new Chart(ctx, {
-      type: 'line',
-      data: { labels, datasets: [{ label:'Sidvisningar', data: values, tension:.25, fill:false }] },
-      options: { responsive:true, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
-    });
+  const last = summary.latestOrder;
+  if (last){
+    setText('kpiLatestOrder', `${last.name} ×${last.qty}`);
+    setText('kpiLatestTime', fmtTime(last.ts));
+  } else {
+    setText('kpiLatestOrder', '–');
+    setText('kpiLatestTime', '');
   }
-  function renderPvTable(topUrls){
-    const tbody = document.getElementById('pvPagesBody');
-    tbody.innerHTML = '';
-    if (!topUrls || !topUrls.length){
-      const tr = document.createElement('tr');
-      tr.innerHTML = '<td colspan="3" class="pv-empty">Inga data för vald period.</td>';
-      tbody.appendChild(tr);
-      return;
-    }
-    topUrls.forEach((row, i) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${i+1}</td>
-        <td style="word-break:break-all">${row._id || '(okänd)'}</td>
-        <td style="text-align:right;font-weight:600">${numberFormat(row.count||0)}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-  function toSortedSeries(byDay){
-    const s = (byDay||[]).slice().sort((a,b) => (a._id > b._id ? 1 : -1));
-    return { labels: s.map(r=>r._id), values: s.map(r=>r.count||0) };
-  }
-  async function loadPageviews(days){
-    const r = await authedFetch(`/api/pageviews/summary/me?days=${days}`, { credentials:'include' });
-    const d = await r.json();
-    if (!d.success) throw new Error('Kunde inte hämta sidvisningar');
-    const total = (d.byDay||[]).reduce((s,r)=>s+(r.count||0),0);
-    document.getElementById('pvTotal').textContent = numberFormat(total);
-    document.getElementById('pvRangeLabel').textContent = (days==7?'7 dagar':days==30?'30 dagar':'6 månader');
-    renderPvTable(d.topUrls||[]);
-    const {labels, values} = toSortedSeries(d.byDay||[]);
-    buildPvLineChart(labels, values);
-  }
-    // Säker fetch-helper (om den inte redan finns)
-    window.authedFetch = window.authedFetch || ((url, opts={}) =>
-    fetch(url, { credentials: 'include', ...opts })
-  );
+}
+  async function loadSummary(){
+  const data = await fetchJSON("/api/orders/summary");
+  if (!data.success) throw new Error("Kunde inte hämta orderdata");
+  renderOrderKPIs(data);
+  buildOrdersByHourChart(data.perHour || []);
+  buildBestsellersChart(data.bestsellers || []);
+}
+
+// Pageviews
+async function loadPageviews(days){
+  const r = await authedFetch(`/api/pageviews/summary/me?days=${days}`, { credentials:'include' });
+  const d = await r.json();
+  if (!d.success) throw new Error('Kunde inte hämta sidvisningar');
+
+  const total = (d.byDay||[]).reduce((s,r)=>s+(r.count||0),0);
+  setText('pvTotal', numberFormat(total));
+  setText('pvRangeLabel', (days==7?'7 dagar':days==30?'30 dagar':'6 månader'));
+
+  renderPvTable(d.topUrls||[]);
+  const {labels, values} = toSortedSeries(d.byDay||[]);
+  buildPvLineChart(labels, values);
+}
+
+
+
 
 
   /* ==== GEO (Europa) – hämta data och färgsätt SVG ==== */
   async function loadGeoEurope(){
-    try {
-      // Anta ett API som returnerar { success: true, byCountry: [{ iso2:'SE', count:123 }, ...] }
-      const r = await authedFetch('/api/geo/summary/eu');
-      const d = await r.json();
-      if (!d.success) throw new Error('Kunde inte hämta geo-data');
+  try {
+    const d = await fetchJSON('/api/geo/summary/eu');
+    if (!d.success) throw new Error('Kunde inte hämta geo-data');
 
-      const data = Object.fromEntries(
-        (d.byCountry||[]).map(row => [
-          (row.iso2 || row.code || row._id || '').toUpperCase(),
-          Number(row.count) || 0
-        ])
-      );
-      // Måla kartan via helpern från föregående block
-      setGeoViews(data);
-    } catch (e) {
-      console.warn('Geo (Europa) fel:', e);
-    }
+    const data = Object.fromEntries(
+      (d.byCountry||[]).map(row => [
+        (row.iso2 || row.code || row._id || '').toUpperCase(),
+        Number(row.count) || 0
+      ])
+    );
+    setGeoViews(data);
+  } catch (e) {
+    console.warn('Geo (Europa) fel:', e);
   }
+}
+ 
 
   /* ==== Init & UI-händelser ==== */
   document.addEventListener('DOMContentLoaded', () => {
@@ -802,7 +788,8 @@
     loadSummary().catch(console.error);   // ordrar & KPI
     loadPageviews(7).catch(console.error); // sidvisningar (7 dagar som default)
     loadGeoEurope().catch(console.error);  // geodata -> färga kartan
-  });
+  // Ensure the preceding function or block is correctly formatted
+  }
 </script>
 
 <script>
@@ -917,8 +904,11 @@ Object.assign(window.NAME_TO_ISO2, {
 
 let globeInstance;
 async function buildSpinningGlobe(countryCounts){
-  const worldTopo = await authedFetch('https://unpkg.com/world-atlas@2/countries-110m.json').then(r=>r.json());
-  const worldGeo  = topojson.feature(worldTopo, worldTopo.objects.countries);
+  const worldTopo = await fetch('https://unpkg.com/world-atlas@2/countries-110m.json', { credentials: 'omit' })
+  .then(r => {
+    if (!r.ok) throw new Error(`world-atlas HTTP ${r.status}`);
+    return r.json();
+  });
 
   // Skala och färg för globen baserat på countryCounts (inte geoViews)
   const maxVal  = Math.max(1, ...Object.values(countryCounts));
@@ -972,6 +962,7 @@ if (globeContainer) {
 
 function showGlobeTooltip(feat, counts, container){
   const tip = document.getElementById('globeTooltip');
+  if (!tip) return;
   if (!feat){ tip.style.display='none'; return; }
   const name = feat.properties.name || 'Okänt land';
   const iso2 = window.NAME_TO_ISO2[name] || '';
@@ -1037,8 +1028,9 @@ async function loadGeo(days = 30) {
     const d = await res.json();
     if (!d.success) throw new Error('Kunde inte hämta geo-data');
 
-    document.getElementById('geoTotal').textContent  = String(d.totals?.total || 0);
-    document.getElementById('geoUnique').textContent = String(d.totals?.uniqueVisitors || 0);
+    setText('geoTotal',  String(d.totals?.total || 0));
+setText('geoUnique', String(d.totals?.uniqueVisitors || 0));
+
 
     const counts = {};
     (d.countries || []).forEach(row => {
@@ -1135,12 +1127,7 @@ function connectSSE(){
 
 /* ==== Starta när DOM är redo ==== */
 document.addEventListener('DOMContentLoaded', () => {
-  loadSummary().catch(console.error);
-  connectSSE();
-  loadPageviews(7).catch(console.error);
-  loadGeo(30).catch(console.error);
-
-  /* ==== Profilmenyknappar ==== */
+  // === Profilmeny ===
   const toggle = document.getElementById('profileToggle');
   const menu   = document.getElementById('profileMenu');
 
@@ -1161,72 +1148,68 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const switchBtn = document.getElementById("switchAccount");
-  if (switchBtn){
-    switchBtn.addEventListener("click", (e) => {
+  const switchAccount = document.getElementById('switchAccount');
+  if (switchAccount) {
+    switchAccount.addEventListener('click', (e) => {
       e.preventDefault();
       if (confirm("Vill du logga ut och byta konto?")) window.location.href = "login.html";
     });
   }
 
-  const settingsBtn = document.getElementById("openSettings");
-  if (settingsBtn){
-    settingsBtn.addEventListener("click", (e) => {
+  const openSettings = document.getElementById('openSettings');
+  if (openSettings) {
+    openSettings.addEventListener('click', (e) => {
       e.preventDefault();
       window.location.href = "profile.html";
     });
   }
 
-  const logoutBtn = document.getElementById("logout");
-  if (logoutBtn){
-    logoutBtn.addEventListener("click", (e) => {
+  const logout = document.getElementById('logout');
+  if (logout) {
+    logout.addEventListener('click', (e) => {
       e.preventDefault();
-      if (confirm("Är du säker på att du vill logga ut?")) {
-        authedFetch('/logout', { method: 'GET', credentials: 'include' })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) { localStorage.clear(); window.location.href = "/login.html"; }
-            else { alert("Utloggning misslyckades."); }
-          })
-          .catch(err => { console.error("Fel vid utloggning:", err); alert("Kunde inte logga ut."); });
-      }
+      if (!confirm("Är du säker på att du vill logga ut?")) return;
+      authedFetch('/logout', { method: 'GET', credentials: 'include' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) { localStorage.clear(); window.location.href = "/login.html"; }
+          else { alert("Utloggning misslyckades."); }
+        })
+        .catch(err => { console.error("Fel vid utloggning:", err); alert("Kunde inte logga ut."); });
     });
   }
-});
-</script>
 
-<script>
-/* === “Exakt visningar”-meny === */
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('exactMenuBtn');
-  const menu = document.getElementById('exactMenu');
-  const totalEl = document.getElementById('exactTotalValue');
+  // === “Exakta visningar” ===
+  const btn      = document.getElementById('exactMenuBtn');
+  const menuEx   = document.getElementById('exactMenu');
+  const totalEl  = document.getElementById('exactTotalValue');
   const footerEl = document.getElementById('exactFooter');
 
-  if (!btn || !menu || !totalEl || !footerEl) return;
-
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
-  });
-  document.addEventListener('click', () => { menu.style.display = 'none'; });
-
-  menu.querySelectorAll('.menu-item').forEach(mi => {
-    mi.addEventListener('click', async () => {
-      const range = mi.dataset.range; // today, 7d, month, all
-      menu.style.display = 'none';
-      try {
-        const res = await authedFetch(`/api/analytics/exact-views?range=${encodeURIComponent(range)}`);
-        const data = await res.json(); // { total, periodLabel }
-        totalEl.textContent  = (data?.total ?? 0).toLocaleString('sv-SE');
-        footerEl.textContent = `Period: ${data?.periodLabel || '—'}`;
-      } catch (err) {
-        console.error(err);
-        totalEl.textContent  = '0';
-        footerEl.textContent = 'Period: —';
-      }
+  if (btn && menuEx && totalEl && footerEl){
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menuEx.style.display = (menuEx.style.display === 'block') ? 'none' : 'block';
     });
-  });
+
+    document.addEventListener('click', () => { menuEx.style.display = 'none'; });
+
+    menuEx.querySelectorAll('.menu-item').forEach(mi => {
+      mi.addEventListener('click', async () => {
+        const range = mi.dataset.range;
+        menuEx.style.display = 'none';
+        try {
+          const res  = await authedFetch(`/api/analytics/exact-views?range=${encodeURIComponent(range)}`);
+          const data = await res.json();
+          totalEl.textContent  = (data?.total ?? 0).toLocaleString('sv-SE');
+          footerEl.textContent = `Period: ${data?.periodLabel || '—'}`;
+        } catch (err) {
+          console.error(err);
+          totalEl.textContent  = '0';
+          footerEl.textContent = 'Period: —';
+        }
+      });
+    });
+  }
 });
 </script>
 
@@ -1286,6 +1269,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     // TODO: loadCountryBreakdown(iso)
   });
 });
+</script>
+
+<script>
+(function () {
+  const ids = [
+    'kpiTotalOrders','kpiTopProduct','kpiTopProductQty','kpiLatestOrder','kpiLatestTime',
+    'pvTotal','pvRangeLabel','pvPagesBody','ordersByHourChart','bestsellersChart','pvLineChart',
+    'europeMapSvg','svgTooltip','globeContainer','globeTooltip','mapEurope',
+    'userEmail','profileToggle','profileMenu','switchAccount','openSettings','logout',
+    'exactMenuBtn','exactMenu','exactTotalValue','exactFooter','europeTooltip','pvRange'
+  ]; //  <-- viktigt: sluta med ]
+
+  const missing = ids.filter(id => !document.getElementById(id));
+  if (missing.length) {
+    console.warn('Saknade element-ID:n:', missing);
+  } else {
+    console.log('Alla viktiga ID:n finns ✨');
+  }
+})(); // <-- viktigt: stäng IIFE
 </script>
 
 <script src="/js/logout.js"></script>
