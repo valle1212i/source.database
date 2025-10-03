@@ -153,7 +153,19 @@ body {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   text-decoration: none;
 }
-
+/* === Tillbaka-länk uppe till höger === */
+.back-link {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-weight: 600;
+  text-decoration: none;
+  color: #1f2937;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background-color: #f3f4f6;
+  transition: background 0.2s ease;
+}
 .advice-text .ai-button:hover {
   background: linear-gradient(to right, #1d4ed8, #4338ca);
   transform: translateY(-2px);

@@ -188,7 +188,19 @@ button:hover {
 button i {
   font-size: 18px;
 }
-
+/* === Tillbaka-länk uppe till höger === */
+.back-link {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-weight: 600;
+  text-decoration: none;
+  color: #1f2937;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background-color: #f3f4f6;
+  transition: background 0.2s ease;
+}
 /* === Resultat === */
 .result-area {
   margin-top: 30px;
