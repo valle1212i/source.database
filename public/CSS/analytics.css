@@ -539,3 +539,67 @@ html, body { max-width: 100%; overflow-x: hidden; }
 @media (max-width: 900px){
   .stats-grid{ grid-template-columns: 1fr; }
 }
+/* Statistiska siffror – 2x2 grid */
+.stats-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap: 16px;
+}
+@media (max-width: 900px){
+  .stats-grid{ grid-template-columns: 1fr; }
+}
+
+/* Centrera värdet i "Exakta siffror" */
+.stats-grid .ms-card .kpi-row{
+  justify-content: center;
+}
+.stats-grid .ms-card .kpi-value{
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+/* Gör SVG:en responsiv och förhindra overflow */
+.map-card svg#europeMapSvg{
+  width:100%;
+  height:auto;
+  display:block;
+  max-width:100%;
+}
+
+/* Standardfyllning + hover */
+#europeMapSvg path{
+  fill:#e5e7eb;              /* ljusgrå för 0-värden */
+  stroke:#111827;            /* mörk kontur */
+  stroke-width:.4;
+  transition: fill .15s, transform .05s;
+}
+#europeMapSvg path[data-has]{
+  cursor:pointer;
+}
+#europeMapSvg path:hover{
+  filter:brightness(1.05);
+}
+
+/* Tooltip för Europa-kartan */
+#europeTooltip{
+  position:absolute;
+  pointer-events:none;
+  padding:6px 8px;
+  background:#111827;
+  color:#fff;
+  font-size:12px;
+  border-radius:8px;
+  display:none;
+  transform:translate(-50%,-120%);
+  z-index:10;
+}
+.map-card svg#europeMapSvg{
+  width:100%;
+  height:auto;
+  display:block;
+  max-width:100%;
+}
+#europeMapSvg path{ transition:fill .15s; }
+#europeMapSvg .country { cursor:pointer; outline:none; transition:fill .15s, stroke .15s; }
+#europeMapSvg .country:hover,
+#europeMapSvg .country:focus { fill:#93c5fd; stroke:#1f2937; stroke-width:.4; }
