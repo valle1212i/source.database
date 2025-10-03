@@ -2,19 +2,41 @@
 <html lang="sv">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
   <title>Marknadsföring</title>
+
+  <!-- TIDIG: sätt rätt tema innan CSS laddas (motverkar FOUC) -->
+  <script>
+    (function(){
+      try {
+        var t = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch(e){}
+    })();
+  </script>
+
+  <!-- Globalt tema + layout -->
+  <link rel="stylesheet" href="CSS/theme.css" />
+  <!-- Sida-specifik CSS (INTE meny/profil-dubbletter) -->
   <link rel="stylesheet" href="CSS/marknadsforing.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+  <!-- Ikoner + typsnitt -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny" onclick="toggleSidebar()">☰</button>
-  <div class="sidebar">
+  <!-- Hamburger (handleds av theme.css + eget script) -->
+  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">☰</button>
+
+  <!-- SIDOMENY -->
+  <aside class="sidebar" aria-label="Sidomeny">
     <div class="logo">
       <a href="customerportal.html">
         <img src="images/logo.png" alt="Logotyp" class="logo-img" />
       </a>
     </div>
+
     <ul class="nav-menu">
       <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
       <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
@@ -24,132 +46,199 @@
       <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
       <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
       <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
-      <li class="active"><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+      <li class="active"><a href="marknadsforing.html" aria-current="page"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
       <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
       <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
     </ul>
-     <div class="help">
-      <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
+
+    <div class="help">
+      <a href="faq.html" class="help-link">
         <i class="fas fa-circle-question"></i> Hjälp / FAQ
       </a>
     </div>
-  </div>
+  </aside>
 
-  
+<!-- Profil uppe till höger -->
+<div class="profile-wrapper">
+  <button class="profile-icon" id="profileToggle" aria-haspopup="true" aria-expanded="false">--</button>
+
+  <div class="profile-dropdown" id="profileMenu" role="menu" aria-hidden="true">
+    <div class="profile-email" id="userEmail">Laddar...</div>
+    <hr />
+    <a href="installningar.html" id="openSettings">Profilinställningar</a>
+    <a href="#" id="switchAccount">Byt konto</a>
+    <a href="#" id="logout">Logga ut</a>
+  </div>
+</div>
+
+  <!-- INNEHÅLL -->
   <main class="main">
     <h1 class="page-title">Marknadsföring</h1>
     <p class="subtitle">Utforska verktyg för annonsering, design och rådgivning.</p>
 
+    <!-- Automatiska annonser -->
+    <section class="card automatiska-annonser">
+      <h2><i class="fas fa-robot"></i> Automatiska annonser</h2>
+      <p>Välj plattform för att skapa kampanjer:</p>
 
-   <section class="card automatiska-annonser">
-  <h2><i class="fas fa-robot"></i> Automatiska annonser</h2>
-  <p>Välj plattform för att skapa kampanjer:</p>
-  
-  <div class="button-group">
-    <a href="googleads.html" class="ad-button google" title="Skapa Google Ads-kampanj">
-      <img src="images/Google_transparent (2).png" alt="Google Ads" />
-    </a>
+      <div class="button-group">
+        <a href="googleads.html" class="ad-button google" title="Skapa Google Ads-kampanj">
+          <img src="images/Google_transparent (2).png" alt="Google Ads" />
+        </a>
 
-    <a href="metaads.html" class="ad-button meta" title="Skapa Meta Ads-kampanj">
-      <img src="images/Meta_transparent.png" alt="Meta Ads" />
-    </a>
+        <a href="metaads.html" class="ad-button meta" title="Skapa Meta Ads-kampanj">
+          <img src="images/Meta_transparent.png" alt="Meta Ads" />
+        </a>
 
-    <a href="tiktokads.html" class="ad-button tiktok" title="Skapa TikTok Ads-kampanj">
-      <img src="images/Tiktok_transparent.png" alt="TikTok Ads" />
-    </a>
+        <a href="tiktokads.html" class="ad-button tiktok" title="Skapa TikTok Ads-kampanj">
+          <img src="images/Tiktok_transparent.png" alt="TikTok Ads" />
+        </a>
 
-    <a href="linkedin.html" class="ad-button linkedin" title="Skapa LinkedIn Ads-kampanj">
-      <img src="images/Linked in.webp" alt="LinkedIn Ads" />
-    </a>
-  </div>
-</section>
-
-
-    <section class="card ai-background ai-card">
-      <div>
-       <h2><i class="fas fa-image"></i> Skapa bilder eller videor</h2>
-        <p>Ladda upp en bild eller skriv en beskrivning för att generera affischer, annonser eller videos med hjälp av AI.</p>
-        <button class="ai-button" onclick="window.location.href='aimarknadsstudio.html'" title="Starta AI-studion">
-          Starta AI-studiot
-        </button>
+        <a href="linkedin.html" class="ad-button linkedin" title="Skapa LinkedIn Ads-kampanj">
+          <img src="images/Linked in.webp" alt="LinkedIn Ads" />
+        </a>
       </div>
-      <img src="images/abstract-ai.svg" alt="AI grafik" />
     </section>
 
-   <section class="card support-highlight">
-  <h2><i class="fas fa-users"></i> Rådgivning & Support</h2>
-  <p>Vill du ha hjälp av en designexpert? Kontakta vår marknadsrådgivare.</p>
-  <button onclick="window.location.href='radgivning.html'" title="Boka rådgivning med expert">
-    Boka rådgivning
-  </button>
-</section>
+    <!-- AI-studio -->
+    <section class="card ai-background ai-card">
+      <div>
+        <h2><i class="fas fa-image"></i> Skapa bilder eller videor</h2>
+        <p>Ladda upp en bild eller skriv en beskrivning för att generera affischer, annonser eller videos med hjälp av AI.</p>
+        <button class="ai-button" onclick="window.location.href='aimarknadsstudio.html'" title="Starta AI-studion">
+          Starta AI-studion
+        </button>
+      </div>
+      <img src="images/abstract-ai.svg" alt="AI-grafik" />
+    </section>
 
+    <!-- Rådgivning -->
+    <section class="card support-highlight">
+      <h2><i class="fas fa-users"></i> Rådgivning & Support</h2>
+      <p>Vill du ha hjälp av en designexpert? Kontakta vår marknadsrådgivare.</p>
+      <button onclick="window.location.href='radgivning.html'" title="Boka rådgivning med expert">
+        Boka rådgivning
+      </button>
+    </section>
+  </main>
 
+  <!-- Gemensam hamburgarlogik (mobil) -->
   <script>
-    function openTool(button, platform) {
-  // Spara originalnoder istället för HTML-sträng
-  const originalNodes = Array.from(button.childNodes);
+    (function(){
+      const btn = document.getElementById('menuToggle');
+      const sidebar = document.querySelector('.sidebar');
+      if (!btn || !sidebar) return;
 
-  // Skapa spinner via DOM — ingen HTML tolkas
-  const spinner = document.createElement("span");
-  spinner.className = "spinner";
-  button.appendChild(spinner);
+      btn.addEventListener('click', () => {
+        const on = sidebar.classList.toggle('active');
+        document.body.classList.toggle('menu-open', on);
+      });
 
-  button.disabled = true;
-  button.style.opacity = 0.7;
-
-  setTimeout(() => {
-    alert("Öppnar " + String(platform) + " verktyg...");
-    // Återställ innehåll säkert
-    while (button.firstChild) button.removeChild(button.firstChild);
-    for (const n of originalNodes) button.appendChild(n);
-    button.disabled = false;
-    button.style.opacity = 1;
-  }, 1000);
-}
+      // Stäng vid klick utanför på mobil
+      window.addEventListener('click', (e) => {
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile && !sidebar.contains(e.target) && !btn.contains(e.target)) {
+          sidebar.classList.remove('active');
+          document.body.classList.remove('menu-open');
+        }
+      });
+    })();
   </script>
-  <script>
-    document.getElementById("marketingForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
-  
-      const status = document.getElementById("saveStatus");
-      status.textContent = "⏳ Sparar...";
-  
-      try {
-        const res = await fetch("/api/customers/me");
-        const customer = await res.json();
-        if (!customer._id) throw new Error("Kund saknas");
-  
-        const form = e.target;
-        const platforms = Array.from(form.platforms.selectedOptions).map(opt => opt.value);
-  
-        const payload = {
-          platforms,
-          goals: form.goals.value,
-          comment: form.comment.value
-        };
-  
-        const putRes = await fetch(`/api/customers/${customer._id}/marketing`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        });
-  
-        const result = await putRes.json();
-        status.textContent = result.success ? "✅ Sparat!" : "❌ Kunde inte spara.";
-      } catch (err) {
-        console.error("❌ Fel vid sparande:", err);
-        status.textContent = "❌ Tekniskt fel, försök igen.";
+<script>
+  // Öppna/stäng dropdown
+  (function profileMenuInit(){
+    const toggle = document.getElementById('profileToggle');
+    const menu   = document.getElementById('profileMenu');
+
+    if (!toggle || !menu) return;
+
+    toggle.addEventListener('click', () => {
+      const open = menu.style.display === 'flex';
+      menu.style.display = open ? 'none' : 'flex';
+      toggle.classList.toggle('open', !open);
+      toggle.setAttribute('aria-expanded', String(!open));
+      menu.setAttribute('aria-hidden', String(open));
+    });
+
+    // Stäng när man klickar utanför
+    window.addEventListener('click', (e) => {
+      if (!document.querySelector('.profile-wrapper').contains(e.target)) {
+        menu.style.display = 'none';
+        toggle.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+        menu.setAttribute('aria-hidden', 'true');
       }
     });
-  </script>
-  <script>
-function toggleSidebar() {
-  document.querySelector('.sidebar').classList.toggle('active');
-  document.body.classList.toggle('menu-open');
-}
+
+    // Snabblänkar
+    document.getElementById("switchAccount")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (confirm("Vill du logga ut och byta konto?")) {
+        window.location.href = "login.html";
+      }
+    });
+    document.getElementById("openSettings")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.location.href = "installningar.html";
+    });
+  })();
+
+  // Ladda inloggad användare (bild/initialer + email)
+  async function loadUserProfile() {
+    const toggleEl = document.getElementById("profileToggle");
+    const emailEl  = document.getElementById("userEmail");
+    if (!toggleEl || !emailEl) return;
+
+    try {
+      const res = await fetch("/api/profile/me", { credentials: "include" });
+      const data = await res.json();
+
+      // Rensa toggle-innehåll
+      while (toggleEl.firstChild) toggleEl.removeChild(toggleEl.firstChild);
+
+      if (data?.success) {
+        const name  = data.name || "";
+        const email = data.email || "";
+        const imgUrl = data.profileImage;
+
+        if (imgUrl) {
+          const img = document.createElement("img");
+          img.src = imgUrl;
+          img.alt = "Profilbild";
+          img.style.width = "100%";
+          img.style.height = "100%";
+          img.style.objectFit = "cover";
+          toggleEl.appendChild(img);
+        } else {
+          const initials = name.split(" ")
+            .map(p => p.charAt(0).toUpperCase())
+            .join("")
+            .slice(0,2) || "--";
+          toggleEl.textContent = initials;
+        }
+        emailEl.textContent = email;
+      } else {
+        toggleEl.textContent = "??";
+        emailEl.textContent = "Ej inloggad";
+      }
+    } catch (err) {
+      console.error("Fel vid hämtning av användarprofil:", err);
+      document.getElementById("profileToggle").textContent = "??";
+      document.getElementById("userEmail").textContent = "Fel vid hämtning";
+    }
+  }
+  loadUserProfile();
 </script>
+<!-- Global tema-utility -->
+<script src="js/theme.js"></script>
+<script>
+  // Sätter <html data-theme="..."> från localStorage om något saknats
+  // och ser till att framtida ändringar i Inställningar består.
+  if (window.Theme) {
+    Theme.init();
+  }
+</script>
+
+  <noscript>Aktivera JavaScript för bästa upplevelse.</noscript>
 </body>
 </html>

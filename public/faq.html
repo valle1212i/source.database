@@ -5,44 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FAQ – Kundportal</title>
 
-  <!-- Ikoner -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<!-- TIDIG: sätt rätt tema innan CSS laddas (motverkar FOUC) -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
 
-  <!-- Sidans CSS (lägg dina accordion-/chip-/kort-stilar i CSS/faq.css) -->
+  <!-- Globalt tema + layout -->
+  <link rel="stylesheet" href="CSS/theme.css" />
+  <!-- Sida-specifik CSS (rätt filnamn) -->
   <link rel="stylesheet" href="CSS/faq.css" />
+
+  <!-- Ikoner + typsnitt -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-
-  <!-- Hamburger (mobil) -->
-  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny" onclick="toggleSidebar()">☰</button>
-
-  <!-- SIDOPANEL – identisk struktur/klasser som övriga sidor -->
-  <div class="sidebar">
-    <div class="logo">
-      <a href="customerportal.html">
-        <img src="images/logo.png" alt="Logotyp" class="logo-img"/>
-      </a>
-    </div>
-    <ul class="nav-menu">
-      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
-      <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
-      <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
-      <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
-      <li><a href="betalningslank.html"><i class="fas fa-link"></i> Betalningslänk</a></li>
-      <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
-      <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
-      <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
-      <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
-      <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
-      <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
-    </ul>
-
-    <div class="help">
-      <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
-        <i class="fas fa-circle-question"></i> Hjälp / FAQ
-      </a>
-    </div>
+  <!-- ===== SIDOMENY ===== -->
+<aside class="sidebar" aria-label="Sidomeny">
+  <div class="logo">
+    <a href="customerportal.html">
+      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+    </a>
   </div>
+
+  <ul class="nav-menu">
+    <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+    <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+    <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+    <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+    <li><a href="betalningslank.html"><i class="fas fa-link"></i> Betalningslänk</a></li>
+    <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+    <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+    <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+    <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+    <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+    <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+  </ul>
+
+  <div class="help">
+    <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
+      <i class="fas fa-circle-question"></i> Hjälp / FAQ
+    </a>
+  </div>
+</aside> <!-- ✅ close the sidebar -->
 
   <!-- INNEHÅLL -->
   <main class="main">
@@ -203,5 +213,23 @@
       applyFilter();
     });
   </script>
+  <script>
+  const menuBtn = document.getElementById('menuToggle');
+  const sidebar = document.querySelector('.sidebar');
+  menuBtn?.addEventListener('click', () => {
+    sidebar.classList.toggle('active');
+    document.body.classList.toggle('menu-open');
+  });
+</script>
+  <script>
+  // Om Theme finns, initiera och bind radios
+  if (window.Theme) {
+    Theme.init();
+    Theme.wireRadios(document);
+  } else {
+    console.warn("Theme.js hittades inte (fel sökväg?).");
+  }
+</script>
+<script src="/js/logout.js"></script>
 </body>
 </html>

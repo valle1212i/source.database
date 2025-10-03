@@ -678,6 +678,10 @@
     return d.toLocaleString('sv-SE', { hour:'2-digit', minute:'2-digit', year:'numeric', month:'2-digit', day:'2-digit' });
   }
   function numberFormat(n){ try{ return n.toLocaleString('sv-SE'); } catch { return String(n); } }
+  window.numberFormat = window.numberFormat || function(n){
+  try { return (n ?? 0).toLocaleString('sv-SE'); }
+  catch { return String(n); }
+};
 
   /* ==== Orders (Chart.js) ==== */
   let ordersByHourChart, bestsellersChart;
@@ -773,28 +777,27 @@ async function loadPageviews(days){
 }
  
 
+
   /* ==== Init & UI-händelser ==== */
   document.addEventListener('DOMContentLoaded', () => {
     // Period-väljare för sidvisningar (radio/select med name="pvRange")
     document.querySelectorAll('input[name="pvRange"]').forEach(el => {
       el.addEventListener('change', (e) => {
         const v = e.target.value;
-        const days = (v==='7') ? 7 : (v==='30') ? 30 : 180;
+        const days = (v === '7') ? 7 : (v === '30') ? 30 : 180;
         loadPageviews(days).catch(console.error);
       });
     });
 
     // Första laddning
-    loadSummary().catch(console.error);   // ordrar & KPI
-    loadPageviews(7).catch(console.error); // sidvisningar (7 dagar som default)
-    loadGeoEurope().catch(console.error);  // geodata -> färga kartan
-  // Ensure the preceding function or block is correctly formatted
-  }
+    loadSummary().catch(console.error);      // ordrar & KPI
+    loadPageviews(7).catch(console.error);   // sidvisningar (7 dagar default)
+    loadGeoEurope().catch(console.error);    // geodata -> färga kartan
+  }); // <-- viktigt: stäng lyssnaren
 </script>
 
+
 <script>
- 
-  
   window.NAME_TO_ISO2 = window.NAME_TO_ISO2 || {
   'Sweden':'SE','Norway':'NO','Denmark':'DK','Finland':'FI','Iceland':'IS',
   'Germany':'DE','France':'FR','Netherlands':'NL','Belgium':'BE','Luxembourg':'LU',
@@ -1194,21 +1197,35 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', () => { menuEx.style.display = 'none'; });
 
     menuEx.querySelectorAll('.menu-item').forEach(mi => {
-      mi.addEventListener('click', async () => {
-        const range = mi.dataset.range;
-        menuEx.style.display = 'none';
-        try {
-          const res  = await authedFetch(`/api/analytics/exact-views?range=${encodeURIComponent(range)}`);
-          const data = await res.json();
-          totalEl.textContent  = (data?.total ?? 0).toLocaleString('sv-SE');
-          footerEl.textContent = `Period: ${data?.periodLabel || '—'}`;
-        } catch (err) {
-          console.error(err);
-          totalEl.textContent  = '0';
-          footerEl.textContent = 'Period: —';
-        }
-      });
-    });
+  mi.addEventListener('click', async () => {
+    const range = mi.dataset.range; // "today", "7d", "month", "all"
+    menuEx.style.display = 'none';
+
+    // Mappa range -> days
+    const days =
+      range === 'today' ? 1 :
+      range === '7d'    ? 7 :
+      range === 'month' ? 30 :
+      180; // "all" ~ 6 månader
+
+    try {
+      const res = await authedFetch(`/api/pageviews/summary/me?days=${days}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      const total = (data?.byDay || []).reduce((s,r) => s + (r.count || 0), 0);
+      const label = days === 1 ? 'Idag' : days === 7 ? 'Senaste 7 dagarna'
+                   : days === 30 ? 'Senaste 30 dagarna' : 'Senaste 6 månaderna';
+
+      totalEl.textContent  = numberFormat(total);
+      footerEl.textContent = `Period: ${label}`;
+    } catch (err) {
+      console.error(err);
+      totalEl.textContent  = '0';
+      footerEl.textContent = 'Period: —';
+    }
+  });
+});
   }
 });
 </script>
@@ -1290,6 +1307,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 })(); // <-- viktigt: stäng IIFE
 </script>
 
+
 <script src="/js/logout.js"></script>
 </body>
 </html>
+

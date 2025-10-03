@@ -1,20 +1,43 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
   <title>Inventarier</title>
+
+  <!-- Sätt sparat tema tidigt -->
+  <script>
+    (function(){
+      try {
+        var t = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch(e){}
+    })();
+  </script>
+
+  <!-- Gemensam tema + meny -->
+  <link rel="stylesheet" href="CSS/theme.css" />
+  <!-- Sidans egna kompletterande stilar (utan menyregler) -->
   <link rel="stylesheet" href="CSS/inventarier.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+  <!-- Ikoner -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 </head>
+
 <body>
-  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny" onclick="toggleSidebar()">☰</button>
-  <div class="sidebar">
+  <!-- Hamburger (visas på mobil) -->
+  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">☰</button>
+
+  <!-- SIDOMENY -->
+  <aside class="sidebar" aria-label="Sidomeny">
     <div class="logo">
       <a href="customerportal.html">
         <img src="images/logo.png" alt="Logotyp" class="logo-img" />
       </a>
     </div>
+
     <ul class="nav-menu">
       <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
       <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
@@ -28,12 +51,13 @@
       <li class="active"><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
       <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
     </ul>
-     <div class="help">
+    <div class="help">
       <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
         <i class="fas fa-circle-question"></i> Hjälp / FAQ
       </a>
     </div>
-  </div>
+ </div>
+ </aside>
 
   <main class="main">
     <div class="profile-wrapper">
@@ -418,6 +442,18 @@
       }
     });
   </script>
+  <script>
+  // ...ditt befintliga script...
+
+  const menuBtn = document.getElementById("menuToggle");
+  if (menuBtn) {
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleSidebar();
+    });
+  }
+</script>
+
 <script src="/js/logout.js"></script>
 </body>
 </html>

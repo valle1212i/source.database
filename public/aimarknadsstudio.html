@@ -25,7 +25,12 @@
       <li><a href="aimarknadsstudio.html" class="active"><i class="fas fa-magic"></i> AI Studio</a></li>
       <li><a href="radgivning.html"><i class="fas fa-headset"></i> Rådgivning</a></li>
     </ul>
-    <div class="help"><i class="fas fa-question-circle"></i> Hjälp</div>
+    <!-- Hjälp/FAQ – ikon + länk (kombinerar nya och gamla) -->
+    <div class="help">
+      <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
+        <i class="fas fa-circle-question"></i> Hjälp / FAQ
+      </a>
+    </div>
   </div>
 
   <!-- INNEHÅLL -->
@@ -144,11 +149,11 @@
     if (imageFile) formData.append("image", imageFile);
 
     // Marknads-parametrar (exempelvärden – justera efter behov)
-   formData.append("platform", "digital advertising (no device or app UI)");
-   formData.append(
-  "style",
-  "flat 2D advertising artwork, full-bleed, print-ready, high-contrast; no frames, no borders, no walls, no mockups"
-);
+    formData.append("platform", "digital advertising (no device or app UI)");
+    formData.append(
+      "style",
+      "flat 2D advertising artwork, full-bleed, print-ready, high-contrast; no frames, no borders, no walls, no mockups"
+    );
 
     // nya val
     formData.append("overlayMode", overlayMode);       // none|logo|main

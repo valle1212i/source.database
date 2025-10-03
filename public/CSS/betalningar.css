@@ -1,483 +1,230 @@
-/* Reset och grundstil */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* =========================
+   Betalningar – förbättrad
+   ========================= */
+
+/* ---------- Layout ---------- */
+.main{
+  margin-left:240px;
+  flex:1 1 auto;
+  padding:40px;
+  color:var(--text);
+  /* VIKTIGT: ingen egen bakgrund/gradient här så menyn ser likadan ut */
+  background: var(--bg);
+}
+.header{
+  font-size:28px;
+  font-weight:700;
+  margin-bottom:30px;
+  color:var(--text);
 }
 
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f4f5f7;
-  display: flex;
-  color: #333;
-}
-
-/* Sidopanel */
-.sidebar {
-  width: 240px;
-  background-color: #111827;
-  color: white;
-  height: 100vh;
-  padding: 30px 20px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.logo {
-  margin-bottom: -10px;
-  text-align: center;
-}
-
-.logo-img {
-  max-width: 120px;
-  height: auto;
-  margin-top: -35px; /* Justerar höjden uppåt */
-}
-
-
-/* Navigationsmeny */
-.nav-menu {
-  list-style: none;
-  flex-grow: 1;
-  padding: 0;
-  margin: 0;
-}
-
-/* Om du använder <li><a></a></li> */
-.nav-menu li {
-  list-style: none;
-}
-
-/* Styling för länkar i menyn */
-.nav-menu a {
-  color: white;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 10px;
-  font-size: 16px;
-  border-left: 4px solid transparent;
-  transition: all 0.3s ease;
-}
-
-/* Hover och aktiv */
-.nav-menu a:hover,
-.nav-menu .active a {
-  background-color: #1f2937;
-  border-left: 4px solid #3b82f6;
-  color: white;
-  font-weight: bold;
-}
-
-/* Hjälp-länken längst ner */
-.help {
-  margin-top: auto;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #9ca3af;
-  cursor: pointer;
-  padding-left: 10px;
-  padding-top: 20px;
-}
-/* Huvudinnehåll */
-.main {
-  margin-left: 240px;
-  flex-grow: 1;
-  padding: 40px;
-}
-
-.header {
-  font-size: 28px;
-  font-weight: bold;
-  margin-bottom: 30px;
-}
-
-.grid {
-  display: grid;
+/* ---------- Grid ---------- */
+.grid{
+  display:grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-}
-/* Profilwrapper och ikon */
-.profile-wrapper {
-  position: fixed;
-  top: 20px;
-  right: 30px;
-  z-index: 100;
+  gap:22px;
 }
 
-.profile-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  overflow: hidden;
-  background-color: transparent;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transform: scale(1);
+/* ---------- Profilmeny ---------- */
+.profile-wrapper{ position:fixed; top:20px; right:30px; z-index:1100; }
+.profile-icon{
+  width:40px; height:40px; border-radius:50%;
+  overflow:hidden; background:transparent;
+  border:1px solid var(--card-border);
+  box-shadow:0 2px 6px rgba(0,0,0,.18);
+  transition:transform .2s ease;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
 }
+.profile-icon img{ width:100%; height:100%; object-fit:cover; display:block; }
+.profile-icon.open{ transform:scale(1.08); }
 
-.profile-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.3s ease;
+.profile-dropdown{
+  position:absolute; top:52px; right:0;
+  background:var(--card); color:var(--text);
+  border:1px solid var(--card-border);
+  border-radius:12px; padding:12px; width:220px; display:none; flex-direction:column;
+  box-shadow:0 10px 28px rgba(0,0,0,.14); z-index:1110;
+  backdrop-filter:saturate(1.1) blur(6px);
 }
-
-/* Förstora hela cirkeln (inte bara bilden) */
-.profile-icon.open {
-  transform: scale(1.3);
+.profile-dropdown a{
+  text-decoration:none; color:var(--text);
+  padding:8px 6px; border-radius:8px; transition:background .18s ease, padding-left .18s ease;
 }
-
-/* Dropdown-meny */
-.profile-dropdown {
-  position: absolute;
-  top: 50px;
-  right: 0;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-  padding: 12px;
-  width: 200px;
-  display: none;
-  flex-direction: column;
-  font-size: 14px;
+.profile-dropdown a:hover{
+  background:color-mix(in srgb, var(--card) 82%, var(--bg) 18%);
+  padding-left:10px;
 }
+.profile-email{ color:var(--muted); font-size:13px; margin-bottom:8px; }
 
-.profile-dropdown a {
-  text-decoration: none;
-  color: #111827;
-  padding: 8px 0;
-  transition: background 0.2s;
+/* ---------- Kort ---------- */
+.card{
+  background:var(--card);
+  color:var(--text);
+  border:1px solid var(--card-border);
+  border-radius:14px;
+  padding:20px;
+  box-shadow:0 6px 14px rgba(0,0,0,.06);
+  transition:transform .18s ease, box-shadow .22s ease, border-color .18s ease;
+  will-change: transform;
 }
-
-.profile-dropdown a:hover {
-  background-color: #f3f4f6;
-  border-radius: 6px;
-  padding-left: 6px;
+.card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 14px 28px rgba(0,0,0,.12);
+  border-color:color-mix(in srgb, var(--card-border) 40%, var(--text) 60%);
 }
+.card h3{ font-size:18px; margin-bottom:10px; color:var(--text); }
+.card p, .card ul{ font-size:14px; color:var(--muted); }
+.card ul{ list-style:disc; padding-left:20px; margin-top:5px; }
 
-.profile-email {
-  color: #6b7280;
-  font-size: 13px;
-  margin-bottom: 6px;
-}
+/* Varianter */
+.card.wide{ grid-column: span 2; }
+.card.large{ grid-column: span 2; min-height:300px; }
+.card.tall{ min-height:360px; }
+.card.match-height{ min-height:360px; }
 
-.card {
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  padding: 20px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-}
-
-.card h3 {
-  font-size: 18px;
-  margin-bottom: 10px;
-  color: #111827;
-}
-
-.card p,
-.card ul {
-  font-size: 14px;
-  color: #4b5563;
-}
-
-.card ul {
-  list-style: disc;
-  padding-left: 20px;
-  margin-top: 5px;
-}
-
-/* Widgetförsäljning */
-.circle-widget {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+/* ---------- KPI/diagram (“circle-widget”) ---------- */
+.circle-widget{
+  display:flex; justify-content:space-between; align-items:flex-start;
   grid-column: span 3;
-  min-height: 220px;
-  padding: 30px;
+  min-height:220px; padding:26px; gap:20px;
+}
+.chart-area{ width:60%; }
+.sales-info{ width:40%; padding-left:22px; padding-top:6px; }
+.sales-info h3{ font-size:20px; font-weight:700; margin-bottom:6px; color:var(--text); }
+.title-underline, .amount-underline{
+  height:3px; border:none; background-color:#3b82f6;
+  width:100%; max-width:200px; margin:6px 0 12px 0;
+}
+.sales-info .amount{
+  font-size:20px; font-weight:800; color:var(--text);
+}
+.circle-widget canvas{ width:100%; max-width:100%; height:auto; }
+
+/* ---------- Highlights ---------- */
+.live-chat.dark{ background:#0f172a; color:#e5e7eb; border:1px solid #1f2937; }
+.live-chat.dark h3{ color:#6ee7b7; }
+.ai-assistant{
+  background:linear-gradient(180deg, #e0f2fe, #f0f9ff);
+  border-left:4px solid #3b82f6;
 }
 
-.chart-area {
-  width: 60%;
+/* ---------- Status-badges ---------- */
+.status{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 10px; border-radius:999px; font-size:13px; font-weight:700;
+  background:color-mix(in srgb, var(--brand, #3b82f6) 14%, var(--card) 86%);
+  color:color-mix(in srgb, var(--brand, #3b82f6) 80%, #0b1020 20%);
+  border:1px solid color-mix(in srgb, var(--brand, #3b82f6) 32%, var(--card-border) 68%);
+}
+.status.open{
+  background:color-mix(in srgb, #3b82f6 16%, var(--card) 84%);
+  color:#1e3a8a;
+  border-color:color-mix(in srgb, #3b82f6 38%, var(--card-border) 62%);
+}
+.status.progress{
+  background:color-mix(in srgb, #34d399 18%, var(--card) 82%);
+  color:#065f46;
+  border-color:color-mix(in srgb, #34d399 40%, var(--card-border) 60%);
 }
 
-.sales-info {
-  width: 40%;
-  padding-left: 30px;
-  padding-top: 5px;
+/* ---------- Filterfält ---------- */
+.filters{
+  display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px;
+}
+.filters input, .filters select, .filters button{
+  padding:10px 12px; font-size:14px; border-radius:10px;
+  border:1px solid var(--input-border);
+  background:var(--input-bg); color:var(--text);
+  transition:border-color .16s ease, box-shadow .18s ease;
+}
+.filters input:focus, .filters select:focus{
+  outline:none; border-color:var(--input-focus);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--input-focus) 34%, transparent);
 }
 
-.sales-info h3 {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 5px;
+/* ---------- Knappar ---------- */
+.black-button{
+  background:#111827; color:#fff; border:1px solid transparent;
+  padding:10px 14px; border-radius:12px; cursor:pointer;
+  transition:background .18s ease, transform .06s ease, box-shadow .18s ease;
+  box-shadow:0 4px 12px rgba(0,0,0,.14);
+}
+.black-button:hover{ background:#1f2937; }
+.black-button:active{ transform:translateY(1px); }
+.black-button:focus-visible{
+  outline:3px solid color-mix(in srgb, var(--brand, #3b82f6) 70%, #fff 30%);
+  outline-offset:2px;
 }
 
-.title-underline,
-.amount-underline {
-  height: 3px;
-  border: none;
-  background-color: #3b82f6;
-  width: 100%;
-  max-width: 200px;
-  margin: 4px 0 12px 0;
+/* Primärknapp (valfri) */
+.btn-brand{
+  background:var(--brand);
+  color:#fff; border:1px solid transparent;
+  padding:10px 14px; border-radius:12px; cursor:pointer;
+  box-shadow:0 8px 22px color-mix(in srgb, var(--brand) 30%, transparent);
+  transition:filter .18s ease, transform .06s ease, box-shadow .18s ease;
+}
+.btn-brand:hover{ filter:brightness(.97); }
+.btn-brand:active{ transform:translateY(1px); }
+
+/* “Tillbaka” */
+.back-button{
+  display:inline-block; margin-bottom:20px; font-size:14px;
+  color:#3b82f6; text-decoration:none; font-weight:600;
+}
+.back-button:hover{ text-decoration:underline; }
+
+/* ---------- Modal ---------- */
+.modal{
+  display:none; position:fixed; inset:0; z-index:1300;
+  background:rgba(0,0,0,.45);
+}
+.modal-content{
+  background:var(--card); color:var(--text);
+  border:1px solid var(--card-border);
+  border-radius:14px; padding:20px; width:92%; max-width:520px;
+  margin:10% auto; box-shadow:0 18px 40px rgba(0,0,0,.24);
+}
+.close{
+  color:var(--muted); float:right; font-size:28px; font-weight:700;
+  cursor:pointer; border-radius:8px; padding:0 6px;
+}
+.close:hover, .close:focus{
+  color:var(--text);
+  background:color-mix(in srgb, var(--card) 86%, var(--text) 14%);
 }
 
-.sales-info .amount {
-  font-size: 20px;
-  font-family: 'Segoe UI', sans-serif;
-  color: #111;
-  font-weight: bold;
+/* ---------- Hamburger (visas bara på mobil) ---------- */
+.hamburger-menu{ display:none; }
+
+/* För mindre skärmar – låt THEME.CSS styra SIDEBAR
+   (inga lokala .sidebar-regler här!) */
+@media (max-width: 1024px){
+  .grid{ grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 }
 
-.circle-widget canvas {
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-}
-
-/* Live Chat Widget */
-.live-chat.dark {
-  background-color: #1f2937;
-  color: white;
-}
-
-.live-chat.dark h3 {
-  color: #6ee7b7;
-}
-
-/* Statusikoner */
-.status {
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: inherit;
-}
-
-.status.open {
-  color: #3b82f6; /* Samma blå som title underline */
-}
-
-.status.progress {
-  color: #6ee7b7; /* Samma färg som live chat rubrik */
-}
-
-/* AI Assistant */
-.ai-assistant {
-  background-color: #e0f2fe;
-  border-left: 4px solid #3b82f6;
-}
-
-/* Anpassade storlekar för vissa widgets */
-.card.wide {
-  grid-column: span 2;
-}
-
-.card.large {
-  grid-column: span 2;
-  min-height: 300px;
-}
-
-.card.tall {
-  min-height: 350px;
-}
-
-.card.match-height {
-  min-height: 350px;
-}
-
-/* Filterfält */
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.filters input,
-.filters select,
-.filters button {
-  padding: 10px;
-  font-size: 14px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-}
-
-/* Svarta knappar */
-.black-button {
-  background-color: #111827;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.black-button:hover {
-  background-color: #374151;
-}
-
-/* Tillbaka-länk */
-.back-button {
-  display: inline-block;
-  margin-bottom: 20px;
-  color: #111827;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-/* Modal för kvitto */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 999;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0,0,0,0.4);
-}
-
-.modal-content {
-  background-color: #fff;
-  margin: 10% auto;
-  padding: 20px;
-  border: 1px solid #888;
-  width: 90%;
-  max-width: 500px;
-  border-radius: 10px;
-}
-
-.close {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-}
-
-.close:hover,
-.close:focus {
-  color: black;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-/* Responsivt */
-@media (max-width: 768px) {
-  .sidebar {
-    position: relative;
-    width: 100%;
-    height: auto;
+@media (max-width: 768px){
+  .hamburger-menu{
+    display:block; position:fixed; top:20px; left:20px; z-index:1400;
+    font-size:28px; background:none; border:none; color:#1f2937; cursor:pointer;
   }
+  body.menu-open .hamburger-menu{ color:#fff; }
 
-  .main {
-    margin-left: 0;
-    padding: 20px;
-  }
+  .main{ margin-left:0; padding:24px 16px; }
+  .header, .main h1{ margin-left:48px; }
 
-  .grid {
-    grid-template-columns: 1fr;
+  /* circle-widget staplas snyggt */
+  .circle-widget{
+    grid-column:auto; flex-direction:column; gap:18px; padding:20px;
   }
-
-  .filters {
-    flex-direction: column;
-  }
-}
-h1 {
-  margin-bottom: 16px; /* eller 20px om du vill ha mer luft */
+  .chart-area, .sales-info{ width:100%; padding-left:0; }
 }
 
-.back-button {
-  display: inline-block;
-  margin-bottom: 20px;
-  font-size: 14px;
-  color: #3b82f6;
-  text-decoration: none;
+/* ---------- Tillgänglighet & motion ---------- */
+:focus-visible{
+  outline:3px solid color-mix(in srgb, var(--brand, #3b82f6) 70%, #fff 30%);
+  outline-offset:2px;
 }
-
-.back-button:hover {
-  text-decoration: underline;
-}
-
-/* ===== HAMBURGER-MENY & MOBILSIDOPANEL ===== */
-
-/* Döljs på desktop */
-.hamburger-menu {
-  display: none;
-}
-
-/* Syns bara på mobilskärmar */
-@media (max-width: 768px) {
-  .hamburger-menu {
-    display: block;
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1001;
-    font-size: 28px;
-    background: none;
-    border: none;
-    color: #1f2937; /* samma blågrå som på inställningar */
-    cursor: pointer;
-  }
-
-  .sidebar {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: -240px;
-    width: 240px;
-    height: 100%;
-    background-color: #111827;
-    color: white;
-    transition: left 0.3s ease, opacity 0.3s ease;
-    z-index: 998;
-
-    visibility: hidden;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .sidebar.active {
-    left: 0;
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .main {
-    margin-left: 0;
-  }
-
-  .main h1 {
-    margin-left: 48px; /* för att undvika att hamna under hamburgermenyn */
-  }
-
-  body.menu-open .hamburger-menu {
-    color: white;
-  }
+@media (prefers-reduced-motion: reduce){
+  *{ transition:none !important; animation:none !important; }
 }

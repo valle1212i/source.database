@@ -3,18 +3,39 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kundportal - Startsida</title>
+  <title>Customerportal – Kundportal</title>
+
+  <!-- TIDIG: sätt rätt tema innan CSS laddas (motverkar FOUC) -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Globalt tema + layout -->
+  <link rel="stylesheet" href="CSS/theme.css" />
+  <!-- Sida-specifik CSS -->
   <link rel="stylesheet" href="CSS/customerportal.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Ikoner + typsnitt -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="sidebar">
+  <!-- Hamburger (mobil) -->
+  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">☰</button>
+
+  <!-- ===== SIDOMENY ===== -->
+  <aside class="sidebar" aria-label="Sidomeny">
     <div class="logo">
       <a href="customerportal.html">
         <img src="images/logo.png" alt="Logotyp" class="logo-img" />
       </a>
     </div>
+
     <ul class="nav-menu">
       <li class="active"><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
       <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
@@ -28,12 +49,13 @@
       <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
       <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
     </ul>
+
     <div class="help">
-      <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
+      <a href="faq.html" class="help-link">
         <i class="fas fa-circle-question"></i> Hjälp / FAQ
       </a>
     </div>
-  </div>
+  </aside> <!-- ✅ korrekt stängning -->
 
   <!-- Hamburger-meny (visas bara på små skärmar) -->
   <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">

@@ -3,24 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kontakta oss</title>
+  <title>Kontakt – Kundportal</title>
+
+  <!-- TIDIG: sätt rätt tema innan CSS laddas (motverkar FOUC) -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Globalt tema + layout -->
+  <link rel="stylesheet" href="CSS/theme.css" />
+  <!-- Sida-specifik CSS (rätt filnamn) -->
   <link rel="stylesheet" href="CSS/kontakt.css" />
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-  />
+
+  <!-- Ikoner + typsnitt -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Hamburgermeny för mobil -->
-<button class="hamburger-menu" onclick="toggleSidebar()">☰</button>
+  <!-- Hamburger (mobil) -->
+  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">☰</button>
 
-
-  <div class="sidebar">
-  <div class="logo">
-    <a href="customerportal.html">
-      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
-    </a>
-  </div>
+  <!-- ===== SIDOMENY ===== -->
+  <aside class="sidebar" aria-label="Sidomeny">
+    <div class="logo">
+      <a href="customerportal.html">
+        <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+      </a>
+    </div>
   <ul class="nav-menu">
     <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
     <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
@@ -40,8 +54,9 @@
       </a>
     </div>
   </div>
- <div class="main">
-  <h2 class="page-title">Kontakta oss</h2>
+  </aside> <!-- stäng sidomenyn rätt -->
+  <div class="main">
+    <h2 class="page-title">Kontakta oss</h2>
 
   <!-- Chatta med oss: Större sektion -->
   <div class="card contact-section chat-section">
@@ -208,6 +223,15 @@
 
     sidebar.classList.toggle("active", !isActive);
     document.body.classList.toggle("menu-open", !isActive);
+  }
+</script>
+<script>
+  // Om Theme finns, initiera och bind radios
+  if (window.Theme) {
+    Theme.init();
+    Theme.wireRadios(document);
+  } else {
+    console.warn("Theme.js hittades inte (fel sökväg?).");
   }
 </script>
 <script src="/js/logout.js"></script>

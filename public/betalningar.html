@@ -5,54 +5,76 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kundportal – Betalningar</title>
 
+  <!-- Sätt tema TIDIGT (motverkar FOUC) -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Globalt tema + layout -->
+  <link rel="stylesheet" href="CSS/theme.css" />
+  <!-- Sida-specifik CSS -->
   <link rel="stylesheet" href="CSS/betalningar.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js" defer></script>
+
+  <!-- Ikoner + typsnitt (samma som på andra sidor) -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+        rel="stylesheet">
+
+  <!-- jsPDF (behövs för kvitto) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-<body>
+<body class="payments-page">
 
-<!-- SIDOMENY -->
-<div class="sidebar">
-  <div class="logo">
-    <a href="customerportal.html">
-      <img src="Images/logo.png" alt="Logotyp" class="logo-img" />
-    </a>
-  </div>
-  <ul class="nav-menu">
-    <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
-    <li class="active"><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
-    <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
-    <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
-    <li><a href="betalningslank.html"><i class="fas fa-link"></i> Betalningslänk</a></li>
-    <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
-    <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
-    <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
-    <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
-    <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
-    <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
-  </ul>
-  <div class="help">
-    <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
-      <i class="fas fa-circle-question"></i> Hjälp / FAQ
-    </a>
-  </div>
-</div>
+  <!-- HAMBURGER (mobil) -->
+  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">☰</button>
 
-<!-- HAMBURGERMENY (mobil) -->
-<button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">&#9776;</button>
+  <!-- ===== SIDOMENY ===== -->
+  <aside class="sidebar" aria-label="Sidomeny">
+    <div class="logo">
+      <a href="customerportal.html">
+        <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+      </a>
+    </div>
 
-<!-- PROFILMENY -->
-<div class="profile-wrapper">
-  <div class="profile-icon" id="profileToggle">--</div>
-  <div class="profile-dropdown" id="profileMenu">
-    <div class="profile-email" id="userEmail">Laddar...</div>
-    <hr />
-    <a href="#" id="switchAccount">Byt konto</a>
-    <a href="#" id="openSettings">Profilinställningar</a>
-    <a href="#" id="logout">Logga ut</a>
+    <ul class="nav-menu">
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li class="active"><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+      <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+      <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+      <li><a href="betalningslank.html"><i class="fas fa-link"></i> Betalningslänk</a></li>
+      <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+      <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+      <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+      <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+      <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+      <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+    </ul>
+
+    <div class="help">
+      <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
+        <i class="fas fa-circle-question"></i> Hjälp / FAQ
+      </a>
+    </div>
+  </aside>
+
+  <!-- PROFILMENY (uppe till höger) -->
+  <div class="profile-wrapper">
+    <div class="profile-icon" id="profileToggle">--</div>
+    <div class="profile-dropdown" id="profileMenu">
+      <div class="profile-email" id="userEmail">Laddar...</div>
+      <hr />
+      <a href="#" id="switchAccount">Byt konto</a>
+      <a href="#" id="openSettings">Profilinställningar</a>
+      <a href="#" id="logout">Logga ut</a>
+    </div>
   </div>
-</div>
+
 
 <!-- HUVUDINNEHÅLL -->
 <main class="main">
@@ -614,6 +636,15 @@
   // Init
   loadUserProfile();
   reloadPayments();
+</script>
+<script>
+  // Om Theme finns, initiera och bind radios
+  if (window.Theme) {
+    Theme.init();
+    Theme.wireRadios(document);
+  } else {
+    console.warn("Theme.js hittades inte (fel sökväg?).");
+  }
 </script>
 <script src="/js/logout.js"></script>
 </body>

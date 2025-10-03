@@ -1,97 +1,13 @@
-/* ===========================
-   Betalningar – ljus layout v2
-   Vit bakgrund + enhetlig meny
-   =========================== */
-
-/* Reset */
-* { margin:0; padding:0; box-sizing:border-box; }
-
-:root{
-  --bg:#ffffff;
-  --text:#111827;
-  --muted:#6b7280;
-  --brand:#3b82f6;
-  --brand-2:#5b8cff;
-  --ok:#10b981;
-  --card:#ffffff;
-  --card-border:#e5e7eb;
-  --input-bg:#ffffff;
-  --input-border:#d1d5db;
-  --input-focus:#93c5fd;
-  --sidebar-bg:#111827;
-  --sidebar-hover:#1f2937;
-  --sidebar-muted:#9ca3af;
-}
-
-/* Baslayout */
-body{
-  font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
-  color: var(--text);
-  background: var(--bg);
-  display:flex;
-  min-height:100vh;
-}
-
-/* ===================================
-   SIDOMENY (matchar din referens-CSS)
-   =================================== */
-.sidebar{
-  width:240px;
-  background:var(--sidebar-bg);
-  color:#fff;
-  height:100vh;
-  padding:30px 20px;
-  position:fixed;
-  top:0; left:0;
-  display:flex; flex-direction:column;
-  z-index:1200;
-}
-.logo{ text-align:center; margin-bottom:-10px; }
-.logo-img{ max-width:120px; height:auto; margin-top:-35px; }
-
-.nav-menu{ list-style:none; flex:1 1 auto; padding:0; margin:0; }
-.nav-menu li{ list-style:none; }
-/* === SIDOMENY – samma som övriga sidor === */
-.nav-menu a{
-  color:#fff;
-  text-decoration:none;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:12px 10px;
-  font-size:16px;
-  border-left:4px solid transparent;
-  transition:all .25s ease;
-  border-radius:0;                 /* ⟵ ta bort pill-utseende */
-}
-
-.nav-menu a:hover{
-  background:#1f2937;              /* samma hover som globalt */
-  /* behåll border-left transparent på hover */
-}
-
-.nav-menu li.active a,
-.nav-menu a.active,
-.nav-menu a[aria-current="page"]{
-  background:#1f2937;
-  border-left-color:#3b82f6;       /* blå vänsterkant */
-  font-weight:700;
-}
-
-.help{
-  margin-top:auto;
-  font-size:16px;
-  display:flex; align-items:center; gap:10px;
-  color:var(--sidebar-muted);
-  cursor:pointer;
-  padding-left:10px; padding-top:20px;
-}
+/* ==============================
+   Betalningslänk — Tema-stabil CSS
+   ============================== */
 
 /* Huvudinnehåll */
 .main{
   margin-left:240px;
   flex:1 1 auto;
   padding:40px 32px;
+  color:var(--text);
 }
 
 /* Titel */
@@ -119,7 +35,7 @@ body{
   padding:20px;
   box-shadow:0 1px 4px rgba(0,0,0,.06);
 }
-.card h3{ font-size:18px; margin-bottom:12px; }
+.card h3{ font-size:18px; margin-bottom:12px; color:var(--text); }
 
 /* Formulär */
 label{ display:block; margin:12px 0 6px; color:var(--text); }
@@ -135,11 +51,11 @@ select{
   border-radius:12px;
   padding:12px 14px;
   outline:none;
-  transition:border-color .2s ease, box-shadow .2s ease;
+  transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
 }
 input:focus, textarea:focus, select:focus{
   border-color:var(--input-focus);
-  box-shadow:0 0 0 3px rgba(59,130,246,.15);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--input-focus) 35%, transparent);
 }
 textarea{ min-height:96px; resize:vertical; }
 
@@ -152,47 +68,65 @@ textarea{ min-height:96px; resize:vertical; }
   text-decoration:none; cursor:pointer; user-select:none;
   border-radius:12px; padding:12px 14px;
   border:1px solid var(--input-border);
-  background:#f9fafb; color:var(--text);
-  transition:transform .06s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+  background:color-mix(in srgb, var(--card) 86%, var(--bg) 14%);
+  color:var(--text);
+  transition:transform .06s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease, filter .18s ease;
 }
-.btn:hover{ background:#eef2ff; border-color:#c7d2fe; }
+.btn:hover{
+  background:color-mix(in srgb, var(--card) 80%, var(--bg) 20%);
+  border-color:color-mix(in srgb, var(--input-border) 60%, var(--input-focus) 40%);
+}
 .btn:active{ transform:translateY(1px); }
 
+/* Primär (brand) */
 .btn.brand{
   background:var(--brand); color:#fff; border-color:transparent;
-  box-shadow:0 6px 16px rgba(59,130,246,.18);
+  box-shadow:0 6px 16px color-mix(in srgb, var(--brand) 28%, transparent);
 }
-.btn.brand:hover{ background:#2563eb; }
+.btn.brand:hover{ filter:brightness(.96); }
 
+/* Bekräfta (ok) */
 .btn.ok{
   background:var(--ok); color:#fff; border-color:transparent;
-  box-shadow:0 6px 16px rgba(16,185,129,.18);
+  box-shadow:0 6px 16px color-mix(in srgb, var(--ok) 28%, transparent);
 }
 .btn.ok:hover{ filter:brightness(.95); }
 
+/* Spökknapp */
 .btn.ghost{
   background:transparent; color:var(--text);
+  border-color:var(--card-border);
 }
 .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
 
 /* Preview-fält (höger) */
 .preview{
-  background:#f9fafb;
-  border:1px dashed #cbd5e1;
+  background:color-mix(in srgb, var(--card) 88%, var(--bg) 12%);
+  border:1px dashed var(--card-border);
   border-radius:12px;
   padding:14px;
   min-height:52px;
   word-break:break-all;
-  color:#374151;
+  color:var(--text);
 }
 .note{ color:var(--muted); font-size:13px; margin-top:8px; }
 
-/* “pay-cta” & copy-feedback (om du använder dem) */
+/* “pay-cta” & copy-feedback */
 .pay-cta{ display:flex; gap:10px; flex-wrap:wrap; }
 .copy-badge{
   display:inline-flex; align-items:center; gap:6px;
   font-size:12px; padding:6px 10px; border-radius:999px;
-  background:#ecfeff; color:#0ea5e9; border:1px solid #bae6fd;
+  background:color-mix(in srgb, var(--brand) 12%, var(--card) 88%);
+  color:color-mix(in srgb, var(--brand) 82%, #ffffff 18%);
+  border:1px solid color-mix(in srgb, var(--brand) 35%, var(--card-border) 65%);
+}
+
+/* Små hjälputseenden */
+.kbd{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  background:color-mix(in srgb, var(--card) 90%, var(--bg) 10%);
+  border:1px solid var(--card-border); border-bottom-width:2px;
+  padding:.15rem .4rem; border-radius:6px; font-size:12px; color:var(--text);
 }
 
 /* Hamburger (mobil) */
@@ -216,7 +150,7 @@ textarea{ min-height:96px; resize:vertical; }
 
   .sidebar{
     left:-240px; visibility:hidden; opacity:0; pointer-events:none;
-    transition:left .28s ease, opacity .28s ease;
+    transition:left .28s ease, opacity .28s ease, visibility .28s ease;
   }
   .sidebar.active{
     left:0; visibility:visible; opacity:1; pointer-events:auto;
@@ -225,11 +159,4 @@ textarea{ min-height:96px; resize:vertical; }
   .main{ margin-left:0; padding:24px 16px; }
   .page-title{ margin-left:48px; }
   .subtitle{ margin-left:48px; }
-}
-
-/* Små hjälputseenden */
-.kbd{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  background:#f3f4f6; border:1px solid #e5e7eb; border-bottom-width:2px;
-  padding:.15rem .4rem; border-radius:6px; font-size:12px; color:#111827;
 }

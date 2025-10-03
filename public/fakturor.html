@@ -3,40 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kundportal - Fakturor</title>
+  <title>Fakturor – Kundportal</title>
+
+  <!-- TIDIG: sätt rätt tema innan CSS laddas (motverkar FOUC) -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Globalt tema + layout -->
+  <link rel="stylesheet" href="CSS/theme.css" />
+  <!-- Sida-specifik CSS -->
   <link rel="stylesheet" href="CSS/fakturor.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+  <!-- Ikoner + typsnitt -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Hamburgermeny för mobil -->
-<button class="hamburger-menu" onclick="toggleSidebar()">☰</button>
-  <div class="sidebar">
-  <div class="logo">
-    <a href="customerportal.html">
-      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
-    </a>
-  </div>
+  <!-- Hamburger (mobil) -->
+  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">☰</button>
+
+  <!-- ===== SIDOMENY ===== -->
+  <aside class="sidebar" aria-label="Sidomeny">
+    <div class="logo">
+      <a href="customerportal.html">
+        <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+      </a>
+    </div>
+
     <ul class="nav-menu">
-  <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
-  <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
-  <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
-  <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
-  <li><a href="betalningslank.html"><i class="fas fa-link"></i> Betalningslänk</a></li>
-  <li class="active"><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
-  <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
-  <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
-  <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
-  <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
-  <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+      <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+      <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+      <li><a href="betalningslank.html"><i class="fas fa-link"></i> Betalningslänk</a></li>
+      <li class="active"><a href="fakturor.html" aria-current="page"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+      <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+      <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+      <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+      <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+      <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
     </ul>
+
     <div class="help">
-      <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
+      <a href="faq.html">
         <i class="fas fa-circle-question"></i> Hjälp / FAQ
       </a>
     </div>
-  </div>
+  </aside>
 
+<!-- ===== HUVUDINNEHÅLL ===== -->
   <div class="main">
     <div class="profile-wrapper">
   <div class="profile-icon" id="profileToggle">--</div>
@@ -192,6 +213,15 @@
   function toggleSidebar() {
     document.querySelector(".sidebar").classList.toggle("active");
     document.body.classList.toggle("menu-open");
+  }
+</script>
+<script>
+  // Om Theme finns, initiera och bind radios
+  if (window.Theme) {
+    Theme.init();
+    Theme.wireRadios(document);
+  } else {
+    console.warn("Theme.js hittades inte (fel sökväg?).");
   }
 </script>
 <script src="/js/logout.js"></script>

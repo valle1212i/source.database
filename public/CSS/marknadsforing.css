@@ -1,443 +1,316 @@
-/* Reset och grundstil */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* =======================================================
+   MARKNADSFÖRING – temakompatibel men "pixel-faithful" i Light
+   - Light = exakt din originaldesign (färger/gradienter)
+   - Övriga teman = poppiga, AI-iga varianter
+   ======================================================= */
+
+/* Reset */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* =========================
+   LIGHT (originallook + starkare AI-lila)
+   ========================= */
+:root:not([data-theme]), :root[data-theme="light"]{
+  /* Automatiska annonser – din ljusa soft glass */
+  --mk-ads-a:#f0f4ff;
+  --mk-ads-b:#f4f5f7;
+  --mk-ads-glow:#ffffff;
+
+  /* AI-studion – mycket mer lila mot höger */
+  --mk-ai-a:#e8ddff;       /* mjuk lila vänster */
+  --mk-ai-b:#8b5cf6;       /* tydlig lila höger */
+  --mk-ai-glow:#a78bfa;    /* neon-glow */
+  --mk-ai-border:#a5b4fc;  /* subtil lila kant */
+
+  /* Rådgivning – din cyan→mint (GRÖN) */
+  --mk-supp-a:#e0f2fe;
+  --mk-supp-b:#5be1c4;
+  --mk-supp-border:#38bdf8;
+
+  /* Knappar (blå baseline) */
+  --mk-btn-a:#3b82f6;
+  --mk-btn-b:#2563eb;
+  --mk-btn-shadow:rgba(37,99,235,.28);
+
+  /* Text + glasnivåer i light */
+  --mk-text:#333;
+  --mk-muted:#4b5563;
+  --mk-card-alpha:.85;
+  --mk-blur:6px;
 }
 
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f4f5f7;
+/* Mer lila sweep + starkare glow på AI-kortet i LIGHT */
+:root:not([data-theme]) .card.ai-card,
+:root[data-theme="light"] .card.ai-card{
+  background: linear-gradient(
+    90deg,
+    #eef2ff 0%,
+    #e6dbff 24%,
+    #d4b9ff 52%,
+    #b08cff 72%,
+    #8b5cf6 100%
+  );
+  border: 2px solid var(--mk-ai-border);
+}
+:root:not([data-theme]) .card.ai-background::before,
+:root[data-theme="light"] .card.ai-background::before{
+  right:-80px; top:-10px; width:280px; height:280px;
+  opacity:.35; filter:blur(6px);
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(167,139,250,.95) 0%,
+    rgba(167,139,250,.55) 38%,
+    transparent 72%
+  );
+}
+
+/* AI-knappen i LIGHT: lila → blå + glow */
+:root:not([data-theme]) .card.ai-card .ai-button,
+:root[data-theme="light"] .card.ai-card .ai-button{
+  background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+  box-shadow: 0 6px 16px rgba(139,92,246,.35);
+}
+:root:not([data-theme]) .card.ai-card .ai-button:hover,
+:root[data-theme="light"] .card.ai-card .ai-button:hover{
+  background: linear-gradient(90deg, #a78bfa, #2563eb);
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+/* Fix: bakgrund för main i LIGHT (selektor skulle gälla .main också) */
+:root:not([data-theme]) .main,
+:root[data-theme="light"] .main{
+  background: linear-gradient(to bottom, #f9fafb, #f4f5f7);
+}
+
+/* DARK – mer neon och kontrast */
+:root[data-theme="dark"]{
+  --mk-ads-a:#95f3cc; --mk-ads-b:#efd6e0; --mk-ads-glow:#5b8cff;
+
+  /* AI-studion blir kraftigt lila/indigo */
+  --mk-ai-a:#3a2a72; --mk-ai-b:#6a41c6; --mk-ai-glow:#a78bfa; --mk-ai-border:#4c1d95;
+
+  /* Support blågrön neon */
+  --mk-supp-a:#0b7285; --mk-supp-b:#1d4ed8; --mk-supp-border:#34d399;
+
+  --mk-btn-a:#8b5cf6; --mk-btn-b:#5b8cff; --mk-btn-shadow:rgba(139,92,246,.35);
+
+  --mk-text:#e5e7eb; --mk-muted:#9ca3af;
+  --mk-card-alpha: .16;     /* mörkt glas */
+  --mk-blur: 8px;
+}
+
+/* GREEN – mint/teal */
+:root[data-theme="green"]{
+  --mk-ads-a:#eafaf3; --mk-ads-b:#f7fcf9; --mk-ads-glow:#ffffff;
+
+  --mk-ai-a:#b7f0e0; --mk-ai-b:#9fe3d7; --mk-ai-glow:#34d399; --mk-ai-border:#99f6e4;
+
+  --mk-supp-a:#06b6d4; --mk-supp-b:#10b981; --mk-supp-border:#0ea5e9;
+
+  --mk-btn-a:#34d399; --mk-btn-b:#10b981; --mk-btn-shadow:rgba(16,185,129,.28);
+
+  --mk-text:var(--text); --mk-muted:var(--muted);
+  --mk-card-alpha:.85; --mk-blur:6px;
+}
+
+/* INDIGO – futuristiskt */
+:root[data-theme="indigo"]{
+  --mk-ads-a:#eef2ff; --mk-ads-b:#f7f7ff; --mk-ads-glow:#ffffff;
+
+  --mk-ai-a:#c084fc; --mk-ai-b:#6366f1; --mk-ai-glow:#a78bfa; --mk-ai-border:#a5b4fc;
+
+  --mk-supp-a:#06b6d4; --mk-supp-b:#3b82f6; --mk-supp-border:#7c3aed;
+
+  --mk-btn-a:#8b5cf6; --mk-btn-b:#6366f1; --mk-btn-shadow:rgba(99,102,241,.28);
+
+  --mk-text:var(--text); --mk-muted:var(--muted);
+  --mk-card-alpha:.85; --mk-blur:6px;
+}
+
+/* HIGH CONTRAST – tydligt */
+:root[data-theme="contrast"]{
+  --mk-ads-a:#ffffff; --mk-ads-b:#f5f5f5; --mk-ads-glow:#000;
+
+  --mk-ai-a:#fff176; --mk-ai-b:#ffd54f; --mk-ai-glow:#000; --mk-ai-border:#000;
+
+  --mk-supp-a:#b2fab4; --mk-supp-b:#80e27e; --mk-supp-border:#000;
+
+  --mk-btn-a:#000; --mk-btn-b:#000; --mk-btn-shadow:rgba(0,0,0,.35);
+
+  --mk-text:#000; --mk-muted:#111;
+  --mk-card-alpha:1; --mk-blur:0px;
+}
+
+/* ===== Baslayout ===== */
+body{
+  font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
   display: flex;
-  color: #333;
 }
 
-/* Sidopanel */
-.sidebar {
-  width: 240px;
-  background-color: #111827;
-  color: white;
-  height: 100vh;
-  padding: 30px 20px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.logo {
-  margin-bottom: -10px;
-  text-align: center;
-}
-
-.logo-img {
-  max-width: 120px;
-  height: auto;
-  margin-top: -35px; /* Justerar höjden uppåt */
-}
-
-
-/* Navigationsmeny */
-.nav-menu {
-  list-style: none;
-  flex-grow: 1;
-  padding: 0;
-  margin: 0;
-}
-
-/* Om du använder <li><a></a></li> */
-.nav-menu li {
-  list-style: none;
-}
-
-/* Styling för länkar i menyn */
-.nav-menu a {
-  color: white;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 10px;
-  font-size: 16px;
-  border-left: 4px solid transparent;
-  transition: all 0.3s ease;
-}
-
-/* Hover och aktiv */
-.nav-menu a:hover,
-.nav-menu .active a {
-  background-color: #1f2937;
-  border-left: 4px solid #3b82f6;
-  color: white;
-  font-weight: bold;
-}
-
-/* Hjälp-länken längst ner */
-
-.help{
-  margin-top:auto;
-  font-size:16px;
-  display:flex; align-items:center; gap:10px;
-  color:var(--sidebar-muted);
-  cursor:pointer;
-  padding-left:10px; padding-top:20px;
-}
-
-
-/* === Huvudinnehåll === */
-.main {
+.main{
   margin-left: 240px;
   padding: 40px;
   flex: 1;
-  background: linear-gradient(to bottom, #f9fafb, #f4f5f7);
   min-height: 100vh;
+  /* din originalbakgrund i light, annars en mjuk variant */
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--bg) 92%, var(--card) 8%),
+      var(--bg)
+    );
+}
+:root:not([data-theme]), :root[data-theme="light"] .main{
+  background: linear-gradient(to bottom, #f9fafb, #f4f5f7);
 }
 
-/* === Visuell hierarki === */
-.subtitle {
-  margin-top: 8px;
-  margin-bottom: 30px;
-  font-size: 16px;
-  color: #6b7280;
+.subtitle{
+  margin-top: 8px; margin-bottom: 30px;
+  font-size: 16px; color: var(--mk-muted);
 }
 
-/* === Kortkomponent (inkl. glassmorphism) === */
-.card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(6px);
+/* ===== Kort (glassmorphism enligt din original) ===== */
+.card{
+  background: color-mix(in srgb, var(--card) calc(var(--mk-card-alpha)*100%), transparent);
+  backdrop-filter: blur(var(--mk-blur));
+  -webkit-backdrop-filter: blur(var(--mk-blur));
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 32px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  transition: transform .25s ease, box-shadow .25s ease;
   cursor: pointer;
 }
-
-.card:hover {
+.card:hover{
   transform: translateY(-6px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
 }
-
-.card p {
-  font-size: 14.5px;
-  color: #4b5563;
-  line-height: 1.6;
+.card p{ font-size: 14.5px; color: var(--mk-muted); line-height: 1.6; }
+.card .platform{
+  display:flex; align-items:center; gap:12px; font-size:20px;
+  font-weight:600; margin-bottom:14px;
 }
+.card .platform img{ width:26px; height:26px; object-fit:contain; }
 
-.card .platform {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 14px;
-}
+/* ===== Widgets (identisk light-look, tematiseras annars) ===== */
 
-.card .platform img {
-  width: 26px;
-  height: 26px;
-  object-fit: contain;
-}
-
-/* === Hero-liknande AI-kort === */
-.card.ai-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 32px;
-  background: linear-gradient(to right, #eef2ff, #f4f5f7);
-}
-
-.card.ai-card img {
-  max-width: 160px;
-  height: auto;
-}
-
-/* === AI-knapp === */
-.card button.ai-button {
-  background: linear-gradient(to right, #9963f1, #3b82f6);
-  border-radius: 20px;
-  font-weight: 600;
-  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
-  color: white;
-  padding: 10px 18px;
-  font-size: 14px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
-
-.card button.ai-button:hover {
-  background: linear-gradient(to right, #af4ed9, #25e1eb);
-  box-shadow: 0 6px 14px rgba(46, 150, 214, 0.3);
-  transform: translateY(-1px);
-}
-
-/* === Bakgrundsillustration till AI === */
-.card.ai-background {
-  background: linear-gradient(135deg, #eef2ff, #ba9af5);
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: right bottom;
-  position: relative;
-  overflow: hidden;
-  border: 2px solid #c7d2fe;
-}
-
-.card.ai-background::before {
-  content: '';
-  position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 160px;
-  height: 160px;
-  background: radial-gradient(circle, #6366f1 0%, transparent 70%);
-  opacity: 0.2;
-  z-index: 0;
-}
-
-.card.ai-background h2,
-.card.ai-background p,
-.card.ai-background button {
-  position: relative;
-  z-index: 1;
-}
-
-/* === Vanlig knapp (ej AI) === */
-.card button {
-  margin-top: 16px;
-  padding: 10px 18px;
-  background-color: #3b82f6;
-  color: white;
-  font-size: 14px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
-}
-
-.card button:hover {
-  background-color: #2563eb;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
-  transform: translateY(-1px);
-}
-
-/* === Annonsknappgrupp === */
-.button-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 43px; /* mer spacing mellan boxarna */
-  justify-content: flex-start;
-}
-
-
-
-.card.automatiska-annonser p {
-  margin-bottom: 35px; /* Ökar avståndet till knapparna nedanför */
-}
-
-.ad-button {
-  display: inline-block;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.ad-button img {
-  width: 70px; /* justera storlek efter behov */
-  height: auto;
-  border-radius: 12px; /* ta bort om du vill ha skarpa hörn */
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.ad-button:hover img {
-  transform: scale(1.1);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-}
-
-.ad-button.meta img {
-  width: 80px;
-}
-
-.ad-button.tiktok img {
-  width: 65px;
-  height: auto;
-  display: block;
-}
-
-
-
-.ad-button.tiktok {
-  all: unset;
-  display: inline-block;
-  cursor: pointer;
-}
-
-
-
-/* === Återställ stil på länk-knappar === */
-.ad-button {
-  text-decoration: none;     /* Ta bort understrykning */
-  color: inherit;            /* Använd ärvd textfärg */
-}
-
-.ad-button span {
-  color: inherit;            /* Säkerställ att texten inte blir lila */
-  }
-
-/* === Spinner för laddning === */
-.spinner {
-  width: 16px;
-  height: 16px;
-  border: 3px solid white;
-  border-top: 3px solid transparent;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  display: inline-block;
-  vertical-align: middle;
-  margin-left: 8px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* === Responsiv layout === */
-@media (max-width: 768px) {
-  .main {
-    padding: 20px;
-  }
-
-  .button-group {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 16px;
-    justify-content: flex-start;
-  }
-
-  .card.ai-card {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .card.ai-card img {
-    margin-top: 16px;
-  }
-}
-
-/* === Specialeffekt för rådgivning === */
-.card.support-highlight {
-  background: linear-gradient(to right, #e0f2fe, #5be1c4);
-  border-left: 6px solid #38bdf8;
-  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.2);
-}
-
-.card.support-highlight h2 {
-  color: #353e42;
-}
-
-.card.support-highlight button {
-  background: linear-gradient(to right, #0ea5e9, #0284c7);
-  font-weight: 600;
-  border-radius: 12px;
-}
-
-.card.support-highlight button:hover {
-  background: linear-gradient(to right, #0284c7, #0369a1);
-}
-
-/* === Förbättrad Automatiska Annonser-ruta === */
-.card.automatiska-annonser {
-  background: linear-gradient(135deg, #f0f4ff, #f4f5f7);
-  backdrop-filter: blur(10px);
+/* Automatiska annonser */
+.card.automatiska-annonser{
+  background: linear-gradient(135deg, var(--mk-ads-a), var(--mk-ads-b));
   border-radius: 20px;
   padding: 32px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
-  animation: gradientMove 12s ease infinite;
-  position: relative;
-  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+  position: relative; overflow: hidden;
 }
-
-.card.automatiska-annonser::before {
-  content: '';
-  position: absolute;
-  top: -60px;
-  left: -60px;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, white 0%, transparent 70%);
-  opacity: 0.1;
-  z-index: 0;
+.card.automatiska-annonser::before{
+  content:''; position:absolute; top:-60px; left:-60px;
+  width:200px; height:200px;
+  background: radial-gradient(circle, var(--mk-ads-glow) 0%, transparent 70%);
+  opacity:.1; z-index:0;
 }
-
 .card.automatiska-annonser h2,
 .card.automatiska-annonser p,
-.card.automatiska-annonser .button-group {
-  position: relative;
-  z-index: 1;
+.card.automatiska-annonser .button-group{ position: relative; z-index: 1; }
+
+/* AI-studion */
+.card.ai-card{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:32px;
+  background: linear-gradient(to right, var(--mk-ai-a), var(--mk-ai-b));
+  border: 2px solid var(--mk-ai-border);
+}
+.card.ai-card img{ max-width:160px; height:auto; }
+.card.ai-background{ position:relative; overflow:hidden; }
+.card.ai-background::before{
+  content:''; position:absolute; top:-40px; right:-40px;
+  width:160px; height:160px;
+  background: radial-gradient(circle, var(--mk-ai-glow) 0%, transparent 70%);
+  opacity:.2; z-index:0;
+}
+.card.ai-background h2,
+.card.ai-background p,
+.card.ai-background button{ position:relative; z-index:1; }
+
+/* Support */
+.card.support-highlight{
+  background: linear-gradient(to right, var(--mk-supp-a), var(--mk-supp-b));
+  border-left: 6px solid var(--mk-supp-border);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--mk-supp-border) 20%, transparent);
+}
+.card.support-highlight h2{ color: #353e42; }
+:root[data-theme="dark"] .card.support-highlight h2{ color: var(--mk-text); }
+
+/* ===== Knappar ===== */
+.card button,
+.card button.ai-button{
+  margin-top: 16px;
+  padding: 10px 18px;
+  background: linear-gradient(to right, var(--mk-btn-a), var(--mk-btn-b));
+  color: #fff; font-size: 14px; border: none; border-radius: 12px; cursor: pointer;
+  transition: all .2s ease-in-out;
+  box-shadow: 0 4px 12px var(--mk-btn-shadow);
+}
+.card button:hover,
+.card button.ai-button:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.03);
 }
 
-@keyframes gradientMove {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+/* ===== Annonsknappgrupp ===== */
+.button-group{ display:flex; flex-wrap:wrap; gap:43px; justify-content:flex-start; }
+.card.automatiska-annonser p{ margin-bottom:35px; }
+
+.ad-button{
+  display:inline-block; background:none; border:none; padding:0; cursor:pointer;
+  text-decoration:none; color:inherit;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.ad-button img{
+  width:70px; height:auto; border-radius:12px;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.ad-button:hover img{ transform: scale(1.1); box-shadow: 0 6px 18px rgba(0,0,0,.15); }
+.ad-button.meta img{ width:80px; }
+.ad-button.tiktok img{ width:65px; height:auto; display:block; }
+.ad-button.tiktok{ all: unset; display:inline-block; cursor:pointer; }
+.ad-button span{ color: inherit; }
+
+/* ===== Spinner ===== */
+.spinner{
+  width:16px; height:16px;
+  border:3px solid #fff; border-top:3px solid transparent;
+  border-radius:50%; animation: spin .8s linear infinite;
+  display:inline-block; vertical-align:middle; margin-left:8px;
+}
+@keyframes spin{ to{ transform: rotate(360deg); } }
+
+/* ===== Responsivitet ===== */
+@media (max-width:768px){
+  .main{ padding:20px; }
+  .button-group{ flex-direction:row; flex-wrap:wrap; gap:16px; justify-content:flex-start; }
+  .card.ai-card{ flex-direction:column; text-align:center; }
+  .card.ai-card img{ margin-top:16px; }
 }
 
-.hamburger-menu {
-    display: none;
-}
+/* ===== Hamburger (mobil) ===== */
+.hamburger-menu{ display:none; }
+@media (max-width:768px){
+  .hamburger-menu{
+    display:block; position:fixed; top:20px; left:20px; z-index:3000;
+    font-size:28px; background:none; border:none; cursor:pointer; color:#1f2937;
+  }
+  body.menu-open .hamburger-menu{ color:#fff; }
 
-@media (max-width: 768px) {
-    .hamburger-menu {
-        display: block;
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        z-index: 3000;
-        font-size: 28px;         /* samma som analytics */
-        background: none;
-        border: none;
-        color: #1f2937;          /* blir vit när body.menu-open är aktiv */
-        cursor: pointer;
-    }
-    
-    body.menu-open .hamburger-menu {
-        color: white;
-    }
+  .sidebar{
+    left:-240px; visibility:hidden; opacity:0; pointer-events:none;
+    transition:left .3s ease, opacity .3s ease;
+  }
+  .sidebar.active{ left:0; visibility:visible; opacity:1; pointer-events:auto; }
 
-    .sidebar {
-        left: -240px;
-        visibility: hidden;
-        opacity: 0;
-        pointer-events: none;
-        transition: left 0.3s ease, opacity 0.3s ease;
-    }
-
-    .sidebar.active {
-        left: 0;
-        visibility: visible;
-        opacity: 1;
-        pointer-events: auto;
-    }
-
-    .main {
-        margin-left: 0;
-        padding: 20px;
-    }
-
-    .main h1,
-    .main .page-title {
-        margin-left: 48px;
-        margin-top: -12px;
-    }
-    .subtitle {
-        margin-left: 48px;
-        margin-top: 4px;
-    }
+  .main{ margin-left:0; padding:20px; }
+  .main .page-title{ margin-left:48px; margin-top:-12px; }
+  .subtitle{ margin-left:48px; margin-top:4px; }
 }

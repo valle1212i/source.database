@@ -4,39 +4,59 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kundportal - Utbetalningsrapporter</title>
+
+  <!-- TIDIGT: Tema (FOUC-skydd) -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="CSS/theme.css" />
   <link rel="stylesheet" href="CSS/rapporter.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-  />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- jsPDF (för exportPDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-/eW3r7cKk7vA2sSg6o2cU4G3L9A8f6Jg7V7i3F0f0q3w7QDi5jWeyq1HkL7qg3c0d1cR2qvq8cJ5Hnq2j0p2JQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
- <div class="sidebar">
-  <div class="logo">
-    <a href="customerportal.html">
-      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
-    </a>
-  </div>
- <ul class="nav-menu">
-  <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
-  <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
-  <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
-  <li class="active"><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
-  <li><a href="betalningslank.html"><i class="fas fa-link"></i> Betalningslänk</a></li>
-  <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
-  <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
-  <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
-  <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
-  <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
-  <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
-</ul>
-   <div class="help">
+  <!-- Hamburger (mobil) -->
+  <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">☰</button>
+
+  <!-- ===== SIDOMENY ===== -->
+  <aside class="sidebar" aria-label="Sidomeny">
+    <div class="logo">
+      <a href="customerportal.html">
+        <img src="images/logo.png" alt="Logotyp" class="logo-img" />
+      </a>
+    </div>
+
+    <ul class="nav-menu">
+      <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+      <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+      <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+      <li class="active"><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+      <li><a href="betalningslank.html"><i class="fas fa-link"></i> Betalningslänk</a></li>
+      <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+      <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+      <li><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+      <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+      <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+      <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+    </ul>
+
+    <div class="help">
       <a href="faq.html" style="color:#9ca3af; text-decoration:none;">
         <i class="fas fa-circle-question"></i> Hjälp / FAQ
       </a>
     </div>
-  </div>
+  </aside>
+
   <div class="main">
     <div class="profile-wrapper">
       <div class="profile-icon" id="profileToggle">--</div>
@@ -49,8 +69,7 @@
       </div>
     </div>
 
-    <!-- Hamburgermeny för mobil -->
-    <button class="hamburger-menu">☰</button>
+
 
     <h2 class="page-title">Utbetalningsrapporter</h2>
     <a href="customerportal.html" class="back-button">← Tillbaka till översikt</a>

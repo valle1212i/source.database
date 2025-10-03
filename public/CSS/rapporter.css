@@ -1,375 +1,227 @@
-/* ========== RESET & GRUNDSTIL ========== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f4f5f7;
-  display: flex;
-  color: #333;
-}
-
-/* ========== SIDOPANEL ========== */
-.sidebar {
-  width: 240px;
-  background-color: #111827;
-  color: white;
-  height: 100vh;
-  padding: 30px 20px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  z-index: 999;
-}
-
-.logo {
-  margin-bottom: -10px;
-  text-align: center;
-}
-
-.logo-img {
-  max-width: 120px;
-  height: auto;
-  margin-top: -35px;
-}
-
-/* ========== NAVIGATION ========== */
-.nav-menu {
-  list-style: none;
-  flex-grow: 1;
-  padding: 0;
-  margin: 0;
-}
-
-.nav-menu li {
-  list-style: none;
-}
-
-.nav-menu a {
-  color: white;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 10px;
-  font-size: 16px;
-  border-left: 4px solid transparent;
-  transition: all 0.3s ease;
-}
-
-.nav-menu a:hover,
-.nav-menu .active a {
-  background-color: #1f2937;
-  border-left: 4px solid #3b82f6;
-  font-weight: bold;
-}
-
-/* ========== HJÄLP-LÄNK ========== */
-.help {
-  margin-top: auto;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #9ca3af;
-  cursor: pointer;
-  padding-left: 10px;
-  padding-top: 20px;
-}
 /* ========== HUVUDINNEHÅLL ========== */
-.main {
-  margin-left: 240px;
-  flex-grow: 1;
-  padding: 40px;
+.main{
+  margin-left:240px;
+  flex-grow:1;
+  padding:40px;
+  background:var(--bg);
+  color:var(--text);
 }
 
-.header {
-  font-size: 28px;
-  font-weight: bold;
-  flex-grow: 1;
+.header{
+  font-size:28px;
+  font-weight:700;
+  flex-grow:1;
 }
 
-.header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 30px 40px 0 40px;
-  gap: 20px;
+.header-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  /* undvik dubbel sidopadding eftersom .main redan har padding */
+  padding:0 0 12px 0;
 }
 
-@media (max-width: 768px) {
-  .header,
-  h1, h2 {
-    padding-left: 50px; /* Justerar bort från hamburgermenyn */
-  }
-}
-
-h1, h2 {
-  margin-bottom: 16px;
-}
+h1,h2{ margin-bottom:16px; }
 
 /* ========== PROFILWRAPPER ========== */
-.profile-wrapper {
-  position: fixed;
-  top: 20px;
-  right: 30px;
-  z-index: 1000;
+.profile-wrapper{
+  position:fixed;
+  top:20px;
+  right:24px;
+  z-index:1000;
 }
 
-.profile-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  overflow: hidden;
-  background-color: transparent;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.profile-icon{
+  width:40px; height:40px; border-radius:50%;
+  overflow:hidden; background:transparent;
+  border:1px solid var(--card-border);
+  box-shadow:0 2px 6px rgba(0,0,0,.18);
+  transition:transform .25s ease;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
 }
+.profile-icon img{ width:100%; height:100%; object-fit:cover; display:block; }
+.profile-icon.open{ transform:scale(1.08); }
 
-.profile-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.3s ease;
+.profile-dropdown{
+  position:absolute; top:52px; right:0;
+  background:var(--card); color:var(--text);
+  border-radius:12px; padding:12px; width:220px; display:none; flex-direction:column;
+  box-shadow:0 10px 24px rgba(0,0,0,.14);
+  border:1px solid var(--card-border);
+  z-index:1001;
 }
-
-.profile-icon.open {
-  transform: scale(1.3);
+.profile-dropdown a{
+  text-decoration:none; color:var(--text);
+  padding:8px 6px; border-radius:8px; transition:background .18s ease;
 }
-
-.profile-dropdown {
-  position: absolute;
-  top: 50px;
-  right: 0;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-  padding: 12px;
-  width: 200px;
-  display: none;
-  flex-direction: column;
-  font-size: 14px;
-  z-index: 1001;
+.profile-dropdown a:hover{
+  background:color-mix(in srgb, var(--card) 80%, var(--bg) 20%);
 }
-
-.profile-dropdown a {
-  text-decoration: none;
-  color: #111827;
-  padding: 8px 0;
-  transition: background 0.2s;
-}
-
-.profile-dropdown a:hover {
-  background-color: #f3f4f6;
-  border-radius: 6px;
-  padding-left: 6px;
-}
-
-.profile-email {
-  color: #6b7280;
-  font-size: 13px;
-  margin-bottom: 6px;
-}
+.profile-email{ color:var(--muted); font-size:13px; margin-bottom:6px; }
 
 /* ========== KORT (RAPPORTER) ========== */
-.card {
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  padding: 20px;
-  margin-bottom: 20px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.card{
+  background:var(--card);
+  border:1px solid var(--card-border);
+  border-radius:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  padding:20px; margin-bottom:20px;
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+.card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 6px 16px rgba(0,0,0,.12);
+}
+.card-top{ display:flex; justify-content:space-between; align-items:center; }
+.card-details{ margin-top:10px; }
+.amount{ font-weight:700; color:var(--text); }
+
+/* ========== STATUS ========== */
+/* Temavänliga fallbacks om theme.css saknar varningar/fel */
+:root{
+  --status-info: var(--brand, #3b82f6);
+  --status-ok:   var(--ok, #10b981);
+  --status-warn: #f59e0b;
+  --status-bad:  #ef4444;
 }
 
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+.status{
+  padding:2px 8px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:600;
+  display:inline-flex; align-items:center; gap:6px;
+  border:1px solid color-mix(in srgb, currentColor 40%, transparent);
+  background: color-mix(in srgb, currentColor 12%, transparent);
 }
+.status.open{       color:var(--status-info); }
+.status.progress{   color:var(--status-ok);   }
+.status.warning{    color:var(--status-warn); }
+.status.error{      color:var(--status-bad);  }
 
-.card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+.actions{ margin-top:12px; }
 
-.card-details {
-  margin-top: 10px;
-}
-
-.amount {
-  font-weight: bold;
-  color: #111827;
-}
-
-.status {
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.status.open {
-  color: #3b82f6;
-}
-
-.status.progress {
-  color: #6ee7b7;
-}
-
-.actions {
-  margin-top: 10px;
-}
-
-/* ========== KNAPPAR ========== */
+/* ===== KNAPPAR ===== */
 .black-button {
-  background-color: #111827;
-  color: white;
+  background-color: var(--brand); /* istället för var(--text) */
+  color: #fff;
   border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: 10px 14px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: filter .15s ease, transform .06s ease, box-shadow .18s ease;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 25%, transparent);
 }
 
 .black-button:hover {
-  background-color: #374151;
+  filter: brightness(1.1);
 }
+
+.black-button:active {
+  transform: translateY(1px);
+}
+
+/* För filter-knappar (inne i .filters) */
+.filters button {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--card-border);
+  cursor: pointer;
+  transition: background .2s, color .2s, border-color .2s;
+}
+
+.filters button:hover {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
 
 /* ========== FILTRERINGSFÄLT ========== */
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
+.filters{
+  display:flex; flex-wrap:wrap; gap:10px;
+  margin: 16px 0 20px 0;
 }
-
 .filters input,
 .filters select,
-.filters button {
-  padding: 10px;
-  font-size: 14px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
+.filters button{
+  padding:10px;
+  font-size:14px;
+  border-radius:8px;
+  border:1px solid var(--input-border);
+  background:var(--input-bg);
+  color:var(--text);
+  outline:none;
+  transition:border-color .18s ease, box-shadow .18s ease;
+}
+.filters input:focus,
+.filters select:focus{
+  border-color:var(--input-focus);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--input-focus) 35%, transparent);
 }
 
 /* ========== TILLBAKA-LÄNK ========== */
-.back-button {
-  display: inline-block;
-  margin-bottom: 20px;
-  font-size: 14px;
-  color: #3b82f6;
-  text-decoration: none;
-  font-weight: 500;
+.back-button{
+  display:inline-block;
+  margin: 0 0 16px 0;
+  font-size:14px;
+  color:var(--brand);
+  text-decoration:none;
+  font-weight:600;
 }
-
-.back-button:hover {
-  text-decoration: underline;
-}
+.back-button:hover{ text-decoration:underline; }
 
 /* ========== MODAL (Kvitto/Detaljer) ========== */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 999;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0, 0, 0, 0.4);
+.modal{
+  display:none;
+  position:fixed; inset:0;
+  z-index:1400;
+  background:rgba(0,0,0,.4);
+  backdrop-filter:saturate(110%) blur(2px);
 }
-
-.modal-content {
-  background-color: #fff;
-  margin: 10% auto;
-  padding: 20px;
-  border: 1px solid #888;
-  width: 90%;
-  max-width: 500px;
-  border-radius: 10px;
+.modal-content{
+  background:var(--card);
+  color:var(--text);
+  margin:10% auto;
+  padding:20px;
+  border:1px solid var(--card-border);
+  width:90%; max-width:520px;
+  border-radius:12px;
+  box-shadow:0 18px 40px rgba(0,0,0,.22);
 }
-
-.close {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
+.close{
+  color:var(--muted);
+  float:right; font-size:28px; font-weight:700;
+  cursor:pointer;
 }
-
-.close:hover,
-.close:focus {
-  color: black;
-  text-decoration: none;
-  cursor: pointer;
-}
+.close:hover, .close:focus{ color:var(--text); }
 
 /* ========== RESPONSIVT LÄGE ========== */
-@media (max-width: 768px) {
-  .sidebar {
-    position: fixed;
-    left: -100%;
-    top: 0;
-    width: 240px;
-    height: 100%;
-    background-color: #111827;
-    transition: left 0.3s ease;
-    z-index: 1000;
+@media (max-width: 768px){
+  .main{ margin-left:0; padding:20px; }
+
+  .sidebar{
+    position:fixed; top:0; left:-240px; width:240px; height:100%;
+    background:var(--sidebar-bg); color:var(--sidebar-text);
+    transition:left .28s ease, opacity .28s ease;
+    z-index:1200; visibility:hidden; opacity:0; pointer-events:none;
+  }
+  .sidebar.active{
+    left:0; visibility:visible; opacity:1; pointer-events:auto;
   }
 
-  .sidebar.active {
-    left: 0;
-  }
-
-  .main {
-    margin-left: 0;
-    padding: 20px;
-  }
-
-  .filters {
-    flex-direction: column;
-  }
-
-  body.menu-open {
-    overflow: hidden;
-  }
+  .filters{ flex-direction:column; }
+  body.menu-open{ overflow:hidden; }
 }
 
-/* ===== HAMBURGER-MENY & MOBILSIDOPANEL ===== */
-
-/* Döljs på desktop */
-.hamburger-menu {
-  display: none;
-}
-
-/* Syns bara på mobilskärmar */
-@media (max-width: 768px) {
-  .hamburger-menu {
-    display: block;
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1001;
-    font-size: 28px;
-    background: none;
-    border: none;
-    color: #1f2937;
-    cursor: pointer;
+/* ===== HAMBURGER-MENY ===== */
+.hamburger-menu{ display:none; }
+@media (max-width:768px){
+  .hamburger-menu{
+    display:block; position:fixed; top:20px; left:20px; z-index:1400;
+    font-size:28px; background:none; border:none; cursor:pointer;
+    color:#1f2937;
   }
-
-  body.menu-open .hamburger-menu {
-    color: white;
-  }
+  body.menu-open .hamburger-menu{ color:#fff; }
 }

@@ -1,0 +1,296 @@
+/* =======================================================
+   Gemensam tema + meny (theme.css)
+   - Light som default via :root
+   - Dark/Green/Indigo/Contrast via [data-theme="..."]
+   - Enhetlig sidomeny (.sidebar, .nav-menu, .help)
+   - Mobil hamburger-stöd (via .sidebar.active och body.menu-open)
+   ======================================================= */
+
+/* Reset */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ====== Bas-variabler (Light default) ====== */
+:root{
+  --bg:#ffffff;
+  --text:#111827;
+  --muted:#6b7280;
+
+  --brand:#3b82f6;
+  --brand-2:#5b8cff;
+  --ok:#10b981;
+
+  --card:#ffffff;
+  --card-border:#e5e7eb;
+
+  --input-bg:#ffffff;
+  --input-border:#d1d5db;
+  --input-focus:#93c5fd;
+
+  --sidebar-bg:#111827;
+  --sidebar-hover:#1f2937;
+  --sidebar-text:#ffffff;
+  --sidebar-muted:#9ca3af;
+  --active-left:#3b82f6;
+}
+
+/* ====== Teman ====== */
+:root[data-theme="dark"]{
+  --bg:#0b1020;
+  --text:#e8eefc;
+  --muted:#9fb2d9;
+
+  --card:#121a33;
+  --card-border:rgba(255,255,255,.08);
+
+  --input-bg:#0f1730;
+  --input-border:rgba(255,255,255,.14);
+  --input-focus:#5b8cff;
+
+  --sidebar-bg:#0e1429;
+  --sidebar-hover:#141d3a;
+  --sidebar-text:#e8eefc;
+  --sidebar-muted:#9fb2d9;
+  --active-left:#5b8cff;
+}
+
+:root[data-theme="green"]{
+  --brand:#10b981;
+  --brand-2:#34d399;
+  --active-left:#10b981;
+  /* meny behåller samma grund, men hover kan få lite djupare ton om du vill */
+  /* --sidebar-hover:#0f2b21;  (aktivera om du vill ha gröntonad hover) */
+}
+
+:root[data-theme="indigo"]{
+  --brand:#6366f1;
+  --brand-2:#8b5cf6;
+  --active-left:#6366f1;
+  /* --sidebar-hover:#1d2149; (valfri indigo-hover) */
+}
+
+:root[data-theme="contrast"]{
+  --bg:#ffffff;
+  --text:#000000;
+  --muted:#333333;
+
+  --card:#ffffff;
+  --card-border:#000000;
+
+  --input-bg:#ffffff;
+  --input-border:#000000;
+  --input-focus:#000000;
+
+  --sidebar-bg:#000000;
+  --sidebar-hover:#1a1a1a;
+  --sidebar-text:#ffffff;
+  --sidebar-muted:#c7c7c7;
+  --active-left:#000000;
+}
+
+/* ====== Grundtypografi/layout ====== */
+body{
+  font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ====== ENHETLIG SIDOMENY ====== */
+/* ====== SIDOMENY (nu helt variabelstyrd) ====== */
+.sidebar{
+  width:240px;
+  background:var(--sidebar-bg);
+  color:var(--sidebar-text);
+  height:100vh;
+  padding:30px 20px;
+  position:fixed;
+  top:0; left:0;
+  display:flex; flex-direction:column;
+  z-index:1200;
+}
+.logo{ margin-bottom:-10px; text-align:center; }
+.logo-img{ max-width:120px; height:auto; margin-top:-35px; }
+
+.nav-menu{ list-style:none; flex-grow:1; padding:0; margin:0; }
+.nav-menu li{ list-style:none; }
+.nav-menu a{
+  color:var(--sidebar-text);
+  text-decoration:none;
+  display:flex; align-items:center; gap:10px;
+  padding:12px 10px; font-size:16px;
+  border-left:4px solid transparent;
+  transition:all .25s ease;
+  border-radius:10px;
+}
+.nav-menu a i{ width:18px; text-align:center; }
+
+.nav-menu a:hover,
+.nav-menu .active a,
+.nav-menu a.active,
+.nav-menu a[aria-current="page"]{
+  background:var(--sidebar-hover);
+  border-left-color:var(--brand);
+  color:var(--sidebar-text);
+  font-weight:700;
+}
+
+.help{
+  margin-top:auto;
+  font-size:16px;
+  display:flex; align-items:center; gap:10px;
+  color:var(--sidebar-muted);
+  cursor:pointer;
+  padding-left:10px; padding-top:20px;
+}
+.help a{
+  color:var(--sidebar-muted);
+  text-decoration:none;
+  display:inline-flex; align-items:center; gap:10px;
+  padding:12px 10px; border-left:4px solid transparent;
+  border-radius:10px; transition:all .25s ease;
+}
+.help a:hover{
+  color:var(--sidebar-text);
+  background:var(--sidebar-hover);
+  border-left-color:var(--brand);
+}
+/* ====== Huvudkolumn ====== */
+.main{
+  margin-left: 240px;
+  flex: 1 1 auto;
+  padding: 40px;
+}
+
+/* ====== Inputs/Kort standard (om sidorna vill återanvända) ====== */
+.card{
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  padding: 20px;
+}
+input[type="text"], input[type="email"], input[type="number"], input[type="tel"],
+textarea, select{
+  width: 100%;
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+input:focus, textarea:focus, select:focus{
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--input-focus) 30%, transparent);
+}
+
+/* ====== Hamburger (mobil) ====== */
+.hamburger-menu{
+  display: none;            /* dold på desktop */
+  color: #111827;           /* mörk ikon på ljus bakgrund */
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+body.menu-open .hamburger-menu{ color: #ffffff; } /* vit när menyn är öppen */
+
+/* ====== Mobilanpassning ====== */
+@media (max-width: 768px){
+  .hamburger-menu{
+    display: block;
+    position: fixed;
+    top: 20px; left: 20px;
+    z-index: 1001;
+    font-size: 28px;
+  }
+
+  .sidebar{
+    left: -240px;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: left .28s ease, opacity .28s ease;
+  }
+  .sidebar.active{
+    left: 0;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .main{
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  /* Skjut rubriker lite åt höger så de inte krockar med hamburgaren */
+  .main h1, .main .page-title{ margin-left: 48px; }
+  .main .subtitle{ margin-left: 48px; }
+}
+/* ======= Global profilwidget (uppe till höger) ======= */
+.profile-wrapper{
+  position: fixed;
+  top: 20px;
+  right: 30px;
+  z-index: 1100;
+}
+
+.profile-icon{
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: transparent;
+  border: 1px solid var(--card-border, #e5e7eb);
+  box-shadow: 0 2px 6px rgba(0,0,0,.12);
+  transition: transform .2s ease;
+  cursor: pointer;
+  display:flex; align-items:center; justify-content:center;
+  padding:0;
+  color: var(--text, #111827);
+  font-weight: 700;
+  font-family: inherit;
+}
+.profile-icon.open{ transform: scale(1.1); }
+
+.profile-dropdown{
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: var(--card, #fff);
+  color: var(--text, #111827);
+  border: 1px solid var(--card-border, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(0,0,0,.12);
+  padding: 12px;
+  width: 220px;
+  display: none;
+  flex-direction: column;
+  font-size: 14px;
+  z-index: 1101;
+}
+
+.profile-dropdown a{
+  text-decoration: none;
+  color: var(--text, #111827);
+  padding: 8px 6px;
+  border-radius: 8px;
+  transition: background .18s ease, padding-left .18s ease;
+}
+.profile-dropdown a:hover{
+  background: #f3f4f6;
+  padding-left: 10px;
+}
+
+.profile-email{
+  color: var(--muted, #6b7280);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+/* Gör plats för profilikonen så den inte överlappar rubriker på små skärmar */
+@media (max-width: 768px){
+  .profile-wrapper{ right: 20px; top: 16px; }
+}
