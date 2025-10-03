@@ -23,11 +23,43 @@ module.exports = function requireTenant(req, _res, next) {
       t = userTen;
     }
   
-    // 4) Sätt på req + spegla in i session för senare rutter
-    req.tenant = t || null;
-    if (t && req.session) req.session.tenant = t;
-  
-    // Viktigt: kasta INTE 400 här. Låt rutter avgöra hur null hanteras.
-    return next();
+     // 4) Sätt på req + spegla in i session för senare rutter (behåll string för bakåtkomp)
+  req.tenant = t || null;
+  if (t && req.session) req.session.tenant = t;
+
+  // 5) Stripe Connect-konto (utan DB-anrop; konfigurerbart)
+  //    a) ENV-karta: STRIPE_ACCOUNT_MAP_JSON = {"tenantA":"acct_123","tenantB":"acct_456"}
+  let stripeAccountId = null;
+  const mapJson = process.env.STRIPE_ACCOUNT_MAP_JSON;
+  if (t && mapJson) {
+    try {
+      const map = JSON.parse(mapJson);
+      if (map && typeof map === 'object' && map[t]) {
+        stripeAccountId = String(map[t]);
+      }
+    } catch (_e) {
+      // ignorerar felaktig JSON tyst (säker default = null)
+    }
+  }
+
+  //    b) Session/användare (om ni redan sparar där)
+  if (!stripeAccountId) {
+    stripeAccountId =
+      req.session?.stripeAccountId ||
+      user?.stripeAccountId ||
+      null;
+  }
+
+
+  // 6) Exponera både enkel och strukturerad form (utan att ändra req.tenant-typen)
+  req.tenantStripeAccountId = stripeAccountId || null;
+  req.tenantInfo = {
+    slug: t || null,
+    stripeAccountId: stripeAccountId || null
   };
+
+  // Viktigt: kasta INTE 400 här. Låt rutter avgöra hur null hanteras.
+  return next();
+};
+
   

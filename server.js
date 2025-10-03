@@ -385,6 +385,7 @@ app.use('/api/invoices', require('./routes/invoiceRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/support', require('./routes/support'));
 app.use('/api/support/inbound', require('./routes/supportInbound')); // separerad
+const customerInvoiceRoutes = require('./routes/customerInvoiceRoutes');
 app.use('/api/email', require('./routes/emailRoutes'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/payouts', payoutsRoutes);
@@ -404,6 +405,8 @@ app.use('/api/ai-marknadsstudio', require('./routes/aiMarknadsstudio'));
 app.use('/api/ads', require('./routes/adsRoutes'));
 app.use('/api/pageviews', require('./routes/pageviews_ext.js'));
 app.use('/vendor', express.static(path.join(__dirname, 'vendor')));
+app.use('/api/customer-invoices', customerInvoiceRoutes);
+
 
 
 

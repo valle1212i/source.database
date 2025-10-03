@@ -23,7 +23,48 @@
   <!-- Ikoner + typsnitt -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <!-- CSRF-token (servern ska skriva in värdet här) -->
+  <meta name="csrf-token" content="">
+
+  <!-- Säkra fetch-hjälpare: API_BASE, CSRF, same-origin credentials -->
+  <script>
+    // Respektera ev. global API_BASE, annars tom sträng (samma origin)
+    if (!('API_BASE' in window)) window.API_BASE = '';
+
+    function getCsrfToken(){
+      const meta = document.querySelector('meta[name="csrf-token"]');
+      return meta ? meta.getAttribute('content') : null;
+    }
+
+    function toAbsolute(url){
+      return /^https?:\/\//i.test(url) ? url : (window.API_BASE + url);
+    }
+
+    function isSameAuthOrigin(url){
+      try{
+        const u = new URL(url, location.origin);
+        const a = new URL(window.API_BASE || '', location.origin);
+        return u.origin === a.origin;
+      }catch{ return true; }
+    }
+
+    async function authedFetch(url, opts = {}){
+      const absoluteUrl = toAbsolute(url);
+      const headers = new Headers(opts.headers || {});
+      const csrf = getCsrfToken();
+      if (csrf) headers.set('X-CSRF-Token', csrf);
+
+      const finalOpts = {
+        ...opts,
+        headers,
+        credentials: isSameAuthOrigin(absoluteUrl) ? 'include' : 'omit', // skicka cookies bara till vårt API
+        mode: 'cors'
+      };
+      return fetch(absoluteUrl, finalOpts);
+    }
+  </script>
 </head>
+
 <body>
   <!-- Hamburger (mobil) -->
   <button id="menuToggle" class="hamburger-menu" aria-label="Visa meny">☰</button>
@@ -71,71 +112,265 @@
   </div>
 </div>
 
-    <div class="header">Fakturor</div>
-    <p class="subtitle">Här hittar du alla dina fakturor, betalstatus och nedladdningar.</p>
+<div class="header">Fakturor</div>
+<p class="subtitle">Här visas dina fakturor från Source.</p>
 
-    <div class="tabs">
-      <button class="tab active" onclick="filterTable('all')">Alla</button>
-      <button class="tab" onclick="filterTable('paid')">Betalda</button>
-      <button class="tab" onclick="filterTable('overdue')">Förfallna</button>
-    </div>
+<!-- Topp: piller + "Skapa faktura" -->
+<div class="invoices-topbar">
+  <div class="pill-group" role="tablist" aria-label="Fakturastatus">
+    <button class="tab-pill active" data-filter="paid" role="tab" aria-selected="true">Betalda</button>
+    <button class="tab-pill" data-filter="unpaid" role="tab" aria-selected="false">Obetalda</button>
+    <button class="tab-pill" data-filter="overdue" role="tab" aria-selected="false">Förfallna</button>
+  </div>
+  <button id="createInvoiceBtn" class="btn-primary">Skapa faktura</button>
+</div>
+
+<!-- Två kolumner -->
+<div class="invoices-layout">
+  <!-- Vänster: tabell + förhandsvisning -->
+  <section class="invoices-panel" aria-labelledby="invoices-table-title">
+    <h2 id="invoices-table-title" class="visually-hidden">Fakturor</h2>
 
     <table class="invoice-table">
       <thead>
         <tr>
-          <th>Fakturanr</th>
+          <th>Faktura</th>
           <th>Datum</th>
           <th>Belopp</th>
           <th>Status</th>
-          <th>Åtgärder</th>
+          <th></th>
         </tr>
       </thead>
-      <tbody>
-        <tr data-status="paid">
-          <td>#1001</td>
-          <td>2025-06-12</td>
-          <td>2 300 kr</td>
-          <td class="status paid">Betald</td>
-          <td><a href="#">Ladda ner</a></td>
-        </tr>
-        <tr data-status="overdue">
-          <td>#1002</td>
-          <td>2025-06-05</td>
-          <td>3 500 kr</td>
-          <td class="status overdue">Förfallen</td>
-          <td><a href="#">Ladda ner</a></td>
-        </tr>
-        <tr data-status="overdue">
-          <td>#1003</td>
-          <td>2025-05-29</td>
-          <td>1 200 kr</td>
-          <td class="status overdue">Förfallen</td>
-          <td><a href="#">Ladda ner</a></td>
-        </tr>
+      <tbody id="invoiceRows">
+        <!-- Populeras via JS från API -->
+      </tbody>
+      <tbody id="invoiceEmpty" style="display:none;">
+        <tr><td colspan="5" class="muted">Inga fakturor i denna kategori.</td></tr>
       </tbody>
     </table>
-  </div>
 
-  <script>
-    function filterTable(status) {
-      const rows = document.querySelectorAll("tbody tr");
-      rows.forEach(row => {
-        const rowStatus = row.getAttribute("data-status");
-        if (status === "all" || rowStatus === status) {
-          row.style.display = "";
-        } else {
-          row.style.display = "none";
-        }
+    <div class="card preview-card">
+      <div class="card-header">
+        <span>Förhandsvisning</span>
+        <span class="muted">Förhandsvisning</span>
+      </div>
+      <div class="card-body">
+        <div class="preview-row"><span class="muted">KUND</span><span class="muted">—</span></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+      <div class="card-footer total-row">
+        <span class="muted">Totalt</span>
+        <strong>0 kr</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- Höger: skapa faktura (för kundens egna kunder, Stripe Connect senare) -->
+  <aside class="create-panel" aria-labelledby="create-invoice-title">
+    <h2 id="create-invoice-title">Skapa faktura</h2>
+
+    <form id="createInvoiceForm" novalidate>
+      <label for="ci-customer">Kund</label>
+      <input id="ci-customer" name="customer" type="text" placeholder="Företag / person" required />
+
+      <label for="ci-email">E-post</label>
+      <input id="ci-email" name="email" type="email" placeholder="kund@exempel.se" required />
+
+      <div class="items-grid">
+        <div class="items-header">
+          <span>Beskrivning</span>
+          <span>Belopp</span>
+        </div>
+        <div id="ci-items" class="items-body">
+          <div class="item-row">
+            <input name="item[0].desc" type="text" placeholder="Tjänst/vara" />
+            <input name="item[0].amount" type="number" step="0.01" min="0" placeholder="0,00" inputmode="decimal" />
+          </div>
+        </div>
+        <button type="button" id="addItem" class="btn-ghost">+ Lägg till rad</button>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">Skicka faktura</button>
+      </div>
+    </form>
+  </aside>
+</div>
+
+<script>
+  // === API-endpoints (byt på ett ställe vid behov) ===
+  const ENDPOINTS = {
+    listInvoices: (status) => `/api/invoices?status=${encodeURIComponent(status)}`,          // Source → kundens fakturor till Source
+    downloadInvoice: (id)   => `/api/invoices/${encodeURIComponent(id)}/pdf`,               // PDF-nedladdning
+    createCustomerInvoice: () => `/api/customer-invoices`                                   // Kund → deras egna kunder (Stripe Connect)
+  };
+
+  // Formatterare (svenska)
+  const fmtCurrency = (amountMinor, currency = 'SEK') => {
+    // amountMinor i ören (minor units). Om API redan returnerar i kronor, konvertera inte.
+    const val = (typeof amountMinor === 'number') ? (amountMinor / 100) : Number(amountMinor || 0);
+    return new Intl.NumberFormat('sv-SE', { style: 'currency', currency }).format(val);
+  };
+  const fmtDate = (iso) => {
+    try { return new Date(iso).toLocaleDateString('sv-SE', { year:'numeric', month:'short', day:'numeric' }); }
+    catch { return iso || ''; }
+  };
+
+  function badgeHTML(status){
+    const s = (status || '').toLowerCase();
+    if (s === 'paid' || s === 'betald')         return '<span class="badge badge-paid">Betald</span>';
+    if (s === 'overdue' || s === 'förfallen')   return '<span class="badge badge-overdue">Förfallen</span>';
+    return '<span class="badge badge-unpaid">Obetald</span>';
+  }
+
+  function mapRow(rec){
+    // Flexibel mappning: stöd olika fältnamn utan att låsa format
+    const id   = rec.id || rec.invoiceId || rec._id || rec.number || rec.invoice_number;
+    const num  = rec.number || rec.invoice_number || `#${id ?? ''}`.replace(/^([^#])/, '#$1');
+    const date = rec.date || rec.created_at || rec.createdAt || rec.issued_at || rec.issuedAt;
+    const amt  = rec.amount_total || rec.total || rec.amount || rec.amount_due || rec.amountDue;
+    const cur  = rec.currency || 'SEK';
+    const st   = rec.status || rec.state;
+
+    return {
+      id, num: num || (id ? `#${id}` : ''), date: fmtDate(date), amount: fmtCurrency(amt, cur), status: st
+    };
+  }
+
+  async function loadInvoices(status){
+    const tbody = document.getElementById('invoiceRows');
+    const empty = document.getElementById('invoiceEmpty');
+    tbody.innerHTML = ''; empty.style.display = 'none';
+
+    try{
+      const res = await authedFetch(ENDPOINTS.listInvoices(status), { method: 'GET' });
+      if (!res.ok) throw new Error('Kunde inte hämta fakturor');
+      const payload = await res.json();
+      const items = Array.isArray(payload?.data) ? payload.data : (Array.isArray(payload) ? payload : []);
+      if (!items.length){
+        empty.style.display = '';
+        return;
+      }
+      const rowsHtml = items.map(mapRow).map(r => `
+        <tr data-status="${(r.status || '').toLowerCase()}">
+          <td>${r.num || ''}</td>
+          <td>${r.date || ''}</td>
+          <td>${r.amount || ''}</td>
+          <td>${badgeHTML(r.status)}</td>
+          <td>
+            ${r.id ? `<button class="icon-btn download-btn" data-id="${String(r.id).replace(/"/g,'&quot;')}" title="Ladda ner" aria-label="Ladda ner ${r.num || 'faktura'}"><i class="fas fa-download"></i></button>` : ''}
+          </td>
+        </tr>
+      `).join('');
+      tbody.innerHTML = rowsHtml;
+
+      // bind nedladdning
+      tbody.querySelectorAll('.download-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          if (!id) return;
+          // Låt servern svara med Content-Disposition: attachment
+          location.href = toAbsolute(ENDPOINTS.downloadInvoice(id));
+        });
       });
+    }catch(err){
+      console.error(err);
+      empty.style.display = '';
+    }
+  }
 
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-      event.target.classList.add('active');
+  (function initInvoicesUI(){
+    const pills = document.querySelectorAll('.tab-pill');
+
+    function setActive(btn){
+      pills.forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
     }
 
-    // Valfri: spara tema i localStorage
-    const savedTheme = localStorage.getItem("theme") || "light";
-    document.body.classList.add(`${savedTheme}-theme`);
-  </script>
+    pills.forEach(p => {
+      p.addEventListener('click', (e) => {
+        const filter = e.currentTarget.dataset.filter;
+        setActive(e.currentTarget);
+        loadInvoices(filter);
+      });
+    });
+
+    // Förvald vy: Betalda (matchar mockup)
+    loadInvoices('paid');
+
+    // Skapa rad i formuläret
+    document.getElementById('addItem')?.addEventListener('click', () => {
+      const idx = document.querySelectorAll('#ci-items .item-row').length;
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML = `
+        <input name="item[${idx}].desc" type="text" placeholder="Tjänst/vara" />
+        <input name="item[${idx}].amount" type="number" step="0.01" min="0" placeholder="0,00" inputmode="decimal" />
+      `;
+      document.getElementById('ci-items').appendChild(row);
+    });
+
+    // Scroll till formuläret
+    document.getElementById('createInvoiceBtn')?.addEventListener('click', () => {
+      document.getElementById('create-invoice-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    // Submit: förberedd för Stripe Connect i backend
+    document.getElementById('createInvoiceForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const fd = new FormData(e.currentTarget);
+      const customer = (fd.get('customer') || '').toString().trim();
+      const email    = (fd.get('email') || '').toString().trim();
+
+      const items = Array.from(document.querySelectorAll('#ci-items .item-row')).map((row, i) => {
+        const desc   = row.querySelector(`input[name="item[${i}].desc"]`)?.value?.toString() || '';
+        const amount = row.querySelector(`input[name="item[${i}].amount"]`)?.value || '0';
+        return { description: desc, amount_minor: Math.round(parseFloat(amount.replace(',', '.')) * 100) || 0, currency: 'SEK' };
+      }).filter(x => x.description || x.amount_minor > 0);
+
+      // Minimal validering klient-side
+      if (!customer || !email || !items.length){
+        alert('Fyll i kund, e-post och minst en rad.');
+        return;
+      }
+
+      try{
+        const res = await authedFetch(ENDPOINTS.createCustomerInvoice(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customer_name: customer, customer_email: email, items })
+        });
+        if (!res.ok) throw new Error('Kunde inte skapa faktura');
+        const data = await res.json();
+
+        // Förväntat backend-beteende (exempel): returnera invoiceId/hostedUrl
+        if (data?.hosted_invoice_url){
+          // Öppna Stripe Hosted Invoice Page om backend redan skapat en utkast-faktura via Connect
+          window.open(data.hosted_invoice_url, '_blank', 'noopener');
+        }else{
+          alert('Fakturan har skapats. (Backend kan konfigurera Hosted Invoice Page/utskick.)');
+        }
+        e.currentTarget.reset();
+        document.getElementById('ci-items').innerHTML = `
+          <div class="item-row">
+            <input name="item[0].desc" type="text" placeholder="Tjänst/vara" />
+            <input name="item[0].amount" type="number" step="0.01" min="0" placeholder="0,00" inputmode="decimal" />
+          </div>
+        `;
+      }catch(err){
+        console.error(err);
+        alert('Ett fel uppstod vid skapande av faktura.');
+      }
+    });
+  })();
+
+  // Tema (oförändrat)
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  document.body.classList.add(`${savedTheme}-theme`);
+</script>
+
   <script>
   const toggle = document.getElementById('profileToggle');
   const menu = document.getElementById('profileMenu');
