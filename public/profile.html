@@ -9,165 +9,313 @@
 <body>
   <div class="container">
     <h1>Min profil</h1>
-    <form id="profileForm">
-      <label for="fullname">Namn:</label>
-      <input type="text" id="fullname" />
 
-      <label for="email">E-post:</label>
-      <input type="email" id="email" />
+    <div class="profile-layout">
+      <main class="profile-content">
+        <!-- Header-kortet -->
+        <section class="profile-header">
+          <div class="ph-left">
+            <div class="avatar">
+              <img id="profileAvatar" src="" alt="Profilbild"/>
+            </div>
+            <div class="identity">
+              <div class="badges" id="planBadges"></div>
+              <h2 id="profileName" class="display-name">—</h2>
+              <div id="profileEmail" class="muted">—</div>
+            </div>
+          </div>
+          <a href="#edit" class="edit-link">✎ Redigera</a>
+        </section>
 
-      <label for="password">Nytt lösenord:</label>
-      <input type="password" id="password" placeholder="********" />
+        <!-- Flikar (visuell, en panel just nu) -->
+        <nav class="tabs" aria-label="Profilflikar">
+          <button class="tab active" data-tab="details">Profiluppgifter</button>
+          <button class="tab" data-tab="settings">Inställningar</button>
 
-      <label for="language">Språk:</label>
-      <select id="language">
-        <option value="sv">Svenska</option>
-        <option value="en">Engelska</option>
-      </select>
+        </nav>
 
-      <label for="profilePic">Profilbild:</label>
-      <input type="file" id="profilePic" name="profilePic" accept="image/*" />
-      <div id="profilePicStatus" style="margin:6px 0 0;color:#666;font-size:0.9em;"></div>
+        <!-- Panel med formulär (två kolumner) -->
+        <section class="panel">
+          <form id="profileForm" class="grid-2">
+            <!-- Namn / E-post -->
+            <div class="field">
+              <label for="fullname">Namn</label>
+              <input type="text" id="fullname" />
+            </div>
 
-      <div class="profile-pic-preview">
-        <img id="profilePicPreview" src="" alt="" />
-        <button type="button" id="removePicBtn" class="remove-btn">Ta bort bild</button>
+            <div class="field">
+              <label for="email">E-post</label>
+              <input type="email" id="email" />
+            </div>
+
+            <!-- Språk / Lösenord -->
+            <div class="field">
+              <label for="language">Språk</label>
+              <select id="language">
+                <option value="sv">Svenska</option>
+                <option value="en">Engelska</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="password">Nytt lösenord</label>
+              <input type="password" id="password" placeholder="********" />
+            </div>
+
+            <!-- Profilbild (spänner över två kolumner) -->
+            <div class="field span-2">
+              <label for="profilePic">Profilbild</label>
+              <input type="file" id="profilePic" name="profilePic" accept="image/*" />
+              <div id="profilePicStatus" class="hint" style="margin-top:6px;"></div>
+
+              <div class="profile-pic-preview">
+                <img id="profilePicPreview" src="" alt="" />
+                <button type="button" id="removePicBtn" class="remove-btn">Ta bort bild</button>
+              </div>
+            </div>
+
+            <!-- Actions längst ned höger -->
+            <div class="actions span-2">
+              <button type="submit" class="primary">Spara</button>
+            </div>
+          </form>
+          <p id="saveMessage"></p>
+        </section>
+      </main>
+      <!-- Inställningar-panel (börjar dold) -->
+<section class="panel" id="settingsPanel" hidden>
+  <form id="settingsForm" class="grid-2">
+    <div class="field">
+      <label>Tvåfaktorsinloggning (TOTP)</label>
+      <div class="value-muted" id="twofaStatus">Inte aktiverad</div>
+      <div style="margin-top:8px; display:flex; gap:8px;">
+        <button type="button" id="setup2faBtn" class="primary">Aktivera/Återställ 2FA</button>
       </div>
+    </div>
 
-      <button type="submit">Spara ändringar</button>
-      <button type="button" class="back-btn" onclick="history.back()">← Tillbaka</button>
-    </form>
-    <p id="saveMessage"></p>
+    <div class="field">
+      <label>Fakturering & paket</label>
+      <div class="hint">Ditt paket visas överst. Hantera betalningar i kundportalen.</div>
+      <div style="margin-top:8px;">
+        <button type="button" id="billingPortalBtn" class="primary">Hantera fakturering</button>
+      </div>
+    </div>
+  </form>
+  <p id="settingsMessage"></p>
+</section>
+
+    </div>
   </div>
 
   <script>
+    // ======= Befintlig logik + header/paket-badge =======
     let removeImage = false;
+
+    // Rendera paket-badge (Bas/Grower/Enterprise) med färger via CSS-klasser
+    function renderPlanBadge(plan){
+      const c = document.getElementById('planBadges');
+      if (!c) return;
+      c.innerHTML = ''; // nollställ
+
+      let cls = 'unknown', text = 'Okänt paket';
+      if (plan) {
+        const p = (''+plan).toLowerCase();
+        if (p === 'bas') { cls = 'bas'; text = 'Bas'; }
+        else if (p === 'grower') { cls = 'grower'; text = 'Grower'; }
+        else if (p === 'enterprise') { cls = 'enterprise'; text = 'Enterprise'; }
+      }
+      const span = document.createElement('span');
+      span.className = `badge ${cls}`;
+      span.textContent = text;
+      c.appendChild(span);
+    }
+    // Flikväxling
+(function(){
+  const tabs = document.querySelectorAll('.tabs .tab');
+  const detailsPanel = document.querySelector('.panel');          // första panelen = profiluppgifter
+  const settingsPanel = document.getElementById('settingsPanel'); // nya panelen
+
+  tabs.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      tabs.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+
+      if (btn.dataset.tab === 'settings') {
+        detailsPanel.hidden = true;
+        settingsPanel.hidden = false;
+      } else {
+        detailsPanel.hidden = false;
+        settingsPanel.hidden = true;
+      }
+    });
+  });
+})();
+// Billing portal (Stripe) – backend ska svara {url}
+document.getElementById('billingPortalBtn')?.addEventListener('click', async ()=>{
+  try{
+    const t = await (await fetch('/csrf-token',{credentials:'include'})).json();
+    const r = await fetch('/api/billing/customer-portal',{
+      method:'POST',credentials:'include',
+      headers:{'Content-Type':'application/json','CSRF-Token':t?.csrfToken},
+      body: JSON.stringify({})
+    });
+    const j = await r.json();
+    if(r.ok && j?.url) location.href = j.url;
+    else alert('Kunde inte öppna fakturering.');
+  }catch(_){ alert('Tekniskt fel.'); }
+});
+
+// 2FA – föreslår separat sida med QR
+document.getElementById('setup2faBtn')?.addEventListener('click', ()=>{
+  location.href = '/security/2fa';
+});
+
 
     async function loadProfile() {
       try {
-        const res = await fetch('/api/profile/me');
+        const res = await fetch('/api/profile/me', { credentials: 'include' });
         if (!res.ok) throw new Error("Kunde inte hämta profil");
 
         const user = await res.json();
 
+        // Fyll formulär
         document.getElementById('fullname').value = user.name || '';
         document.getElementById('email').value = user.email || '';
         document.getElementById('language').value = user.language || 'sv';
 
-        const preview = document.getElementById("profilePicPreview");
-const removeBtn = document.getElementById("removePicBtn");
-const statusEl = document.getElementById("profilePicStatus");
+        // Header: namn/e-post
+        document.getElementById('profileName').textContent = user.name || '—';
+        document.getElementById('profileEmail').textContent = user.email || '—';
 
-if (user.profileImage) {
-  preview.src = user.profileImage;
-  preview.style.display = "block";
-  removeBtn.style.display = "inline";
-  if (statusEl) statusEl.textContent = "En profilbild finns sparad (ersätts om du laddar upp en ny).";
-} else {
-  preview.style.display = "none";
-  removeBtn.style.display = "none";
-  if (statusEl) statusEl.textContent = "Ingen profilbild är sparad ännu.";
-}
+        // Paketbadge från flera möjliga fältnamn (plan/package/subscription)
+        const plan = user.plan || user.package || user.subscription || null;
+        renderPlanBadge(plan);
+
+        // Profilbild (preview + avatar i header)
+        const preview = document.getElementById("profilePicPreview");
+        const removeBtn = document.getElementById("removePicBtn");
+        const statusEl = document.getElementById("profilePicStatus");
+        const avatar = document.getElementById("profileAvatar");
+
+        if (user.profileImage) {
+          preview.src = user.profileImage;
+          preview.style.display = "block";
+          removeBtn.style.display = "inline";
+          avatar.src = user.profileImage;
+          if (statusEl) statusEl.textContent = "En profilbild finns sparad (ersätts om du laddar upp en ny).";
+        } else {
+          preview.style.display = "none";
+          removeBtn.style.display = "none";
+          avatar.removeAttribute('src'); // låt CSS/placeholder gälla
+          if (statusEl) statusEl.textContent = "Ingen profilbild är sparad ännu.";
+        }
       } catch (err) {
         console.error("❌ Fel vid inladdning av profil:", err);
         document.getElementById('saveMessage').textContent = "❌ Kunde inte ladda profilen.";
       }
     }
 
+    // Byt bild => uppdatera preview + header-avatar
     document.getElementById("profilePic").addEventListener("change", function (e) {
-  const file = e.target.files[0];
-  const preview = document.getElementById("profilePicPreview");
-  const removeBtn = document.getElementById("removePicBtn");
-  const statusEl = document.getElementById("profilePicStatus");
+      const file = e.target.files[0];
+      const preview = document.getElementById("profilePicPreview");
+      const removeBtn = document.getElementById("removePicBtn");
+      const statusEl = document.getElementById("profilePicStatus");
+      const avatar = document.getElementById("profileAvatar");
 
-  if (file) {
-    preview.src = URL.createObjectURL(file);
-    preview.style.display = "block";
-    removeBtn.style.display = "inline";
-    removeImage = false;
-    if (statusEl) statusEl.textContent = `Vald fil: ${file.name} (ersätter sparad bild när du sparar).`;
-  } else {
-    if (statusEl) statusEl.textContent = "Ingen fil vald.";
-  }
-});
-
-    document.getElementById("removePicBtn").addEventListener("click", () => {
-  if (confirm("Vill du ta bort din profilbild?")) {
-    const preview = document.getElementById("profilePicPreview");
-    const fileInput = document.getElementById("profilePic");
-    const removeBtn = document.getElementById("removePicBtn");
-    const statusEl = document.getElementById("profilePicStatus");
-
-    // Nollställ visning och markera för borttag vid sparning
-    preview.src = "";
-    preview.style.display = "none";
-    fileInput.value = "";
-    removeBtn.style.display = "none";
-    removeImage = true;
-
-    // Tydlig statusrad
-    if (statusEl) statusEl.textContent = "Bild kommer att tas bort när du sparar.";
-  }
-});
-  document.getElementById("profileForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    const name = document.getElementById('fullname').value;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const language = document.getElementById('language').value;
-    const profilePic = document.getElementById('profilePic').files[0];
-
-    const confirmed = confirm("Är du säker på att du vill spara dessa ändringar?");
-    if (!confirmed) return;
-
-    // 1) Hämta CSRF-token
-    let csrfToken;
-    try {
-      const tRes = await fetch('/csrf-token', { credentials: 'include' });
-      const tData = await tRes.json();
-      csrfToken = tData?.csrfToken;
-      if (!csrfToken) throw new Error('Saknar CSRF-token i svar');
-    } catch (err) {
-      console.error('CSRF-token fel:', err);
-      document.getElementById('saveMessage').textContent = "❌ Kunde inte hämta säkerhetstoken. Prova igen.";
-      return;
-    }
-
-    // 2) Bygg formData som tidigare
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("email", email);
-    formData.append("password", password);
-    formData.append("language", language);
-    formData.append("removeImage", removeImage);
-    if (profilePic) formData.append("profilePic", profilePic);
-
-    // 3) Skicka med token i header + cookies
-    try {
-      const res = await fetch("/api/profile/update", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-        headers: { "CSRF-Token": csrfToken }
-      });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        document.getElementById('saveMessage').textContent = "✅ Ändringar sparade!";
-            } else {
-        const msg = (data && (data.message || data.error))
-          ? (data.message || data.error)
-          : `Det gick inte att spara (status ${res.status}).`;
-        document.getElementById('saveMessage').textContent = `⚠️ ${msg}`;
-        console.error("❌ Upload misslyckades:", { status: res.status, data });
+      if (file) {
+        const url = URL.createObjectURL(file);
+        preview.src = url;
+        avatar.src = url;
+        preview.style.display = "block";
+        removeBtn.style.display = "inline";
+        removeImage = false;
+        if (statusEl) statusEl.textContent = `Vald fil: ${file.name} (ersätter sparad bild när du sparar).`;
+      } else {
+        if (statusEl) statusEl.textContent = "Ingen fil vald.";
       }
-    } catch (err) {
-      console.error("Något gick fel:", err);
-      document.getElementById('saveMessage').textContent = "❌ Fel vid uppdatering.";
-    }
-  });
-</script>
+    });
 
+    // Ta bort bild
+    document.getElementById("removePicBtn").addEventListener("click", () => {
+      if (confirm("Vill du ta bort din profilbild?")) {
+        const preview = document.getElementById("profilePicPreview");
+        const fileInput = document.getElementById("profilePic");
+        const removeBtn = document.getElementById("removePicBtn");
+        const statusEl = document.getElementById("profilePicStatus");
+        const avatar = document.getElementById("profileAvatar");
+
+        preview.src = "";
+        preview.style.display = "none";
+        fileInput.value = "";
+        removeBtn.style.display = "none";
+        avatar.removeAttribute('src');
+        removeImage = true;
+
+        if (statusEl) statusEl.textContent = "Bild kommer att tas bort när du sparar.";
+      }
+    });
+
+    // Spara
+    document.getElementById("profileForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById('fullname').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const language = document.getElementById('language').value;
+      const profilePic = document.getElementById('profilePic').files[0];
+
+      const confirmed = confirm("Är du säker på att du vill spara dessa ändringar?");
+      if (!confirmed) return;
+
+      // CSRF-token
+      let csrfToken;
+      try {
+        const tRes = await fetch('/csrf-token', { credentials: 'include' });
+        const tData = await tRes.json();
+        csrfToken = tData?.csrfToken;
+        if (!csrfToken) throw new Error('Saknar CSRF-token i svar');
+      } catch (err) {
+        console.error('CSRF-token fel:', err);
+        document.getElementById('saveMessage').textContent = "❌ Kunde inte hämta säkerhetstoken. Prova igen.";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("email", email);
+      formData.append("password", password);
+      formData.append("language", language);
+      formData.append("removeImage", removeImage);
+      if (profilePic) formData.append("profilePic", profilePic);
+
+      try {
+        const res = await fetch("/api/profile/update", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+          headers: { "CSRF-Token": csrfToken }
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          document.getElementById('saveMessage').textContent = "✅ Ändringar sparade!";
+        } else {
+          const msg = (data && (data.message || data.error))
+            ? (data.message || data.error)
+            : `Det gick inte att spara (status ${res.status}).`;
+          document.getElementById('saveMessage').textContent = `⚠️ ${msg}`;
+          console.error("❌ Upload misslyckades:", { status: res.status, data });
+        }
+      } catch (err) {
+        console.error("Något gick fel:", err);
+        document.getElementById('saveMessage').textContent = "❌ Fel vid uppdatering.";
+      }
+    });
+
+    // Init
+    loadProfile();
+  </script>
 </body>
 </html>

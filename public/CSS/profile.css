@@ -1,134 +1,211 @@
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background: #f4f5f7;
+/* ===============  Design tokens (justera vid behov) =============== */
+:root{
+  --bg: #f6f7fb;        /* sidbakgrund */
+  --card: #f4f6ff;      /* header-kort & panel-bakgrund */
+  --panel: #ffffff;     /* huvudcontainer */
+  --border: #e5e7eb;    /* tunna linjer */
+  --text: #111827;      /* rubrik */
+  --muted: #6b7280;     /* sekundär text */
+  --link: #3b5bff;      /* blå accent (tab/knapp) */
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.08);
+}
+
+/* ===============  Baslayout  =============== */
+*{ box-sizing: border-box; }
+html,body{ height:100%; }
+body{
+  font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  background: var(--bg);
+  color: var(--text);
   margin: 0;
-  padding: 0;
+  line-height: 1.55;
 }
 
-.container {
-  max-width: 500px;
-  margin: 60px auto;
-  background: #ffffff;
-  padding: 40px 30px;
-  border-radius: 16px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
+.container{
+  max-width: 1200px;
+  margin: 24px auto 40px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 20px 20px 28px;
 }
 
-h1 {
-  text-align: center;
+h1{
   font-size: 28px;
-  margin-bottom: 35px;
-  color: #111827;
   font-weight: 700;
+  margin: 6px 0 18px;
 }
 
-form {
-  display: flex;
-  flex-direction: column;
+/* Vi använder bara en kolumn (ingen vänstermeny längre) */
+.profile-layout{ display:block; }
+.profile-content{ max-width: 980px; margin: 0 auto; }
+
+/* ===============  Header-kort  =============== */
+.profile-header{
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.ph-left{ display:flex; gap:16px; align-items:center; }
+
+.avatar{
+  width:72px; height:72px;
+  border-radius: 999px; overflow:hidden;
+  background:#e5e7eb; border: 2px solid #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+.avatar img{ width:100%; height:100%; object-fit: cover; }
+
+.identity{ display:flex; flex-direction:column; gap:6px; }
+.display-name{ margin:0; font-size: 20px; font-weight: 700; line-height:1.2; }
+.muted{ color: var(--muted); font-size: 14px; }
+
+.badges{ display:flex; gap:8px; }
+.badge{
+  font-size:12px; font-weight:700;
+  padding:4px 10px; border-radius:999px;
+  border:1px solid var(--border);
+  display:inline-block;
+}
+/* Paketfärger */
+.badge.bas{
+  background:#eef2ff; color:#1e3a8a; border-color:#c7d2fe;
+}
+.badge.grower{
+  background:#e8f7ef; color:#065f46; border-color:#bfe7d1;
+}
+.badge.enterprise{
+  background:#f3e8ff; color:#5b21b6; border-color:#e9d5ff;
+}
+.badge.unknown{
+  background:#f1f5f9; color:#475569; border-color:#e2e8f0;
 }
 
-label {
+.edit-link{
+  color: var(--link);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.edit-link:hover{ text-decoration: underline; }
+
+/* ===============  Flikar  =============== */
+.tabs{
+  display:flex; gap:24px; align-items:center;
+  border-bottom: 1px solid var(--border);
+  margin: 10px 0 16px; padding-left:4px;
+}
+.tab{
+  appearance:none; background:transparent; border:none;
+  cursor:pointer; padding:10px 0; margin:0;
+  font-weight:600; color:#374151; position:relative;
+}
+.tab[disabled]{ opacity:.45; cursor:not-allowed; }
+.tab.active{ color: var(--link); }
+.tab.active::after{
+  content:""; position:absolute; left:0; right:0; bottom:-1px;
+  height:2px; background: var(--link);
+}
+
+/* ===============  Panel (formulär)  =============== */
+.panel{
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+}
+
+/* Två kolumner – som i bilden */
+.grid-2{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+}
+
+.field{ display:flex; flex-direction:column; }
+.field.span-2{ grid-column: 1 / -1; }
+
+label{
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
   margin-bottom: 6px;
-  font-weight: 600;
-  font-size: 15px;
-  color: #374151;
 }
 
-input,
-select {
-  padding: 12px;
-  margin-bottom: 22px;
-  border: 1px solid #d1d5db;
+/* Inputs */
+input, select{
+  width: 100%;
+  padding: 10px 12px;
+  border:1px solid var(--border);
+  background:#fff;
   border-radius: 8px;
-  font-size: 15px;
-  transition: border 0.2s ease;
+  font-size: 14px;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
-
-input:focus,
-select:focus {
-  border-color: #3b82f6;
+input:focus, select:focus{
   outline: none;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+  border-color: #9bb4ff;
+  box-shadow: 0 0 0 3px rgba(59,91,255,.15);
 }
 
-button {
-  background-color: #3b82f6;
-  color: white;
-  padding: 14px;
-  border: none;
+/* “N/A” rader/sekundär värdetext (om ni visar text i grått under label) */
+.value-muted{ color: var(--muted); font-size: 14px; }
+
+/* Profilbildsrad */
+.profile-pic-preview{
+  display:flex; align-items:center; gap:12px; margin-top: 8px;
+}
+.profile-pic-preview img{
+  width:56px; height:56px; border-radius:999px; object-fit:cover; display:none;
+}
+.remove-btn{
+  background:transparent; border:none; color:#b42318;
+  text-decoration: underline; cursor: pointer; font-size: 13px;
+}
+.remove-btn:hover{ opacity:.9; }
+
+/* Knappar – Save nere till höger */
+.actions{
+  display:flex; justify-content:flex-end; margin-top: 4px;
+}
+button.primary{
+  background: var(--link);
+  border: 1px solid var(--link);
+  color:#fff;
+  padding: 10px 16px;
   border-radius: 8px;
-  font-size: 16px;
+  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
-  font-weight: 600;
-  transition: background 0.3s ease, transform 0.2s ease;
 }
+button.primary:hover{ filter: brightness(.95); }
 
-button:hover {
-  background-color: #2563eb;
-  transform: translateY(-1px);
-}
-
-#saveMessage {
-  text-align: center;
-  color: green;
-  margin-top: 20px;
+/* Meddelanden */
+#saveMessage{
+  color: #0a7a13;
+  margin-top: 12px;
   font-weight: 500;
   font-size: 14px;
 }
 
-/* Responsiv för mobiler */
-@media (max-width: 600px) {
-  .container {
-    margin: 30px 20px;
-    padding: 30px 20px;
-  }
-
-  h1 {
-    font-size: 24px;
-  }
-
-  button {
-    font-size: 15px;
-  }
-}
-.profile-pic-preview {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 22px;
+/* ===============  Responsivitet  =============== */
+@media (max-width: 900px){
+  .grid-2{ grid-template-columns: 1fr; }
+  .profile-content{ padding: 0 4px; }
+  .avatar{ width:64px; height:64px; }
 }
 
-.profile-pic-preview img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  display: none; /* visas bara om det finns bild */
-}
-
-.remove-btn {
-  background: none;
-  border: none;
-  color: #ef4444;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 0;
-  margin: 0;
-  transition: color 0.2s;
-}
-
-.remove-btn:hover {
-  color: #b91c1c;
-  text-decoration: underline;
-}
-
-.back-btn {
-  background-color: #e5e7eb;
-  color: #374151;
-  margin-top: 10px;
-}
-
-.back-btn:hover {
-  background-color: #d1d5db;
+@media (max-width: 560px){
+  h1{ font-size: 22px; margin-bottom: 10px; }
+  .display-name{ font-size:18px; }
+  .tab{ font-size:14px; }
+  button.primary{ font-size:13px; padding:9px 14px; }
 }
