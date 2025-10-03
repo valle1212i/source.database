@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Analyser – Kundportal</title>
-
-  <script>
-    const API_BASE  = "";                  // sätt till t.ex. 'http://127.0.0.1:3000' om backend kör där
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Analyser – Kundportal</title>
+<script>
     const LOGIN_PATH = "/public/login.html";
     
     function getCsrfToken(){
@@ -34,131 +32,88 @@
       return res; // låt 404/500 bubbla upp utan redirect-loop
     }
     </script>
-    
-  
-  
+<!-- Styles -->
+<link href="CSS/analytics.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  /** Hjälpare (EN uppsättning) */
+  const MONTH_LABELS = ['Jan','Feb','Mar','Apr','Maj','Jun'];
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="CSS/analytics.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  function formatNumber(n){ return (n ?? 0).toLocaleString('sv-SE'); }
+  function formatCurrency(n, unit){ return `${formatNumber(n)} ${unit||''}`.trim(); }
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  function setDeltaBadge(el, deltaPct){
+    const n = Number.isFinite(deltaPct) ? deltaPct : 0;
+    el.textContent = `${n>0?'+':''}${n.toFixed(1)}%`;
+    el.classList.remove('up','down','neutral');
+    el.classList.add(n>0 ? 'up' : n<0 ? 'down' : 'neutral');
+  }
 
+  /** Mini-bars (6 staplar) */
+  function renderMiniBars(root, values){
+    const vals = Array.isArray(values) ? values.slice(0,6) : [];
+    while (root.firstChild) root.removeChild(root.firstChild);
 
-  <script>
-    /** Hjälpare */
-    const MONTH_LABELS = ['Jan','Feb','Mar','Apr','Maj','Jun'];
-    
-    function formatNumber(n){ return (n ?? 0).toLocaleString('sv-SE'); }
-    function formatCurrency(n, unit){ return `${formatNumber(n)} ${unit||''}`.trim(); }
-    
-    function setDeltaBadge(el, deltaPct){
-      const n = Number.isFinite(deltaPct) ? deltaPct : 0;
-      el.textContent = `${n>0?'+':''}${n.toFixed(1)}%`;
-      el.classList.remove('up','down','neutral');
-      el.classList.add(n>0 ? 'up' : n<0 ? 'down' : 'neutral');
-    }
-    
-    /** Ritar minigraferna (6 staplar) */
-    function renderMiniBars(root, values){
-      const vals = Array.isArray(values) ? values.slice(0,6) : [];
-      while (root.firstChild) root.removeChild(root.firstChild);
-    
-      const padded = [...vals];
-      while (padded.length < 6) padded.push(0); // fyll till 6 månader
-    
-      const max = Math.max(1, ...padded);
-      padded.forEach((v,i)=>{
-        const bar = document.createElement('div');
-        bar.className = 'bar' + (v===0 ? ' zero' : '');
-        const fill = document.createElement('div');
-        fill.className = 'fill';
-        const h = v===0 ? 6 : Math.max(8, Math.round((v/max)*100)); // alltid synlig
-        fill.style.height = h + '%';
-        bar.appendChild(fill);
-        root.appendChild(bar);
-      });
-    
-      // liten “Jan–Jun” etikett under staplarna
-      const footer = root.nextElementSibling?.matches('.tiny') ? root.nextElementSibling : null;
-      if (footer) footer.textContent = MONTH_LABELS.join('   ');
-    }
-    
-    /** Render-funktion per KPI-kort */
-    function renderKPI({ idPrefix, total, unit, deltaPct, monthly, footerText }){
-      // värde + enhet
-      const vEl = document.getElementById(`${idPrefix}_value`);
-      const uEl = document.getElementById(`${idPrefix}_unit`);
-      if (vEl) vEl.textContent = unit ? formatCurrency(total, unit) : formatNumber(total);
-      if (uEl) uEl.textContent = unit || '';
-    
-      // badge
-      const dEl = document.getElementById(`${idPrefix}_delta`);
-      if (dEl) setDeltaBadge(dEl, deltaPct);
-    
-      // minigraf
-      const sEl = document.getElementById(`${idPrefix}_spark`);
-      if (sEl) renderMiniBars(sEl, monthly);
-    
-      // footer
-      const fEl = document.getElementById(`${idPrefix}_footer`);
-      if (fEl) fEl.textContent = footerText || '';
-    }
-    
-    /* --------- EXEMPEL-ANROP (byt till dina API-värden) --------- */
-    renderKPI({
-      idPrefix:'kpi_spend',
-      total: 164234,
-      unit: 'SEK',
-      deltaPct: 12.2,
-      monthly: [21000,18000,24000,26000,30000,35234],
-      footerText: ''
-    });
-    
-    renderKPI({
-      idPrefix:'kpi_impressions',
-      total: 6010555,
-      deltaPct: 21.4,
-      monthly: [0,0,1200000,980000,1100000,1720555],
-    });
-    
-    renderKPI({
-      idPrefix:'kpi_clicks',
-      total: 21917,
-      deltaPct: -16.7,
-      monthly: [5400,5100,4800,3900,3700,3017],
-    });
-    
-    renderKPI({
-      idPrefix:'kpi_ctr',
-      total: 4.23,
-      deltaPct: 18.9,
-      monthly: [3.8,3.7,3.9,4.0,4.2,4.5],
-      footerText: ''
-    });
-    
-    renderKPI({
-      idPrefix:'kpi_conv',
-      total: 2060,
-      deltaPct: 8.3,
-      monthly: [280,300,320,310,380,470],
-    });
-    
-    renderKPI({
-      idPrefix:'kpi_conv_value',
-      total: 428644,
-      unit:'SEK',
-      deltaPct: 2.1,
-      monthly: [60000,64000,68000,67000,83000,88000],
-    });
-    </script>
-    
+    const padded = [...vals];
+    while (padded.length < 6) padded.push(0);
 
-  <!-- 3D-glob -->
-  <script src="https://unpkg.com/globe.gl@2.32.6/dist/globe.gl.min.js"></script>
-  <script src="https://unpkg.com/topojson-client@3"></script>'
-  <script>
+    const max = Math.max(1, ...padded);
+    padded.forEach(v=>{
+      const bar = document.createElement('div');
+      bar.className = 'bar' + (v===0 ? ' zero' : '');
+      const fill = document.createElement('div');
+      fill.className = 'fill';
+      const h = v===0 ? 6 : Math.max(8, Math.round((v/max)*100));
+      fill.style.height = h + '%';
+      bar.appendChild(fill);
+      root.appendChild(bar);
+    });
+
+    const footer = root.nextElementSibling?.matches('.tiny') ? root.nextElementSibling : null;
+    if (footer) footer.textContent = MONTH_LABELS.join('   ');
+  }
+
+  /** EN (1) renderKPI */
+  function renderKPI({ idPrefix, total, unit, deltaPct, monthly, footerText }){
+    const vEl = document.getElementById(`${idPrefix}_value`);
+    const uEl = document.getElementById(`${idPrefix}_unit`);
+    if (vEl) vEl.textContent = unit ? formatCurrency(total, unit) : formatNumber(total);
+    if (uEl) uEl.textContent = unit || '';
+
+    const dEl = document.getElementById(`${idPrefix}_delta`);
+    if (dEl) setDeltaBadge(dEl, deltaPct);
+
+    const sparkEl = document.getElementById(`${idPrefix}_spark`);
+    if (sparkEl) renderMiniBars(sparkEl, Array.isArray(monthly) ? monthly : []);
+
+    const fEl = document.getElementById(`${idPrefix}_footer`);
+    if (fEl) fEl.textContent = footerText || '';
+  }
+
+  /** Ladda Marknadsöversikt */
+  async function loadMarketingSummary(range = '7d'){
+    const res  = await authedFetch(`/api/analytics/summary?range=${encodeURIComponent(range)}`);
+    const data = await res.json();
+
+    renderKPI({ idPrefix:'kpi_spend',        ...data.spend });
+    renderKPI({ idPrefix:'kpi_impressions',  ...data.impressions });
+    renderKPI({ idPrefix:'kpi_clicks',       ...data.clicks });
+    renderKPI({ idPrefix:'kpi_ctr',          ...data.ctr });
+    renderKPI({ idPrefix:'kpi_conv',         ...data.conversions });
+    renderKPI({ idPrefix:'kpi_conv_value',   ...data.conv_value });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadMarketingSummary('7d').catch(console.error);
+  });
+</script>
+<!-- 3D-glob -->
+<script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three-globe"></script>
+<script src="https://unpkg.com/topojson-client@3"></script>
+<script>
   (async () => {
   try {
     const r = await authedFetch('/api/profile/me', { method: 'GET' });
@@ -191,7 +146,7 @@
   }
 })();
 </script>
-  <script>
+<script>
     // Undvik dubletter: om globalerna redan finns, skriv inte över dem.
     window.NAME_TO_ISO2 = window.NAME_TO_ISO2 || {};
   
@@ -226,378 +181,463 @@
       window.colorOf = function(){ return "rgb(229,231,235)"; };
     }
   </script>
-  
 </head>
-
 <body>
-<button id="menuToggle" class="hamburger-menu" aria-label="Visa meny" onclick="toggleSidebar()">☰</button>
-
+<button aria-label="Visa meny" class="hamburger-menu" id="menuToggle" onclick="toggleSidebar()">☰</button>
 <!-- SIDOMENY -->
 <div class="sidebar">
-  <div class="logo">
-    <a href="customerportal.html"><img src="images/logo.png" alt="Logotyp" class="logo-img" /></a>
-  </div>
-  <ul class="nav-menu">
-    <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
-    <li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
-    <li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
-    <li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
-    <li><a href="betalningslank.html"><i class="fas fa-link"></i> Betalningslänk</a></li>
-    <li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
-    <li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
-    <li class="active"><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
-    <li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
-    <li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
-    <li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
-  </ul>
-  <div class="help">
-    <a href="faq.html" class="help-link">
-      <i class="fas fa-circle-question"></i> Hjälp / FAQ
-    </a>
-  </div>
+<div class="logo">
+<a href="customerportal.html"><img alt="Logotyp" class="logo-img" src="images/logo.png"/></a>
 </div>
-
+<ul class="nav-menu">
+<li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
+<li><a href="betalningar.html"><i class="fas fa-credit-card"></i> Betalningar</a></li>
+<li><a href="kontakt.html"><i class="fas fa-envelope"></i> Kontakt</a></li>
+<li><a href="rapporter.html"><i class="fas fa-chart-line"></i> Rapporter</a></li>
+<li><a href="betalningslank.html"><i class="fas fa-link"></i> Betalningslänk</a></li>
+<li><a href="fakturor.html"><i class="fas fa-file-invoice"></i> Fakturor</a></li>
+<li><a href="kunder.html"><i class="fas fa-users"></i> Kunder</a></li>
+<li class="active"><a href="analytics.html"><i class="fas fa-chart-pie"></i> Analyser</a></li>
+<li><a href="marknadsforing.html"><i class="fas fa-bullhorn"></i> Marknadsföring</a></li>
+<li><a href="inventarier.html"><i class="fas fa-box"></i> Inventarier</a></li>
+<li><a href="installningar.html"><i class="fas fa-cog"></i> Inställningar</a></li>
+</ul>
+<div class="help">
+<a class="help-link" href="faq.html">
+<i class="fas fa-circle-question"></i> Hjälp / FAQ
+    </a>
+</div>
+</div>
 <!-- PROFIL -->
 <div class="profile-wrapper">
-  <div class="profile-icon" id="profileToggle">--</div>
-  <div class="profile-dropdown" id="profileMenu">
-    <div class="profile-email" id="userEmail">Laddar...</div>
-    <hr />
-    <a href="#" id="switchAccount">Byt konto</a>
-    <a href="#" id="openSettings">Profilinställningar</a>
-    <a href="#" id="logout">Logga ut</a>
-  </div>
+<div class="profile-icon" id="profileToggle">--</div>
+<div class="profile-dropdown" id="profileMenu">
+<div class="profile-email" id="userEmail">Laddar...</div>
+<hr/>
+<a href="#" id="switchAccount">Byt konto</a>
+<a href="#" id="openSettings">Profilinställningar</a>
+<a href="#" id="logout">Logga ut</a>
 </div>
-
+</div>
 <!-- INNEHÅLL -->
 <!-- HERO -->
 <section class="dash-hero">
-  <div class="dash-hello">
-    <h1>Översikt <span class="wave" aria-hidden="true">👋</span></h1>
-    <p>Sammanfattning av marknadsföringen</p>
-  </div>
-
-  <div class="dash-actions">
-    <button class="chip" id="periodPicker">
-      <i class="fa-regular fa-calendar"></i>
-      <span id="uiPeriodLabel">Januari</span>
-      <i class="fa-solid fa-caret-down"></i>
-    </button>
-    <button class="icon-btn" id="uiShare" aria-label="Dela"><i class="fa-solid fa-share-nodes"></i></button>
-    <button class="icon-btn" id="uiInvite" aria-label="Bjud in"><i class="fa-regular fa-paper-plane"></i></button>
-    <button class="icon-btn" id="uiInfo" aria-label="Info"><i class="fa-regular fa-circle-question"></i></button>
-  </div>
+<div class="dash-hello">
+<h1>Översikt <span aria-hidden="true" class="wave">👋</span></h1>
+<p>Sammanfattning av marknadsföringen</p>
+</div>
+<div class="dash-actions">
+<button class="chip" id="periodPicker">
+<i class="fa-regular fa-calendar"></i>
+<span id="uiPeriodLabel">Januari</span>
+<i class="fa-solid fa-caret-down"></i>
+</button>
+<button aria-label="Dela" class="icon-btn" id="uiShare"><i class="fa-solid fa-share-nodes"></i></button>
+<button aria-label="Bjud in" class="icon-btn" id="uiInvite"><i class="fa-regular fa-paper-plane"></i></button>
+<button aria-label="Info" class="icon-btn" id="uiInfo"><i class="fa-regular fa-circle-question"></i></button>
+</div>
 </section>
-
 <!-- MARKNADSFÖRINGSÖVERSIKT -->
 <section class="ms-wrap" id="summaryRoot">
-  <div class="ms-head">
-    <div class="ms-head-left">
-      <i class="fa-solid fa-chart-pie"></i>
-      <span>Marknadsöversikt</span>
-    </div>
-    <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
-  </div>
-
-  <div class="ms-grid">
-    <!-- Kostnader -->
-    <article class="ms-card" data-kpi="spend">
-      <header>
-        <div class="title"><i class="fa-regular fa-credit-card"></i><span>Kostnader</span></div>
-        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
-      </header>
-      <p class="eyebrow">Hur mycket investerade du?</p>
-      <div class="kpi-row">
-        <div class="kpi-value">
-          <span id="kpi_spend_value"></span> <span class="muted" id="kpi_spend_unit"></span>
-        </div>
-        <div class="kpi-badge" id="kpi_spend_delta"></div>
-      </div>
-      <div class="mini-bars" id="kpi_spend_spark"></div>
-      <footer class="tiny muted"><span id="kpi_spend_footer"></span></footer>
-    </article>
-
-    <!-- Visningar -->
-    <article class="ms-card" data-kpi="impressions">
-      <header>
-        <div class="title"><i class="fa-regular fa-eye"></i><span>Visningar</span></div>
-        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
-      </header>
-      <p class="eyebrow">Hur många gånger visades dina annonser?</p>
-      <div class="kpi-row">
-        <div class="kpi-value"><span id="kpi_impressions_value"></span></div>
-        <div class="kpi-badge" id="kpi_impressions_delta"></div>
-      </div>
-      <div class="mini-bars" id="kpi_impressions_spark"></div>
-      <footer class="tiny muted"><span id="kpi_impressions_footer"></span></footer>
-    </article>
-
-    <!-- Klick -->
-    <article class="ms-card" data-kpi="clicks">
-      <header>
-        <div class="title"><i class="fa-regular fa-hand-pointer"></i><span>Klick</span></div>
-        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
-      </header>
-      <p class="eyebrow">Hur många klick fick dina annonser?</p>
-      <div class="kpi-row">
-        <div class="kpi-value"><span id="kpi_clicks_value"></span></div>
-        <div class="kpi-badge" id="kpi_clicks_delta"></div>
-      </div>
-      <div class="mini-bars" id="kpi_clicks_spark"></div>
-      <footer class="tiny muted"><span id="kpi_clicks_footer"></span></footer>
-    </article>
-
-    <!-- Klickfrekvens -->
-    <article class="ms-card" data-kpi="ctr">
-      <header>
-        <div class="title"><i class="fa-solid fa-chart-line"></i><span>Klickfrekvens</span></div>
-        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
-      </header>
-      <p class="eyebrow">Hur ofta klickade användare på dina annonser?</p>
-      <div class="kpi-row">
-        <div class="kpi-value"><span id="kpi_ctr_value"></span></div>
-        <div class="kpi-badge" id="kpi_ctr_delta"></div>
-      </div>
-      <div class="mini-bars" id="kpi_ctr_spark"></div>
-      <footer class="tiny muted"><span id="kpi_ctr_footer"></span></footer>
-    </article>
-
-    <!-- Konverteringar -->
-    <article class="ms-card" data-kpi="conversions">
-      <header>
-        <div class="title"><i class="fa-solid fa-trophy"></i><span>Konverteringar</span></div>
-        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
-      </header>
-      <p class="eyebrow">Hur många användare slutförde ett mål?</p>
-      <div class="kpi-row">
-        <div class="kpi-value"><span id="kpi_conv_value"></span></div>
-        <div class="kpi-badge" id="kpi_conv_delta"></div>
-      </div>
-      <div class="mini-bars" id="kpi_conv_spark"></div>
-      <footer class="tiny muted"><span id="kpi_conv_footer"></span></footer>
-    </article>
-
-    <!-- Konverteringsvärde -->
-    <article class="ms-card" data-kpi="conv_value">
-      <header>
-        <div class="title"><i class="fa-solid fa-coins"></i><span>Konverteringsvärde</span></div>
-        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
-      </header>
-      <p class="eyebrow">Hur mycket försäljning genererade marknadsföringen?</p>
-      <div class="kpi-row">
-        <div class="kpi-value">
-          <span id="kpi_conv_value_value"></span> <span class="muted" id="kpi_conv_value_unit"></span>
-        </div>
-        <div class="kpi-badge" id="kpi_conv_value_delta"></div>
-      </div>
-      <div class="mini-bars" id="kpi_conv_value_spark"></div>
-      <footer class="tiny muted"><span id="kpi_conv_value_footer"></span></footer>
-    </article>
-  </div>
+<div class="ms-head">
+<div class="ms-head-left">
+<i class="fa-solid fa-chart-pie"></i>
+<span>Marknadsöversikt</span>
+</div>
+<button aria-label="Mer" class="icon-btn"><i class="fa-solid fa-ellipsis"></i></button>
+</div>
+<div class="ms-grid">
+<!-- Kostnader -->
+<article class="ms-card" data-kpi="spend">
+<header>
+<div class="title"><i class="fa-regular fa-credit-card"></i><span>Kostnader</span></div>
+<button aria-label="Mer" class="icon-btn"><i class="fa-solid fa-ellipsis"></i></button>
+</header>
+<p class="eyebrow">Hur mycket investerade du?</p>
+<div class="kpi-row">
+<div class="kpi-value">
+<span id="kpi_spend_value"></span> <span class="muted" id="kpi_spend_unit"></span>
+</div>
+<div class="kpi-badge" id="kpi_spend_delta"></div>
+</div>
+<div class="mini-bars" id="kpi_spend_spark"></div>
+<footer class="tiny muted"><span id="kpi_spend_footer"></span></footer>
+</article>
+<!-- Visningar -->
+<article class="ms-card" data-kpi="impressions">
+<header>
+<div class="title"><i class="fa-regular fa-eye"></i><span>Visningar</span></div>
+<button aria-label="Mer" class="icon-btn"><i class="fa-solid fa-ellipsis"></i></button>
+</header>
+<p class="eyebrow">Hur många gånger visades dina annonser?</p>
+<div class="kpi-row">
+<div class="kpi-value"><span id="kpi_impressions_value"></span></div>
+<div class="kpi-badge" id="kpi_impressions_delta"></div>
+</div>
+<div class="mini-bars" id="kpi_impressions_spark"></div>
+<footer class="tiny muted"><span id="kpi_impressions_footer"></span></footer>
+</article>
+<!-- Klick -->
+<article class="ms-card" data-kpi="clicks">
+<header>
+<div class="title"><i class="fa-regular fa-hand-pointer"></i><span>Klick</span></div>
+<button aria-label="Mer" class="icon-btn"><i class="fa-solid fa-ellipsis"></i></button>
+</header>
+<p class="eyebrow">Hur många klick fick dina annonser?</p>
+<div class="kpi-row">
+<div class="kpi-value"><span id="kpi_clicks_value"></span></div>
+<div class="kpi-badge" id="kpi_clicks_delta"></div>
+</div>
+<div class="mini-bars" id="kpi_clicks_spark"></div>
+<footer class="tiny muted"><span id="kpi_clicks_footer"></span></footer>
+</article>
+<!-- Klickfrekvens -->
+<article class="ms-card" data-kpi="ctr">
+<header>
+<div class="title"><i class="fa-solid fa-chart-line"></i><span>Klickfrekvens</span></div>
+<button aria-label="Mer" class="icon-btn"><i class="fa-solid fa-ellipsis"></i></button>
+</header>
+<p class="eyebrow">Hur ofta klickade användare på dina annonser?</p>
+<div class="kpi-row">
+<div class="kpi-value"><span id="kpi_ctr_value"></span></div>
+<div class="kpi-badge" id="kpi_ctr_delta"></div>
+</div>
+<div class="mini-bars" id="kpi_ctr_spark"></div>
+<footer class="tiny muted"><span id="kpi_ctr_footer"></span></footer>
+</article>
+<!-- Konverteringar -->
+<article class="ms-card" data-kpi="conversions">
+<header>
+<div class="title"><i class="fa-solid fa-trophy"></i><span>Konverteringar</span></div>
+<button aria-label="Mer" class="icon-btn"><i class="fa-solid fa-ellipsis"></i></button>
+</header>
+<p class="eyebrow">Hur många användare slutförde ett mål?</p>
+<div class="kpi-row">
+<div class="kpi-value"><span id="kpi_conv_value"></span></div>
+<div class="kpi-badge" id="kpi_conv_delta"></div>
+</div>
+<div class="mini-bars" id="kpi_conv_spark"></div>
+<footer class="tiny muted"><span id="kpi_conv_footer"></span></footer>
+</article>
+<!-- Konverteringsvärde -->
+<article class="ms-card" data-kpi="conv_value">
+<header>
+<div class="title"><i class="fa-solid fa-coins"></i><span>Konverteringsvärde</span></div>
+<button aria-label="Mer" class="icon-btn"><i class="fa-solid fa-ellipsis"></i></button>
+</header>
+<p class="eyebrow">Hur mycket försäljning genererade marknadsföringen?</p>
+<div class="kpi-row">
+<div class="kpi-value">
+<span id="kpi_conv_value_value"></span> <span class="muted" id="kpi_conv_value_unit"></span>
+</div>
+<div class="kpi-badge" id="kpi_conv_value_delta"></div>
+</div>
+<div class="mini-bars" id="kpi_conv_value_spark"></div>
+<footer class="tiny muted"><span id="kpi_conv_value_footer"></span></footer>
+</article>
+</div>
 </section>
 <!-- STATISTISKA SIFFROR -->
 <section class="ms-wrap">
-  <div class="ms-head">
-    <div class="ms-head-left">
-      <i class="fa-solid fa-hashtag"></i>
-      <span>Statistiska siffror</span>
-    </div>
-    <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
-  </div>
-
-  <!-- VIKTIGT: EN (1) grid-container som INNEHÅLLER ALLA 4 kort -->
-  <div class="ms-grid stats-grid">
-
-    <!-- Mest visade sidor (VÄNSTER, rad 1) -->
-    <article class="ms-card">
-      <header>
-        <div class="title"><i class="fa-regular fa-file-lines"></i><span>Mest visade sidor</span></div>
-        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
-      </header>
-      <p class="eyebrow">Vilka sidor har setts flest gånger?</p>
-      <table class="pv-table">
-        <thead><tr><th>Sida</th><th>Visningar</th><th>Andel</th></tr></thead>
-        <tbody id="tblTopPages"><tr><td colspan="3" class="subtle">Uppdateras dagligen.</td></tr></tbody>
-      </table>
-    </article>
-
-    <!-- Webbläsare (HÖGER, rad 1) -->
-    <article class="ms-card">
-      <header>
-        <div class="title"><i class="fa-solid fa-globe"></i><span>Webbläsare</span></div>
-        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
-      </header>
-      <p class="eyebrow">Varifrån kommer trafiken tekniskt?</p>
-      <table class="pv-table">
-        <thead><tr><th>Webbläsare</th><th>Visningar</th><th>Andel</th></tr></thead>
-        <tbody id="tblBrowsers"><tr><td colspan="3" class="subtle">Summerar ≈100%.</td></tr></tbody>
-      </table>
-    </article>
-
-    <!-- Trafikkällor (VÄNSTER, rad 2) -->
-    <article class="ms-card">
-      <header>
-        <div class="title"><i class="fa-solid fa-share-nodes"></i><span>Trafikkällor</span></div>
-        <button class="icon-btn" aria-label="Mer"><i class="fa-solid fa-ellipsis"></i></button>
-      </header>
-      <p class="eyebrow">Vilka källor driver mest trafik?</p>
-      <table class="pv-table">
-        <thead><tr><th>Källa</th><th>Visningar</th><th>Andel</th></tr></thead>
-        <tbody id="tblSources"><tr><td colspan="3" class="subtle">Summerar ≈100%.</td></tr></tbody>
-      </table>
-    </article>
-
-    <!-- Exakta siffror (HÖGER, rad 2) -->
-    <article class="ms-card">
-      <header>
-        <div class="title"><i class="fa-solid fa-hashtag"></i><span>Exakta siffror</span></div>
-
-        <!-- Dropdown för datumintervall -->
-        <div class="menu" style="position:relative">
-          <button class="icon-btn" id="exactMenuBtn" aria-label="Datumintervall"><i class="fa-solid fa-ellipsis"></i></button>
-          <div class="menu-dropdown" id="exactMenu" style="display:none; position:absolute; right:0; top:100%; background:#fff; border:1px solid #e5e7eb; border-radius:10px; box-shadow:0 8px 20px rgba(0,0,0,.08); min-width:180px; padding:6px;">
-            <button class="menu-item" data-range="today" role="menuitem">Idag</button>
-            <button class="menu-item" data-range="7d" role="menuitem">Senaste 7 dagarna</button>
-            <button class="menu-item" data-range="month" role="menuitem">Denna månad</button>
-            <button class="menu-item" data-range="all" role="menuitem">Sedan start</button>
-          </div>
-        </div>
-      </header>
-
-      <p class="eyebrow">Exakt antal sidvisningar för vald period.</p>
-      <div class="kpi-row">
-        <div class="kpi-value">
-          <span id="exactTotalValue">0</span> <span class="muted">visningar</span>
-        </div>
-      </div>
-      <footer class="tiny muted"><span id="exactFooter">Period: —</span></footer>
-    </article>
-
-  </div> <!-- /ms-grid stats-grid -->
+<div class="ms-head">
+<div class="ms-head-left">
+<i class="fa-solid fa-hashtag"></i>
+<span>Statistiska siffror</span>
+</div>
+<button aria-label="Mer" class="icon-btn"><i class="fa-solid fa-ellipsis"></i></button>
+</div>
+<!-- VIKTIGT: EN (1) grid-container som INNEHÅLLER ALLA 4 kort -->
+<div class="ms-grid stats-grid">
+<!-- Mest visade sidor (VÄNSTER, rad 1) -->
+<article class="ms-card">
+<header>
+<div class="title"><i class="fa-regular fa-file-lines"></i><span>Mest visade sidor</span></div>
+<button aria-label="Mer" class="icon-btn"><i class="fa-solid fa-ellipsis"></i></button>
+</header>
+<p class="eyebrow">Vilka sidor har setts flest gånger?</p>
+<table class="pv-table">
+<thead><tr><th>Sida</th><th>Visningar</th><th>Andel</th></tr></thead>
+<tbody id="tblTopPages"><tr><td class="subtle" colspan="3">Uppdateras dagligen.</td></tr></tbody>
+</table>
+</article>
+<!-- Webbläsare (HÖGER, rad 1) -->
+<article class="ms-card">
+<header>
+<div class="title"><i class="fa-solid fa-globe"></i><span>Webbläsare</span></div>
+<button aria-label="Mer" class="icon-btn"><i class="fa-solid fa-ellipsis"></i></button>
+</header>
+<p class="eyebrow">Varifrån kommer trafiken tekniskt?</p>
+<table class="pv-table">
+<thead><tr><th>Webbläsare</th><th>Visningar</th><th>Andel</th></tr></thead>
+<tbody id="tblBrowsers"><tr><td class="subtle" colspan="3">Summerar ≈100%.</td></tr></tbody>
+</table>
+</article>
+<!-- Trafikkällor (VÄNSTER, rad 2) -->
+<article class="ms-card">
+<header>
+<div class="title"><i class="fa-solid fa-share-nodes"></i><span>Trafikkällor</span></div>
+<button aria-label="Mer" class="icon-btn"><i class="fa-solid fa-ellipsis"></i></button>
+</header>
+<p class="eyebrow">Vilka källor driver mest trafik?</p>
+<table class="pv-table">
+<thead><tr><th>Källa</th><th>Visningar</th><th>Andel</th></tr></thead>
+<tbody id="tblSources"><tr><td class="subtle" colspan="3">Summerar ≈100%.</td></tr></tbody>
+</table>
+</article>
+<!-- Exakta siffror (HÖGER, rad 2) -->
+<article class="ms-card">
+<header>
+<div class="title"><i class="fa-solid fa-hashtag"></i><span>Exakta siffror</span></div>
+<!-- Dropdown för datumintervall -->
+<div class="menu" style="position:relative">
+<button aria-label="Datumintervall" class="icon-btn" id="exactMenuBtn"><i class="fa-solid fa-ellipsis"></i></button>
+<div class="menu-dropdown" id="exactMenu" style="display:none; position:absolute; right:0; top:100%; background:#fff; border:1px solid #e5e7eb; border-radius:10px; box-shadow:0 8px 20px rgba(0,0,0,.08); min-width:180px; padding:6px;">
+<button class="menu-item" data-range="today" role="menuitem">Idag</button>
+<button class="menu-item" data-range="7d" role="menuitem">Senaste 7 dagarna</button>
+<button class="menu-item" data-range="month" role="menuitem">Denna månad</button>
+<button class="menu-item" data-range="all" role="menuitem">Sedan start</button>
+</div>
+</div>
+</header>
+<p class="eyebrow">Exakt antal sidvisningar för vald period.</p>
+<div class="kpi-row">
+<div class="kpi-value">
+<span id="exactTotalValue">0</span> <span class="muted">visningar</span>
+</div>
+</div>
+<footer class="tiny muted"><span id="exactFooter">Period: —</span></footer>
+</article>
+</div> <!-- /ms-grid stats-grid -->
+</section>
+<!-- GEO -->
+<section class="chart-card geo-full">
+<h3>Geo-översikt</h3>
+<p class="muted">
+    Andel per land (visningar). Totalt: <span id="geoTotal">0</span> visningar –
+    <span id="geoUnique">0</span> unika besökare.
+  </p>
+<div class="map-grid" style="grid-template-columns:1fr 400px;">
+<!-- Världen -->
+<div class="map-card" style="position:relative;">
+<h4>Världen</h4>
+<div class="map" id="globeContainer" style="background:#0b1220;border-radius:16px;height:360px;"></div>
+<div id="globeTooltip" style="position:absolute;pointer-events:none;padding:6px 8px;background:#111827;color:#fff;font-size:12px;border-radius:8px;display:none;transform:translate(-50%,-120%);z-index:10;"></div>
+</div>
+<!-- Europa -->
+<div class="map-card" style="position:relative;">
+<h4>Europa</h4>
+<svg baseprofile="tiny" fill="#ececec" id="europeMapSvg" preserveaspectratio="xMidYMid meet" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width=".1" viewbox="0 0 1000 684" xmlns="http://www.w3.org/2000/svg">
+<circle cx="399.9" cy="390.8" id="0">
+</circle>
+<circle cx="575.4" cy="412" id="1">
+</circle>
+<circle cx="521" cy="266.6" id="2">
+</circle>
+<path class="country" d="M423.4 528.8l-2.8 1.1-0.7-0.4 0-2.1 0.9-0.7 2.6 0.6 0 1.5z" data-name="Andorra" id="AD" name="Andorra">
+</path><path class="country" d="M654.7 528.1l0.5 0.4 2 2.9 1.4 0.5 1.9 1.3 1.4 3.2 0.1 2.2-0.5 2.6 0.3 2.1-0.8 0.8 0.7 2 0.2 1.9 1.2 2.2 1.2 1.1 1.3 2.4 1.6-0.2 1.3 1.1 0 1.1 1.1 1.8-0.8 2.6-1.7 0.8-1.2 3.1-0.3 2-0.6 0.5-1.9 0.3-1.7 1.3 1 2.2-0.9 0.7-0.3 1.5-0.7 0.7-2.7-0.9-0.7-2.5-1.7-2.7-4.9-2.6-1.2-1.1 0.4-1.5-0.1-1.4-1.4-2.4 0.3-2.6 0.8-2.2-0.3-2.7 0.1-2.1-0.7-2.9 0.5-2.1 0.9-1.3-0.2-2.2-1.5-1.1-1.6-0.2 0-3.1-0.3-0.6 1.7 0-1.7-2.8 3.2-5.3 1.1 0.3 0.8 2.1 3.4-1.2z" data-name="Albania" id="AL" name="Albania">
+</path><path class="country" d="M974.6 572.4l-3.2-2.8-2.3-1.7-1.6-0.7-3.5 0.4-2.9-0.9-1.8-0.9 0.5-0.6-1.9-3-0.8-1.9 1-1.4 0.2-2.3-1.7-3.3-1.7-1.2-1.3-1.6 4.4-0.3 5.3-1.3 3.2 0.3 1.1-0.2 3.5-0.1-0.5-0.7 2.3-0.5 1.3 1.5 1.6 1-0.9 0.9 2.3 1 1.2 0 3.3 2.5 0 0.7-1.9 1.5-0.2 1.1 3.2 3.4 2.4 1.4 3.2 1.5 0.2 0.9-0.9 2.5-3 0 0.6 0.9 1.9 1.2 6.1 4.4 1.5-0.3 2.2 0.9 0.2 1.3-1 1.4 1.9 1.4 0.8 1.5-1.8 0.5 1.4 1.5 0.5 2.6-2.2-0.1-2.5 0.5-3-4.7 0.1-1-3.1-2.1 0.1-1.7-0.8-1.2-1.7 0.2-1.9 0.9-2.9-1.6-1.2 0.2-0.3-1.1-1.8-1.7-3.2 0.9z" data-name="Armenia" id="AM" name="Armenia">
+</path><path class="country" d="M607.8 434.9l-0.9 2.4 0.1 0.8 1.6 2.9 2.3 2.9-0.6 0.7-0.6 1.9 0.7 2-3.9 0.3-2.5-0.9-1.3 1.4 2.6 0.7 0.5 1.1-0.5 1.4-2.2 1.2 0.4 1.5-0.5 0.7 1.1 1.6-0.3 1.8-2.5 0.5-1.8 1.7-1.3 0.9-0.1 1.9-2.4-0.5-1.6 0.2-2.3 1.1-2.8-0.2-2.6 0.2-1.9 0.7-1 1.3-3 1.2-5-0.7-5-0.9-2.6-0.5-4-0.3-8.6-1.5-1.1-0.5-3.1-3.5 0-2.3-4.7 1.5-3.1-0.2-3.4 0.3-1.4 0.6-1.2 2.2-1.1 0.4-2.1-0.4-0.9-0.8-3-0.3-0.5-1.5-0.8-0.3-2 1.9-2.3-0.4-1.5-0.8-0.4-1-3.3-0.8 0.3-0.8-1.1-2.5 1-3-0.9-0.7 1.7-0.5 0.7-0.5 3.5 1.6 0.9 1.4 1.2 0.3-0.1 1.3 1.6-0.5 1-1.6 0.2-1.9 2.8-0.1 2.7 0.4 1.4 1.9 3.8-0.5 1.1-0.9 3.9-1.5 5.7-0.5 0.1-1.4 2 0.3 1.5 0.8 2.5-0.5 1.1 0.5 0.2 1.1 1.2 0.9 1.7 0.4 0.3-1.5-0.3-1.9-1.7-0.3 0.6-1.3-0.1-1.3-2.5-2.8 0.6-1.3 3.1-1.8 2.9-0.8 1-1 0.7-2.9 2.3 0.9 1.3-0.9 0.2-2.8 2.2 1.2 0.8 1.3 3.9 0.4 1.4-0.7 2.5 0.4 0.1-1.1 1.3-1.6 1.2 0 0.3-3.2 1.2-0.2 1.6 0.8 1.4-0.4 4.8 1.7 1.5-0.1 3 1.7 3.8 0.2 1.2-0.9 5.1 1.5 1 1.6z" data-name="Austria" id="AT" name="Austria">
+</path><path class="country" d="M638.2 492.2l2.8-0.7 1.5 0.8-0.5 2.5-1.6 2.7-0.1 2.6 0.5 0.8 2.4 1.2 3.3 2.9-0.3 0.8-3.1-0.1-0.5 0.8 3.2 3.7-0.2 2.2-2.5-0.3-0.7 0.8-3.2 0.5 1.4 2.2-2.3 0.2-2 1.7-0.5 1.7 0.1 1.5-1.7 0.2-0.5 0.7 0.6 3 1.1 1.6-0.1 0.8-1.1 1-1.7-0.7-6.2-3.8-0.6-0.9-1.6 0.1-1.1-0.6 0.3-1.6-3-2.5-1.5-1.6-0.4-2.2-2.4-1.1-5-4.1-1.7-2-2.8-2.3-2.3-2.4-1.3-4-3.4-3.2-1.9-1.3-0.1-1.4 0.3-5 1.2-0.6 1.8 0.4 1.7 1.8 1.8 1 2.7-3.2 3.2 0.3 1.5-1.2 2.7 1.6 2.5 0.1 2.8 0.7 1.7-0.6 1.6 1.3 2.2-1 1.8 0.3 1.8-0.2 2.6 0.7 2.2 0.2 1.1 0.8 1.3 2.2 2.2 0.2z" data-name="Bosnia and Herzegovina" id="BA" name="Bosnia and Herzegovina">
+</path><path class="country" d="M470 401.8l1.6-0.5 0.8 0.8 1.2 0.1 3 2.3-0.4 1.5 1.7 0.7 0.4 2-2.3 1.3-0.6 1.7-1.7-0.7-1.3 1.3-1.4 2.5-0.2 1.7 2 2.4-1.1 1.7-3.4 0.4-2.8-2.6-3.3-1.5-1.7-0.1-0.4-2-0.6-0.6 0.8-2.7-1.9 0.6-0.5 1.4-1.3 0.6-2.2 0.3-2.3-0.3-0.5-0.6 0.7-1.4-0.7-0.7 0.4-1.6-1.6-1.1-3.6-0.4-0.9 0.3-0.6-2-4.2-1.1-0.5-2-1.6-1.8-3.2 1-2.9-2.4 0-1.2-0.9-2.2 5.1-2.5 4.7-1.7 0.3 1.3 1.2 0.7 1.2-0.6 3.9 1.1 3.2-1.5 0.6-1.2 2.1 0.3-0.2-0.9 1.4-0.7 1.5 0.8 1.5-1 1.1 1.3 2.5-0.8 0.5 1.6 2.6 1.4 1.9-0.4 1.7 1.3 2.6 1.1-1 2.9-1.1 1.3 0.7 1.1z" data-name="Belgium" id="BE" name="Belgium">
+</path><path class="country" d="M759.6 509.6l0.2 3.7-0.9 1.8-2-0.6-2.2 0.5-1 2-1.2 1.2 0 2.6 0.4 4.2-1.6 0.7-2.9 3.7 3 1.8 1.7 2.2 2.4 2.5 0.5 1.2-1.7-0.2-0.9 0.4-1.8 0-1.5 0.6-3.4-2.5-3.5 0.3-1.5 1.1-3.4 0.4-1 2.2-1.9 0.3-0.3 1.4-1.6-0.5-1.6 1.1 0.7 1 0.9 2.7-0.2 0.8-2.5 1.2-1.8-0.3-3.2 0.4-3.4 0.9-1.7-1.1-3.7-1.2-0.9 0.6-2.4-1.4-1.2-1.7-1.6 0.5-4.2-0.1-0.2 0.9-1.9 0.2-3 1.1-2.6-0.2-2.4 0.2-1 1-3-0.2 0-4.2 0.5-1.7-0.9-1-1.7-3.3-3.4-1.8-3.3-3.2 1-0.3 1.1-1.7-1.4-2.9 0-3.3 1.1-0.6 1.8-0.1 1.1-1.6 1.6-1.7 0.3-1.4-1.6-1-1.3-1.6-2.9-1.5-2.4-3.9-0.6-2.4 0.4-2.3 2.1-1 0.2-1.9 0.9-0.7 4.3 2.5-1.8 2 0.9 1.8 3.7-0.6 3.9 0.3 5.3 1 3.5 0.4 2.5-0.5 9.4 1.7 4.2 0.2 2.3-0.6 1.6-0.9 1.2-1.6 3.3-2.1 3.2-1.2 4.4-0.9 2.9-0.4 4.5 2.3 3.2 0.4 0.9 0.6 1.7-0.5 2.5 2.6 2.2 0.7 2.6 0.5 2 0z" data-name="Bulgaria" id="BG" name="Bulgaria">
+</path><path class="country" d="M724.5 321.5l1.8 1.3 1.2-0.4 1.9-0.1 3.1 2.2 1.6-0.9 1.5-0.3 3.6 1.2 0.2 2.3 1.7 1.5 2.1-1.3 2.7-1.1 3.4 0 2.7 0.9 2.4 1.8 3.5 1.4 0.4 2.5-0.6 1.8 2.1 2.1 0.5 1.3-1.3 2 0 2 4.1 2 0.5 0.5-0.5 1.8 1.4 0.6 1.8 2.4 1.5 1.4 4.9 2.1 0.7 0.8-0.4 2.8 5.3 0.5 3.2 1.3 0 1.1 0.7 1.1 2.8 1.4 0.6 1.7-2.6 1-0.3 0.9-3 1.8-3.5-0.2-2.4-1.5-2.9 0.1-1.4 2.7 3.9 3.3 0.6 1-0.2 1.5 1 1.5 0.5 3.3 1.6 1.4 1.3 1.8-5-0.1-1.4 0.8-1.7-0.4-1.1 0.5-2.2 2.3-0.8 1.2-1 3.3 1.8 3.6-0.8 1.4-2.7-0.9-0.5-1.2-2-1.1-7.1 0.6-2.3 0.8-0.6-0.5-2.5-3-3.8 1.6-0.6 1.1-1-0.3-0.8-1.3-5.1-1-1.9 0.7-1.9-0.5-1.2 1.7-0.8-1.4-1.1-0.4-3 0.1-1-0.3-1.8-2.1-2.3 0-6.1-0.9-6.5-1.5-7.8-0.4-2.4 0.1-2.3 0.5-5.9 0.5-0.8 1.4-1.6 1.6-1.9 1.2-1.1-0.5-1.9-0.3-1.1 0.5 0.1 1.4-1-1.6-0.1-1.3 0.8-1.5-0.4-1.1 0.2-2.4-0.8-1-1.8-1-3.3-1.3 0-1.2 2-2.7 0.8-0.5 4-1.7 0.6-1.6-0.9-3.9-1.7-3.6-2.9-4.9-2.1-5.1 2.9 0.4 1.6-0.3 3.7-0.3 1.6 0.9 3.3-1.3 1.8 0.1 0.8-2.6 2 0.2 1.4-1.2 2.1-0.5 1-0.7 1.7 2.3 2-0.2 0-1-0.9-1.1-1.9-0.5 0.5-2 1-1.5-0.4-2.3 1.1-3 2.6-0.6 0.8-0.6 1-2 3.6 0.1 0.4-1.1 1.3-1-3.9-1 0.7-3.1 0-1.8 2.6-0.6 1.2-1.5 1.1-0.3 3 0.4 3.1 0.1 0.4-1.7 2.5-2.4 1.4-0.8 1.3-0.2z" data-name="Belarus" id="BY" name="Belarus">
+</path><path class="country" d="M514.1 449.1l0.8 1.1 2.6 1.3 1.2 0 0.9 0.7-1 3-0.5 1.5 0.1 1.7 1.2 0.1 3.3 0.8 0.4 1 1.5 0.8 2.3 0.4 2-1.9 0.8 0.3 0.5 1.5-0.5 3.1 0.5 1.8-1.9-0.2-1-0.9-1.3 0.3-0.6 1.8 1.5 3.5-1.2 0.3-1.4-1.9-0.7-0.1-2.9 1.1-2-0.8-0.8-2.1-2 0.1 0 2.9-0.5 1.1-2.2 2.6-0.2 1 0.7 1.7-1.2 0.7-0.9-1.4-1.3-1.2 0.4-1.2-2.2-0.6-2.4-2-0.2-2.5-1-0.6-3.4 2.9 0.6 1.5-1.6 2.2-2.4 1.4-3.1-0.8-2.6 1-2.4 0.5-1.4-0.7-0.9-1.4-2.3-2.3 0.5-1.7-0.8-2.2-2.2-0.3-1.9 0.1-2.3 1.5 0.5 1.3-2.3 1.6-1.4-0.1 0-1 1.5-1 0.3-1.5-0.8-0.7 1.1-2.9 3-2.2 0.5-2.9 2.1-0.9 3.8-4 0.6-0.9-1.3-1.1 1.8-1.4 1.1 0 0.8 0.8 2.7-0.3 0.8-1.4 1.5-0.7 1 0.3 2.8 0.1 3.3-0.6 2.6 0.2-0.2-1.5 1.3-1.2 1.3 0 1.4 1 0.8-0.2 1.1 0.9 3.7-0.2z" data-name="Switzerland" id="CH" name="Switzerland">
+</path><path class="country" d="M843.2 646.3l-0.1 0-0.1 0 0.1-0.1 0.1 0.1z m0 0l0.1 0 0.1 0 0.1 0.1-0.1 0-0.1 0-0.1 0 0-0.1z m-0.4-0.3l-0.1 0 0-0.1 0.1 0 0-0.1 0.1 0.1 0 0.1-0.1 0z m3.5-0.8l0.2 0.1 0.3 0.3 0.2 0.4 0.1 0.3 0.2 0.2 0.2 0.1-0.2 0-0.3 0-0.3-0.1-0.2-0.2-0.2 0-0.7 0.1-0.6 0.1-0.1 0.1-0.1 0.1-0.3 0-0.3 0-0.1-0.1 0.2-0.1 0.1 0-0.1-0.3-0.2 0-0.2-0.1 0-0.4-0.1-0.1-0.3-0.1 0-0.2 0.1-0.1 0.2-0.1 0.1 0.1 0.1 0.1 0.2-0.1 0.1-0.1 0.1-0.1 0.1-0.1 0.2 0.2 0.2 0.1 0.1 0 0.2 0.1 0.1 0 0.3-0.1 0.2 0 0.1 0.1 0.2 0 0.1 0 0.1 0 0-0.1z m-4 1.1l0 0.2-0.3 0.1-0.3 0.3 0 0.2-0.1 0.3 0 0.3 0 0.3 0 0.3 0 0.1-0.1 0-0.1 0.1 0 0.3-0.1 0.1-0.2 0-0.4 0-0.2 0.1-0.1 0.1-0.1 0.2-0.1 0.1-0.2 0.1-0.4 0.1-0.4 0.2-0.3 0.1-0.2-0.3 0.1 0.5-0.4 0.2-0.9 0.2-0.2 0.1-0.1 0.1-0.2 0.1-0.2 0-0.9-0.1-1 0.1-0.1 0.1-0.2 0.1-0.6 0.5-0.1 0.3-0.3 0-0.3 0.1 0 0.1-0.1-0.1-0.1-0.2 0.1-0.2 0.1 0.1 0.3 0-0.1-0.4-0.4-0.1-0.2 0.2-0.1 0.1-0.2-0.1 0 0.1-0.4-0.1-0.3-0.2-0.1-0.1 0-0.2-0.1 0-0.1 0-0.1 0-0.1 0-0.1 0.1 0 0.1-0.2 0-0.1 0.2-0.2 0-0.2 0-0.1 0.1 0.1 0.2-0.2 0.1-0.5 0-0.6-0.1-0.5-0.2-0.7-0.4-0.3-0.1-0.3-0.1-0.5 0-0.3-0.1-0.2-0.2-0.6-0.4-0.1-0.1-0.1-0.4 0-0.1-0.1-0.1-0.4-0.9-0.1-0.1-0.3-0.2-0.2-0.1-0.1-0.1-0.1-0.2 0-0.2 0.1-0.2-0.3-0.4-0.1-0.2 0-0.4-0.1-0.2-0.3-0.5-0.2-0.3-0.1-0.4 0.1-0.3 0.1 0 0.3 0.1 0.4 0.5 0.3 0.1 0.2 0.1 0.6 0 0.4-0.2 0.3-0.4 0.3-0.4 0.1-0.5 0.1-0.3 0.2-0.1 0.1-0.1 0-0.1 0.1 0 0.1 0.1 0.1 0 0.2 0 0.1 0.1 0.2 0.2 0.2 0 0.1 0 0.2-0.2 0.1-0.2 0-0.2 0.4 0.1 0.2 0.4 0.1 0.2 0.1 0.2 0.2 0.1 0.4 0.1 0.3 0.1 0.2 0.2 0.2 0.1 0.1 0.2 0 0.2 0.1 0.1 0.1 0.1 0.1 0 0.4-0.1 0.1-0.2 0.1-0.2 0.1-0.1 0.1 0.1 0.1 0.1 0.2 0.1 0.2 0 0.2-0.1 0.2-0.2 0.2-0.2 0.2-0.1 0.3-0.2 0.1-0.2 0.2 0 0.3 0.1 0.3 0 0.4 0 0.1-0.1 0.1 0 0.1-0.2 0.3-0.2 0.2 0 0.2 0.1 0.1 0.1 0.2 0 0.1 0 0.2 0.2 0.2 0.2 0.2 0.1 0.3 0.1 0.1 0 0.1-0.1 0-0.1 0.1-0.2 0.3-0.3 0.1 0 0.2 0 0.3 0 0.2 0 0.1 0 0 0.2 0.1 0.2 0.1 0.1 0.2 0.2 0.2 0.2 0 0.1 0.1 0.3 0 0.2 0 0.3 0 0.4-0.1 0.3 0.1 0.2 0.1 0.1 0.2 0 0.2 0 0-0.3 0-0.4 0.1-0.1 0.1-0.1 0.1-0.1 0.1 0.1 0.1 0.4 0.1 0.2 0.1 0.1 0.3-0.1 0-0.2 0.1-0.1 0.2 0 0.1 0.1 0.2 0 0.1-0.1 0.1 0.1 0.1 0 0.3 0.2 0.2 0 0.1 0 0.3 0.2z" data-name="Cyprus" id="CY" name="Cyprus">
+</path><path class="country" d="M578.9 400.5l2.1-0.4-0.1-1.9 3.3 0.8 0.3 1.1 1 1.1 4.6 1.1 2.7 1.1 0.8 0.9 3.2-0.7 1.8 1.2-0.7 1.1-1.6 1.2 1.6 0.9 2 1.8 1.5 1.9 1 0.4 3.5-2.5-1.7-2.4 1.3 0 2.2 0.6 3.3 1.9 3.6-0.7 0 1.6-1.4 0.5 2.7 2.3 1 0.6 1.8-1 3.5 1.8 0.5-0.2 2.7 0.8 0.5 1.8 2.8 2.2 0.5 1.6-2.8 0.3-2 1.5-0.6 0.8-2.3 1.2-0.7 3-1.6 0.8-2.1 1.9-1.5 0.7-1.7 0.2-3.6-0.5-1.4 1.2-1.1 2.8-1-1.6-5.1-1.5-1.2 0.9-3.8-0.2-3-1.7-1.5 0.1-4.8-1.7-1.4 0.4-1.6-0.8-1.2 0.2-0.3 3.2-1.2 0-1.3 1.6-0.1 1.1-2.5-0.4-1.4 0.7-3.9-0.4-0.8-1.3-2.2-1.2-0.6-0.7-2.9-2.2-1.3 0-1.3-1.6-2.5-1.5-2.9-2.6-1.3 0-2.3-2-1.8-2.7-1.4-1.5 1.2-1.7-0.6-1.6-2.3-1.3-2.5-3.4 0.5-0.7 1.9 2 1.9-2.6 1.1-0.6 2.6-0.6 2.1 0.4 0.8-1.3 2-0.3 0.6-1 1.6-0.7 1.1 0.1 0.6-1.2 4.4-1 3.5-1.5 1.9-0.6-1.5-1.5 0.8-0.6 2.2 0.4 1.5 1.5 0 0.9 1.4 0.6 0.9-0.7z" data-name="Czech Republic" id="CZ" name="Czech Republic">
+</path><path class="country" d="M567.9 355.2l-3.4-0.1-0.2-1.7-1.1-1-0.1-1 4.7 2.6 0.1 1.2z m-34.8-8.1l-1.8 0-1.4-0.7 0.8-1 1.7 0.4 0.7 1.3z m28.3 0.5l-1.3 0.7-1.3 0-1.3 1.3-2.1-1.1-0.5-1.1 0.1-2.2 0.6-1.4 2-0.9 0.9 1.2 1.7 0.6-0.5 1.7 1.7 1.2z m-46.6-6.6l1.8 0.7 1.6 1.6 0.1 1.4-1.7 1.6 3.2-0.3 0.8 1.2 1.7-0.4 4.5 1.8 3.2-0.9 0.7 1.4-0.6 1.5-2.2 1.6 1.4 1.2 2.1-0.2 3.6 0.9 3.3-2.5 1.1-0.5 3.6-0.3 5.1-4.5 5.3 0.9 1.5 1.9 3.7 2.1 3.2-0.2 1.3 2 0.8 2.5 1.9 1.3 2.8 0.5 0.7 2.6 1.8 4.1-0.3 2.7-1.9 1.8-0.7 1.6 1.6 1.4 3.3 2.1 1.4 1.7-0.6 2.6 2 2.3 0.8 1.9-0.7 2.6-0.8 1.1 1.9 3.1 0 1.6 2.2 0.9 1.6 3.2-0.4 2.3-1.6 3.6-0.9 0.7-1.4-0.6 0-0.9-1.5-1.5-2.2-0.4-0.8 0.6 1.5 1.5-1.9 0.6-3.5 1.5-4.4 1-0.6 1.2-1.1-0.1-1.6 0.7-0.6 1-2 0.3-0.8 1.3-2.1-0.4-2.6 0.6-1.1 0.6-1.9 2.6-1.9-2-0.5 0.7 2.5 3.4 2.3 1.3 0.6 1.6-1.2 1.7 1.4 1.5 1.8 2.7 2.3 2 1.3 0 2.9 2.6 2.5 1.5 1.3 1.6 1.3 0 2.9 2.2 0.6 0.7-0.2 2.8-1.3 0.9-2.3-0.9-0.7 2.9-1 1-2.9 0.8-3.1 1.8-0.6 1.3 2.5 2.8 0.1 1.3-0.6 1.3 1.7 0.3 0.3 1.9-0.3 1.5-1.7-0.4-1.2-0.9-0.2-1.1-1.1-0.5-2.5 0.5-1.5-0.8-2-0.3-0.1 1.4-5.7 0.5-3.9 1.5-1.1 0.9-3.8 0.5-1.4-1.9-2.7-0.4-2.8 0.1-0.2 1.9-1 1.6-1.6 0.5 0.1-1.3-1.2-0.3-0.9-1.4-3.5-1.6-0.7 0.5-2.2-1.2-5.1-2.3 1 1.6-3.7 0.2-1.1-0.9-0.8 0.2-1.4-1-1.3 0-1.3 1.2 0.2 1.5-2.6-0.2-3.3 0.6-2.8-0.1-1-0.3-1.1-1.3 0-1.5 0.6-2-0.2-2.4 0.3-1.5 1-1.8 1.4-5.5 3.5-3.8-0.1-1.3-1.6-0.6-4.8-0.8-2-1.4-3 0.6-2.1-0.1-0.3-0.9-1.4-0.4-1.8 0.7-3.5-4.3-1.4-0.1 0.6-3 0.9-0.9 0-1.4-2.8-1.1-1.5-1.6-0.3-2.2 0.6-1.7 2.3-1.3-0.4-2-1.7-0.7 0.4-1.5-3-2.3 0.6-2.4-1.9-1.2 0.5-0.8 2.2-1.6-0.7-1.2 1.3-2.8 0-1.2-3.1-4.1 0.7-1.1 1.8-0.7 2.3 0.8 4.5-1.3 0.7-1-1-0.9 0.3-0.9 2.6-1.6 0.6-2.6-0.8-1-2.6-0.3-0.7-1 0.6-1.6 3.1 0.1 1.1-3.8 0.7-1.7-0.1-4.3-1.7-1.4 0.5-2.7 1.1-1.4 0.9-0.4 4-0.3 4.5 0.1 1.9 2.2-0.6 1.2 1.6 0.3 0.9-2.4 1.4 0.8 1.1-0.1-0.5-1.7 0.2-1.6 0.9-1.4 3.3 0.6 3.6-0.3 0.1-0.6-2.8-0.5-0.9-1.1-0.2-3.9-1.5-0.8-1.6 0.3 0-1.5 3.4-1.1 0-1-3.4-3.8-0.2-1.6 2.7 0.1 5.2 1.3 3.1-0.7 1.5 0.4z" data-name="Germany" id="DE" name="Germany">
+</path><path class="country" d="M533.5 340l2.1 1 2.4 0.3 0.4 1.9-3.5 0.7-5.1-2.1 0.1-2.5 2.3-0.2 1.3 0.9z m13.7-1.1l-2.3 0.1-1.9 1-0.3-1.2 1.6-1 1.2 0.2 1.7 0.9z m-28.8 1.2l-1.2 0.2-1.7-0.5-0.6-2.3 2.7 1.1 0.8 1.5z m8 2l-1.4-1.5 2.5-2.9 0.7-0.2-1.8 4.6z m50.1-4l-2.4-0.2-2.4-1 0.1-2 0.5-0.9 4.5 2.3-0.3 1.8z m-52.1-8.7l2.3 4.3-0.1 2.8-1.8 1.2-2.1 0-5.4-1.7-1.7-2.9-0.1-2.3 4.8-1.4 2.6 0.8 1.5-0.8z m23.3 0.2l-1 0.6-0.7-0.9 0.9-0.9 0.8 1.2z m-23.9-2.8l-0.9 0 0-3 1.5 1.6-0.6 1.4z m22.6 0l0.1 1.5-0.7 0.7-2 0.7-1.1 1.8 2 1.2 0.5 1.5-1 0.7-2.6 0.7 0 5.6-2.2 0.6-1.5-2.1-0.1-0.9-1.3-3.1-2-0.4-2.2 0.1-1.5-1.8 0.1-2.1-1-2-1.3-0.6 0.4-1.4 3.1-0.2 1.5-1.9 0-0.9 1.8-0.2 0.8 0.7 0.1 2.6 1.6 0.5 1.1-2.9-0.9-1.1 3.9-2.2 1.1-0.1 3 0.9-0.4 2.1 0.7 2z m-31.6 14.2l-1.5-0.4-3.1 0.7-5.2-1.3-2.7-0.1-0.5-2.1-0.8-1.4 1.1-0.3-0.9-3.9-3.2-1.3-2.5-1.4 0.5-5.6-1-2.3 0.1-6.9 1.3-0.1 3.1 0.8 1.5 0.9 0.6-1.9 1.6-1.6 2-0.8 1.6 1.3 0.3-4.5-1.6-0.5-1.3 0.4-1.3 1.9-1 2.4-1.9 0.2-1.5 0.7-2.4-1.4 0.1-1.4 1.6-1.9 2-1.9 2.2 0 1.6-0.6 3.9 0.1 2.8-1.3 2.8-3.6 1.5-1.5 3.3-0.5 3-1.7-0.8 2.5 1.2 1.7 0 3-0.9 1-1.4 2.5 0.2 5.6 2.5 1.5 4.1 0 1 1.1-0.7 2.2-2.6 1.4-0.9 0-1.4-1.1-1.1 0.9-1.2 5.1-2-0.1-1.2 0.5 1.4 1.2-1.3 0.8-3.4 3.1 1.1 3.4-0.2 0.9-1.5 1.3-0.6 1.1 2.3 0.3 1.3 2.9z" data-name="Denmark" id="DK" name="Denmark">
+</path><path class="country" d="M655.5 285.3l3.9 0.2 4 1.8-1.8 0.7-3.7 2.5-0.3 0.5-2.6-0.1-1.4 0.2-1 0.9-0.9 2.8-1.6 0.5-0.3-0.9 1.6-1.8-1.5-1.4-1.9-0.7 0.9-1.8-1.6-1.6 1.5-0.2 1 0.5 2-0.5 0.5-1 3.2-0.6z m8.3 1l-0.9 0.2-2.4-1.1 1-1 1.9 0.5 0.4 1.4z m-5.4-4l-0.8 0.7-0.9-0.6-0.9 1.6-1.3 0.3-1.9-2.5-2.9-0.5-1.3-0.7 4.5-0.4 1.2-1.6 1.3 0.1 0.4 0.9 2.1 0.3 0.9 1-0.4 1.4z m53.2 18.9l-1.9-0.2-3.4-1-4 1.2-2.8-1.1-3.5-2.7-0.6-0.7-2.3-0.5-5.6-2.5-1.1 0.7-1.5-1-8.4 2.8 1-3.4 0.1-3.6-2.3-0.4-0.9 1.3-1.3 0.3-4.1-1.3-1.2-2.1-1.6-1.1-0.8-1.2 0-1.8-1.5-2 0.7-1.1-0.7-2.8 3-1.2 3.3-0.2 0.9-1.3 2-1.3 2.3 0.2 3.1-1 6.3 0.1 0.4-1.7 3.2 0 7.6 1.2 1.8 0 2.8 1.2 1.4 0.3 4 0 6.3 0.5 1.2-1 1.5 1.2-1 1.4-1.2 0.4-0.9 3.2-0.8 1-1.7-0.3-2.5 0.2-2 0.5-1.3 1.1 0.1 1.1 2.6 2.3 1.4 2.8 2.6 2.2 0.8 1.3 2.4 2.9 1.8 2.5-2.3 0.6-1.2 2-0.2 2z" data-name="Estonia" id="EE" name="Estonia">
+</path><path class="country" d="M420.4 584.7l-0.4 1-2-0.4 0-1.5 1.2-1.6 2.7-0.7 0.8 1.3-2.3 1.9z m21.7-13.6l1.2 0.5 1.3-0.5 1.4 0.4 0.2 1-2.2 3.5-0.6 1.4-2.1 1.3-4-1.7-0.3-1.6-1.4-0.7-1.7 1.3-1.4-1-0.3-1.2 5.3-3.7 1.5-0.9 3.2-0.9 0.5 1.2-0.6 1.6z m14.7-0.8l-0.3 0.2-3.9-1.9-1.6-0.4 0.1-1.4 2.6-0.2 2.1 0.7 1.2 1.8-0.2 1.2z m-77.4-55.5l0.5 1.3 4.3 1.3-0.3 3.2 1.8-0.4 4.4 1.7 2.2 0.2 2.2 2.1 3.6-0.4 3.2 2.1 3.1-0.4 0.7 0.4 4.7 0 0.8-2.4 4 1.1 2.5 1 1.7 0.3 1.1 1.5 0 2.1 0.7 0.4 2.8-1.1 2.8 1.2 1.3 1.2 2.1-1.1 4.7 1.2 1.2-0.8 3.8-1.1 3.1 0.6 1.2 2.2-1.8 0.5-0.2 1.4 1.2 1.3 0.1 2.1-3 2.8-8.7 4.7-2.9 2.7-6.6 1.5-4.5 1.5-2.2 0.5-4.1 3.8 1.1 0.3 1.2 1.2-0.4 0.6-2.5 1.1-0.9 0-2.9 4.6-2.6 3.3-1.5 1.5-1.5 2.1-3.2 5.6-0.1 1.6 1.6 5.5 2.2 2.7 2.4 1.1 0.6 1-0.8 1-2.4 1.7-4.3 2.3-1.8 1.9-0.3 1.8-1.3 0.8-0.5 2.5-1.8 4.4 1.3 1.2-1.3 0.8-6.5 0.3-4.1 2.8-2 2.4-1.9 4.5-2.2 2.6-1 0.5-1.5-1.2-1.9-0.1-1.9 0.3-1 1-1.5 0.5-1.5-0.5-4.6-0.2-2.3 0.8-1.9-0.5-3.2-0.3-7 0.6-4 3.4-3.4 0-3.1 1.2-2.1 3-0.5 1.6-1-0.3-0.3 1.2-2.1 0.8-2.4-1-2-1.5-1-0.1-1.6-2.2-1.2-3.1 0-1.1-1.5-0.6-0.3-1.4 0.2-1.6-1.2-2-5-3.7-3.7-0.3-3 0.5-1.1-6.4 0.8-2.2 3.5-4.3 2.1-0.6 0.7-2.4-1.7 0.2-3-4.3 0.9-4 3.2-3 0.6-2.4-0.5-0.8-1.7-0.4-1.6-3.2-0.3-1.9-1.4-1.2-1.1-1.9 1.1-0.3 4.3 0 1-0.5 1.7-3.5 0-1.9-1.4-1.3 0.2-1 2.7-2.1-0.4-1.1 0.4-3.8-0.4-3.5-0.8-2 2-1.6 1.1-1.6 1.6-1.4 2.1-1.1 2.5-2.5-0.3-1.1-1.9-0.9-1.9-0.2-0.1-3.1-0.7-1.1-5.2-0.1-1.5-0.5-0.8 1.4-2.5 0.9-1.4 0-2.2-0.8-2.9 0.1-3 1.1-0.9-1.3 1.3-1.9-1-1.8-4.1 1-1.9 0.9-1.2 1.1-1.3-0.1 0-2.5 2.6-2.6-1.6-0.2 1.2-1.9-1-1 0.1-2.6-2.3 0.9-0.5-1.2 1.4-2.2-1.4-0.2-2.3-2.5 0.8-3.1 2-1 1.9-1.5 2.6 0.3 1.7-0.3 3.6-1.6-0.4-1.5 0.4-0.7 3.2-1.7 2-0.2 1.9-0.9 1.3 0.5 1.1-0.1 1.3 0.6 1.7 1.6 2.5 0.6 2-0.5 3.6-0.1 1.7 0.2 3.2-0.3 1.8 0.1 2.9-0.8 2.3 1 4.4 0.4 2.6 0.8 7.2 1.4 2.7 0 3.7-0.8 1.6-0.5 1.5 0.3 2.1-0.6 2.3 1 4.7 1.3 2.1-1.3 3.4 0.6 3.3 1.3 1.8 0.1 2.6-0.3 2.5-1z" data-name="Spain" id="ES" name="Spain">
+</path><path class="country" d="M646.5 260l2 0.2-0.6 2.8-2.3-1.8 0.9-1.2z m-1.9 0.5l-2.1-0.6 0.9-0.8 1.2 1.4z m-6.5-2.7l-1.5 0.7-0.3-1.7 1.8 1z m25.5-62.9l-1.5 0.5-1.3-0.3-0.2-0.9 2-0.6 1 1.3z m30.1-54.6l-3.7 1.3 1.6 0.8 0.8 1.2-2 3.2 0.1 0.6 3.1 4 7.2 1.7 2.3 1.8 3.6 2.3 1.8 0.9 0.1 1.9-3 3-2.6 3.1-1.2 1.7 0.4 1.7 2.6 2.1 2.3 2.2 3 3.5 3 2.5 3 4.2 0.4 1.4-3.7 0.7 1.2 0.9-0.6 1.3 0.3 1.9-0.5 1.5 1.9 0.3 0.3 1.3-1.7 1 0 0.9 1.4 1.7 1 0.6 3.2 0.6 0.9 1.6-1 1.7 1.8 2.2 4.5 1.8 0.7 1.3 0.2 1.7-2.4 3-2 0.8 0.7 0.8 4.5 2.6 6.6 2.9 2.6 1.3 2.1 1.9 2.2 1.6 0.5 1-1.6 4.5-0.7 1.2-2.2 2.2-3.4 2.8-2.3 2.3-5.3 5.9-1.9 1.5-2.1 2.2-4.9 3.3-0.7 0.8-2.5 1.5-5.6 5.2-3.5 1-2.6-1.1-1.8 0.2-1.2 0.8-2.5 0.2-2 0.6-1-0.7-0.7 0.6-1.9 0.2-2-1 0.3 1.5-3.3 1.5-0.8-0.9-2 1-2.1 0.2-1.1 0.8-5.9 1.1-1.5 1.3-1.2-0.3-6.7 1.1-2.9-0.2-2.7 2-1.8 0.4 1.5-3-2.4-1.1-1.2-1.6-0.7 0.4-0.3 1.5-1.5 0.8-2-0.1-0.4-2.4 0.8-2.3-3.6-0.6-3.8-1.4-0.9-0.1-0.7-1.3-2 0.9-2.1-0.9-1.7-5.3 0-1.3 0.9-1.6-0.1-3.4-0.6-2 1.1-0.6-0.9-1.6-2.2-3-1.6-1.1 0.5-3.3-0.6-1.6-1.9-1.1-1.1-2.9 0.6-2.4 2.4-2.2 0-1.2 0.9-1.1-0.5-1.3 2.7-0.5 1 0.4 2.4-0.4 1.9-1-1.1-1.8 1.5-0.7 1.2-1.2-0.1-1 2.3-0.5 2.4-1.9 2.3-1.1 2.3-1.9 1.1-0.1 0.3-1.3 2.5-1.9 0.8-1.6 2.3-1.8 2.2-3.9 3.8-1.2 3.8 0.3-0.6-1.7 1-0.3-0.6-1.3-1-0.6 0-4.6-1.3-0.9-4.5-1.6-1.7-0.1-1.2-1.2-4.6-0.7-1.6-2.5-1.9-2.2-1.8-0.6-1.3-2.6 0-1.3 1.5-1.3-0.1-1.8 0.7-1.4-0.6-0.9-3.3-2.6-0.8-1.6 0.1-1.1 1-0.8-0.6-1.3-2.8-0.4 0.3-1.9-0.7-1.4-0.4-2.4 1.1-1-1.8-0.9-1.9-1.5-1.4-0.1-1.2-1.6-3.5-1.8-8.3-1.7-4.2-1.8-4.8-2.3-2.9-1.1-0.4-0.9-2.9-0.8 0.5-0.4 2.1 0 1.9 0.4 0.5-0.6-1-1.4 1.9-1.1 3.6 0 7.9 5.5 1.4 1.8 6.9 0.6 0.8 0.5 1.8-0.1 3.7-0.9 1.2-1.2 1.5 0.1 3.6 1.1 3.9 0.8 2.6 0.8 1.3-0.6 0.5-1.7 1.6-1.3 2.1-0.3 1.5-1.4-0.7-3.2 0.6-1.7 0.7-3.8 2.6-1.7 1.7-1.8 2.1-0.2 3.8 0.4 0.9-0.2 3.5-1.6 2.9-0.3 1.8 1.2 4.2 2 4.2 1.1 3.6 0.8 2.6 2.7-0.7 1-3.2 2.9 0 0.7 1.7 1.3z" data-name="Finland" id="FI" name="Finland">
+</path><path class="country" d="M521.2 524.1l-0.3 2.3 1 1.7 0.6 6.5-1.8 3.2 0.1 3-1.6 4.3-0.8 1.1-3.8-2-1.2-1.1 1-1.8-2.2-0.9 0.4-1.7-0.2-0.9-1.6-0.5 1-1.3 0-0.8-1.5-1-0.3-0.9 1.3-1.1-0.6-0.9 0.1-1.3 0.9-1.9 1.2-0.9 2.8-0.8 1.2-1.1 1.9 0.6 0.6-1.2-0.2-2.7 0.3-1.1 1.3 0.5 0.4 2.7z m-133.9-47.9l-0.4 1.4-1.9-2.4 1-0.5 1.3 1.5z m84.4-55.6l2.1 1.2 1.4 0 2-0.6 1.3 0.7 1.4 0.1 3.5 4.3 1.8-0.7 1.4 0.4 0.3 0.9 2.1 0.1 3-0.6 2 1.4 4.8 0.8 1.6 0.6 0.1 1.3-3.5 3.8-1.4 5.5-1 1.8-0.3 1.5 0.2 2.4-0.6 2 0 1.5 1.1 1.3-1.5 0.7-0.8 1.4-2.7 0.3-0.8-0.8-1.1 0-1.8 1.4 1.3 1.1-0.6 0.9-3.8 4-2.1 0.9-0.5 2.9-3 2.2-1.1 2.9 0.8 0.7-0.3 1.5-1.5 1 0 1 1.4 0.1 2.3-1.6-0.5-1.3 2.3-1.5 1.9-0.1 2.2 0.3 0.8 2.2-0.5 1.7 2.3 2.3 0.9 1.4-2.6 1.7 0.1 1.6 0.9 0.6 1.7 2.6 1.8 1.6-0.8 2.5-1.2 0.3-1.7 1.3-1.9-0.2-0.8 0.4 1.5 3.1 3.2 1.4 0.5 1.7-0.8 0.7-1.4 2.5 0.7 1.3 0.1 1.4 0.9 0.9 5.1 2.4 3.3-0.6 0.3 2-2.1 2.6 0.2 1.5-0.6 0.3-0.8 0.3-2.4 1.1-3.9 3.4-1.8 1-0.7 1.8-2 1.4-2.4 0.5-2.3 1-1.1-0.4-2.8 0-1.7-1.2-3.4-0.8-1.1-1.8-2.5-0.1-0.8-1.5-1.9 0.3-1.5 0.7-2-0.1-5.9-1.8-1.4-1.4-1.7 0.5-1.6 1.6-6.5 4.1-2.6 4.3-0.1 1.2 0.7 3.9 1.6 2.5-3.1-0.6-3.8 1.1-1.2 0.8-4.7-1.2-2.1 1.1-1.3-1.2-2.8-1.2 0-1.5-2.6-0.6-0.9 0.7-1.1-1.5-1.7-0.3-2.5-1-4-1.1-0.8 2.4-4.7 0-0.7-0.4-3.1 0.4-3.2-2.1-3.6 0.4-2.2-2.1-2.2-0.2-4.4-1.7-1.8 0.4 0.3-3.2-4.3-1.3-0.5-1.3 2-0.5 1.9-1.9 1.7-7.1 1.3-8.3 1-1.6 1.2-0.4-1-1.2-1.1 1.5 0.7-7.6 0.5-2.8 0.9-3 3.1 2.4 0.8 1 0.9 3.4 0.6 0.1-1.1-4.6-1.8-2.3-3.6-2.3-0.5-1.3 1.8-0.6-0.5-1.8-0.5-5.9-3-0.6-4.8-2.6-1.7-2.6-1.6-1.9-0.4-1.7 0.9-1.8-0.8-1.1-1.4-0.8 1.1-1.6-3-0.2-1.8-0.5-0.3-1.1 1.3-1.4-1.6-0.8-2.6 0.2-0.2-1.7-2.2 0.3-1.2-0.3-1.1-1.1-1.3 0.2-2.2-0.4-0.8-0.7-4.8-1.3-2-0.1-1.9 0.6-1.1-0.3-1.3-2.2-3.1-1.1 0.6-0.7 3.1-0.6 0.6-0.7-2.2-0.9-0.2-1.2 1.6 0.3 0.1-1.2-4 0.1-0.4-1.3 0.5-1.4 2.3-1.2 5.8-1.4 2.5 0.2 1.7-0.2 3-1.6 2.9-0.4 2.7 0.8 2.5 2.8 1.2 1 3.1-1.7 4.4 0.1 0.9 0.9 1.2-1.7 1 1 4.7-0.2-1.5-2.5-0.2-6-1.3-1.7-2.1-4.3 0.2-1.4 3.2 0.3 2.7-0.6 1.3 0.4 0.3 2.8 1.1 1.6 2.2 0 2.3 0.5 3 0.1 4.3 0.8 1.8-0.5 3.5-2-1.8-0.7-0.2-0.7 0.9-2.2 5.2-2.5 3.7-0.7 3.8-1.3 2-1.4 1.2-1.8 0.5-1.3 0.3-6.8 1-2.2 2.9-1.6 6.4-1.1 0.9-0.5 0.9 2.2 0 1.2 2.9 2.4 3.2-1 1.6 1.8 0.5 2 4.2 1.1 0.6 2 0.9-0.3 3.6 0.4 1.6 1.1-0.4 1.6 0.7 0.7-0.7 1.4 0.5 0.6 2.3 0.3 2.2-0.3 1.3-0.6 0.5-1.4 1.9-0.6-0.8 2.7 0.6 0.6 0.4 2 1.7 0.1 3.3 1.5 2.8 2.6 3.4-0.4z" data-name="France" id="FR" name="France">
+</path><path class="country" d="M389.1 403.1l-1.6 1.3-1.3 0.2-2.5-1.2 0-0.5 2.5-1.1 2 0.6 0.9 0.7z m-36.5-39.7l1.3 0.9-3.4 1.9-1.2-0.6-0.9-1.2-0.1-1.9 1.2-0.5 1.8 0 1.3 1.4z m-23.3-11.4l-2.1 0.4-2.9 0 0.1-1.5-1.4-0.5-1.8-2.7-1.3-0.5-1.9 1.6 0.5 0.9-2.4 1.8-2.9-0.3-0.8-0.7-2.1-0.4-0.2-1-2.7-2 1-1.4 2.9-0.9-1-1.4 0.2-0.8 1.6 0.1 2.2-0.8 1.2-1.6 1-2.3 1.9-0.9 1.3 0.6 1.9-2 2.8-0.1 2.7-0.7 3.9 0.3 1.1 1.1 0.5 1.7 1.3 1.7 1.7 1.4 0 0.9-2 1.1 3.5 0.3 1.2 2.5-2.1 0.3-0.1 1.4 1.1 0.2-0.6 1.4-2.6 0.6-1.4 2.2-1 0.5-2.3-0.5z m13.7-20.2l-2.6-0.5-0.6-2 0.9-1.4 1.8 0.7 0.6 1.3-0.1 1.9z m-11.5-7.1l0.7 3.4-2.4 1.3-0.8-2.4-1.4 1 0.2-1.9 1.5-0.3 2.2-1.1z m1.7 1.7l-1.1-1.2 1.6-2.2 1.7-1-0.1 1.6-2.1 2.8z m2.5-7.8l-4.6 0.8 0.6-3-1.9-0.9 0.3-0.9 2.1-0.5 1.7 1.7 2.1 0.6-0.3 2.2z m-16.2-11.4l-1.5-0.2-0.4-1.4 0.2-2.3 1.6 0.2 0.1 3.7z m12.8-5.7l-0.1 2.8 2.9 0.8 2-0.1 0.4 0.6-3.3 2.7-0.7-0.1-0.2-2.2-1.4 0.3-1.9-0.3-1.2-1.9-2.7-0.5-0.9-1.1 1.4-0.6 0.3-1.2 2.8-0.6 1.5-0.7 0.9 1 0.2 1.1z m-11.9-2.6l1.2 0.9-1.1 1.3-1.5 0-2.2-1 0.2-0.5 3.4-0.7z m11.8-9.9l-1.6 2.6-1 0.7-0.2 1.7-3 1.6-3.2 2.4-1.4-1 2.6-1.7-2.1-1-0.2-2.6 0.8-0.7 1.4 0.7 1.9-0.3-0.7-1.2 6.3-3.2 0.4 2z m34.8-2.2l0 1.2-1.3 1.6-2.2 1.2-4.2 2.8-2.5 1.3-0.5 1.6 1.4 0.1 0.2 0.8-2.2 1.6-0.6 1.5 3-0.4 5.3-1.5 3.6 0.5 2.6-0.3 6.9 0.2 1.9-0.3 2.3 1.3 1 1.7-2.8 3.4-0.8 2.3-2 3.5-1.9 2-2 2.5-2.1 1.1-3.1 0.5 4.5 1.9-1.4 1.8-2.4 0.1-2.3 1.7-2.1 0.7 3.6 1.1 2.4-1 2.7-0.1 5.2 1.9 3.6 3.4 2 1.5 0.5 1.1 2.1 6.9 1.5 3.8 1.6 1.8 4.5 1.6 1.1 0.6 3.4 3.3 3.4 2.4-1.4 1.5 0.4 1.2 2.1 2.9 0.3 1.6-1.3-0.1-2.3-1.4-0.3 0.7 5 3.3 1.6 2 1 2.7-0.6 1.1-3 2.7 2.8 1.4 1.2-0.2 2-2.1 1.7-0.2 4.2 0.3 3.8 1 3.3 2.1 0.7 1.1 0.4 3.1-2.2 5.8-2.8 1.9-0.5 1.7-2.1 0.9-1.7-0.3-2.4 1.2 1.7 0.6 0 1.7-1.1 0.6-2.5 0.2 1.1 2 2.5 0.4 4.3-0.2 1.9 0.2-0.2 2.7-0.4 0.4-3.8 1.7-1 1.8-2.2-0.1-1.1 0.7-5.7 1.9-4.9-0.8-2.9 0.1-4 0.6-4.2-1.2-1.8-0.2-2.8 1.7-4.2 0.5-2-0.2 0.9 1.5-0.9 0.4-3.8-0.5-1 0.5-1.4-0.2-2.7-1.4-2.6-0.1-4.9 1.2-1 1.3-1.3 3.5-1.1 1.2-1.4 0.2-4.5-2.5-1.5 0.5-2.5 0.3-2.7 0.7-3.9 2.4-0.9 1.5-1.3 0.2-1.1-0.9-1.4-0.3-2.3 0.8-0.3-1.3 1-1 2.8-0.7 2.5-1.9 2.2-2.3 4.6-3.8 0.8-3.1 2.7-0.7 1.4-2.5 4.1-0.6 2.8 0 2.8 0.5 2.9-0.1 1.1-0.7 1.9-2.4 3.6-3-4.7 1-3.8 2.3-3.2-0.4-2.3-1.9-2.1-0.8-2.1 0.4-0.7-0.9-2.4-1.7-2.6 0-3.6 1.7-2.6-1.2-0.9-2.3 0.3-1.4 1.1-0.7 2.5-0.6 3.8-1.7 2.2-0.7 2.8-1.9 1.2-2.3-0.3-2 0.5-1.4-0.9-1.7 0.3-1.5-3 0.3-2.7 1.2-0.7-1.1 2.8-1.8 1-1.4 2.6-1.7 3.6-1.3 1.9 0.1 3.7-0.7 2.7 1.3-0.8-2.1 1.2-0.4 0.1-2.4 1.6-2.2-1.2-0.6 0.1-2 1.5-0.8 0.7-2.6-1.7-0.5-2.1 0.6-1.7-1.5-2.8-3.6-0.3-1.4 1.6-3.1 2.3-2-1.9-0.8-1.4 0.2-2.7 1.2-2 1.3-2.1 0-0.8-0.9-1.1 0.1-2.5 1.1-3.5-1.3-1.1 2.3-2.6-2.5-0.3-1.9 1.3 0 1.2-2.4 2.9-4 0.6-1.2-0.5-1.4-1.9-1.5 0.3-2.6 0.8-1 1.5-0.4-1.9-1.2-2.9 0.9-1.8 0.9 0.3-2-0.6-0.4-1.5 1.4 0.1 3.3-2.1 5.7-1.1 0.9-1.4-0.5 1.1-3.9 1.4-2.5-0.6-0.3 0.3-3.6 1-2.9 1.7-3.8 2.2-3.5-4.1 2.7-1 0.5-2.4-0.4-0.8-0.7-1-2.3 1.8-0.2 1.7-1.1-1.5-0.7 1.5-0.9 1.7-2.1 0.4-1.9-1-1.5-1.6-0.6-0.2-0.9 1.7-1.9-0.7-1.5 1.6-3.1 3 0.1 1.9-0.4-2.3-2 0.7-2.9 3.7-0.3-0.8-1.8 0.3-2 1.6-0.9 1.3 0.2 1 0.9 2.6-0.9 0.6 0.8 2.8-0.6 3.7-0.3 4.5-0.6 2.2-0.4 2.3 0.2-0.6 1.7z m-0.6-4l-1.3 0.1-1.3-1.4 1.5-0.3 1.1 1.6z m1.3-3.4l2.7 0.6-0.6 1.4-1.4-0.7-2 0.3-1.9-1 0.4-2.1 1.7-0.1 1.2 0.5-0.1 1.1z m3.7-2.3l-1 0.3-0.4-1.2-1.7-0.6 0.4-0.8 2.7 2.3z m16.1-19.5l1.6 1.8 1 0.5-1.3 3.8-0.2 1.6-1 1.7-0.8-0.4 0.9-2.9-0.5-1.1-1.7 0.3-0.4-0.9 1.6-1.4-0.8-2-1.1-0.2 1.5-1.6 1.2 0.8z m2.9 0.4l-1.4-1.3 1.3-0.6 0.1 1.9z" data-name="United Kingdom" id="GB" name="United Kingdom">
+</path><path class="country" d="M972.9 547.7l-2.3 0.5 0.5 0.7-3.5 0.1-1.1 0.2-3.2-0.3-5.3 1.3-4.4 0.3-1.3-1.2-1.9-0.2-1.1-1.7-3.5-2.5-1.2-0.4-0.6-1.1-1.4-0.3-1.4 0.4-0.9 1.9-3.4-0.8-3.6-0.1-1.1 1-4.3-1.3 1.9-3 0.4-1.7-0.4-2.4-1.7-2.7-3.7-8-1.1-1.2-4-1.4-1.1-1.6-3.2-2.1-4.1-0.9-4.8-2.9-2.9-1.7 0.9-2.1 0.8-0.2 4.8 0.9 1.5-0.4 5.9 2.5 3.6 0.7 3.1 1.7 6 0.5 2.8-0.6 1.8 0 2 1.1 2.4-0.2 3.2 1.2 1.5 1.6 3.5 1.4 2.8 0.8 3.2 1.5 0.2 2.4 2.5 0.4 4.3-2.1 2.1-0.7 1.8 0.2 1.9 1.9 0.8-2.2 4.6 1.7 2.1 1.8 2.8-0.1 2.2 1-0.2 4.2 2.9 1.4 1.6 1.2 3.4 0.7 3.1 1.5-1.2 2.1-1.2 0.3 0 1.3 1.1 0.8 0.9 1.5 4.5 2.6 0.9 0.8-0.2 2-1.8 1.4-4.1-2-1.7 0.5-3.2-0.9-1.4-1 0.1-0.7-4-1.4-1.9-0.4-3 2.5z" data-name="Georgia" id="GE" name="Georgia">
+</path><path class="country" d="M712.9 637.7l2.3 0 1.7-1 2.2 3.7 1.7-0.1 3.5-0.9 3.7 0.2 1.4 1 2.6 0.2 2.3 0.5 3.3-0.7 0.4 0.4 0.1 2.8 1.2 0.2 0.7-0.7 1.7-0.6 1.8 0 1.6-0.8-0.4 3.5-0.9 0.4-4.4-0.1-8.1 1-5.3 0.4-0.7-0.2-0.7-2.2-3.3-1.1-6.2-1-1.5-0.4-3.1 0.2-1.1-1-0.4-1.8 0.2-1.9 1.4 0.3 0.4-1.4 1.9 1.1z m43.4 1.1l-1.6-2.1 1.1-0.5 1.2 2.4-0.7 0.2z m-54.7-11.4l-1.4 0.2-0.7-2.2 0.5-1 2.1 2.1-0.5 0.9z m62.7 4.1l-1.7-0.4 0.4-1.8-0.7-1.6 2.3-2.7 3.2-1.3 0.9 0.9-0.9 2.5-0.9 1.3 0.4 1-1.6 0.2-1.4 1.9z m-19-10.3l-1.5 1.2-0.9-0.6 1.9-1.2 0.5 0.6z m6.2-2.2l0-0.7 1.3-1.1 2.5-1 1.2 0.6-2.5 1.4-1.5 0.1-1 0.7z m-22.2-5.4l-0.9 1.3-1.3-0.7 0.4-1.2 1.1-0.6 0.7 1.2z m3.6 1.6l-1.1 0.6-1.4-2.2 1.9-2 0.9 0.7 0.1 1.8-0.4 1.1z m5.4-8.8l0.6-1.6 1.6-0.1 0 1.1-2.2 0.6z m-21.7-0.7l-1-0.4 0.4-1.2 1.1 0.5-0.5 1.1z m31.6-3.7l2.8 0.7-0.7 1-1.6 0.9-1.7-0.9-1.2-1.2 2.4-0.5z m-76.7 0.1l0.4 1.2-1.1 1-1.6-1.2-1.2-1.8 0.9-1.1 0.9 1.2 1.7 0.7z m53.1 0.7l-1.4-0.1-2.4-2.1 0.9-1.4 0.9 1.2 1.3 0.1 0.7 2.3z m-57.3-9.7l0.3 1.8 0.9 0.3 1.3 1.6-0.2 1.2-2.1-0.8-1 0.2-1.1-2-1.3 0.2 0.6-1.8 1.4 0.1 1.2-0.8z m70.8 2.5l-1.1 0.9-1.8-1.7 1.4-1.3-2.1-2.4-0.1-1 2.1-0.5 1.3 0.9 0.6 1.2 0.4 2.6-0.7 1.3z m-70.2-6.1l-1.3 0.1-0.4-0.9 0.8-2.4 1.1 0.3 0.2 2.5-0.4 0.4z m34.6-5.4l0.9 1.7 5.5 2.5 2.8 0.3 1.7 2.6-0.2 0.6 1.5 3.8 1.1 0.9 2.7 0.3 0.4 1.9-0.9 0.8-1.9-0.7-2.1-1.6-0.4-1.3-2.2-2.9-3.6-0.2-1.5-0.7-0.6-1.7-1.5-0.9-2-1.9-1.5-1.1-3-1.1-0.6-0.7 1.9-1.3 2.1-0.5 1.4 1.2z m37.9-5.8l-0.1 0.9 1.9 1.5 0.7 1-1.2 2.1-4-0.8-0.8-0.8 1.6-1.3-0.9-0.5-1.2 1.5-2.2-0.7-0.9-0.9 0.7-1.4 1.5 0.1 1.7-0.8 0-0.6 2.3-0.2 0.9 0.9z m-81.3-1.6l-1.3 0.3-1.2-0.8-1.2-1.9-2.2-2.2 0.7-1.1 1.6-0.4 1.4 1.2-1.1 1.2 0.8 0.7 0.9 2.4 1.6 0.6z m67.8-8.6l-0.7 1.4-0.1 1.3-3.8-0.7-0.3-2.3 2.2-0.1 0.8 0.8 1-0.9 0.9 0.5z m2.4-6.9l-1.4 0.4-1.7-1.3 1.4-0.5 1.7 1.4z m-11.9-3l-1.6 0.6-1.8-1.1 1.1-2.3 1.3 0.1 1 1.3 0 1.4z m15.9-1.7l-0.5-0.7-2.1-1.2-4.6-0.6-2.3-0.9-0.9 0.2-2-1-1.2 0.4-2.5 1.7-1.5-0.2-1.6-1-2.2 0.4-1.7 1.9-1.8 1-1.8-0.4-2.3 0-0.2 1.1 2 2.1-0.5 1 0.5 1 2.1 0.1 2.5 1.3-0.7 0.7-3.2-1.2-1.2-0.1-1.2 1.2 3.5 2.7 0.5 1.4-0.6 0.9-1.5-0.8-2.5-3.2-3.1-0.6-0.4 0.6 1.2 2.4 2.9 1.7-0.6 0.6-3-1-1.1-1.6-0.4-2-5.5-2.8-1.4-2.8-2.2 1.3 0.4 2-0.6 3.8 0.4 1.3 3.5 3.7 1.3 2.7 2.6 2.1 2.6 3.2 0.7 1.8-1.3 1.1-1.3-0.5 0.3-1.9-2.2-1.2-1.9 1.2 1.5 2.3 0.5 1.2-0.4 1.3-1.6 0.8-2.6 0.1 2.4 1.4 3.3 1 1.6 1.1 1.5 0.1 1.7 2.1 2.6 0.6 1.7 2.1 2 0.5 1.7 0.8 1 2.1 0.3 2.9 0.6 2.1 0.1 1.7-1.1 0.5-1.3-1.6-4.2-3.6-1-0.4-1 0.7-2.9 0.5-1.9 1.3 1.5 1.3 0.1 1.2 0.8 1.5 2 0.4 2 2.4-3 1-1.1 0.7-0.8-0.5-0.2-1.2-4.3-2.2-0.6 0.6 0.7 2.4 1.3 1.6 2.2 4.3 1.3 3.7-0.2 2.1 1 1.5 0.1 1.5-1.7-1.2-2.2-2.5-0.8-1.5-2.2 0.1-1.3 3.3 0.2 1.9-1.6-1.1-0.2-2.9-2.1-2.8-0.9-0.4-1.3-1.9-1.5 0.6-0.1 2.9-0.4 1-2.2-1.9-2.3-3.5-0.2-1.8 1.4-1.7-0.3-1.2-1.6-2.5-2.1-1.5-1.2-0.5-0.7-1.6-2-1.3 0-1 2-1.7 1-2.6 1.9 0.5 1.4-0.2 2-2.4 1.6 0.1 3.9 2.1 4.2 1.2 2.1 1 1.2 1.1 1.6 0.3-0.5-1.4 0.8-0.4 2.1 0 0.2-1.6-2-0.6-0.8 0.2-2.4-1.4-2.3-0.8-2.2-1.5-1.2 1.3-1.2 0-3.4-0.9-2.1 0.7-4.2 0.7-1.1-1.3-2.6 1-1-0.7-1.9-4.2-1.7-1.9-1.2-0.5-0.2-1.9 1.5-0.2 2.4 0.9 0.9-0.6-0.6-1.6-2.5-0.2-1.8 0.5-2.8-2.2-1.5-1.7-2.2-1.1-1.7-3.4-2.6-2.6 2.7 0.9 0.7-0.7 0.3-1.5 0.9-0.7-1-2.2 1.7-1.3 1.9-0.3 0.6-0.5 0.3-2 1.2-3.1 1.7-0.8 0.8-2.6-1.1-1.8 0-1.1 4.6-0.3 0.9-0.6 2.3 0.6 2.4-1.3 1.7-2.5 0.8-0.3 3-0.4 3.3 0.6 2.9-1 0.2-2.1 2-0.3 3 0.2 1-1 2.4-0.2 2.6 0.2 3-1.1 1.9-0.2 0.2-0.9 4.2 0.1 1.6-0.5 1.2 1.7 2.4 1.4 0.9-0.6 3.7 1.2 1.7 1.1 3.4-0.9 3.2-0.4 1.8 0.3 2.5-1.2 0.2-0.8-0.9-2.7-0.7-1 1.6-1.1 1.6 0.5 1.2 0.3 2.3 1.5 0.9 3.1-3.4 2.5 0.5 4.4-2.5 3.2-0.8 0.4z" data-name="Greece" id="GR" name="Greece">
+</path><path class="country" d="M611.2 521.2l2.3 0.4-1.1 0.9-1.2-1.3z m12.9 1.5l1.6-0.1 0.6 0.9 6.2 3.8 1.7 0.7 1.2 1.9-4.8-3.1-4.4-2.5-3.1-0.7-4.3-2-0.5-0.9 5.8 2z m-6.3-3.5l-0.8 0.1-5.6-0.1-1.7-0.3-0.5-1.3 1.8 0.2 0.5 0.6 6.3 0.8z m-5.3-2.3l-2 0.1-2.6-0.8 0.3-1.1 4.8 0.6-0.5 1.2z m-21.2-16.5l-0.3 0.4-3.3-2.7-0.3-1.9 2.8 2.7 1.1 1.5z m-4.9-6.5l-1.9-0.2 0.8-1.1 1.1 1.3z m-4.2 1.5l-0.9-0.1-1.7-4.2 0.4-1.2-0.8-2 0.9-0.3 0.5 2.1 1 0.9-0.1 1.6 0.7 3.2z m3.7-4.9l-1.5 0.3-1-1-1.3-0.2-1-1 1-0.7 0.5-1.2 3.3 3.8z m49.5-14.7l-0.7 1.5 1.6 2.7 0.2 1.6 1.3 0.4-0.4 2 1.2 1 3 1 0.9 1.5-2.3 0.1-1.7 0.4 0.7 2.6-1 1.6-2.2-0.2-1.3-2.2-1.1-0.8-2.2-0.2-2.6-0.7-1.8 0.2-1.8-0.3-2.2 1-1.6-1.3-1.7 0.6-2.8-0.7-2.5-0.1-2.7-1.6-1.5 1.2-3.2-0.3-2.7 3.2-1.8-1-1.7-1.8-1.8-0.4-1.2 0.6-0.3 5 0.1 1.4 1.9 1.3 3.4 3.2 1.3 4 2.3 2.4 2.8 2.3 1.7 2 5 4.1 2.4 1.1 0.4 2.2 1.5 1.6 3 2.5-0.3 1.6-3.5-2.8-2.6-1.5-3.1-2.8-3.8-1.1-2.7-1.2-3.3 0.6-1.8-0.2-0.7-2.2-5.8-3.9-4.3-4-0.8-1.3 3.1-1.2-1.4-0.8-3.9-3.4-1.2-1.6-0.1-4.1-0.8-1.7-2.9-2.2-1.1-1.1-2.1-0.7-1.4 0.9-0.3 1.9-3 5-1.3 0-3.1-4.2-0.5-1.9-1.3-3.9 0.7-0.5 0.5 0.6 3.3 0.8 1.4-1.3 1.1 0.5 3.6-0.1 0.6-0.3 1.2-2.2 2.6 2.1 1.5 0.7 1.3-0.5 2 0.7 1.6 0.2 1.2-0.4-0.8-2.3 0.7-0.7-1-1.1 2.1-1 2.1-0.6 0.4-1.1-0.2-2.2-0.9-0.9 0.4-1.4 4.4-1.7 0.7-1 2 0 0-1.7 0.9-0.8 2.5 0.6 2.9 1.2 1.7 1.2 0.9 1.3 2.7 1.8 2.2 2.2 1.3 0.7 2.5 0.6 1.3 1.3 3.3 0.9 4.9 0.2 2.5-0.9 1.1-1.4 2.9-0.4z" data-name="Croatia" id="HR" name="Croatia">
+</path><path class="country" d="M671 437.8l1.5 0 1.4 2.3 2.2 0.8 0.9 1.1 2.3 0.4 0.9 0.7 0.7 1.7-2.2 2.3-4.6 1.1-1.9 2.4-1.2 1 0.1 1.7-1.4 1.4-0.7 2.5-1.4 1.5 0 1.2-1.6 2.7 0.2 1.3-2.1 1.5-1.5 4.7-1.3 0.9-2.6-0.3-2.5 2-1.4-0.5-3.2 0.9-1-0.5-2.8-0.3-1.1 0.2-2.9-0.4-1 0.3-1.5 1.6-2.2 1-1.6-0.5-2.1 1.3-2.9 0.4-1.1 1.4-2.5 0.9-4.9-0.2-3.3-0.9-1.3-1.3-2.5-0.6-1.3-0.7-2.2-2.2-2.7-1.8-0.9-1.3-1.7-1.2-2.9-1.2-1.9-2.2-1.4-3.3-2.4-0.1 1.8-1.7 2.5-0.5 0.3-1.8-1.1-1.6 0.5-0.7-0.4-1.5 2.2-1.2 0.5-1.4-0.5-1.1-2.6-0.7 1.3-1.4 2.5 0.9 3.9-0.3-0.7-2 0.6-1.9 0.6-0.7 2.1 0.3 4.2 2.7 1.6 0.7 4.7 0.1 7-0.4 0.6-1-0.5-1.3 0.4-1 1.4-0.7 4.3-0.4 2.4-0.6 1-1.5 0.7-0.2 3.5 1.4 5-2.5 1.6-3.5 1.8-0.4 2.7 0.1 2.5 0.6 4.6-0.7 1.4 0.9 2.2 2.2 0.6 0.2 4.3-1.1z" data-name="Hungary" id="HU" name="Hungary">
+</path><path class="country" d="M329.3 352l0.7 1.1-2.2 0.4 1.5 5.2 0.6 0.9 0 4.1 0.9 3.2 0.1 2.5-1.3 1.8-0.9 2.1-0.2 1.8-1.6 2.1-1.5 0.9 1.6 1.5-2.8 0.8-2.6-0.3-1.3 0.8-3.9 0.2-3.7 0.7-1.7 1.8-2.5 0.7-1 1-2.3 0.8-1.7-1.2-1 0.2 0.2 2.1-2.9 1.3-1.8 0.3-1 0.7-5.8 1.4-1.9-0.5-3.3 0.8-1.2-0.1 1.6-1.8 1.6-1.3-3.8 0.6-1.4 0.5-0.6-0.6 3.2-1.9-3.3 0.1-3-0.4-0.4-1 2.9-2.3 2.4-0.9-0.1-0.9-5.1 0.1 0.5-1.1 1.7-1 1.8-0.1 1.5 0.6 1.1-0.8-0.6-1.7 3.9-2.3 3-0.3 3.3-0.7 3.3-0.8-2.4-1.2-2.3 1.8-2.6 0.3-1.9-0.5-2.1 0 2.7-2 1.6-1.7-0.8-0.7 2-2.3 3.6-1-1.6-1.3-3.9 0.2-1.4-1.3-2.6 0.1 0.4-1.2-3.5-0.2 0.5-1-0.6-1.1 2.8-0.6-0.2-2 1.9-0.8 2-0.4 0.1-1.1-2-0.2-2 0.4 0.8-2.1-0.8-1-0.4-1.7-0.9-1 2.8-0.2 1.2-0.5 4.7 0.1 1.9 1.3 1.7-1.2 4.8 0.9 0.6-2.6 3.8-1.5 1.2-2-3.7 0.4-3.6-1 0.7-0.8 2.1-0.7 1.9-1.6-0.3-1.1 1.7-2.7 3.1-0.8 2.4 0 1.6-0.9 1.2 2-1 1 0.6 0.9 1.2-0.8-0.5-2.1 0.9-1.3 1.9-0.3 0.6-0.8 3.2 1.7-2.5 1.5-0.5 0.7-1.9 0.9-1 2.3-1.2 1.6-2.2 0.8-1.6-0.1-0.2 0.8 1 1.4-2.9 0.9-1 1.4 2.7 2 0.2 1 2.1 0.4 0.8 0.7 2.9 0.3 2.4-1.8-0.5-0.9 1.9-1.6 1.3 0.5 1.8 2.7 1.4 0.5-0.1 1.5 2.9 0 2.1-0.4z" data-name="Ireland" id="IE" name="Ireland">
+</path><path class="country" d="M240.3 177.9l1.2 0.1 2.8-0.8 2.2-1.1 0.5 1.1-2.5 2.4 2.2 0.9 2 0.3-0.1 1.7-1.7 1.6 0.8 0.3 3.5-0.5 1 2.3 1.5-0.2 2.4 0.3 1.4 1.2 1.2-0.3 0.5 0.9-0.7 1.2-1.5 0.6 2.1 2.9 0 1.1-1 0.7-1.3 0-1 2.1-1.2 1.1-2 1-2.6-0.5-1.1 1.5 0.2 1.4-1.3 1.3-5.3 2.1-2.5 0-2.6 0.5-6.2 2-4.7 2.8-2 0.7-3.1 0.3-1.8 0.5-5.9 0.8-2 0.5-1.2 1.1-0.5 1.4-4 1.1-3.8 0.7-6.4-0.5-5.4-1.3-4.5-0.3-3.8-2.5-2.9-1-3.6-1.8-2.3 1.1-12.4 0.3-0.8-0.5-0.2-2.1 1.1-0.8 1.3 1.2 5-1.1 2.7-1.9 2.5-2.7-3.5 1.2-0.2-1.9-0.9-1.1-1.7-0.8-0.3-0.8 1.1-0.9-2.3-1.2-2.6 0.1-6.6-0.5-3.8 1-2 0.1-0.9-1 0-1.1 1.5-0.3 1.8 0.1 4.1-0.6 1.4-0.6 0.8 0.5 3.6-1.1 1 0.2 4-0.2 4.4-0.1 1.1-0.8 0.4-1.1-2.8 0.9-3.7-0.5-0.6-0.9 3.6-1.6 2.7-0.8-0.8-1.3-3.2 0.2-0.7-0.8-2.6-0.4-1.8 0.3-0.9-0.5-2.4 0.6-5.2 0.9-3.3 0.9-3.1-1.1-2.4-0.2 1.4-1.4 2-0.1 1.7 0.8 0.1-3.2 1.2 0.3 2.8 1.1-0.7-2.8 2.2 0.1-2.2-1.6 0.5-1 1.6-0.3 0.8-1 2.4 0 2.3 1.1 0.2 1.4 2.1 0 1.1-0.8 0.9 0.6 0.5 1.2 1.2 0 0.4-2.2-3.6-1.1-0.3-1.4 3.7-0.1-1.7-1.1-3 0.2-1.4-0.4 2.6-1.2 3.4 0 1.4 0.2 2.3 1.7 2 0.6 3.1 2.3 2.2 0.9 0 1.2 0.7 0.8-2.3 3.4 0.9 0.7-0.8 1.6 1.9 0.6 1 1.7 0.9-1.8 1.5-1.9 2.3-1.3 0.9 0.1 0.9 1 0.9 0.1 1.4-2 0.7-4.3 1.7-0.9 1.8 0.7 1.3 1.6 2.6 2.1 1.8-0.5 0.1-2.3 1-1.3 2-0.3 2.2-0.8 2.3-0.2 1.7 1.4 1.2 1.4 1.7 1.1 0.7 1.8 0.9-0.3-0.2-1.7-1.4-2.6 0.3-0.9 4.1 0.2 3 2.3 1.3-0.3 3.6-2.8 2.3 0.8 1.8 0.1 2.8-0.8 0.8-1.2-0.9-2.3 0.6-0.4 2.6-0.6 2.7 0.1 2.6 2.1-0.1 1 1.6 0.8z" data-name="Iceland" id="IS" name="Iceland">
+</path><path class="country" d="M602.6 595.6l-1.2 2.5-2.8 4.3-1.5 5.1 0.3 2 1.6 1.4-0.7 0.5 1.6 1.8 0.1 1.3-1.8 1.9-0.4 1.7 0.1 1.5-2.9-0.6-1.4 0.3-3.7-1.4-1.9-2.8-3-2-3 0-1.4-0.5-2.9-1.9-3-1.4-2.6-2.1-1.7-0.4-1.5-1-2.9 0-2.3-1.6-1.3-2.3 1.3-3.7 1.4-0.8 0.9-1.2 2.3 2.3 1.8-0.8 1.4-1.6 2.4 0.1 0.5 0.9 1.4 0.3 2.5 1.6 1.4 0.4 3.4-1 3 0.4 2.8-0.5 1.7-0.6 1.2-1 1.4-0.3 3.5 0.3 2-1.2 0.8 0.2 2-1.2 1.1 1.1z m-78.3-41.5l0.7 0.9 1.8 5-0.6 1.6-1.3 2 0.8 2.8-0.6 11.5-0.6 2.9-0.9 0.4-2.9-1.2-1.5 0.3-1.2-0.6-0.3 3-1.8 2.1-3-0.2-0.7-0.6-2.4-3.8-0.4-4.3 0.6-1.3 0-2.5 1.1-0.1 0-1.7-1.8-1.2 0-1.9 0.7-1.4-0.1-2.6-0.8-0.9-0.8-2.3-2.2-2.4 0.1-3.4 3.4 0.6 1.3-0.3 3.1-1.5 2.1-2.5 1.4-0.5 1.5-1.8 0.7 0.9 2.2 0.8 1.2 1.5 0.9 0.5-0.7 1.4 1 0.8z m8.3-30.8l0.3 1.4-2.5 0.5-1.1-1.1 2.9-0.2 0.4-0.6z m37.9-56.6l-0.2 0.9-3.3 2.3 0.7 1.4 2.3 0.7-1.6 2.1 0.3 1 1.3 0.2-0.4 2 1.9 1.1 1.5 1.3 0.2 1.3-1.5 0.1 0.7-0.6-2-2.2-2 0.9-3.2-0.9-2.1 2-1.5 0.4-1.7 1.1-3.2 1.2-1.8-0.4-1 0.7-0.4 3.1 0.8 0.6 1.5 2.6 1.7 1.1-0.7 1.9-0.9 0.7-1.3-0.5-0.3 1.7 0.9 4.5 1.4 3.2 1.2 1.3 2.7 2.2 2.7 1.1 5.1 3.7 2.8 1.1 0.7 0.7 1.8 2.8 1.6 3.2 1.8 5.1 1.3 2.5 2.3 2.9 4.8 4.1 4.3 2.9 4 1.9 3 0.3 7-0.4 2.6 0.7 0.4 1.2-0.4 0.9-2.9 2.1 0 1.7 1.5 1.2 7.1 3.2 7.2 2.6 2.2 1.4 2.7 2.1 6.4 2.9 1.1 1.4 4 3 1.8 2.4 0.5 1.8-1.5 4.4-1.6-0.5-1.9-1.3-3.1-5.4-5-0.5-2.9-1.3-0.7-1.4-2.3-0.4-1.3 0.9-1.4 2-1.5 3-1.5 4.3 0 1.7 1.1 1.7 2.9 1 2.4 1.5 1.6 1.6 0.3 3.8 0.9 2.1-0.9 1.3-1.9-0.3-2.5 0.7-1.7 1.4-0.7 1.4 0.5 3.4-0.3 1.4-3.3 2.5-1.6 2.5-1 2.3-4.3 0-1.1-1.5-0.1-2.2 0.6-1.3 1.6-0.7 0.9-2.8-0.5-2 1.1-1.6 2.8-0.7 0-2.9-1.4-1.3-1.4-5.1-2.4-4.3-1.4-3.8-1.1-1.8-1.4-1-3.7-0.3-4.6-2.6-0.3-1.1 0.6-1.1-1.1-2.8-2-1.7-2.6 0.6-1.2-0.1-0.1-1.5-2-1.3-2.7-0.2-0.7-0.7-2.6-4-1.7-1.7-2.3 0.1-3.9-0.9-2 0.7-3.2-2.6-2.8-0.9-5.7-5.3-1.8-2-3.5-2.2-2.3-3.2-1.8-1.2-4-1.4-0.3-1.3-3.1-3.1-1.7-1-1.3-2.1-2.5-0.5 0.1-2.7-1.2-3.5-1.7-2.2-1.2-5.3-0.8-1.5-1.8-1.1-4-1.2-5.7-3.4-1.1-0.1-3.4-1.3-2.1-0.2-2.6 1.2-3.1 3.2-2.5 3.4-0.9 0.6-3.4 1.2-3 0.5-0.2-1.5 2.1-2.6-0.3-2-3.3 0.6-5.1-2.4-0.9-0.9-0.1-1.4-0.7-1.3 1.4-2.5 0.8-0.7-0.5-1.7-3.2-1.4-1.5-3.1 0.8-0.4 1.9 0.2 1.7-1.3 1.2-0.3 0.8-2.5-1.8-1.6-1.7-2.6-0.9-0.6-0.1-1.6 2.6-1.7 1.4 0.7 2.4-0.5 2.6-1 3.1 0.8 2.4-1.4 1.6-2.2-0.6-1.5 3.4-2.9 1 0.6 0.2 2.5 2.4 2 2.2 0.6-0.4 1.2 1.3 1.2 0.9 1.4 1.2-0.7-0.7-1.7 0.2-1 2.2-2.6 0.5-1.1 0-2.9 2-0.1 0.8 2.1 2 0.8 2.9-1.1 0.7 0.1 1.4 1.9 1.2-0.3-1.5-3.5 0.6-1.8 1.3-0.3 1 0.9 1.9 0.2-0.5-1.8 0.5-3.1 3 0.3 0.9 0.8 2.1 0.4 1.1-0.4 1.2-2.2 1.4-0.6 3.4-0.3 3.1 0.2 4.7-1.5 0 2.3 3.1 3.5 1.1 0.5 8.6 1.5 4 0.3 2.6 0.5z" data-name="Italy" id="IT" name="Italy">
+</path><path class="country" d="M519.4 458.5l-1.2-0.1-0.1-1.7 0.5-1.5 1.1 2.5-0.3 0.8z" data-name="Liechtenstein" id="LI" name="Liechtenstein">
+</path><path class="country" d="M707.9 328.5l0 1.8-0.7 3.1 3.9 1-1.3 1-0.4 1.1-3.6-0.1-1 2-0.8 0.6-2.6 0.6-1.1 3 0.4 2.3-1 1.5-0.5 2 1.9 0.5 0.9 1.1 0 1-2 0.2-1.7-2.3-1 0.7-2.1 0.5-1.4 1.2-2-0.2-0.8 2.6-1.8-0.1-3.3 1.3-1.6-0.9-3.7 0.3-1.6 0.3-2.9-0.4-0.8-3-1.1-0.9-4.5-2.2-2.3-0.7-0.6 0.6-1.3-2 0-2.1 1-3.1-1.3-1.3-1.4-0.6-0.9-1.3-5.7-0.1-2.4-0.6-3.9-1.4-2-1.2-1.8 0.2-0.6-1.2 0.2-1.6-1.1-2.4-1.6-2.9-0.7-3.8 2.8-1.7 3.6-1.9 4.7-1.4 5.9 0.5 4.3-0.1 1 0.9 1.6-0.7 4.9 0.5 2.3 0.1 3.7 0.9 4.6-0.4 1.7-1.3 2.3-0.2 2.4 2.9 6.1 1 0.9 0.4 5.4 3.1 2.6 2.1 1.5 0.7 2.3 0.5z" data-name="Lithuania" id="LT" name="Lithuania">
+</path><path class="country" d="M475.4 411.7l0.3 2.2 1.5 1.6 2.8 1.1 0 1.4-0.9 0.9-0.6 3-1.3-0.7-2 0.6-1.4 0-2.1-1.2 1.1-1.7-2-2.4 0.2-1.7 1.4-2.5 1.3-1.3 1.7 0.7z" data-name="Luxembourg" id="LU" name="Luxembourg">
+</path><path class="country" d="M711.6 301.2l1.9 0.3 0.5 1.1 3.2 1.7 0.7 2.2-0.8 1.6-0.3 3.1 1.8-0.3 1 0.6 0.3 1.2 1.7 2.1 1.3 0.8 1.9 4.2-0.3 1.7-1.3 0.2-1.4 0.8-2.5 2.4-0.4 1.7-3.1-0.1-3-0.4-1.1 0.3-1.2 1.5-2.6 0.6-2.3-0.5-1.5-0.7-2.6-2.1-5.4-3.1-0.9-0.4-6.1-1-2.4-2.9-2.3 0.2-1.7 1.3-4.6 0.4-3.7-0.9-2.3-0.1-4.9-0.5-1.6 0.7-1-0.9-4.3 0.1-5.9-0.5-4.7 1.4-3.6 1.9-2.8 1.7-0.8-2.8-0.6-5.5 0.1-2.8 1.9-1.6 0.8-1.2 0.6-4.5 2.5-3.6 2.4-0.4 3.1-1 3.5-0.9 1.4 1.9 4.9 3 1.2 1 2.3 3.4 4.4 1.8 3.1-0.6 3.6-2.4 1-1.1 0-1.1-1.2-4.7-1.1-2 0.1-1.3 8.4-2.8 1.5 1 1.1-0.7 5.6 2.5 2.3 0.5 0.6 0.7 3.5 2.7 2.8 1.1 4-1.2 3.4 1 1.9 0.2z" data-name="Latvia" id="LV" name="Latvia">
+</path><path class="country" d="M751.4 483.2l-2-2.3 0.9-0.7-1.4-5-0.1-2.6 0.9-4.8-0.5-2.9-1.4-2.3-1.4-2.9-3-2.1-1.3-1.7-2.1-1.8-2.5-3.2-1.5-1.3-3-4.9-2.5-3-2.5-1.6-2.1 0 0.2-0.6 2.3-1.4 0.7 0.2 4 0.1 1.2-1 0.8 0.3 1.6-1 3.5 1 3.6 2.4 2.5 0.3 0.6 1.2 5.6 0.6 1.4 1.9 1.4 1 1.4-0.7 1.4 1.4 0.6 2.3-0.6 3.1 0.6 1.2 2.3 1.2 2.9 2 0 2.4 0.9 1.9 2 1.3 2.1 0.8 1 1.6 0.2 2.9 2.9 1.7-0.6 0.7-2.9 0.4-1.2-1.3-1.6 0.6-2.1-0.8-1.9-0.2-2.1-1-2.5 1.6 0.5 2.1 1 1.7-0.4 2-2.3 1.7 0 1.3-2.5 2.9 0.5 1.4-0.4 1-2 0.2-1.1 0.7z" data-name="Moldova" id="MD" name="Moldova">
+</path><path class="country" d="M642.4 512.9l0.4 1.2 2.6 1.7 1.9 2 3 1.6 2.1 0.5 5.3 2.9 0.1 1-1.6 0.4-0.2 0.7-2 0.4 0.9 1.5-0.2 1.3-3.4 1.2-0.8-2.1-1.1-0.3-3.2 5.3-0.8 0.3-2.5-0.2 1.6 1.9 1.7 0.8 0.3 0.6 0 3.1-2.1-1.2-0.9-1.8-3.1-2.9-3.5-2 0.1-1-1.6 0.1-1.2-1.9 1.1-1 0.1-0.8-1.1-1.6-0.6-3 0.5-0.7 1.7-0.2-0.1-1.5 0.5-1.7 2-1.7 2.3-0.2-1.4-2.2 3.2-0.5z" data-name="Montenegro" id="ME" name="Montenegro">
+</path><path class="country" d="M683.8 531.8l3.3 3.2 3.4 1.8 1.7 3.3 0.9 1-0.5 1.7 0 4.2-2 0.3-0.2 2.1-2.9 1-3.3-0.6-3 0.4-0.8 0.3-1.7 2.5-2.4 1.3-2.3-0.6-0.9 0.6-4.6 0.3-1.3-1.1-1.6 0.2-1.3-2.4-1.2-1.1-1.2-2.2-0.2-1.9-0.7-2 0.8-0.8-0.3-2.1 0.5-2.6 1.7 0.3 0.5-0.8 0.2-2.6 3.4-1.5 1-0.1 1.6 1.2 1.5-1.9 2.1-0.4 2.2-0.3 2-0.9 1.9 0.3 2.3-0.8 1.4 0.7z" data-name="Macedonia" id="MK" name="Macedonia">
+</path><path class="country" d="M452.2 392.5l-0.6 1.2-3.2 1.5-3.9-1.1-1.2 0.6-1.2-0.7-0.3-1.3 2.8-0.4 3.5 0.7 1.5-0.6 1.2 0.5 1.4-0.4z m-3.4-5.3l1.5 1.4-1.5 0.3-1.6-1 1.6-0.7z m18.1-8.5l-3-0.4-0.9-0.7 2.4-1.7 3.2-1.5 1.7 0.4 0.5 0.9-1.1 1.1-2.8 1.9z m-7.6-11.5l-1.1 1.1-0.6-1.4 1.7-1.4 0 1.7z m-7.1 25.3l-2.6-0.8-2.2 0.5-2.8-0.7-1.7-1.3 1.2-0.7 2.3-0.1 4 0.7 1.2-0.9-0.6-1-2.3-2.1 1.6-2.7 1.4-1 3.2-3.8 0.9-2 1.2-5.5 1-2 1.4 0.5 2-0.8 3.4-2 1-1.7 1-0.9 4-1.6 2.1-0.4 8.9-0.5 1.8 1.7 2.7 0.6 0.1 4.3-0.7 1.7-1.1 3.8-3.1-0.1-0.6 1.6 0.7 1 2.6 0.3 0.8 1-0.6 2.6-2.6 1.6-0.3 0.9 1 0.9-0.7 1-4.5 1.3-2.3-0.8-1.8 0.7-0.7 1.1 3.1 4.1 0 1.2-1.3 2.8 0.7 1.2-2.2 1.6-0.5 0.8 1.9 1.2-0.6 2.4-1.2-0.1-2.4-0.3-0.7-1.1 1.1-1.3 1-2.9-2.6-1.1-1.7-1.3-1.9 0.4-2.6-1.4-0.5-1.6-2.5 0.8-1.1-1.3-1.5 1-1.5-0.8-1.4 0.7 0.2 0.9-2.1-0.3z m18.1-15.6l0.9-0.9-0.5-1.9-2.1-0.3-0.5-0.8 0.4-2.5-2.8-0.4-0.4-2.5-1.5 0.3-2.3 1.5 0.6 1.3 1.6 1.6 0 0.9-2.1 0.7 0.1 2.6-0.2 1.6 5.4 1.4 3.4-2.6z" data-name="Netherlands" id="NL" name="Netherlands">
+</path><path class="country" d="M458 260.9l0.1 1.7-1-0.1-0.7-1.1-0.2-2 0.7-0.5 1.1 2z m-1.8-11.1l-1.8 0 0.3-1.3 0.9-0.3 0.6 1.6z m32.5-31.9l-2.3-0.2-1-0.8 2.8-0.8 0.7 0.5-0.2 1.3z m3.6-4.6l-0.3-0.9 2.7-0.6 0.9 1-3.3 0.5z m28-16.6l-4.2 0.3-0.3-1.1 2.1-0.8 1.2 0 1.2 1.6z m6.8-10.5l-2 0.3 0.1-1.1 1.8-0.3 0.1 1.1z m4.1-5.7l-0.1-1.1 1-1.2 1 0.4-0.3 1.5-1.6 0.4z m3.1-24.9l-1.5 0.7 1.1-2.6 1.1-0.7 0.4 1.5-1.1 1.1z m8.5-5.2l2.3 0.2-0.5 0.8-1.4 0.3-1.1 0.8-1.9 0.2-1.9 1-1.6 0.3-0.4-1.2 0.9-1 1.3 0 1-1.2 3.3-0.2z m12.4-9l2.2 2.1-0.3 1.5-1.2 0.7-3.3 0.1-1.6-0.9-2.2 0.6-1.6-1.1 1.6-1.4 2.6 0.4 0.5-1.7 1.7 0.3 0.4-1.5 1.2 0.9z m6.3 5l1.3-1.1 1.5-0.4 0.6-2.2 1.8-0.5 1.6 1 0.9 1.2-0.2 1.1-3.1 1.2-2.5 2-1.6-0.2-0.7 0.7-2.4 0.6-1.7-0.9-0.9 0.9-1.4 0.4-1.2-0.4-2.9 1.5-2.8 0.3-1-1.1 3.1-1.9 5.1-0.6 2.9-2.3 0.4-2.5 0.6-0.9-1.3-0.6 0.2-1.7 2.4-1.7 1.3-1.4 1.5-0.3 0.9 1.1-1.1 1.4-1.6 1.2 1.1 1.5 0.6 2.4-1.4 2.2z m15.5-13.7l1.4 0.8 1.5-0.3 2.3 0.7 1 1.5-1.2 0.9 0.4 1.7-3.8 0.5-0.9-0.5-1.5 0.9-1.4 1.4-2.2-0.6 0.2-1.6-0.3-2.3 0.7-0.5 2.9 0.3-0.4-2 1.3-0.9z m124-2.6l-1.8 0.4 0.2-1.8 1.6 1.4z m-92.4-3.8l-1.3 0.4-1.8-0.3-0.7-1 2.2-1 1.7 0.3-0.1 1.6z m-15.1 0.3l1 0.7 1.5-0.5 1.1 1-1.4 0.8-0.8 1.2-2 0.1-2.9 2.3-0.1 0.8-5 0.5-1.5-0.3 1.7-2.7 1.7 0 1.7-0.8-0.3-0.8 2.5-2 0.6-1.7 1.4-1 0.8 2.4z m4.8-2l1.4 0.2 1.3 1.6-2.3 0-2-1.8 1.6 0z m37.3-4.3l0.5 1.1-3.3 2.1-1.6 0.1-2.1-1.2 0.1-0.8 1.9-0.9 0.9 0.1 2.7-1.4 0.9 0.9z m3.9-0.3l-1.8 0.5-1.7-0.9-0.2-1.6 0.8-0.3 3.2 1.2-0.3 1.1z m-6.4-3.2l-0.4 0.8-2.7 2.1-2.2 0.7-1.8-0.3-0.8 0.6-2 0-2-0.6-2-1.2 3.5-0.1 0.6-0.5 1.5 0 2.8-0.4 1.1 0.3 2.1-1.4 2.3 0z m60.6 23.5l-1.7-1.3 0-0.7 3.2-2.9 0.7-1-2.6-2.7-3.6-0.8-4.2-1.1-4.2-2-1.8-1.2-2.9 0.3-3.5 1.6-0.9 0.2-3.8-0.4-2.1 0.2-1.7 1.8-2.6 1.7-0.7 3.8-0.6 1.7 0.7 3.2-1.5 1.4-2.1 0.3-1.6 1.3-0.5 1.7-1.3 0.6-2.6-0.8-3.9-0.8-3.6-1.1-1.5-0.1-1.2 1.2-3.7 0.9-1.8 0.1-0.8-0.5-6.9-0.6-1.4-1.8-7.9-5.5-3.6 0-1.9 1.1 1 1.4-0.5 0.6-1.9-0.4-2.1 0-0.5 0.4-5.1 0.2 2.6 1.6 0.1 2-1.4 1.9-1.6 0.9 2.9 0.9-2.5 1.6-1-0.1-8.6-1.7-2.9-0.1-4.1-0.9-2.1 0.5 0 0.8 0.8 3.6-2.1 3.1-6.3-1.8-1.5 0.9-3.7 1.9-1.5 3.5-1.1 1.1-2.7 0.6-0.5 1.1 2.7 2.3 1 1.3-0.2 1.4-1.5 1-3.3 2.9-3 2.9-1.3 0.9 1 2.5-3.3 1.5-2.4 0.5-3.8 0.4 1.4 3.9-0.6 2.7-0.1 4.7-3.3 5-4.4 5 4.7 1.6 1.1 2.9 0.1 1.2-1.7 2.2-7.1-0.9-3.3 0.4-3.3 1.5-3.5 3.8-1.2 1 0.5 1.5-2 2.8 2.7 4.1-1.1 1.1 0.6 2.8-0.1 1.8 2.5 4.4 0 1.6-0.9 6.4 3.8 2.1 1.2 0.4 3.4 2.7-0.4 1.9-1.3 2.5-2.4 0-1.8 0.6 0.3 1.6 3.1 4.9 0.5 1.4-0.6 2.1-0.1 2.8-1.9 2-1.3 0.8-2.6 0.7-0.9 2.4-1.5 1.5 1.6 4.4-0.6 3.9-0.7 1.4-1.9 0.2-1-1.8-0.4-1-6-1.2-2.3-2.9-0.4-3.1-2.5 1.2 0.6 1.1 0 2.3-2.5 3.9-1.1-0.2-1.3 0.8-1.3 0.2-0.6-1-1.1 0.2-0.8 1-3.4 1.3 1 0.7-1.7 1-0.6 0.9-2.7 1.5-4.3 3.9-2.3 1.1-1.6 1.2-1.4 0-1.8 0.9-4.6 0.9-3.1-0.4-2.1 0.4-1.1-0.7 0-1.1-1.2-0.1-0.8 1.2-1.6-0.4 0.7-2.4-3.1-0.1-3.8-1.6-0.9-0.8-3.1-1.3-1.4-1.4-0.8-1.6 0.3-3.6 0.6-0.5 2.7 0.8 2.8 1.3-0.1-1.2-2.4-1.6 0.8-1.8-0.2-1.6 2.6-2.1-0.4-0.7-3.4 2-3.1 0.9-1.1 1.2-1.1 0.6-2.1 0-0.5-0.9 0.5-3.3 1.2-2.7 1.8-1 3.4 0.7 1-1 1.3-0.2 2.4-1.2-4.1 0.5-1.2-1 2.8-2.4 1.2-1.4 0.3-1.5 2.2-1.7 1.8-0.8 1.6 0.6 1.5-1.9-5 1.1-2 1.1-2.7 2.8-0.2 1.1-2 0.9-1.5 1.5-0.6 1.2-2.8 1.9-1.4 0.3 0-2.4 1.1-2-0.3-1.6 3.2 0.2 1.8-1.2-2.7 0-1.4-0.7-1.2-1.5-0.6-1.9 1.1-1.8-2.2-2-0.5-2.2-0.1-2.5 0.9-0.5 2.1 0.4 2.4-0.2 5.2-0.9 3.4 0.6 1.4-0.1 2-0.7 1.9-0.1 2.2 1.2 0.7-0.5 5.4-1.2-3-1.5 0.1 1.4-3.6 0.3-3.2-0.6-1.3-0.6-0.5 1.3-1.1 0.3-3.4-0.5-4.7 0.3-2.1 0.7-1.4-0.1-2.5-1.2-0.9-0.9-0.3-2.6 2.8-0.3-1.9-2.3-1.9-1.3-0.2-1.4 0.7-1.3 1.5 0.2 3.8-0.1 6 1.5 4.9-0.3-0.8-0.6-2.9 0-7.2-1.3-2.2 0.1-1.2-0.3-0.7-1 0.4-1.9 1.1-0.4 1.2 0.6 1.9-2.3 1.9-1 2-0.5 2 1 1.3-0.1 4-0.8-1.3-0.5-3.5 0.5-0.2-0.5 2.4-2.3 4.2-0.4 5.9 0.5 2.3 0.8 0.4-1.8 5.3-1.4-6.8 0.8-1.8-0.5-4.9 0.7-0.1-1.3 2.3-2.3 4.1-0.9 1.9-1.1 3.1-0.2 2.6 0.3 1.2 1.3 4.4 1.7-5.1-4 1.1-1.7 3.3-0.4 0-1.6-2.2-0.3 0-1.2 1.9-0.9 2.8-0.7 3.2 0.8-0.6 1.3 0.9 0.5 1.7-1.5 3.9-0.8 2.8 2.1 0.5 1.1 1.1-0.5 2.7-0.5 2.7 0.3 1.8-0.2-1-1.3 0.4-1 2.4-1 1.7-0.3 2.6-1.2-0.8-1-1.4-0.3 2.9-1.5-1.7-0.6-2.4 0.9-1.6 0.9 1.5 1-1.1 1.1-6.1 2.8-3 0.8-1.4-0.1-1.9-2.5-2.1-0.1 1.3-2.2 1.6-0.8 1.4-2.3 2.3-1.3 3.2-3.3 2.8-1.1 0.9-1.1 3-1.5 3-0.9 0.3-1-2.7 0.9 0.4-2.1 1.4-1 6.8-2.8 1.6 1.3 2.1-0.2 2.3-1.6-0.3-0.7-2.1 1-1.5 0-0.4-0.6-2.1-0.5-0.3-1.2 1.3-2.8 3.4-3.3 0.5-1.3 1.3-0.7 1.7 0.2-0.2-1.1-2.1-1.1 6.2-1.1 3 0 2.4-0.9 0.5-1-6.4 1.1-2.4 0.1-0.8-2.7 0.2-1.5 1.9-2.2 1.4-0.2 1.7-1.1 0.1-1.5 2.3-0.8 2.1-2.1 2.3-0.5 1.4 0.2 3-0.7 6.6-0.1 0.1-0.6-6.3-0.3-3.5 0.2-0.4-0.6 2.8-2.7 2-1 1.7 0.2 1.8 1 0.6-0.8-1.6-1.5 0.7-1.5-2.6 1.1-1.8 0.3-0.9-2 2.3-2 2.3 0 0.3-1.5 3.3-1.3 1.9-0.2 1.5-0.6 0.6 0.4 0.9 2.3 1.5 0.3 1-0.8-1.3-1.1-1.1-1.8 2-1.5 2.3-0.2 2.6 0.7 2.3-0.2 0.9-1.2-6.3-0.1-0.8-0.9 1.2-1.2 2.2-0.8 2.5-0.1 2.4-1.4 0.9-1.1 0.3-1.6 1.4-1.3 3.9-0.8-0.6-2.2 0.8-1.4 1-0.6 2.1 1.5 1.8 0.5-0.5-1.4 0.3-1.2 2.1 0 1-0.5 0.3-1.3 1.4-1.2 4.7-0.7 0.5 2.5 0.7 1.4 0.8-2.8 1.6-2.1 2.4-0.9 0.9 1.1-0.4 4.3-1.9 2.4 1.5-0.2 2.5-2.3 0.6-1.2-0.7-2.8 0.6-0.8 3.5-0.1 1.9 0.4 0.7-1.5 1.7-0.1 1.8 0.9 4.1 1.4-1.3-2.2-1-0.8-2.1-0.5-2.2-1 1.2-1 2.4 0.3 2-0.8 2.2-0.2 1.1 0.6 0.8-1 2.5-0.5 2.8 0.9 1.6 2.7 2.4 1.4-0.1-1.4 0.6-1.9 2.3-2 2.1-1 1.4-0.1 2.9-3.4-1.6-1 3.3-2.3 1.1-0.1 5.4 2.1 1.5-0.9 3.4 0.8-0.8 1-3.1 2.9-0.5 0.8-0.1 2.2-1.2 1.4 0.8 1.4 1.6-0.4 1.8-1.3 0.1-1.3 4.3-3.7 1.9-2.1 2.3-1.7 1.5-0.3 0.9 1.1-0.2 1.5 0.2 4.3 3.7-1.4 1.1-3 1.1-0.7-0.8-1.4 0.4-1.1 2.3-1.3 2.2 0.4 3.3 0.3 2.7 0.8 0.2 1.4-0.8 0.9-2.9 1.1 0.7 0.7 2-0.6 0.9 5.5 0.9-2.1 1-0.7 0.1-1.5 0.8-1.9 1.8-1.3 2.7 0 3.3 1.7 2.5 0.3 1.8 0.8 2.4-0.7 2 1 0.1 1 3.8 0.3 3.8 1.6 0.6 1.6-4.4 1-1.8 1-3.3 0.4-11.5-0.7 0.4 0.7 8.3 1.5 0.6 0.5 0.4 2.1 1.8 0.7 3.5-0.2 0-1.3 3.2 0.6 3.8 0.2 1.1 1.7-0.3 1.5-2.4 0.1-4.2-1.4-0.4 2.3-1.1 0.9-5.8 1.3-1.1 2.6-2.2 1z m-40.5-27.7l3.7 0.5 2.2 1.4-3.6 0.5-1.7-0.1-2-1.8 1.4-0.5z m-339.6 3.9l-0.1-1 4.5-1.5 1.9-1.4 3.4-0.5-0.2 1.8-3 0.8-3.3 0.5-3.2 1.3z m269.2-45l-1 0.5-1.9-0.8-0.8-1.2 3-0.1 0.7 1.6z m9.6-50.1l3.9 0.2 2 1.9 1.4 2 1.3 0.2 4.7-0.4 3.4 0.7-1.4 1.1 0 1.2 5.5 1.3 1.8 0.1 3-0.4 6.5 1.7-6.6 1.1-2 1.9-3.7 1.3-2.6 0-2.3 1.3-2.2 0.1-1.5-1.9 2.2-1.3-3.1-0.4-1.2 0.5-10.5 1-1.1-0.2-0.9-1.2 2.8-0.6 0.2-1.1 2.5-2.4-5.5-1.6-2-1.2-0.8-1-2.5-0.9 0-1-1.7 0.1-0.4-1.2 10.8-0.9z m46.2-0.6l-1.3 0-2.6-0.8 0.7-1 3.2 1.8z m-137.6 0.4l3.5 1.5 1.9 0.5 2.3 1.5-0.7 0.9-2-1.2-3.6-1.3-2.3-0.2-3.3-2.5-1.5-0.8-0.8-1.7 3.6 0.7 1.6 1-0.3 0.8 1.6 0.8z m155.6-3.4l2.7 0.1-0.1 0.6-7.3-0.4-3.8 0.7 0.4-0.9 2.4-0.6 3.7-0.1 2 0.6z m-109.9-10.8l1.4-0.6 5.4 0.8 2.5 0.9 1.3 1-1.9 1.9 1.7 1 3.2-1.7 2.7 0.3 1.7 0.9 1 1.1-0.2 1.4 3.1 1.1 3.4-0.2 2.4 0.3 1.5 1 1.9-0.2 0.2-0.8 2.6 0.2 3 0.8-2.1 0.9 2.1 0.8 3.4 0.6 2.1 0.6-1.5 1.4-3.2 0-2.9 0.3-5.4 0.3-3 1.6-2.5 1.8-0.4 1.6 0.6 1.1-1.5 0.5-3.3 0.2 0.2 3.9-0.8 1.9-3.3 0.3-1.8 1.1-1.2 2.1-2.1 2 1 1-2.1 1.9 1.2 1.8-1 0.6-2.1 0.3-2.2-0.3-2.3-1.1-6.7-2.2-4.3-2.4-6-1.3-3.3-1.6-1.5-1.3 0.3-1.4 2.8-0.2 2.9 0.7 1.7-1.9 11.3-1.1 7.3-0.2-1.9-1.3-6.9 0.7-4.3-0.2-2.1 0.1-2.1 0.6-4.3 0.5-4.6-0.1-2.9-1-1.3-2 1.2-0.6 3.8 0.1 6.4-0.9 3-0.8 3.1-0.1-0.5-0.8 1.8-0.4 2.4-0.2 5.6 0.1 0.2-0.6-2.6-0.6-0.9-0.6 2.6-1.8-2.2 0.1-3 1.3-1.8 0.5-4.6 0.3-1.7-1.6 0.9-1.2-0.8-0.7-1.3 1.3-2.1 0.3-2-0.9-1.9 0.5 0.7 1-0.6 1 2 0.9-2.3 0.6-2.1 1.1-3.9 0.2-4.5 0.1-4.6-1.6-2.2-1.2-1.8-1.2-2.7-0.6-1.7-0.8-0.4-1.1-1.4-0.7-0.7-1.2 4.4 0-1.7-1.8 0.5-1.6-3.4 0.1 0.4 0.9-2.2 1-1.2-0.2-2.3-1.9-2.4-2.4 0.4-1.3-1.2-1 1.5-0.7 2.5 0.9 0.8-0.7 3.8-0.4 4.6 1.1 0.4-1.1 4.2 0.5 3-0.6 5-0.3 2 0.4-1 1.1-6.3 0.3-4 1.3 5.7-0.2 1 0.1 0.6 1.1 3 0.5 2.3 1 0.8-0.5-0.6-2.2 4.4-2.3 2.1 0.4 2.1 0.9 4 3 2.3 1.9 6.1 2.8-0.7-1.5-4.2-4.5-0.9-1.7 0.9-1.7 1.1-0.5-0.4-1.3 1.3-0.5 2.4 0.3 2.6 1.3z m134.7-2.3l-8 0.4-0.9-0.3 15.7-1.4 1.7 0.5-8.5 0.8z m-118.9-1.9l-1.8 0.6-3.2-0.5 0.9-0.7 4.1 0.6z m18.6 0.5l5.6 0.1 1.5 0.9 5.5 1.1 0.8-1.5-0.6-2.2 1.9-0.1 1.7-0.6 3.1 0.3 0.2 1.3-0.5 1.4 2.1 0.1 2.8-0.3 1.9-1.1 2.4 0.1 1.3-0.6 1.4 0.6 8.2 0.7 3.3 0.6 5.2 0 3.7 0.2 2.8 1 1.1 1.7-0.9 0.4-6.7 2-1.6 0.7-2.4 2.3-4.1 0.7-3.5-0.3-3 0.7-1.9 1-1.5 0.2-9.2-0.4-2.2-1.1 1.2-0.9-8.2 0.3-9.2-0.1-1-0.5-5.6-0.5-4.2-1.1 1.1-0.5 5.8 0-0.7-1.5-2.9-0.1-1.8 0.4-4.3 0.2-4-0.1-1.9-0.3-3.8-1-0.7-0.8 2.8-0.4 2.1-0.7-4.5-0.3-1.9-0.3-0.6-0.9 5.9-0.2 5 0.8-0.7-2.2 3.9 1.1 0.2-1.1-2-1.4 2-0.1 4.5 0.7 5.1 1.6z" data-name="Norway" id="NO" name="Norway">
+</path><path class="country" d="M666.8 348l0.6-0.6 2.3 0.7 4.5 2.2 1.1 0.9 0.8 3 2.1 5.1 2.9 4.9 1.7 3.6 0.9 3.9-0.6 1.6-4 1.7-0.8 0.5-2 2.7 0 1.2 3.3 1.3 1.8 1 0.8 1-0.2 2.4 0.4 1.1-0.8 1.5 0.1 1.3 1 1.6 1.2 1.8 0 1.3 2.7 2.8 1.9 2.8 1.4 1-1.2 1.3 1.8 2.6 0.1 1.3-1.2 1.8-3 0.5-4.8 4.6-2.4 2.7-3.4 4.4-0.6 1 1.5 3.8-0.1 1.8 1.9 1.4-0.4 0.9-3.3-0.7-0.9-0.2-5.7-1.9-0.8-1.4-1-0.7-3.1-1-3.6-0.3-3.2 0.2-1.4 1.5-1.8-0.1-2.4-1-3 0.1-2.3 1-1.1 2.1-1.7-0.6-1.4 0.4-0.6-2.7-1.4-0.4-3-3-2.2 1.3-1 1.7-2.2 0-0.5-1.5-1.3-0.2-0.5-1.6-2.8-2.2-0.5-1.8-2.7-0.8-0.5 0.2-3.5-1.8-1.8 1-1-0.6-2.7-2.3 1.4-0.5 0-1.6-3.6 0.7-3.3-1.9-2.2-0.6-1.3 0 1.7 2.4-3.5 2.5-1-0.4-1.5-1.9-2-1.8-1.6-0.9 1.6-1.2 0.7-1.1-1.8-1.2-3.2 0.7-0.8-0.9-2.7-1.1-4.6-1.1-1-1.1-0.3-1.1-3.3-0.8 0.1 1.9-2.1 0.4 1.6-3.6 0.4-2.3-1.6-3.2-2.2-0.9 0-1.6-1.9-3.1 0.8-1.1 0.7-2.6-0.8-1.9-2-2.3 0.6-2.6-1.4-1.7-3.3-2.1-1.6-1.4 0.7-1.6 1.9-1.8 0.3-2.7-1.8-4.1-0.7-2.6 2.8 0.9 0.7-0.5-0.1-1.8-4.1-0.7-0.1-1.2 2 0.4 3.8-1.4 6.5-1.8 6.9-1.7 3.3-0.5 2-2.2 1.9-1.7 3.8-0.7 1.3-0.8 2.8-1.2 6.6-1.2 5.5-0.4 5.4 2.3-0.9 0.3-3-1.2 2.2 3.5 1.1 1.2 2 0.9 1.7 0.3 4.9-0.5 2.2-1.1 0.5 0.1 6.6 0.4 22.9 0.9 7 0.1z" data-name="Poland" id="PL" name="Poland">
+</path><path class="country" d="M306 611.9l-1.2 0.2-4.5 2.5-1.3 0-2.5-1.1-4.5-0.4-1.5-0.3-1.8 0.7-1.5 0-1.1 1-0.8-0.3 1-2.1 1.6-4.1 0-2.6 0.4-2.2-0.3-2.1-0.7-1.4 1.1-3.5 0-1.8-0.9-2.3 2.8 0.3-1.7-1.4-1.5 0-2.3 0.9-1.5 0.1 0.1-1.4-0.5-1.8 2-0.6 1.6-1.7-0.3-1.6-1.2 1.1-0.6 1.4-2.8 0.7-1.5-0.5 0-1.9 0.6-1.7 0.4-2.3 0.8-2.2-0.2-1.4 1.6-1.3 1.4-1.9 4.3-8.9-0.6-1 1.7-6.6 1.2-2.3 0.6-4.3-0.2-2-0.7-2-0.7-4.3 0-1.4-0.9-1.8 0.1-1 1.4-1.7 1.2-1.1 1.9-0.9 4.1-1 1 1.8-1.3 1.9 0.9 1.3 3-1.1 2.9-0.1 2.2 0.8 1.4 0 2.5-0.9 0.8-1.4 1.5 0.5 5.2 0.1 0.7 1.1 0.1 3.1 1.9 0.2 1.9 0.9 0.3 1.1-2.5 2.5-2.1 1.1-1.6 1.4-1.1 1.6-2 1.6 0.8 2 0.4 3.5-0.4 3.8 0.4 1.1-2.7 2.1-0.2 1 1.4 1.3 0 1.9-1.7 3.5-1 0.5-4.3 0-1.1 0.3 1.1 1.9 1.4 1.2 0.3 1.9 1.6 3.2 1.7 0.4 0.5 0.8-0.6 2.4-3.2 3-0.9 4 3 4.3 1.7-0.2-0.7 2.4-2.1 0.6-3.5 4.3-0.8 2.2 1.1 6.4z" data-name="Portugal" id="PT" name="Portugal">
+</path><path class="country" d="M306 611.9l-1.2 0.2-4.5 2.5-1.3 0-2.5-1.1-4.5-0.4-1.5-0.3-1.8 0.7-1.5 0-1.1 1-0.8-0.3 1-2.1 1.6-4.1 0-2.6 0.4-2.2-0.3-2.1-0.7-1.4 1.1-3.5 0-1.8-0.9-2.3 2.8 0.3-1.7-1.4-1.5 0-2.3 0.9-1.5 0.1 0.1-1.4-0.5-1.8 2-0.6 1.6-1.7-0.3-1.6-1.2 1.1-0.6 1.4-2.8 0.7-1.5-0.5 0-1.9 0.6-1.7 0.4-2.3 0.8-2.2-0.2-1.4 1.6-1.3 1.4-1.9 4.3-8.9-0.6-1 1.7-6.6 1.2-2.3 0.6-4.3-0.2-2-0.7-2-0.7-4.3 0-1.4-0.9-1.8 0.1-1 1.4-1.7 1.2-1.1 1.9-0.9 4.1-1 1 1.8-1.3 1.9 0.9 1.3 3-1.1 2.9-0.1 2.2 0.8 1.4 0 2.5-0.9 0.8-1.4 1.5 0.5 5.2 0.1 0.7 1.1 0.1 3.1 1.9 0.2 1.9 0.9 0.3 1.1-2.5 2.5-2.1 1.1-1.6 1.4-1.1 1.6-2 1.6 0.8 2 0.4 3.5-0.4 3.8 0.4 1.1-2.7 2.1-0.2 1 1.4 1.3 0 1.9-1.7 3.5-1 0.5-4.3 0-1.1 0.3 1.1 1.9 1.4 1.2 0.3 1.9 1.6 3.2 1.7 0.4 0.5 0.8-0.6 2.4-3.2 3-0.9 4 3 4.3 1.7-0.2-0.7 2.4-2.1 0.6-3.5 4.3-0.8 2.2 1.1 6.4z" data-name="Portugal" id="PT" name="Portugal">
+</path><path class="country" d="M751.4 483.2l1.5 1.6 1.8 0.9 4 0.9 0.6-1.2 0.9 0.3 1.6-0.5 2.2-1.3 2.2-0.2 2.2 0.7 1.9 1.8-0.2 4.3-0.7 2.1-6.2 1.3 0.4-0.6-0.7-2-1-1-0.9 1.1 0.6 1.7-0.7 1.4-0.2 2.4 0.6 0.9-1.6 2-0.5 1.3 0.8 4.8-0.4 3.7-2 0-2.6-0.5-2.2-0.7-2.5-2.6-1.7 0.5-0.9-0.6-3.2-0.4-4.5-2.3-2.9 0.4-4.4 0.9-3.2 1.2-3.3 2.1-1.2 1.6-1.6 0.9-2.3 0.6-4.2-0.2-9.4-1.7-2.5 0.5-3.5-0.4-5.3-1-3.9-0.3-3.7 0.6-0.9-1.8 1.8-2-4.3-2.5-0.8-1.2-1.6-0.9-0.5-1.7 2.5-1.8-3-1.6-1.7 0.5-1.7 1.8-1.3 0.2-1-1.2-1.5-0.7-3.5-0.7-1.5-1.2-2.1-0.6 0.2-0.6 1.8-0.8-2.3-1.1 1.5-2-0.9-1.1-2.6-0.8-3.8-1.9-2.2-1.8-0.4-4.1-0.8 0.2-1.8-2-2.9-1.7-1.7-2 3.2-0.9 1.4 0.5 2.5-2 2.6 0.3 1.3-0.9 1.5-4.7 2.1-1.5-0.2-1.3 1.6-2.7 0-1.2 1.4-1.5 0.7-2.5 1.4-1.4-0.1-1.7 1.2-1 1.9-2.4 4.6-1.1 2.2-2.3 2.1-0.9 0.9-1.2 0.7 0 2.7 1.5 2.7-0.1 6.9 1.4 3.6-0.7 1.2 0.3 4.3 3.3 2.1-0.5 1-1.2 3.4-1.3 8.4-1.2 1.1-1.9 0.2-1.4 3.7-0.8 2.1 0 2.5 1.6 2.5 3 3 4.9 1.5 1.3 2.5 3.2 2.1 1.8 1.3 1.7 3 2.1 1.4 2.9 1.4 2.3 0.5 2.9-0.9 4.8 0.1 2.6 1.4 5-0.9 0.7 2 2.3z" data-name="Romania" id="RO" name="Romania">
+</path><path class="country" d="M651.6 473.1l1.7 2 2.9 1.7 1.8 2 0.8-0.2 0.4 4.1 2.2 1.8 3.8 1.9 2.6 0.8 0.9 1.1-1.5 2 2.3 1.1-1.8 0.8-0.2 0.6 2.1 0.6 1.5 1.2 3.5 0.7 1.5 0.7 1 1.2 1.3-0.2 1.7-1.8 1.7-0.5 3 1.6-2.5 1.8 0.5 1.7 1.6 0.9 0.8 1.2-0.9 0.7-0.2 1.9-2.1 1-0.4 2.3 0.6 2.4 2.4 3.9 2.9 1.5 1.3 1.6 1.6 1-0.3 1.4-1.6 1.7-1.1 1.6-1.8 0.1-1.1 0.6 0 3.3 1.4 2.9-1.1 1.7-1 0.3-1.4-0.7-2.3 0.8-1.9-0.3-2 0.9-2.2 0.3-0.6-1.3 1-0.9 1.2-3.2 0.2-1.2-4.7-1.2 0-1.3-2.2-1.2-0.2-0.7-2.3-2.1-2.8-1.3-1.1-1.3-1.7 0.9 0.6 1.6-0.4 1-1.7 1.3 0 1.4-1.5 0.5-0.1-1-5.3-2.9-2.1-0.5-3-1.6-1.9-2-2.6-1.7-0.4-1.2 0.7-0.8 2.5 0.3 0.2-2.2-3.2-3.7 0.5-0.8 3.1 0.1 0.3-0.8-3.3-2.9-2.4-1.2-0.5-0.8 0.1-2.6 1.6-2.7 0.5-2.5-1.5-0.8-2.8 0.7 1-1.6-0.7-2.6 1.7-0.4 2.3-0.1-0.9-1.5-3-1-1.2-1 0.4-2-1.3-0.4-0.2-1.6-1.6-2.7 0.7-1.5 2.1-1.3 1.6 0.5 2.2-1 1.5-1.6 1-0.3 2.9 0.4 1.1-0.2 2.8 0.3 1 0.5z" data-name="Serbia" id="RS" name="Serbia">
+</path><path class="country" d="M591.1 319.4l-1.5-0.3-0.3-3.8 2-4.6 1-0.3 2.7-6.5 0.5 2-1.5 3.2-0.3 2.2-0.6 0.5-2 7.6z m26.2-22.7l-1.3 1.4-1.4 0.5 0.1 3.3 1.5 1.2-1.3 0.5-0.7 1.8-1.8 0.6-1.5 1.6-0.3 1.6-2.1 0.9 1.2-2.4-0.9-0.7-1.4-2.1 0.4-0.9-0.6-3.2 2.7-2.9 1.3-1.1 3.3-1 1.3 0 1.5 0.9z m36.8-113l-2.7 0.3-2.2-0.6-1 0.3-3.8 0.3-1.1 0.7-2.1-0.7-2-1.2-2 1.1-1.6-1-1 1.9 0.1 1.8-1.8-0.2 0.3 1.1-2 1.5-3.2 0.2 0.7 1.5-0.9 0.7 1 1.7-1.3 1.5-2.1 1.9-0.5 1 1.7 1.1 1.6 2.5 1.6 1.1-0.4 1.2-2.1 1.1-2.2 1.7-2 4.3-3.1 1.3-2.4 1.6-3 0.7-2.4 2.2-1.8-0.8-1.5 0.5-1 1.8-1.9 1.5-2.4-0.2 0.2 0.8-2.3 0.3-1 4-2.2 0.6-0.7 0.8-0.9-0.6-2.1 0.1 1.6 2.8-1.7 1.8-1.2 0-1.5 0.7-1.9-0.8-0.2 1.2 0.8 1.3 1.3 1-0.1 1.3-0.9 4.3 0.7 1.8-2.1 1.2-0.8 1.1 0.6 1.7-0.1 1.1 0.7 1.9 0.8 4.2 1.1 2-0.1 1.6 1.3 0.9 2.1-0.1 1.4 1.6 3.1-0.8 0.8 1.1 2.9 2.2 1.7 0.3 1.9 1.2 0 1.5 2.9 1 1.9 2 0.8 1.6-0.1 1-2.6 1.5-1.3 1.3-3.8 2.1-0.6-0.1-2.1 1 2 0.6 1.4-0.7 2.6-0.6 1.4 1.2-2.2 0.5-0.3 1.6-0.8 1-2 0.7-2.8 1.5-4 1.4-1.1 1.2-2.6 1-1.3 0.8-3.8 0-3.7-0.1 1 0.9 0.9-0.2 3.6 0.4 1.7 1.3-3 0.9 1.7 3.2-0.7 0.8 0.4 3.5-1.1 0.1-0.3 1.4 0.6 2.5 1 2.1-0.1 1-1.5 2.4 0.9 2.9-1.5 5.3-1.9 3.1-1.3 4.1-1.8 1.4-2.4-0.9-3.4 0.5-3.2-0.3-3 0.2-0.8 0.4 0.7 1.4-2.3-0.2-1.7 1.1-2 2.1 0 1.5 1.9 3-1.7 2-1.1 0-3.2-0.5-5.5 1.2-5.1-1 0.5-1 0.2-3.1-0.6-1.7-1.3-1.1-3.1-3.8-1.2-2.3 2.4 0.9 1-0.5-1.8-2.6 2.2-0.1 0.7-1-0.6-1.5-1.9-0.6-1.9-2.4-1.8-1.2-3.5-4.7-1.3-3.2-1.1 0.3-1.2-3.7-1.7-0.6-0.6-3.7-1.8-0.4-1.3-1.7-0.4-3.2-1.2-0.6-0.8-1.4-0.8-3-0.3-2.7-0.9-1.8 0.5-1.2 1.1-0.2 1.1 0.8 1 1.8 1.9-0.2 0.7-1.4 0.6-3.9-1.6-4.4 1.5-1.5 0.9-2.4 2.6-0.7 1.3-0.8 1.9-2 0.1-2.8 0.6-2.1-0.5-1.4-3.1-4.9-0.3-1.6 1.8-0.6 2.4 0 1.3-2.5 0.4-1.9-3.4-2.7-1.2-0.4-3.8-2.1 0.9-6.4 0-1.6-2.5-4.4 0.1-1.8-0.6-2.8 1.1-1.1-2.7-4.1 2-2.8-0.5-1.5 1.2-1 3.5-3.8 3.3-1.5 3.3-0.4 7.1 0.9 1.7-2.2-0.1-1.2-1.1-2.9-4.7-1.6 4.4-5 3.3-5 0.1-4.7 0.6-2.7-1.4-3.9 3.8-0.4 2.4-0.5 3.3-1.5-1-2.5 1.3-0.9 3-2.9 3.3-2.9 1.5-1 0.2-1.4-1-1.3-2.7-2.3 0.5-1.1 2.7-0.6 1.1-1.1 1.5-3.5 3.7-1.9 1.5-0.9 6.3 1.8 2.1-3.1-0.8-3.6 0-0.8 2.1-0.5 4.1 0.9 2.9 0.1 8.6 1.7 1 0.1 2.5-1.6-2.9-0.9 1.6-0.9 1.4-1.9-0.1-2-2.6-1.6 5.1-0.2 2.9 0.8 0.4 0.9 2.9 1.1 4.8 2.3 4.2 1.8 8.3 1.7 3.5 1.8 1.2 1.6 1.4 0.1 1.9 1.5 1.8 0.9-1.1 1 0.4 2.4 0.7 1.4-0.3 1.9 2.8 0.4 0.6 1.3-1 0.8-0.1 1.1 0.8 1.6 3.3 2.6 0.6 0.9-0.7 1.4 0.1 1.8-1.5 1.3 0 1.3 1.3 2.6 1.8 0.6 1.9 2.2 1.6 2.5z" data-name="Sweden" id="SE" name="Sweden">
+</path><path class="country" d="M605.2 467.1l-2.5-0.6-0.9 0.8 0 1.7-2 0-0.7 1-4.4 1.7-0.4 1.4 0.9 0.9 0.2 2.2-0.4 1.1-2.1 0.6-2.1 1 1 1.1-0.7 0.7 0.8 2.3-1.2 0.4-1.6-0.2-2-0.7-1.3 0.5-1.5-0.7-2.6-2.1-1.2 2.2-0.6 0.3-3.6 0.1-1.1-0.5-1.4 1.3-3.3-0.8-0.5-0.6 1.7-1.1 1.5-0.1-0.2-1.3-1.5-1.3-1.9-1.1 0.4-2-1.3-0.2-0.3-1 1.6-2.1-2.3-0.7-0.7-1.4 3.3-2.3 0.2-0.9 5 0.9 5 0.7 3-1.2 1-1.3 1.9-0.7 2.6-0.2 2.8 0.2 2.3-1.1 1.6-0.2 2.4 0.5 0.1-1.9 1.3-0.9 2.4 0.1 1.4 3.3 1.9 2.2z" data-name="Slovenia" id="SI" name="Slovenia">
+</path><path class="country" d="M674.8 427.7l-1.5 3-0.8 2.9-1.6 1.7 0.1 2.5-4.3 1.1-0.6-0.2-2.2-2.2-1.4-0.9-4.6 0.7-2.5-0.6-2.7-0.1-1.8 0.4-1.6 3.5-5 2.5-3.5-1.4-0.7 0.2-1 1.5-2.4 0.6-4.3 0.4-1.4 0.7-0.4 1 0.5 1.3-0.6 1-7 0.4-4.7-0.1-1.6-0.7-4.2-2.7-2.1-0.3-2.3-2.9-1.6-2.9-0.1-0.8 0.9-2.4 1.1-2.8 1.4-1.2 3.6 0.5 1.7-0.2 1.5-0.7 2.1-1.9 1.6-0.8 0.7-3 2.3-1.2 0.6-0.8 2-1.5 2.8-0.3 1.3 0.2 0.5 1.5 2.2 0 1-1.7 2.2-1.3 3 3 1.4 0.4 0.6 2.7 1.4-0.4 1.7 0.6 1.1-2.1 2.3-1 3-0.1 2.4 1 1.8 0.1 1.4-1.5 3.2-0.2 3.6 0.3 3.1 1 1 0.7 0.8 1.4 5.7 1.9 0.9 0.2z" data-name="Slovakia" id="SK" name="Slovakia">
+</path><path class="country" d="M733.4 565.7l-2.9 0.5-0.1-1.5 2.2-0.6 0.8 1.6z m194.5-21.5l4.3 1.3 1.1-1 3.6 0.1 3.4 0.8 0.9-1.9 1.4-0.4 1.4 0.3 0.6 1.1 1.2 0.4 3.5 2.5 1.1 1.7 1.9 0.2 1.3 1.2 1.3 1.6 1.7 1.2 1.7 3.3-0.2 2.3-1 1.4 0.8 1.9 1.9 3-0.5 0.6 1.8 0.9 2.9 0.9 3.5-0.4 1.6 0.7 2.3 1.7 3.2 2.8 0.8 0.9-3.3-1.9-1.4 1.6-0.1 3.8-0.6 0.4-2.8-0.1-1.2 0.4 1.2 2.5 1.4 1.2 0 2.3 2.1 2.5 0.2 2.1 0.9 2.2 0.3 2.2 0.5 0.7 1.4 0.3-0.6 3.8-0.6 1.2-0.4 2 1.7 0.6 3.2 2 0.1 1.3 0.6 1.5 0.3 2 3.2 2.3 0 2.3-2.1-0.5-3.7 3.1-1.2-1.2-0.3-2.4-1.5-1.5-1.3-0.2-2.1 1.4-4.2-0.3-2.9-1.1-2.9-0.8-1.9 0.6-2.2-0.7-1.5 1.9-2 1.9-1.2 0.3-1.6-2.6-1.3-0.2-1.2 1.3-2.2 0.8-4.6 1-3.2 0.3-4.1-0.6-3.2 0.2-3.1 1.4-5.2 2.8-4.1 1.4-4.2 0.9-7.6-0.2-1.1-0.3-3.5-2.3-3.4-0.6-3.4 1.6-2.3 0.8-3.5 1.6-4.8-0.1-1.9-1.7-3.7-0.7-0.6 1.6-0.3 3.8 1.8 3.1-3.3 1.4 0 2.6-1.8 1.1-0.8 1.6-2.2-1.2-1-0.1 0.7-1.3-2.5-4.9 0.7-1.5 3.5-3.9-0.4-2.4-2-1.6-2.9 2.1-1.7 0.8-0.3 1.2-1.1 0.8-1.8 0.4-2.9-1-3.2-1.4-1.9-1.1-1.4-0.3-1.3 0.5-3.5 2.8-3.1 4.1-0.8 0.8-3.2 1.7-2.2 0.6-1-0.1-4.4 0.8-2.2 0.1-1.6 0.9-3.5-1-2.2-1.3-1.4-1.3-2.3-2.9-1.6-1.3-3.3-1.2-5.8-3-5.3-0.7-4-0.3-0.7 1.1 0.1 4.2-0.5 1.2-0.1 2.2-1.1 1.1-2.1-1-1.9 0.9-3.7 1.3-1.2 0.1-4.6-1.6-2.9-2.1-0.6-2-1.3-2.7-1.8 0.3-2.3-0.4-3.2-1.6-2.4-0.1-1.2 1.9-1 0.7-1.3-0.4 0.8-1.3-3.7 0.2-1.8 1-1.5-0.1-1-1 2-0.6 3.9-0.4 0.9-0.4 0.9-1.3 1.7-1.2-1.2-0.5-6 0.3-4.2-0.2-1 0.7-0.4-1.6 3.6-1.4-0.3-1.3-4.2-2.2-0.3-1.6-2-3.1 1.9-0.5 0.1-2.5-0.4-1.5-3.9-1.3-0.8 0.1-1.1-1.3-1.7-0.9-1.2 0.7-3.3-1.4-0.6-0.6 0.5-1.4 1-1.1-0.9-1.9-0.1-1 1.8-0.1 1 1.1 0.3 2.2 3.6 0.7 2.9-0.6-2.5-1.1-1.1-1.2-1.2-2.3 1.8-1.1 1.2-1.7-2.7-1.2 0.2-2.4-2.5-2.7 0.3-0.8 2.3-2.8-1.2-0.7-4.3 0.7-1.6 0.6-3.1 0.2-0.3-1.6 0.6-1.3-0.5-3.4 0.2-1.8 1.7-0.6 1.7-2.7 3-3.1 3.5 0 1.3-0.9 2.1 0 0.8 1.2 1.9 0.9 3.2-0.1 1.4-0.9-1.6-1.5 1.7-0.5 1.5 0.4-0.1 1.8 4.1-0.5 4.4 0.4 1.4-0.2 3.4 0 0.5-0.5-3.6-1.7 2-1.5 6.8-1.2 3.7-0.8-5.7-0.8-1.4-0.6-2-1.4-1-1.1 0.3-2.6 0.6-0.7 2.2-0.1 7.7 1.2 5.3-0.8 6.1 1.8 5.6-0.4 1.1-0.7 1.1-2.6 7.4-4.2 2.4-2.1 2.8-1.2 5-1.4 4-1.7 1.2-0.2 10.4 0.8 7 0.1 3-1.6 2 0.5-0.1 2.1 2.6 2.6 3.5 1.4 4.4-1.2 1.8 0.5 2.2 4 1.5 1.4 1.8 0.9 1.3 0.2 1.5-1.4 1.7-0.1 2.9 1.3 1.2 1.4 4.8 1.1 4.3 0.6 2 1.2 6.2 1.2 2.2-0.2 3.6-1.3 7-1.3 5.2 1.9 2.5 0.1 1.7 0.5 1.7-0.3 5-2.3 1.4-1.2 1.7-0.4 5.2-3.3 0.9-1.4z m-171.9-7.1l-0.1 1.8 1 2 2.3 2.7 2 1.4 8.1 3.3 1.4 0.3-0.9 3.5-2.1 0.5-6.4-1.5-1.6-0.1-2.9 1.4-2.3-0.4-3.1 0.6-0.6 2.1-2 2.4-3.3 1.9-2.5 1-3.5 3.7-1.5 2.2-1.5 0.7 0.5-2-0.3-1.7 2.3-2 3.3-1.6 0.7-1.3-5.4 0.3-3.3 0-1-1.8 0.8-0.4 2.5-3.2-0.5-4.4 3.4-2.5-0.9-3.1-2.3-1.5-1.2-0.3 0.3-1.4 1.9-0.3 1-2.2 3.4-0.4 1.5-1.1 3.5-0.3 3.4 2.5 1.5-0.6 1.8 0 0.9-0.4 1.7 0.2z" data-name="Turkey" id="TR" name="Turkey">
+</path><path class="country" d="M796.7 471.6l0 0.6-3.9-0.8-0.9-0.9 4.8 1.1z m-26.4 14.6l-1.9-1.8-2.2-0.7-2.2 0.2-2.2 1.3-1.6 0.5-0.9-0.3-0.6 1.2-4-0.9-1.8-0.9-1.5-1.6 1.1-0.7 2-0.2 0.4-1-0.5-1.4 2.5-2.9 0-1.3 2.3-1.7 0.4-2-1-1.7-0.5-2.1 2.5-1.6 2.1 1 1.9 0.2 2.1 0.8 1.6-0.6 1.2 1.3 2.9-0.4 0.6-0.7-2.9-1.7-0.2-2.9-1-1.6-2.1-0.8-2-1.3-0.9-1.9 0-2.4-2.9-2-2.3-1.2-0.6-1.2 0.6-3.1-0.6-2.3-1.4-1.4-1.4 0.7-1.4-1-1.4-1.9-5.6-0.6-0.6-1.2-2.5-0.3-3.6-2.4-3.5-1-1.6 1-0.8-0.3-1.2 1-4-0.1-0.7-0.2-2.3 1.4-0.2 0.6-3.7 0.8-0.2 1.4-1.1 1.9-8.4 1.2-3.4 1.3-1 1.2-2.1 0.5-4.3-3.3-1.2-0.3-3.6 0.7-6.9-1.4-2.7 0.1-2.7-1.5-0.7 0-0.9 1.2-2.1 0.9-0.7-1.7-0.9-0.7-2.3-0.4-0.9-1.1-2.2-0.8-1.4-2.3-1.5 0-0.1-2.5 1.6-1.7 0.8-2.9 1.5-3 3.3 0.7 0.4-0.9-1.9-1.4 0.1-1.8-1.5-3.8 0.6-1 3.4-4.4 2.4-2.7 4.8-4.6 3-0.5 1.2-1.8-0.1-1.3-1.8-2.6 1.2-1.3-1.4-1-1.9-2.8-2.7-2.8 0-1.3-1.2-1.8-0.1-1.4 1.1-0.5 1.9 0.3 1.1 0.5 1.9-1.2 1.6-1.6 0.8-1.4 5.9-0.5 2.3-0.5 2.4-0.1 7.8 0.4 6.5 1.5 6.1 0.9 2.3 0 1.8 2.1 1 0.3 3-0.1 1.1 0.4 0.8 1.4 1.2-1.7 1.9 0.5 1.9-0.7 5.1 1 0.8 1.3 1 0.3 0.6-1.1 3.8-1.6 2.5 3 0.6 0.5 2.3-0.8 7.1-0.6 2 1.1 0.5 1.2 2.7 0.9 0.8-1.4-1.8-3.6 1-3.3 0.8-1.2 2.2-2.3 1.1-0.5 1.7 0.4 1.4-0.8 5 0.1 2.6 0.8 1.7-0.1 1.8-0.9 0.5-2.4 1.6-0.6 3.7 0.9 1-0.1 2.7-1.2 1.6-0.2 2 0.3 3.4-0.2 2.5 1.4 1.4 1.4 1.7 2.7 4 3-0.1 1-2.9 0.5 1.3 1.9 0.5 2 1.2 1.7-0.4 1 3.1 0.1 2.9 1 4.1-0.5 1.5 2.2 1.9 0.2 0.2 0.9 1.4 2.8 0.9 1.1-0.2 1.8 0.5 1 1.9 1.6 0.7 1 1.1 0.4 2.3-1.4 2.8 0.4 2.7 2 2.3 0 1.7 1.1 1.4-1.3 4.3-0.9 2.3-1 1 0.1 2.3 1.8 0.5 1.2 1.5 1.6 4.7 2.9 1.3-0.6 0.9-1.5 2.6 1.4 2.4 0.2 3.6 1.9 1.4 0.1 1.6-0.6 2 1.8 1.9 0.2 4.4 2.3 2.9-0.3 1 0.8-0.1 1.7 1 0.9-0.1 2.6-1.7 2.1-2.3 0.8 1.1 1.5 3.1 0.9-0.9 0.9-1.4-0.2-0.8 1-0.3 2.3 2.5 0.7 1.2 2.8 0 1.1 1.2 0.3-1.3 4.7-0.1 1.8-4.2 0.2-6-0.3-0.9 0.2-0.9 1.9-2.3 1.4-1.7 0.2-0.8 0.8 0 2.3-0.4 1.3 1.1 0.7-0.7 1.6 0.5 1.3-0.5 0.1-4.3-0.2-3.4 0.3-2.1 2.4-1.5 0-3.2 1.5-1.4 1.7-1.4-0.8-3.1 0.5-1.7 1.1-3.1-0.1-2.3 0.6-4.6 3.8-1.3 0.1-1-1-1.6 2.6-2.4 1.2 0.6 3.1 2.8 4.5 3.6 3.9 1.7 1.4 2.4 0.7 3.1-1.4 2.4 0.4 1.7-1.2 1.5-0.1 3.7 1-1.1 2.5-0.3 2.6-1.9 0.6-2.2-0.1-2.2 0.4-2.7-1.5-2.5 0-1.1 1.9-2.3 1.3-0.6 1.4-2.6-0.3-2.1 0.2-2.8 1.4-1.9 2.8-2.3 1.8-1.9 0.5-2-0.1-1.3-0.6-2.9-1.8 0.7-2 0.5-3.5-1.2-2.9-2.3-1.4-1.6 0.2-0.9-0.3-3.7-2.4-1.9-0.2-1.9 0.5-1.5-1.2 3.5-2.9 3.5-2.4 1.7-0.2 2.1-1.2 2.2-1.6-1.3-2.3-1.9 0.6-2.2-1.1-0.9-0.8-3.1 0.8-1.8-0.1-3.8 0.8-1.9-0.8-4-2-2.6-0.3 0-1 1.8-0.3 0.1-1-3.8-0.6-0.1-1.3 2 0.5 3.2 0.2 2.9 0.5 2.1-1.8-2.4 0.5-2.9-0.5-2.1-1.8-2.2 1.2-3.2-0.5-2.4 0.8-2.3-0.2-4.1 1.1-0.4 2.9-2 4-3.1 3.7-4.6 2.1-1.7-0.4-0.9 1.1 0.2 1.3 1 0.9 1.1 3.1-0.1 1.3z" data-name="Ukraine" id="UA" name="Ukraine">
+</path><path class="country" d="M674 532.8l-2.1 0.4-1.5 1.9-1.6-1.2-1 0.1-3.4 1.5-0.2 2.6-0.5 0.8-1.7-0.3-0.1-2.2-1.4-3.2-1.9-1.3-1.4-0.5-2-2.9-0.5-0.4 0.2-1.3-0.9-1.5 2-0.4 0.2-0.7 1.6-0.4 1.5-0.5 0-1.4 1.7-1.3 0.4-1-0.6-1.6 1.7-0.9 1.1 1.3 2.8 1.3 2.3 2.1 0.2 0.7 2.2 1.2 0 1.3 4.7 1.2-0.2 1.2-1.2 3.2-1 0.9 0.6 1.3z" data-name="Kosovo" id="XK" name="Kosovo">
+</path></svg>
+<div id="svgTooltip"></div>
+</div>
+</div>
 </section>
 
+<script>
+   if (!('API_BASE' in window)) window.API_BASE = "";
+   const API_BASE = window.API_BASE;
+  /* ==== EUROPA-KARTA: färgsättning + interaktion ==== */
+  
 
-
-
-
-  <!-- GEO -->
-  <section class="chart-card geo-full">
-    <h3>Geo-översikt</h3>
-    <p class="muted">
-      Andel per land (visningar). Totalt: <span id="geoTotal">0</span> visningar –
-      <span id="geoUnique">0</span> unika besökare.
-    </p>
-    <div class="map-grid" style="grid-template-columns:1fr 400px;">
-      <div class="map-card" style="position:relative;">
-        <h4>Världen</h4>
-        <div id="globeContainer" class="map" style="background:#0b1220;border-radius:16px;height:360px;"></div>
-        <div id="globeTooltip" style="position:absolute;pointer-events:none;padding:6px 8px;background:#111827;color:#fff;font-size:12px;border-radius:8px;display:none;transform:translate(-50%,-120%);z-index:10;"></div>
+  // Säkerställ global struktur
+  window.geoViews = window.geoViews || {}; // { "SE": 1234, ... }
+  
+  /** Målar hela kartan utifrån window.geoViews */
+  function paintEuropeMap() {
+    const svg = document.getElementById('europeMapSvg');
+    if (!svg) return;
+    // Hitta alla land-paths (de har id=ISO2 och name=landnamn i din SVG)
+    const paths = svg.querySelectorAll('path[id][name]');
+    paths.forEach(p => {
+      const iso = (p.id || '').toUpperCase();
+      const val = window.geoViews[iso] || 0;
+      const fill = window.colorOf(iso);
+  
+      p.style.fill = fill;
+      p.style.stroke = 'rgba(255,255,255,.9)';
+      p.style.strokeWidth = '0.5';
+      p.style.cursor = 'pointer';
+      p.dataset.value = String(val);
+    });
+  
+    // Skapa/uppdatera en enkel legend
+    renderGeoLegend();
+  }
+  
+  /** Enkel legend i hörnet av kartcontainern */
+  function renderGeoLegend() {
+    const host = document.querySelector('#europeMapSvg')?.closest('.map-card');
+    if (!host) return;
+  
+    let legend = host.querySelector('.geo-legend');
+    if (!legend) {
+      legend = document.createElement('div');
+      legend.className = 'geo-legend';
+      legend.style.position = 'absolute';
+      legend.style.right = '12px';
+      legend.style.bottom = '12px';
+      legend.style.padding = '8px 10px';
+      legend.style.background = 'rgba(255,255,255,.9)';
+      legend.style.border = '1px solid rgba(0,0,0,.08)';
+      legend.style.borderRadius = '8px';
+      legend.style.fontSize = '12px';
+      legend.style.lineHeight = '1.2';
+      host.appendChild(legend);
+    }
+  
+    const values = Object.values(window.geoViews||{});
+    const maxVal = values.length ? Math.max(...values) : 0;
+    const stop0 = window.makeColorScale(maxVal)(0);
+    const stop1 = window.makeColorScale(maxVal)(maxVal);
+  
+    legend.innerHTML = `
+      <div style="margin-bottom:6px;font-weight:600">Sidvisningar</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span>0</span>
+        <div style="height:10px;width:120px;background:linear-gradient(90deg, ${stop0}, ${stop1});border:1px solid rgba(0,0,0,.1);border-radius:4px"></div>
+        <span>${numberFormat(maxVal)}</span>
       </div>
-      <div class="map-card">
-        <h4>Europa</h4>
-        <svg id="europeMapSvg" baseProfile="tiny" fill="#ececec" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width=".1" version="1.2" viewBox="0 0 1000 684" xmlns="http://www.w3.org/2000/svg">
-          <path d="M654.7 528.1l0.5 0.4 2 2.9 1.4 0.5 1.9 1.3 1.4 3.2 0.1 2.2-0.5 2.6 0.3 2.1-0.8 0.8 0.7 2 0.2 1.9 1.2 2.2 1.2 1.1 1.3 2.4 1.6-0.2 1.3 1.1 0 1.1 1.1 1.8-0.8 2.6-1.7 0.8-1.2 3.1-0.3 2-0.6 0.5-1.9 0.3-1.7 1.3 1 2.2-0.9 0.7-0.3 1.5-0.7 0.7-2.7-0.9-0.7-2.5-1.7-2.7-4.9-2.6-1.2-1.1 0.4-1.5-0.1-1.4-1.4-2.4 0.3-2.6 0.8-2.2-0.3-2.7 0.1-2.1-0.7-2.9 0.5-2.1 0.9-1.3-0.2-2.2-1.5-1.1-1.6-0.2 0-3.1-0.3-0.6 1.7 0-1.7-2.8 3.2-5.3 1.1 0.3 0.8 2.1 3.4-1.2z" id="AL" name="Albania">
-          </path>
-          <path d="M423.4 528.8l-2.8 1.1-0.7-0.4 0-2.1 0.9-0.7 2.6 0.6 0 1.5z" id="AD" name="Andorra">
-          </path>
-          <path d="M974.6 572.4l-3.2-2.8-2.3-1.7-1.6-0.7-3.5 0.4-2.9-0.9-1.8-0.9 0.5-0.6-1.9-3-0.8-1.9 1-1.4 0.2-2.3-1.7-3.3-1.7-1.2-1.3-1.6 4.4-0.3 5.3-1.3 3.2 0.3 1.1-0.2 3.5-0.1-0.5-0.7 2.3-0.5 1.3 1.5 1.6 1-0.9 0.9 2.3 1 1.2 0 3.3 2.5 0 0.7-1.9 1.5-0.2 1.1 3.2 3.4 2.4 1.4 3.2 1.5 0.2 0.9-0.9 2.5-3 0 0.6 0.9 1.9 1.2 6.1 4.4 1.5-0.3 2.2 0.9 0.2 1.3-1 1.4 1.9 1.4 0.8 1.5-1.8 0.5 1.4 1.5 0.5 2.6-2.2-0.1-2.5 0.5-3-4.7 0.1-1-3.1-2.1 0.1-1.7-0.8-1.2-1.7 0.2-1.9 0.9-2.9-1.6-1.2 0.2-0.3-1.1-1.8-1.7-3.2 0.9z" id="AM" name="Armenia">
-          </path>
-          <path d="M607.8 434.9l-0.9 2.4 0.1 0.8 1.6 2.9 2.3 2.9-0.6 0.7-0.6 1.9 0.7 2-3.9 0.3-2.5-0.9-1.3 1.4 2.6 0.7 0.5 1.1-0.5 1.4-2.2 1.2 0.4 1.5-0.5 0.7 1.1 1.6-0.3 1.8-2.5 0.5-1.8 1.7-1.3 0.9-0.1 1.9-2.4-0.5-1.6 0.2-2.3 1.1-2.8-0.2-2.6 0.2-1.9 0.7-1 1.3-3 1.2-5-0.7-5-0.9-2.6-0.5-4-0.3-8.6-1.5-1.1-0.5-3.1-3.5 0-2.3-4.7 1.5-3.1-0.2-3.4 0.3-1.4 0.6-1.2 2.2-1.1 0.4-2.1-0.4-0.9-0.8-3-0.3-0.5-1.5-0.8-0.3-2 1.9-2.3-0.4-1.5-0.8-0.4-1-3.3-0.8 0.3-0.8-1.1-2.5 1-3-0.9-0.7 1.7-0.5 0.7-0.5 3.5 1.6 0.9 1.4 1.2 0.3-0.1 1.3 1.6-0.5 1-1.6 0.2-1.9 2.8-0.1 2.7 0.4 1.4 1.9 3.8-0.5 1.1-0.9 3.9-1.5 5.7-0.5 0.1-1.4 2 0.3 1.5 0.8 2.5-0.5 1.1 0.5 0.2 1.1 1.2 0.9 1.7 0.4 0.3-1.5-0.3-1.9-1.7-0.3 0.6-1.3-0.1-1.3-2.5-2.8 0.6-1.3 3.1-1.8 2.9-0.8 1-1 0.7-2.9 2.3 0.9 1.3-0.9 0.2-2.8 2.2 1.2 0.8 1.3 3.9 0.4 1.4-0.7 2.5 0.4 0.1-1.1 1.3-1.6 1.2 0 0.3-3.2 1.2-0.2 1.6 0.8 1.4-0.4 4.8 1.7 1.5-0.1 3 1.7 3.8 0.2 1.2-0.9 5.1 1.5 1 1.6z" id="AT" name="Austria">
-          </path>
-          <path d="M470 401.8l1.6-0.5 0.8 0.8 1.2 0.1 3 2.3-0.4 1.5 1.7 0.7 0.4 2-2.3 1.3-0.6 1.7-1.7-0.7-1.3 1.3-1.4 2.5-0.2 1.7 2 2.4-1.1 1.7-3.4 0.4-2.8-2.6-3.3-1.5-1.7-0.1-0.4-2-0.6-0.6 0.8-2.7-1.9 0.6-0.5 1.4-1.3 0.6-2.2 0.3-2.3-0.3-0.5-0.6 0.7-1.4-0.7-0.7 0.4-1.6-1.6-1.1-3.6-0.4-0.9 0.3-0.6-2-4.2-1.1-0.5-2-1.6-1.8-3.2 1-2.9-2.4 0-1.2-0.9-2.2 5.1-2.5 4.7-1.7 0.3 1.3 1.2 0.7 1.2-0.6 3.9 1.1 3.2-1.5 0.6-1.2 2.1 0.3-0.2-0.9 1.4-0.7 1.5 0.8 1.5-1 1.1 1.3 2.5-0.8 0.5 1.6 2.6 1.4 1.9-0.4 1.7 1.3 2.6 1.1-1 2.9-1.1 1.3 0.7 1.1z" id="BE" name="Belgium">
-          </path>
-          <path d="M759.6 509.6l0.2 3.7-0.9 1.8-2-0.6-2.2 0.5-1 2-1.2 1.2 0 2.6 0.4 4.2-1.6 0.7-2.9 3.7 3 1.8 1.7 2.2 2.4 2.5 0.5 1.2-1.7-0.2-0.9 0.4-1.8 0-1.5 0.6-3.4-2.5-3.5 0.3-1.5 1.1-3.4 0.4-1 2.2-1.9 0.3-0.3 1.4-1.6-0.5-1.6 1.1 0.7 1 0.9 2.7-0.2 0.8-2.5 1.2-1.8-0.3-3.2 0.4-3.4 0.9-1.7-1.1-3.7-1.2-0.9 0.6-2.4-1.4-1.2-1.7-1.6 0.5-4.2-0.1-0.2 0.9-1.9 0.2-3 1.1-2.6-0.2-2.4 0.2-1 1-3-0.2 0-4.2 0.5-1.7-0.9-1-1.7-3.3-3.4-1.8-3.3-3.2 1-0.3 1.1-1.7-1.4-2.9 0-3.3 1.1-0.6 1.8-0.1 1.1-1.6 1.6-1.7 0.3-1.4-1.6-1-1.3-1.6-2.9-1.5-2.4-3.9-0.6-2.4 0.4-2.3 2.1-1 0.2-1.9 0.9-0.7 4.3 2.5-1.8 2 0.9 1.8 3.7-0.6 3.9 0.3 5.3 1 3.5 0.4 2.5-0.5 9.4 1.7 4.2 0.2 2.3-0.6 1.6-0.9 1.2-1.6 3.3-2.1 3.2-1.2 4.4-0.9 2.9-0.4 4.5 2.3 3.2 0.4 0.9 0.6 1.7-0.5 2.5 2.6 2.2 0.7 2.6 0.5 2 0z" id="BG" name="Bulgaria">
-          </path>
-          <path d="M638.2 492.2l2.8-0.7 1.5 0.8-0.5 2.5-1.6 2.7-0.1 2.6 0.5 0.8 2.4 1.2 3.3 2.9-0.3 0.8-3.1-0.1-0.5 0.8 3.2 3.7-0.2 2.2-2.5-0.3-0.7 0.8-3.2 0.5 1.4 2.2-2.3 0.2-2 1.7-0.5 1.7 0.1 1.5-1.7 0.2-0.5 0.7 0.6 3 1.1 1.6-0.1 0.8-1.1 1-1.7-0.7-6.2-3.8-0.6-0.9-1.6 0.1-1.1-0.6 0.3-1.6-3-2.5-1.5-1.6-0.4-2.2-2.4-1.1-5-4.1-1.7-2-2.8-2.3-2.3-2.4-1.3-4-3.4-3.2-1.9-1.3-0.1-1.4 0.3-5 1.2-0.6 1.8 0.4 1.7 1.8 1.8 1 2.7-3.2 3.2 0.3 1.5-1.2 2.7 1.6 2.5 0.1 2.8 0.7 1.7-0.6 1.6 1.3 2.2-1 1.8 0.3 1.8-0.2 2.6 0.7 2.2 0.2 1.1 0.8 1.3 2.2 2.2 0.2z" id="BA" name="Bosnia and Herzegovina">
-          </path>
-          <path d="M724.5 321.5l1.8 1.3 1.2-0.4 1.9-0.1 3.1 2.2 1.6-0.9 1.5-0.3 3.6 1.2 0.2 2.3 1.7 1.5 2.1-1.3 2.7-1.1 3.4 0 2.7 0.9 2.4 1.8 3.5 1.4 0.4 2.5-0.6 1.8 2.1 2.1 0.5 1.3-1.3 2 0 2 4.1 2 0.5 0.5-0.5 1.8 1.4 0.6 1.8 2.4 1.5 1.4 4.9 2.1 0.7 0.8-0.4 2.8 5.3 0.5 3.2 1.3 0 1.1 0.7 1.1 2.8 1.4 0.6 1.7-2.6 1-0.3 0.9-3 1.8-3.5-0.2-2.4-1.5-2.9 0.1-1.4 2.7 3.9 3.3 0.6 1-0.2 1.5 1 1.5 0.5 3.3 1.6 1.4 1.3 1.8-5-0.1-1.4 0.8-1.7-0.4-1.1 0.5-2.2 2.3-0.8 1.2-1 3.3 1.8 3.6-0.8 1.4-2.7-0.9-0.5-1.2-2-1.1-7.1 0.6-2.3 0.8-0.6-0.5-2.5-3-3.8 1.6-0.6 1.1-1-0.3-0.8-1.3-5.1-1-1.9 0.7-1.9-0.5-1.2 1.7-0.8-1.4-1.1-0.4-3 0.1-1-0.3-1.8-2.1-2.3 0-6.1-0.9-6.5-1.5-7.8-0.4-2.4 0.1-2.3 0.5-5.9 0.5-0.8 1.4-1.6 1.6-1.9 1.2-1.1-0.5-1.9-0.3-1.1 0.5 0.1 1.4-1-1.6-0.1-1.3 0.8-1.5-0.4-1.1 0.2-2.4-0.8-1-1.8-1-3.3-1.3 0-1.2 2-2.7 0.8-0.5 4-1.7 0.6-1.6-0.9-3.9-1.7-3.6-2.9-4.9-2.1-5.1 2.9 0.4 1.6-0.3 3.7-0.3 1.6 0.9 3.3-1.3 1.8 0.1 0.8-2.6 2 0.2 1.4-1.2 2.1-0.5 1-0.7 1.7 2.3 2-0.2 0-1-0.9-1.1-1.9-0.5 0.5-2 1-1.5-0.4-2.3 1.1-3 2.6-0.6 0.8-0.6 1-2 3.6 0.1 0.4-1.1 1.3-1-3.9-1 0.7-3.1 0-1.8 2.6-0.6 1.2-1.5 1.1-0.3 3 0.4 3.1 0.1 0.4-1.7 2.5-2.4 1.4-0.8 1.3-0.2z" id="BY" name="Belarus">
-          </path>
-          <path d="M514.1 449.1l0.8 1.1 2.6 1.3 1.2 0 0.9 0.7-1 3-0.5 1.5 0.1 1.7 1.2 0.1 3.3 0.8 0.4 1 1.5 0.8 2.3 0.4 2-1.9 0.8 0.3 0.5 1.5-0.5 3.1 0.5 1.8-1.9-0.2-1-0.9-1.3 0.3-0.6 1.8 1.5 3.5-1.2 0.3-1.4-1.9-0.7-0.1-2.9 1.1-2-0.8-0.8-2.1-2 0.1 0 2.9-0.5 1.1-2.2 2.6-0.2 1 0.7 1.7-1.2 0.7-0.9-1.4-1.3-1.2 0.4-1.2-2.2-0.6-2.4-2-0.2-2.5-1-0.6-3.4 2.9 0.6 1.5-1.6 2.2-2.4 1.4-3.1-0.8-2.6 1-2.4 0.5-1.4-0.7-0.9-1.4-2.3-2.3 0.5-1.7-0.8-2.2-2.2-0.3-1.9 0.1-2.3 1.5 0.5 1.3-2.3 1.6-1.4-0.1 0-1 1.5-1 0.3-1.5-0.8-0.7 1.1-2.9 3-2.2 0.5-2.9 2.1-0.9 3.8-4 0.6-0.9-1.3-1.1 1.8-1.4 1.1 0 0.8 0.8 2.7-0.3 0.8-1.4 1.5-0.7 1 0.3 2.8 0.1 3.3-0.6 2.6 0.2-0.2-1.5 1.3-1.2 1.3 0 1.4 1 0.8-0.2 1.1 0.9 3.7-0.2z" id="CH" name="Switzerland">
-          </path>
-          <path d="M578.9 400.5l2.1-0.4-0.1-1.9 3.3 0.8 0.3 1.1 1 1.1 4.6 1.1 2.7 1.1 0.8 0.9 3.2-0.7 1.8 1.2-0.7 1.1-1.6 1.2 1.6 0.9 2 1.8 1.5 1.9 1 0.4 3.5-2.5-1.7-2.4 1.3 0 2.2 0.6 3.3 1.9 3.6-0.7 0 1.6-1.4 0.5 2.7 2.3 1 0.6 1.8-1 3.5 1.8 0.5-0.2 2.7 0.8 0.5 1.8 2.8 2.2 0.5 1.6-2.8 0.3-2 1.5-0.6 0.8-2.3 1.2-0.7 3-1.6 0.8-2.1 1.9-1.5 0.7-1.7 0.2-3.6-0.5-1.4 1.2-1.1 2.8-1-1.6-5.1-1.5-1.2 0.9-3.8-0.2-3-1.7-1.5 0.1-4.8-1.7-1.4 0.4-1.6-0.8-1.2 0.2-0.3 3.2-1.2 0-1.3 1.6-0.1 1.1-2.5-0.4-1.4 0.7-3.9-0.4-0.8-1.3-2.2-1.2-0.6-0.7-2.9-2.2-1.3 0-1.3-1.6-2.5-1.5-2.9-2.6-1.3 0-2.3-2-1.8-2.7-1.4-1.5 1.2-1.7-0.6-1.6-2.3-1.3-2.5-3.4 0.5-0.7 1.9 2 1.9-2.6 1.1-0.6 2.6-0.6 2.1 0.4 0.8-1.3 2-0.3 0.6-1 1.6-0.7 1.1 0.1 0.6-1.2 4.4-1 3.5-1.5 1.9-0.6-1.5-1.5 0.8-0.6 2.2 0.4 1.5 1.5 0 0.9 1.4 0.6 0.9-0.7z" id="CZ" name="Czech Republic">
-          </path>
-          <path d="M567.9 355.2l-3.4-0.1-0.2-1.7-1.1-1-0.1-1 4.7 2.6 0.1 1.2z m-34.8-8.1l-1.8 0-1.4-0.7 0.8-1 1.7 0.4 0.7 1.3z m28.3 0.5l-1.3 0.7-1.3 0-1.3 1.3-2.1-1.1-0.5-1.1 0.1-2.2 0.6-1.4 2-0.9 0.9 1.2 1.7 0.6-0.5 1.7 1.7 1.2z m-46.6-6.6l1.8 0.7 1.6 1.6 0.1 1.4-1.7 1.6 3.2-0.3 0.8 1.2 1.7-0.4 4.5 1.8 3.2-0.9 0.7 1.4-0.6 1.5-2.2 1.6 1.4 1.2 2.1-0.2 3.6 0.9 3.3-2.5 1.1-0.5 3.6-0.3 5.1-4.5 5.3 0.9 1.5 1.9 3.7 2.1 3.2-0.2 1.3 2 0.8 2.5 1.9 1.3 2.8 0.5 0.7 2.6 1.8 4.1-0.3 2.7-1.9 1.8-0.7 1.6 1.6 1.4 3.3 2.1 1.4 1.7-0.6 2.6 2 2.3 0.8 1.9-0.7 2.6-0.8 1.1 1.9 3.1 0 1.6 2.2 0.9 1.6 3.2-0.4 2.3-1.6 3.6-0.9 0.7-1.4-0.6 0-0.9-1.5-1.5-2.2-0.4-0.8 0.6 1.5 1.5-1.9 0.6-3.5 1.5-4.4 1-0.6 1.2-1.1-0.1-1.6 0.7-0.6 1-2 0.3-0.8 1.3-2.1-0.4-2.6 0.6-1.1 0.6-1.9 2.6-1.9-2-0.5 0.7 2.5 3.4 2.3 1.3 0.6 1.6-1.2 1.7 1.4 1.5 1.8 2.7 2.3 2 1.3 0 2.9 2.6 2.5 1.5 1.3 1.6 1.3 0 2.9 2.2 0.6 0.7-0.2 2.8-1.3 0.9-2.3-0.9-0.7 2.9-1 1-2.9 0.8-3.1 1.8-0.6 1.3 2.5 2.8 0.1 1.3-0.6 1.3 1.7 0.3 0.3 1.9-0.3 1.5-1.7-0.4-1.2-0.9-0.2-1.1-1.1-0.5-2.5 0.5-1.5-0.8-2-0.3-0.1 1.4-5.7 0.5-3.9 1.5-1.1 0.9-3.8 0.5-1.4-1.9-2.7-0.4-2.8 0.1-0.2 1.9-1 1.6-1.6 0.5 0.1-1.3-1.2-0.3-0.9-1.4-3.5-1.6-0.7 0.5-2.2-1.2-5.1-2.3 1 1.6-3.7 0.2-1.1-0.9-0.8 0.2-1.4-1-1.3 0-1.3 1.2 0.2 1.5-2.6-0.2-3.3 0.6-2.8-0.1-1-0.3-1.1-1.3 0-1.5 0.6-2-0.2-2.4 0.3-1.5 1-1.8 1.4-5.5 3.5-3.8-0.1-1.3-1.6-0.6-4.8-0.8-2-1.4-3 0.6-2.1-0.1-0.3-0.9-1.4-0.4-1.8 0.7-3.5-4.3-1.4-0.1 0.6-3 0.9-0.9 0-1.4-2.8-1.1-1.5-1.6-0.3-2.2 0.6-1.7 2.3-1.3-0.4-2-1.7-0.7 0.4-1.5-3-2.3 0.6-2.4-1.9-1.2 0.5-0.8 2.2-1.6-0.7-1.2 1.3-2.8 0-1.2-3.1-4.1 0.7-1.1 1.8-0.7 2.3 0.8 4.5-1.3 0.7-1-1-0.9 0.3-0.9 2.6-1.6 0.6-2.6-0.8-1-2.6-0.3-0.7-1 0.6-1.6 3.1 0.1 1.1-3.8 0.7-1.7-0.1-4.3-1.7-1.4 0.5-2.7 1.1-1.4 0.9-0.4 4-0.3 4.5 0.1 1.9 2.2-0.6 1.2 1.6 0.3 0.9-2.4 1.4 0.8 1.1-0.1-0.5-1.7 0.2-1.6 0.9-1.4 3.3 0.6 3.6-0.3 0.1-0.6-2.8-0.5-0.9-1.1-0.2-3.9-1.5-0.8-1.6 0.3 0-1.5 3.4-1.1 0-1-3.4-3.8-0.2-1.6 2.7 0.1 5.2 1.3 3.1-0.7 1.5 0.4z" id="DE" name="Germany">
-          </path>
-          <path d="M533.5 340l2.1 1 2.4 0.3 0.4 1.9-3.5 0.7-5.1-2.1 0.1-2.5 2.3-0.2 1.3 0.9z m13.7-1.1l-2.3 0.1-1.9 1-0.3-1.2 1.6-1 1.2 0.2 1.7 0.9z m-28.8 1.2l-1.2 0.2-1.7-0.5-0.6-2.3 2.7 1.1 0.8 1.5z m8 2l-1.4-1.5 2.5-2.9 0.7-0.2-1.8 4.6z m50.1-4l-2.4-0.2-2.4-1 0.1-2 0.5-0.9 4.5 2.3-0.3 1.8z m-52.1-8.7l2.3 4.3-0.1 2.8-1.8 1.2-2.1 0-5.4-1.7-1.7-2.9-0.1-2.3 4.8-1.4 2.6 0.8 1.5-0.8z m23.3 0.2l-1 0.6-0.7-0.9 0.9-0.9 0.8 1.2z m-23.9-2.8l-0.9 0 0-3 1.5 1.6-0.6 1.4z m22.6 0l0.1 1.5-0.7 0.7-2 0.7-1.1 1.8 2 1.2 0.5 1.5-1 0.7-2.6 0.7 0 5.6-2.2 0.6-1.5-2.1-0.1-0.9-1.3-3.1-2-0.4-2.2 0.1-1.5-1.8 0.1-2.1-1-2-1.3-0.6 0.4-1.4 3.1-0.2 1.5-1.9 0-0.9 1.8-0.2 0.8 0.7 0.1 2.6 1.6 0.5 1.1-2.9-0.9-1.1 3.9-2.2 1.1-0.1 3 0.9-0.4 2.1 0.7 2z m-31.6 14.2l-1.5-0.4-3.1 0.7-5.2-1.3-2.7-0.1-0.5-2.1-0.8-1.4 1.1-0.3-0.9-3.9-3.2-1.3-2.5-1.4 0.5-5.6-1-2.3 0.1-6.9 1.3-0.1 3.1 0.8 1.5 0.9 0.6-1.9 1.6-1.6 2-0.8 1.6 1.3 0.3-4.5-1.6-0.5-1.3 0.4-1.3 1.9-1 2.4-1.9 0.2-1.5 0.7-2.4-1.4 0.1-1.4 1.6-1.9 2-1.9 2.2 0 1.6-0.6 3.9 0.1 2.8-1.3 2.8-3.6 1.5-1.5 3.3-0.5 3-1.7-0.8 2.5 1.2 1.7 0 3-0.9 1-1.4 2.5 0.2 5.6 2.5 1.5 4.1 0 1 1.1-0.7 2.2-2.6 1.4-0.9 0-1.4-1.1-1.1 0.9-1.2 5.1-2-0.1-1.2 0.5 1.4 1.2-1.3 0.8-3.4 3.1 1.1 3.4-0.2 0.9-1.5 1.3-0.6 1.1 2.3 0.3 1.3 2.9z" id="DK" name="Denmark">
-          </path>
-          <path d="M655.5 285.3l3.9 0.2 4 1.8-1.8 0.7-3.7 2.5-0.3 0.5-2.6-0.1-1.4 0.2-1 0.9-0.9 2.8-1.6 0.5-0.3-0.9 1.6-1.8-1.5-1.4-1.9-0.7 0.9-1.8-1.6-1.6 1.5-0.2 1 0.5 2-0.5 0.5-1 3.2-0.6z m8.3 1l-0.9 0.2-2.4-1.1 1-1 1.9 0.5 0.4 1.4z m-5.4-4l-0.8 0.7-0.9-0.6-0.9 1.6-1.3 0.3-1.9-2.5-2.9-0.5-1.3-0.7 4.5-0.4 1.2-1.6 1.3 0.1 0.4 0.9 2.1 0.3 0.9 1-0.4 1.4z m53.2 18.9l-1.9-0.2-3.4-1-4 1.2-2.8-1.1-3.5-2.7-0.6-0.7-2.3-0.5-5.6-2.5-1.1 0.7-1.5-1-8.4 2.8 1-3.4 0.1-3.6-2.3-0.4-0.9 1.3-1.3 0.3-4.1-1.3-1.2-2.1-1.6-1.1-0.8-1.2 0-1.8-1.5-2 0.7-1.1-0.7-2.8 3-1.2 3.3-0.2 0.9-1.3 2-1.3 2.3 0.2 3.1-1 6.3 0.1 0.4-1.7 3.2 0 7.6 1.2 1.8 0 2.8 1.2 1.4 0.3 4 0 6.3 0.5 1.2-1 1.5 1.2-1 1.4-1.2 0.4-0.9 3.2-0.8 1-1.7-0.3-2.5 0.2-2 0.5-1.3 1.1 0.1 1.1 2.6 2.3 1.4 2.8 2.6 2.2 0.8 1.3 2.4 2.9 1.8 2.5-2.3 0.6-1.2 2-0.2 2z" id="EE" name="Estonia">
-          </path>
-          <path d="M646.5 260l2 0.2-0.6 2.8-2.3-1.8 0.9-1.2z m-1.9 0.5l-2.1-0.6 0.9-0.8 1.2 1.4z m-6.5-2.7l-1.5 0.7-0.3-1.7 1.8 1z m25.5-62.9l-1.5 0.5-1.3-0.3-0.2-0.9 2-0.6 1 1.3z m30.1-54.6l-3.7 1.3 1.6 0.8 0.8 1.2-2 3.2 0.1 0.6 3.1 4 7.2 1.7 2.3 1.8 3.6 2.3 1.8 0.9 0.1 1.9-3 3-2.6 3.1-1.2 1.7 0.4 1.7 2.6 2.1 2.3 2.2 3 3.5 3 2.5 3 4.2 0.4 1.4-3.7 0.7 1.2 0.9-0.6 1.3 0.3 1.9-0.5 1.5 1.9 0.3 0.3 1.3-1.7 1 0 0.9 1.4 1.7 1 0.6 3.2 0.6 0.9 1.6-1 1.7 1.8 2.2 4.5 1.8 0.7 1.3 0.2 1.7-2.4 3-2 0.8 0.7 0.8 4.5 2.6 6.6 2.9 2.6 1.3 2.1 1.9 2.2 1.6 0.5 1-1.6 4.5-0.7 1.2-2.2 2.2-3.4 2.8-2.3 2.3-5.3 5.9-1.9 1.5-2.1 2.2-4.9 3.3-0.7 0.8-2.5 1.5-5.6 5.2-3.5 1-2.6-1.1-1.8 0.2-1.2 0.8-2.5 0.2-2 0.6-1-0.7-0.7 0.6-1.9 0.2-2-1 0.3 1.5-3.3 1.5-0.8-0.9-2 1-2.1 0.2-1.1 0.8-5.9 1.1-1.5 1.3-1.2-0.3-6.7 1.1-2.9-0.2-2.7 2-1.8 0.4 1.5-3-2.4-1.1-1.2-1.6-0.7 0.4-0.3 1.5-1.5 0.8-2-0.1-0.4-2.4 0.8-2.3-3.6-0.6-3.8-1.4-0.9-0.1-0.7-1.3-2 0.9-2.1-0.9-1.7-5.3 0-1.3 0.9-1.6-0.1-3.4-0.6-2 1.1-0.6-0.9-1.6-2.2-3-1.6-1.1 0.5-3.3-0.6-1.6-1.9-1.1-1.1-2.9 0.6-2.4 2.4-2.2 0-1.2 0.9-1.1-0.5-1.3 2.7-0.5 1 0.4 2.4-0.4 1.9-1-1.1-1.8 1.5-0.7 1.2-1.2-0.1-1 2.3-0.5 2.4-1.9 2.3-1.1 2.3-1.9 1.1-0.1 0.3-1.3 2.5-1.9 0.8-1.6 2.3-1.8 2.2-3.9 3.8-1.2 3.8 0.3-0.6-1.7 1-0.3-0.6-1.3-1-0.6 0-4.6-1.3-0.9-4.5-1.6-1.7-0.1-1.2-1.2-4.6-0.7-1.6-2.5-1.9-2.2-1.8-0.6-1.3-2.6 0-1.3 1.5-1.3-0.1-1.8 0.7-1.4-0.6-0.9-3.3-2.6-0.8-1.6 0.1-1.1 1-0.8-0.6-1.3-2.8-0.4 0.3-1.9-0.7-1.4-0.4-2.4 1.1-1-1.8-0.9-1.9-1.5-1.4-0.1-1.2-1.6-3.5-1.8-8.3-1.7-4.2-1.8-4.8-2.3-2.9-1.1-0.4-0.9-2.9-0.8 0.5-0.4 2.1 0 1.9 0.4 0.5-0.6-1-1.4 1.9-1.1 3.6 0 7.9 5.5 1.4 1.8 6.9 0.6 0.8 0.5 1.8-0.1 3.7-0.9 1.2-1.2 1.5 0.1 3.6 1.1 3.9 0.8 2.6 0.8 1.3-0.6 0.5-1.7 1.6-1.3 2.1-0.3 1.5-1.4-0.7-3.2 0.6-1.7 0.7-3.8 2.6-1.7 1.7-1.8 2.1-0.2 3.8 0.4 0.9-0.2 3.5-1.6 2.9-0.3 1.8 1.2 4.2 2 4.2 1.1 3.6 0.8 2.6 2.7-0.7 1-3.2 2.9 0 0.7 1.7 1.3z" id="FI" name="Finland">
-          </path>
-          <path d="M389.1 403.1l-1.6 1.3-1.3 0.2-2.5-1.2 0-0.5 2.5-1.1 2 0.6 0.9 0.7z m-36.5-39.7l1.3 0.9-3.4 1.9-1.2-0.6-0.9-1.2-0.1-1.9 1.2-0.5 1.8 0 1.3 1.4z m-23.3-11.4l-2.1 0.4-2.9 0 0.1-1.5-1.4-0.5-1.8-2.7-1.3-0.5-1.9 1.6 0.5 0.9-2.4 1.8-2.9-0.3-0.8-0.7-2.1-0.4-0.2-1-2.7-2 1-1.4 2.9-0.9-1-1.4 0.2-0.8 1.6 0.1 2.2-0.8 1.2-1.6 1-2.3 1.9-0.9 1.3 0.6 1.9-2 2.8-0.1 2.7-0.7 3.9 0.3 1.1 1.1 0.5 1.7 1.3 1.7 1.7 1.4 0 0.9-2 1.1 3.5 0.3 1.2 2.5-2.1 0.3-0.1 1.4 1.1 0.2-0.6 1.4-2.6 0.6-1.4 2.2-1 0.5-2.3-0.5z m13.7-20.2l-2.6-0.5-0.6-2 0.9-1.4 1.8 0.7 0.6 1.3-0.1 1.9z m-11.5-7.1l0.7 3.4-2.4 1.3-0.8-2.4-1.4 1 0.2-1.9 1.5-0.3 2.2-1.1z m1.7 1.7l-1.1-1.2 1.6-2.2 1.7-1-0.1 1.6-2.1 2.8z m2.5-7.8l-4.6 0.8 0.6-3-1.9-0.9 0.3-0.9 2.1-0.5 1.7 1.7 2.1 0.6-0.3 2.2z m-16.2-11.4l-1.5-0.2-0.4-1.4 0.2-2.3 1.6 0.2 0.1 3.7z m12.8-5.7l-0.1 2.8 2.9 0.8 2-0.1 0.4 0.6-3.3 2.7-0.7-0.1-0.2-2.2-1.4 0.3-1.9-0.3-1.2-1.9-2.7-0.5-0.9-1.1 1.4-0.6 0.3-1.2 2.8-0.6 1.5-0.7 0.9 1 0.2 1.1z m-11.9-2.6l1.2 0.9-1.1 1.3-1.5 0-2.2-1 0.2-0.5 3.4-0.7z m11.8-9.9l-1.6 2.6-1 0.7-0.2 1.7-3 1.6-3.2 2.4-1.4-1 2.6-1.7-2.1-1-0.2-2.6 0.8-0.7 1.4 0.7 1.9-0.3-0.7-1.2 6.3-3.2 0.4 2z m34.8-2.2l0 1.2-1.3 1.6-2.2 1.2-4.2 2.8-2.5 1.3-0.5 1.6 1.4 0.1 0.2 0.8-2.2 1.6-0.6 1.5 3-0.4 5.3-1.5 3.6 0.5 2.6-0.3 6.9 0.2 1.9-0.3 2.3 1.3 1 1.7-2.8 3.4-0.8 2.3-2 3.5-1.9 2-2 2.5-2.1 1.1-3.1 0.5 4.5 1.9-1.4 1.8-2.4 0.1-2.3 1.7-2.1 0.7 3.6 1.1 2.4-1 2.7-0.1 5.2 1.9 3.6 3.4 2 1.5 0.5 1.1 2.1 6.9 1.5 3.8 1.6 1.8 4.5 1.6 1.1 0.6 3.4 3.3 3.4 2.4-1.4 1.5 0.4 1.2 2.1 2.9 0.3 1.6-1.3-0.1-2.3-1.4-0.3 0.7 5 3.3 1.6 2 1 2.7-0.6 1.1-3 2.7 2.8 1.4 1.2-0.2 2-2.1 1.7-0.2 4.2 0.3 3.8 1 3.3 2.1 0.7 1.1 0.4 3.1-2.2 5.8-2.8 1.9-0.5 1.7-2.1 0.9-1.7-0.3-2.4 1.2 1.7 0.6 0 1.7-1.1 0.6-2.5 0.2 1.1 2 2.5 0.4 4.3-0.2 1.9 0.2-0.2 2.7-0.4 0.4-3.8 1.7-1 1.8-2.2-0.1-1.1 0.7-5.7 1.9-4.9-0.8-2.9 0.1-4 0.6-4.2-1.2-1.8-0.2-2.8 1.7-4.2 0.5-2-0.2 0.9 1.5-0.9 0.4-3.8-0.5-1 0.5-1.4-0.2-2.7-1.4-2.6-0.1-4.9 1.2-1 1.3-1.3 3.5-1.1 1.2-1.4 0.2-4.5-2.5-1.5 0.5-2.5 0.3-2.7 0.7-3.9 2.4-0.9 1.5-1.3 0.2-1.1-0.9-1.4-0.3-2.3 0.8-0.3-1.3 1-1 2.8-0.7 2.5-1.9 2.2-2.3 4.6-3.8 0.8-3.1 2.7-0.7 1.4-2.5 4.1-0.6 2.8 0 2.8 0.5 2.9-0.1 1.1-0.7 1.9-2.4 3.6-3-4.7 1-3.8 2.3-3.2-0.4-2.3-1.9-2.1-0.8-2.1 0.4-0.7-0.9-2.4-1.7-2.6 0-3.6 1.7-2.6-1.2-0.9-2.3 0.3-1.4 1.1-0.7 2.5-0.6 3.8-1.7 2.2-0.7 2.8-1.9 1.2-2.3-0.3-2 0.5-1.4-0.9-1.7 0.3-1.5-3 0.3-2.7 1.2-0.7-1.1 2.8-1.8 1-1.4 2.6-1.7 3.6-1.3 1.9 0.1 3.7-0.7 2.7 1.3-0.8-2.1 1.2-0.4 0.1-2.4 1.6-2.2-1.2-0.6 0.1-2 1.5-0.8 0.7-2.6-1.7-0.5-2.1 0.6-1.7-1.5-2.8-3.6-0.3-1.4 1.6-3.1 2.3-2-1.9-0.8-1.4 0.2-2.7 1.2-2 1.3-2.1 0-0.8-0.9-1.1 0.1-2.5 1.1-3.5-1.3-1.1 2.3-2.6-2.5-0.3-1.9 1.3 0 1.2-2.4 2.9-4 0.6-1.2-0.5-1.4-1.9-1.5 0.3-2.6 0.8-1 1.5-0.4-1.9-1.2-2.9 0.9-1.8 0.9 0.3-2-0.6-0.4-1.5 1.4 0.1 3.3-2.1 5.7-1.1 0.9-1.4-0.5 1.1-3.9 1.4-2.5-0.6-0.3 0.3-3.6 1-2.9 1.7-3.8 2.2-3.5-4.1 2.7-1 0.5-2.4-0.4-0.8-0.7-1-2.3 1.8-0.2 1.7-1.1-1.5-0.7 1.5-0.9 1.7-2.1 0.4-1.9-1-1.5-1.6-0.6-0.2-0.9 1.7-1.9-0.7-1.5 1.6-3.1 3 0.1 1.9-0.4-2.3-2 0.7-2.9 3.7-0.3-0.8-1.8 0.3-2 1.6-0.9 1.3 0.2 1 0.9 2.6-0.9 0.6 0.8 2.8-0.6 3.7-0.3 4.5-0.6 2.2-0.4 2.3 0.2-0.6 1.7z m-0.6-4l-1.3 0.1-1.3-1.4 1.5-0.3 1.1 1.6z m1.3-3.4l2.7 0.6-0.6 1.4-1.4-0.7-2 0.3-1.9-1 0.4-2.1 1.7-0.1 1.2 0.5-0.1 1.1z m3.7-2.3l-1 0.3-0.4-1.2-1.7-0.6 0.4-0.8 2.7 2.3z m16.1-19.5l1.6 1.8 1 0.5-1.3 3.8-0.2 1.6-1 1.7-0.8-0.4 0.9-2.9-0.5-1.1-1.7 0.3-0.4-0.9 1.6-1.4-0.8-2-1.1-0.2 1.5-1.6 1.2 0.8z m2.9 0.4l-1.4-1.3 1.3-0.6 0.1 1.9z" id="GB" name="United Kingdom">
-          </path>
-          <path d="M972.9 547.7l-2.3 0.5 0.5 0.7-3.5 0.1-1.1 0.2-3.2-0.3-5.3 1.3-4.4 0.3-1.3-1.2-1.9-0.2-1.1-1.7-3.5-2.5-1.2-0.4-0.6-1.1-1.4-0.3-1.4 0.4-0.9 1.9-3.4-0.8-3.6-0.1-1.1 1-4.3-1.3 1.9-3 0.4-1.7-0.4-2.4-1.7-2.7-3.7-8-1.1-1.2-4-1.4-1.1-1.6-3.2-2.1-4.1-0.9-4.8-2.9-2.9-1.7 0.9-2.1 0.8-0.2 4.8 0.9 1.5-0.4 5.9 2.5 3.6 0.7 3.1 1.7 6 0.5 2.8-0.6 1.8 0 2 1.1 2.4-0.2 3.2 1.2 1.5 1.6 3.5 1.4 2.8 0.8 3.2 1.5 0.2 2.4 2.5 0.4 4.3-2.1 2.1-0.7 1.8 0.2 1.9 1.9 0.8-2.2 4.6 1.7 2.1 1.8 2.8-0.1 2.2 1-0.2 4.2 2.9 1.4 1.6 1.2 3.4 0.7 3.1 1.5-1.2 2.1-1.2 0.3 0 1.3 1.1 0.8 0.9 1.5 4.5 2.6 0.9 0.8-0.2 2-1.8 1.4-4.1-2-1.7 0.5-3.2-0.9-1.4-1 0.1-0.7-4-1.4-1.9-0.4-3 2.5z" id="GE" name="Georgia">
-          </path>
-          <path d="M712.9 637.7l2.3 0 1.7-1 2.2 3.7 1.7-0.1 3.5-0.9 3.7 0.2 1.4 1 2.6 0.2 2.3 0.5 3.3-0.7 0.4 0.4 0.1 2.8 1.2 0.2 0.7-0.7 1.7-0.6 1.8 0 1.6-0.8-0.4 3.5-0.9 0.4-4.4-0.1-8.1 1-5.3 0.4-0.7-0.2-0.7-2.2-3.3-1.1-6.2-1-1.5-0.4-3.1 0.2-1.1-1-0.4-1.8 0.2-1.9 1.4 0.3 0.4-1.4 1.9 1.1z m43.4 1.1l-1.6-2.1 1.1-0.5 1.2 2.4-0.7 0.2z m-54.7-11.4l-1.4 0.2-0.7-2.2 0.5-1 2.1 2.1-0.5 0.9z m62.7 4.1l-1.7-0.4 0.4-1.8-0.7-1.6 2.3-2.7 3.2-1.3 0.9 0.9-0.9 2.5-0.9 1.3 0.4 1-1.6 0.2-1.4 1.9z m-19-10.3l-1.5 1.2-0.9-0.6 1.9-1.2 0.5 0.6z m6.2-2.2l0-0.7 1.3-1.1 2.5-1 1.2 0.6-2.5 1.4-1.5 0.1-1 0.7z m-22.2-5.4l-0.9 1.3-1.3-0.7 0.4-1.2 1.1-0.6 0.7 1.2z m3.6 1.6l-1.1 0.6-1.4-2.2 1.9-2 0.9 0.7 0.1 1.8-0.4 1.1z m5.4-8.8l0.6-1.6 1.6-0.1 0 1.1-2.2 0.6z m-21.7-0.7l-1-0.4 0.4-1.2 1.1 0.5-0.5 1.1z m31.6-3.7l2.8 0.7-0.7 1-1.6 0.9-1.7-0.9-1.2-1.2 2.4-0.5z m-76.7 0.1l0.4 1.2-1.1 1-1.6-1.2-1.2-1.8 0.9-1.1 0.9 1.2 1.7 0.7z m53.1 0.7l-1.4-0.1-2.4-2.1 0.9-1.4 0.9 1.2 1.3 0.1 0.7 2.3z m-57.3-9.7l0.3 1.8 0.9 0.3 1.3 1.6-0.2 1.2-2.1-0.8-1 0.2-1.1-2-1.3 0.2 0.6-1.8 1.4 0.1 1.2-0.8z m70.8 2.5l-1.1 0.9-1.8-1.7 1.4-1.3-2.1-2.4-0.1-1 2.1-0.5 1.3 0.9 0.6 1.2 0.4 2.6-0.7 1.3z m-70.2-6.1l-1.3 0.1-0.4-0.9 0.8-2.4 1.1 0.3 0.2 2.5-0.4 0.4z m34.6-5.4l0.9 1.7 5.5 2.5 2.8 0.3 1.7 2.6-0.2 0.6 1.5 3.8 1.1 0.9 2.7 0.3 0.4 1.9-0.9 0.8-1.9-0.7-2.1-1.6-0.4-1.3-2.2-2.9-3.6-0.2-1.5-0.7-0.6-1.7-1.5-0.9-2-1.9-1.5-1.1-3-1.1-0.6-0.7 1.9-1.3 2.1-0.5 1.4 1.2z m37.9-5.8l-0.1 0.9 1.9 1.5 0.7 1-1.2 2.1-4-0.8-0.8-0.8 1.6-1.3-0.9-0.5-1.2 1.5-2.2-0.7-0.9-0.9 0.7-1.4 1.5 0.1 1.7-0.8 0-0.6 2.3-0.2 0.9 0.9z m-81.3-1.6l-1.3 0.3-1.2-0.8-1.2-1.9-2.2-2.2 0.7-1.1 1.6-0.4 1.4 1.2-1.1 1.2 0.8 0.7 0.9 2.4 1.6 0.6z m67.8-8.6l-0.7 1.4-0.1 1.3-3.8-0.7-0.3-2.3 2.2-0.1 0.8 0.8 1-0.9 0.9 0.5z m2.4-6.9l-1.4 0.4-1.7-1.3 1.4-0.5 1.7 1.4z m-11.9-3l-1.6 0.6-1.8-1.1 1.1-2.3 1.3 0.1 1 1.3 0 1.4z m15.9-1.7l-0.5-0.7-2.1-1.2-4.6-0.6-2.3-0.9-0.9 0.2-2-1-1.2 0.4-2.5 1.7-1.5-0.2-1.6-1-2.2 0.4-1.7 1.9-1.8 1-1.8-0.4-2.3 0-0.2 1.1 2 2.1-0.5 1 0.5 1 2.1 0.1 2.5 1.3-0.7 0.7-3.2-1.2-1.2-0.1-1.2 1.2 3.5 2.7 0.5 1.4-0.6 0.9-1.5-0.8-2.5-3.2-3.1-0.6-0.4 0.6 1.2 2.4 2.9 1.7-0.6 0.6-3-1-1.1-1.6-0.4-2-5.5-2.8-1.4-2.8-2.2 1.3 0.4 2-0.6 3.8 0.4 1.3 3.5 3.7 1.3 2.7 2.6 2.1 2.6 3.2 0.7 1.8-1.3 1.1-1.3-0.5 0.3-1.9-2.2-1.2-1.9 1.2 1.5 2.3 0.5 1.2-0.4 1.3-1.6 0.8-2.6 0.1 2.4 1.4 3.3 1 1.6 1.1 1.5 0.1 1.7 2.1 2.6 0.6 1.7 2.1 2 0.5 1.7 0.8 1 2.1 0.3 2.9 0.6 2.1 0.1 1.7-1.1 0.5-1.3-1.6-4.2-3.6-1-0.4-1 0.7-2.9 0.5-1.9 1.3 1.5 1.3 0.1 1.2 0.8 1.5 2 0.4 2 2.4-3 1-1.1 0.7-0.8-0.5-0.2-1.2-4.3-2.2-0.6 0.6 0.7 2.4 1.3 1.6 2.2 4.3 1.3 3.7-0.2 2.1 1 1.5 0.1 1.5-1.7-1.2-2.2-2.5-0.8-1.5-2.2 0.1-1.3 3.3 0.2 1.9-1.6-1.1-0.2-2.9-2.1-2.8-0.9-0.4-1.3-1.9-1.5 0.6-0.1 2.9-0.4 1-2.2-1.9-2.3-3.5-0.2-1.8 1.4-1.7-0.3-1.2-1.6-2.5-2.1-1.5-1.2-0.5-0.7-1.6-2-1.3 0-1 2-1.7 1-2.6 1.9 0.5 1.4-0.2 2-2.4 1.6 0.1 3.9 2.1 4.2 1.2 2.1 1 1.2 1.1 1.6 0.3-0.5-1.4 0.8-0.4 2.1 0 0.2-1.6-2-0.6-0.8 0.2-2.4-1.4-2.3-0.8-2.2-1.5-1.2 1.3-1.2 0-3.4-0.9-2.1 0.7-4.2 0.7-1.1-1.3-2.6 1-1-0.7-1.9-4.2-1.7-1.9-1.2-0.5-0.2-1.9 1.5-0.2 2.4 0.9 0.9-0.6-0.6-1.6-2.5-0.2-1.8 0.5-2.8-2.2-1.5-1.7-2.2-1.1-1.7-3.4-2.6-2.6 2.7 0.9 0.7-0.7 0.3-1.5 0.9-0.7-1-2.2 1.7-1.3 1.9-0.3 0.6-0.5 0.3-2 1.2-3.1 1.7-0.8 0.8-2.6-1.1-1.8 0-1.1 4.6-0.3 0.9-0.6 2.3 0.6 2.4-1.3 1.7-2.5 0.8-0.3 3-0.4 3.3 0.6 2.9-1 0.2-2.1 2-0.3 3 0.2 1-1 2.4-0.2 2.6 0.2 3-1.1 1.9-0.2 0.2-0.9 4.2 0.1 1.6-0.5 1.2 1.7 2.4 1.4 0.9-0.6 3.7 1.2 1.7 1.1 3.4-0.9 3.2-0.4 1.8 0.3 2.5-1.2 0.2-0.8-0.9-2.7-0.7-1 1.6-1.1 1.6 0.5 1.2 0.3 2.3 1.5 0.9 3.1-3.4 2.5 0.5 4.4-2.5 3.2-0.8 0.4z" id="GR" name="Greece">
-          </path>
-          <path d="M611.2 521.2l2.3 0.4-1.1 0.9-1.2-1.3z m12.9 1.5l1.6-0.1 0.6 0.9 6.2 3.8 1.7 0.7 1.2 1.9-4.8-3.1-4.4-2.5-3.1-0.7-4.3-2-0.5-0.9 5.8 2z m-6.3-3.5l-0.8 0.1-5.6-0.1-1.7-0.3-0.5-1.3 1.8 0.2 0.5 0.6 6.3 0.8z m-5.3-2.3l-2 0.1-2.6-0.8 0.3-1.1 4.8 0.6-0.5 1.2z m-21.2-16.5l-0.3 0.4-3.3-2.7-0.3-1.9 2.8 2.7 1.1 1.5z m-4.9-6.5l-1.9-0.2 0.8-1.1 1.1 1.3z m-4.2 1.5l-0.9-0.1-1.7-4.2 0.4-1.2-0.8-2 0.9-0.3 0.5 2.1 1 0.9-0.1 1.6 0.7 3.2z m3.7-4.9l-1.5 0.3-1-1-1.3-0.2-1-1 1-0.7 0.5-1.2 3.3 3.8z m49.5-14.7l-0.7 1.5 1.6 2.7 0.2 1.6 1.3 0.4-0.4 2 1.2 1 3 1 0.9 1.5-2.3 0.1-1.7 0.4 0.7 2.6-1 1.6-2.2-0.2-1.3-2.2-1.1-0.8-2.2-0.2-2.6-0.7-1.8 0.2-1.8-0.3-2.2 1-1.6-1.3-1.7 0.6-2.8-0.7-2.5-0.1-2.7-1.6-1.5 1.2-3.2-0.3-2.7 3.2-1.8-1-1.7-1.8-1.8-0.4-1.2 0.6-0.3 5 0.1 1.4 1.9 1.3 3.4 3.2 1.3 4 2.3 2.4 2.8 2.3 1.7 2 5 4.1 2.4 1.1 0.4 2.2 1.5 1.6 3 2.5-0.3 1.6-3.5-2.8-2.6-1.5-3.1-2.8-3.8-1.1-2.7-1.2-3.3 0.6-1.8-0.2-0.7-2.2-5.8-3.9-4.3-4-0.8-1.3 3.1-1.2-1.4-0.8-3.9-3.4-1.2-1.6-0.1-4.1-0.8-1.7-2.9-2.2-1.1-1.1-2.1-0.7-1.4 0.9-0.3 1.9-3 5-1.3 0-3.1-4.2-0.5-1.9-1.3-3.9 0.7-0.5 0.5 0.6 3.3 0.8 1.4-1.3 1.1 0.5 3.6-0.1 0.6-0.3 1.2-2.2 2.6 2.1 1.5 0.7 1.3-0.5 2 0.7 1.6 0.2 1.2-0.4-0.8-2.3 0.7-0.7-1-1.1 2.1-1 2.1-0.6 0.4-1.1-0.2-2.2-0.9-0.9 0.4-1.4 4.4-1.7 0.7-1 2 0 0-1.7 0.9-0.8 2.5 0.6 2.9 1.2 1.7 1.2 0.9 1.3 2.7 1.8 2.2 2.2 1.3 0.7 2.5 0.6 1.3 1.3 3.3 0.9 4.9 0.2 2.5-0.9 1.1-1.4 2.9-0.4z" id="HR" name="Croatia">
-          </path>
-          <path d="M671 437.8l1.5 0 1.4 2.3 2.2 0.8 0.9 1.1 2.3 0.4 0.9 0.7 0.7 1.7-2.2 2.3-4.6 1.1-1.9 2.4-1.2 1 0.1 1.7-1.4 1.4-0.7 2.5-1.4 1.5 0 1.2-1.6 2.7 0.2 1.3-2.1 1.5-1.5 4.7-1.3 0.9-2.6-0.3-2.5 2-1.4-0.5-3.2 0.9-1-0.5-2.8-0.3-1.1 0.2-2.9-0.4-1 0.3-1.5 1.6-2.2 1-1.6-0.5-2.1 1.3-2.9 0.4-1.1 1.4-2.5 0.9-4.9-0.2-3.3-0.9-1.3-1.3-2.5-0.6-1.3-0.7-2.2-2.2-2.7-1.8-0.9-1.3-1.7-1.2-2.9-1.2-1.9-2.2-1.4-3.3-2.4-0.1 1.8-1.7 2.5-0.5 0.3-1.8-1.1-1.6 0.5-0.7-0.4-1.5 2.2-1.2 0.5-1.4-0.5-1.1-2.6-0.7 1.3-1.4 2.5 0.9 3.9-0.3-0.7-2 0.6-1.9 0.6-0.7 2.1 0.3 4.2 2.7 1.6 0.7 4.7 0.1 7-0.4 0.6-1-0.5-1.3 0.4-1 1.4-0.7 4.3-0.4 2.4-0.6 1-1.5 0.7-0.2 3.5 1.4 5-2.5 1.6-3.5 1.8-0.4 2.7 0.1 2.5 0.6 4.6-0.7 1.4 0.9 2.2 2.2 0.6 0.2 4.3-1.1z" id="HU" name="Hungary">
-          </path>
-          <path d="M329.3 352l0.7 1.1-2.2 0.4 1.5 5.2 0.6 0.9 0 4.1 0.9 3.2 0.1 2.5-1.3 1.8-0.9 2.1-0.2 1.8-1.6 2.1-1.5 0.9 1.6 1.5-2.8 0.8-2.6-0.3-1.3 0.8-3.9 0.2-3.7 0.7-1.7 1.8-2.5 0.7-1 1-2.3 0.8-1.7-1.2-1 0.2 0.2 2.1-2.9 1.3-1.8 0.3-1 0.7-5.8 1.4-1.9-0.5-3.3 0.8-1.2-0.1 1.6-1.8 1.6-1.3-3.8 0.6-1.4 0.5-0.6-0.6 3.2-1.9-3.3 0.1-3-0.4-0.4-1 2.9-2.3 2.4-0.9-0.1-0.9-5.1 0.1 0.5-1.1 1.7-1 1.8-0.1 1.5 0.6 1.1-0.8-0.6-1.7 3.9-2.3 3-0.3 3.3-0.7 3.3-0.8-2.4-1.2-2.3 1.8-2.6 0.3-1.9-0.5-2.1 0 2.7-2 1.6-1.7-0.8-0.7 2-2.3 3.6-1-1.6-1.3-3.9 0.2-1.4-1.3-2.6 0.1 0.4-1.2-3.5-0.2 0.5-1-0.6-1.1 2.8-0.6-0.2-2 1.9-0.8 2-0.4 0.1-1.1-2-0.2-2 0.4 0.8-2.1-0.8-1-0.4-1.7-0.9-1 2.8-0.2 1.2-0.5 4.7 0.1 1.9 1.3 1.7-1.2 4.8 0.9 0.6-2.6 3.8-1.5 1.2-2-3.7 0.4-3.6-1 0.7-0.8 2.1-0.7 1.9-1.6-0.3-1.1 1.7-2.7 3.1-0.8 2.4 0 1.6-0.9 1.2 2-1 1 0.6 0.9 1.2-0.8-0.5-2.1 0.9-1.3 1.9-0.3 0.6-0.8 3.2 1.7-2.5 1.5-0.5 0.7-1.9 0.9-1 2.3-1.2 1.6-2.2 0.8-1.6-0.1-0.2 0.8 1 1.4-2.9 0.9-1 1.4 2.7 2 0.2 1 2.1 0.4 0.8 0.7 2.9 0.3 2.4-1.8-0.5-0.9 1.9-1.6 1.3 0.5 1.8 2.7 1.4 0.5-0.1 1.5 2.9 0 2.1-0.4z" id="IE" name="Ireland">
-          </path>
-          <path d="M240.3 177.9l1.2 0.1 2.8-0.8 2.2-1.1 0.5 1.1-2.5 2.4 2.2 0.9 2 0.3-0.1 1.7-1.7 1.6 0.8 0.3 3.5-0.5 1 2.3 1.5-0.2 2.4 0.3 1.4 1.2 1.2-0.3 0.5 0.9-0.7 1.2-1.5 0.6 2.1 2.9 0 1.1-1 0.7-1.3 0-1 2.1-1.2 1.1-2 1-2.6-0.5-1.1 1.5 0.2 1.4-1.3 1.3-5.3 2.1-2.5 0-2.6 0.5-6.2 2-4.7 2.8-2 0.7-3.1 0.3-1.8 0.5-5.9 0.8-2 0.5-1.2 1.1-0.5 1.4-4 1.1-3.8 0.7-6.4-0.5-5.4-1.3-4.5-0.3-3.8-2.5-2.9-1-3.6-1.8-2.3 1.1-12.4 0.3-0.8-0.5-0.2-2.1 1.1-0.8 1.3 1.2 5-1.1 2.7-1.9 2.5-2.7-3.5 1.2-0.2-1.9-0.9-1.1-1.7-0.8-0.3-0.8 1.1-0.9-2.3-1.2-2.6 0.1-6.6-0.5-3.8 1-2 0.1-0.9-1 0-1.1 1.5-0.3 1.8 0.1 4.1-0.6 1.4-0.6 0.8 0.5 3.6-1.1 1 0.2 4-0.2 4.4-0.1 1.1-0.8 0.4-1.1-2.8 0.9-3.7-0.5-0.6-0.9 3.6-1.6 2.7-0.8-0.8-1.3-3.2 0.2-0.7-0.8-2.6-0.4-1.8 0.3-0.9-0.5-2.4 0.6-5.2 0.9-3.3 0.9-3.1-1.1-2.4-0.2 1.4-1.4 2-0.1 1.7 0.8 0.1-3.2 1.2 0.3 2.8 1.1-0.7-2.8 2.2 0.1-2.2-1.6 0.5-1 1.6-0.3 0.8-1 2.4 0 2.3 1.1 0.2 1.4 2.1 0 1.1-0.8 0.9 0.6 0.5 1.2 1.2 0 0.4-2.2-3.6-1.1-0.3-1.4 3.7-0.1-1.7-1.1-3 0.2-1.4-0.4 2.6-1.2 3.4 0 1.4 0.2 2.3 1.7 2 0.6 3.1 2.3 2.2 0.9 0 1.2 0.7 0.8-2.3 3.4 0.9 0.7-0.8 1.6 1.9 0.6 1 1.7 0.9-1.8 1.5-1.9 2.3-1.3 0.9 0.1 0.9 1 0.9 0.1 1.4-2 0.7-4.3 1.7-0.9 1.8 0.7 1.3 1.6 2.6 2.1 1.8-0.5 0.1-2.3 1-1.3 2-0.3 2.2-0.8 2.3-0.2 1.7 1.4 1.2 1.4 1.7 1.1 0.7 1.8 0.9-0.3-0.2-1.7-1.4-2.6 0.3-0.9 4.1 0.2 3 2.3 1.3-0.3 3.6-2.8 2.3 0.8 1.8 0.1 2.8-0.8 0.8-1.2-0.9-2.3 0.6-0.4 2.6-0.6 2.7 0.1 2.6 2.1-0.1 1 1.6 0.8z" id="IS" name="Iceland">
-          </path>
-          <path d="M602.6 595.6l-1.2 2.5-2.8 4.3-1.5 5.1 0.3 2 1.6 1.4-0.7 0.5 1.6 1.8 0.1 1.3-1.8 1.9-0.4 1.7 0.1 1.5-2.9-0.6-1.4 0.3-3.7-1.4-1.9-2.8-3-2-3 0-1.4-0.5-2.9-1.9-3-1.4-2.6-2.1-1.7-0.4-1.5-1-2.9 0-2.3-1.6-1.3-2.3 1.3-3.7 1.4-0.8 0.9-1.2 2.3 2.3 1.8-0.8 1.4-1.6 2.4 0.1 0.5 0.9 1.4 0.3 2.5 1.6 1.4 0.4 3.4-1 3 0.4 2.8-0.5 1.7-0.6 1.2-1 1.4-0.3 3.5 0.3 2-1.2 0.8 0.2 2-1.2 1.1 1.1z m-78.3-41.5l0.7 0.9 1.8 5-0.6 1.6-1.3 2 0.8 2.8-0.6 11.5-0.6 2.9-0.9 0.4-2.9-1.2-1.5 0.3-1.2-0.6-0.3 3-1.8 2.1-3-0.2-0.7-0.6-2.4-3.8-0.4-4.3 0.6-1.3 0-2.5 1.1-0.1 0-1.7-1.8-1.2 0-1.9 0.7-1.4-0.1-2.6-0.8-0.9-0.8-2.3-2.2-2.4 0.1-3.4 3.4 0.6 1.3-0.3 3.1-1.5 2.1-2.5 1.4-0.5 1.5-1.8 0.7 0.9 2.2 0.8 1.2 1.5 0.9 0.5-0.7 1.4 1 0.8z m8.3-30.8l0.3 1.4-2.5 0.5-1.1-1.1 2.9-0.2 0.4-0.6z m37.9-56.6l-0.2 0.9-3.3 2.3 0.7 1.4 2.3 0.7-1.6 2.1 0.3 1 1.3 0.2-0.4 2 1.9 1.1 1.5 1.3 0.2 1.3-1.5 0.1 0.7-0.6-2-2.2-2 0.9-3.2-0.9-2.1 2-1.5 0.4-1.7 1.1-3.2 1.2-1.8-0.4-1 0.7-0.4 3.1 0.8 0.6 1.5 2.6 1.7 1.1-0.7 1.9-0.9 0.7-1.3-0.5-0.3 1.7 0.9 4.5 1.4 3.2 1.2 1.3 2.7 2.2 2.7 1.1 5.1 3.7 2.8 1.1 0.7 0.7 1.8 2.8 1.6 3.2 1.8 5.1 1.3 2.5 2.3 2.9 4.8 4.1 4.3 2.9 4 1.9 3 0.3 7-0.4 2.6 0.7 0.4 1.2-0.4 0.9-2.9 2.1 0 1.7 1.5 1.2 7.1 3.2 7.2 2.6 2.2 1.4 2.7 2.1 6.4 2.9 1.1 1.4 4 3 1.8 2.4 0.5 1.8-1.5 4.4-1.6-0.5-1.9-1.3-3.1-5.4-5-0.5-2.9-1.3-0.7-1.4-2.3-0.4-1.3 0.9-1.4 2-1.5 3-1.5 4.3 0 1.7 1.1 1.7 2.9 1 2.4 1.5 1.6 1.6 0.3 3.8 0.9 2.1-0.9 1.3-1.9-0.3-2.5 0.7-1.7 1.4-0.7 1.4 0.5 3.4-0.3 1.4-3.3 2.5-1.6 2.5-1 2.3-4.3 0-1.1-1.5-0.1-2.2 0.6-1.3 1.6-0.7 0.9-2.8-0.5-2 1.1-1.6 2.8-0.7 0-2.9-1.4-1.3-1.4-5.1-2.4-4.3-1.4-3.8-1.1-1.8-1.4-1-3.7-0.3-4.6-2.6-0.3-1.1 0.6-1.1-1.1-2.8-2-1.7-2.6 0.6-1.2-0.1-0.1-1.5-2-1.3-2.7-0.2-0.7-0.7-2.6-4-1.7-1.7-2.3 0.1-3.9-0.9-2 0.7-3.2-2.6-2.8-0.9-5.7-5.3-1.8-2-3.5-2.2-2.3-3.2-1.8-1.2-4-1.4-0.3-1.3-3.1-3.1-1.7-1-1.3-2.1-2.5-0.5 0.1-2.7-1.2-3.5-1.7-2.2-1.2-5.3-0.8-1.5-1.8-1.1-4-1.2-5.7-3.4-1.1-0.1-3.4-1.3-2.1-0.2-2.6 1.2-3.1 3.2-2.5 3.4-0.9 0.6-3.4 1.2-3 0.5-0.2-1.5 2.1-2.6-0.3-2-3.3 0.6-5.1-2.4-0.9-0.9-0.1-1.4-0.7-1.3 1.4-2.5 0.8-0.7-0.5-1.7-3.2-1.4-1.5-3.1 0.8-0.4 1.9 0.2 1.7-1.3 1.2-0.3 0.8-2.5-1.8-1.6-1.7-2.6-0.9-0.6-0.1-1.6 2.6-1.7 1.4 0.7 2.4-0.5 2.6-1 3.1 0.8 2.4-1.4 1.6-2.2-0.6-1.5 3.4-2.9 1 0.6 0.2 2.5 2.4 2 2.2 0.6-0.4 1.2 1.3 1.2 0.9 1.4 1.2-0.7-0.7-1.7 0.2-1 2.2-2.6 0.5-1.1 0-2.9 2-0.1 0.8 2.1 2 0.8 2.9-1.1 0.7 0.1 1.4 1.9 1.2-0.3-1.5-3.5 0.6-1.8 1.3-0.3 1 0.9 1.9 0.2-0.5-1.8 0.5-3.1 3 0.3 0.9 0.8 2.1 0.4 1.1-0.4 1.2-2.2 1.4-0.6 3.4-0.3 3.1 0.2 4.7-1.5 0 2.3 3.1 3.5 1.1 0.5 8.6 1.5 4 0.3 2.6 0.5z" id="IT" name="Italy">
-          </path>
-          <path d="M519.4 458.5l-1.2-0.1-0.1-1.7 0.5-1.5 1.1 2.5-0.3 0.8z" id="LI" name="Liechtenstein">
-          </path>
-          <path d="M707.9 328.5l0 1.8-0.7 3.1 3.9 1-1.3 1-0.4 1.1-3.6-0.1-1 2-0.8 0.6-2.6 0.6-1.1 3 0.4 2.3-1 1.5-0.5 2 1.9 0.5 0.9 1.1 0 1-2 0.2-1.7-2.3-1 0.7-2.1 0.5-1.4 1.2-2-0.2-0.8 2.6-1.8-0.1-3.3 1.3-1.6-0.9-3.7 0.3-1.6 0.3-2.9-0.4-0.8-3-1.1-0.9-4.5-2.2-2.3-0.7-0.6 0.6-1.3-2 0-2.1 1-3.1-1.3-1.3-1.4-0.6-0.9-1.3-5.7-0.1-2.4-0.6-3.9-1.4-2-1.2-1.8 0.2-0.6-1.2 0.2-1.6-1.1-2.4-1.6-2.9-0.7-3.8 2.8-1.7 3.6-1.9 4.7-1.4 5.9 0.5 4.3-0.1 1 0.9 1.6-0.7 4.9 0.5 2.3 0.1 3.7 0.9 4.6-0.4 1.7-1.3 2.3-0.2 2.4 2.9 6.1 1 0.9 0.4 5.4 3.1 2.6 2.1 1.5 0.7 2.3 0.5z" id="LT" name="Lithuania">
-          </path>
-          <path d="M475.4 411.7l0.3 2.2 1.5 1.6 2.8 1.1 0 1.4-0.9 0.9-0.6 3-1.3-0.7-2 0.6-1.4 0-2.1-1.2 1.1-1.7-2-2.4 0.2-1.7 1.4-2.5 1.3-1.3 1.7 0.7z" id="LU" name="Luxembourg">
-          </path>
-          <path d="M711.6 301.2l1.9 0.3 0.5 1.1 3.2 1.7 0.7 2.2-0.8 1.6-0.3 3.1 1.8-0.3 1 0.6 0.3 1.2 1.7 2.1 1.3 0.8 1.9 4.2-0.3 1.7-1.3 0.2-1.4 0.8-2.5 2.4-0.4 1.7-3.1-0.1-3-0.4-1.1 0.3-1.2 1.5-2.6 0.6-2.3-0.5-1.5-0.7-2.6-2.1-5.4-3.1-0.9-0.4-6.1-1-2.4-2.9-2.3 0.2-1.7 1.3-4.6 0.4-3.7-0.9-2.3-0.1-4.9-0.5-1.6 0.7-1-0.9-4.3 0.1-5.9-0.5-4.7 1.4-3.6 1.9-2.8 1.7-0.8-2.8-0.6-5.5 0.1-2.8 1.9-1.6 0.8-1.2 0.6-4.5 2.5-3.6 2.4-0.4 3.1-1 3.5-0.9 1.4 1.9 4.9 3 1.2 1 2.3 3.4 4.4 1.8 3.1-0.6 3.6-2.4 1-1.1 0-1.1-1.2-4.7-1.1-2 0.1-1.3 8.4-2.8 1.5 1 1.1-0.7 5.6 2.5 2.3 0.5 0.6 0.7 3.5 2.7 2.8 1.1 4-1.2 3.4 1 1.9 0.2z" id="LV" name="Latvia">
-          </path>
-          <path d="M751.4 483.2l-2-2.3 0.9-0.7-1.4-5-0.1-2.6 0.9-4.8-0.5-2.9-1.4-2.3-1.4-2.9-3-2.1-1.3-1.7-2.1-1.8-2.5-3.2-1.5-1.3-3-4.9-2.5-3-2.5-1.6-2.1 0 0.2-0.6 2.3-1.4 0.7 0.2 4 0.1 1.2-1 0.8 0.3 1.6-1 3.5 1 3.6 2.4 2.5 0.3 0.6 1.2 5.6 0.6 1.4 1.9 1.4 1 1.4-0.7 1.4 1.4 0.6 2.3-0.6 3.1 0.6 1.2 2.3 1.2 2.9 2 0 2.4 0.9 1.9 2 1.3 2.1 0.8 1 1.6 0.2 2.9 2.9 1.7-0.6 0.7-2.9 0.4-1.2-1.3-1.6 0.6-2.1-0.8-1.9-0.2-2.1-1-2.5 1.6 0.5 2.1 1 1.7-0.4 2-2.3 1.7 0 1.3-2.5 2.9 0.5 1.4-0.4 1-2 0.2-1.1 0.7z" id="MD" name="Moldova">
-          </path>
-          <path d="M683.8 531.8l3.3 3.2 3.4 1.8 1.7 3.3 0.9 1-0.5 1.7 0 4.2-2 0.3-0.2 2.1-2.9 1-3.3-0.6-3 0.4-0.8 0.3-1.7 2.5-2.4 1.3-2.3-0.6-0.9 0.6-4.6 0.3-1.3-1.1-1.6 0.2-1.3-2.4-1.2-1.1-1.2-2.2-0.2-1.9-0.7-2 0.8-0.8-0.3-2.1 0.5-2.6 1.7 0.3 0.5-0.8 0.2-2.6 3.4-1.5 1-0.1 1.6 1.2 1.5-1.9 2.1-0.4 2.2-0.3 2-0.9 1.9 0.3 2.3-0.8 1.4 0.7z" id="MK" name="Macedonia">
-          </path>
-          <path d="M642.4 512.9l0.4 1.2 2.6 1.7 1.9 2 3 1.6 2.1 0.5 5.3 2.9 0.1 1-1.6 0.4-0.2 0.7-2 0.4 0.9 1.5-0.2 1.3-3.4 1.2-0.8-2.1-1.1-0.3-3.2 5.3-0.8 0.3-2.5-0.2 1.6 1.9 1.7 0.8 0.3 0.6 0 3.1-2.1-1.2-0.9-1.8-3.1-2.9-3.5-2 0.1-1-1.6 0.1-1.2-1.9 1.1-1 0.1-0.8-1.1-1.6-0.6-3 0.5-0.7 1.7-0.2-0.1-1.5 0.5-1.7 2-1.7 2.3-0.2-1.4-2.2 3.2-0.5z" id="ME" name="Montenegro">
-          </path>
-          <path d="M458 260.9l0.1 1.7-1-0.1-0.7-1.1-0.2-2 0.7-0.5 1.1 2z m-1.8-11.1l-1.8 0 0.3-1.3 0.9-0.3 0.6 1.6z m32.5-31.9l-2.3-0.2-1-0.8 2.8-0.8 0.7 0.5-0.2 1.3z m3.6-4.6l-0.3-0.9 2.7-0.6 0.9 1-3.3 0.5z m28-16.6l-4.2 0.3-0.3-1.1 2.1-0.8 1.2 0 1.2 1.6z m6.8-10.5l-2 0.3 0.1-1.1 1.8-0.3 0.1 1.1z m4.1-5.7l-0.1-1.1 1-1.2 1 0.4-0.3 1.5-1.6 0.4z m3.1-24.9l-1.5 0.7 1.1-2.6 1.1-0.7 0.4 1.5-1.1 1.1z m8.5-5.2l2.3 0.2-0.5 0.8-1.4 0.3-1.1 0.8-1.9 0.2-1.9 1-1.6 0.3-0.4-1.2 0.9-1 1.3 0 1-1.2 3.3-0.2z m12.4-9l2.2 2.1-0.3 1.5-1.2 0.7-3.3 0.1-1.6-0.9-2.2 0.6-1.6-1.1 1.6-1.4 2.6 0.4 0.5-1.7 1.7 0.3 0.4-1.5 1.2 0.9z m6.3 5l1.3-1.1 1.5-0.4 0.6-2.2 1.8-0.5 1.6 1 0.9 1.2-0.2 1.1-3.1 1.2-2.5 2-1.6-0.2-0.7 0.7-2.4 0.6-1.7-0.9-0.9 0.9-1.4 0.4-1.2-0.4-2.9 1.5-2.8 0.3-1-1.1 3.1-1.9 5.1-0.6 2.9-2.3 0.4-2.5 0.6-0.9-1.3-0.6 0.2-1.7 2.4-1.7 1.3-1.4 1.5-0.3 0.9 1.1-1.1 1.4-1.6 1.2 1.1 1.5 0.6 2.4-1.4 2.2z m15.5-13.7l1.4 0.8 1.5-0.3 2.3 0.7 1 1.5-1.2 0.9 0.4 1.7-3.8 0.5-0.9-0.5-1.5 0.9-1.4 1.4-2.2-0.6 0.2-1.6-0.3-2.3 0.7-0.5 2.9 0.3-0.4-2 1.3-0.9z m124-2.6l-1.8 0.4 0.2-1.8 1.6 1.4z m-92.4-3.8l-1.3 0.4-1.8-0.3-0.7-1 2.2-1 1.7 0.3-0.1 1.6z m-15.1 0.3l1 0.7 1.5-0.5 1.1 1-1.4 0.8-0.8 1.2-2 0.1-2.9 2.3-0.1 0.8-5 0.5-1.5-0.3 1.7-2.7 1.7 0 1.7-0.8-0.3-0.8 2.5-2 0.6-1.7 1.4-1 0.8 2.4z m4.8-2l1.4 0.2 1.3 1.6-2.3 0-2-1.8 1.6 0z m37.3-4.3l0.5 1.1-3.3 2.1-1.6 0.1-2.1-1.2 0.1-0.8 1.9-0.9 0.9 0.1 2.7-1.4 0.9 0.9z m3.9-0.3l-1.8 0.5-1.7-0.9-0.2-1.6 0.8-0.3 3.2 1.2-0.3 1.1z m-6.4-3.2l-0.4 0.8-2.7 2.1-2.2 0.7-1.8-0.3-0.8 0.6-2 0-2-0.6-2-1.2 3.5-0.1 0.6-0.5 1.5 0 2.8-0.4 1.1 0.3 2.1-1.4 2.3 0z m60.6 23.5l-1.7-1.3 0-0.7 3.2-2.9 0.7-1-2.6-2.7-3.6-0.8-4.2-1.1-4.2-2-1.8-1.2-2.9 0.3-3.5 1.6-0.9 0.2-3.8-0.4-2.1 0.2-1.7 1.8-2.6 1.7-0.7 3.8-0.6 1.7 0.7 3.2-1.5 1.4-2.1 0.3-1.6 1.3-0.5 1.7-1.3 0.6-2.6-0.8-3.9-0.8-3.6-1.1-1.5-0.1-1.2 1.2-3.7 0.9-1.8 0.1-0.8-0.5-6.9-0.6-1.4-1.8-7.9-5.5-3.6 0-1.9 1.1 1 1.4-0.5 0.6-1.9-0.4-2.1 0-0.5 0.4-5.1 0.2 2.6 1.6 0.1 2-1.4 1.9-1.6 0.9 2.9 0.9-2.5 1.6-1-0.1-8.6-1.7-2.9-0.1-4.1-0.9-2.1 0.5 0 0.8 0.8 3.6-2.1 3.1-6.3-1.8-1.5 0.9-3.7 1.9-1.5 3.5-1.1 1.1-2.7 0.6-0.5 1.1 2.7 2.3 1 1.3-0.2 1.4-1.5 1-3.3 2.9-3 2.9-1.3 0.9 1 2.5-3.3 1.5-2.4 0.5-3.8 0.4 1.4 3.9-0.6 2.7-0.1 4.7-3.3 5-4.4 5 4.7 1.6 1.1 2.9 0.1 1.2-1.7 2.2-7.1-0.9-3.3 0.4-3.3 1.5-3.5 3.8-1.2 1 0.5 1.5-2 2.8 2.7 4.1-1.1 1.1 0.6 2.8-0.1 1.8 2.5 4.4 0 1.6-0.9 6.4 3.8 2.1 1.2 0.4 3.4 2.7-0.4 1.9-1.3 2.5-2.4 0-1.8 0.6 0.3 1.6 3.1 4.9 0.5 1.4-0.6 2.1-0.1 2.8-1.9 2-1.3 0.8-2.6 0.7-0.9 2.4-1.5 1.5 1.6 4.4-0.6 3.9-0.7 1.4-1.9 0.2-1-1.8-0.4-1-6-1.2-2.3-2.9-0.4-3.1-2.5 1.2 0.6 1.1 0 2.3-2.5 3.9-1.1-0.2-1.3 0.8-1.3 0.2-0.6-1-1.1 0.2-0.8 1-3.4 1.3 1 0.7-1.7 1-0.6 0.9-2.7 1.5-4.3 3.9-2.3 1.1-1.6 1.2-1.4 0-1.8 0.9-4.6 0.9-3.1-0.4-2.1 0.4-1.1-0.7 0-1.1-1.2-0.1-0.8 1.2-1.6-0.4 0.7-2.4-3.1-0.1-3.8-1.6-0.9-0.8-3.1-1.3-1.4-1.4-0.8-1.6 0.3-3.6 0.6-0.5 2.7 0.8 2.8 1.3-0.1-1.2-2.4-1.6 0.8-1.8-0.2-1.6 2.6-2.1-0.4-0.7-3.4 2-3.1 0.9-1.1 1.2-1.1 0.6-2.1 0-0.5-0.9 0.5-3.3 1.2-2.7 1.8-1 3.4 0.7 1-1 1.3-0.2 2.4-1.2-4.1 0.5-1.2-1 2.8-2.4 1.2-1.4 0.3-1.5 2.2-1.7 1.8-0.8 1.6 0.6 1.5-1.9-5 1.1-2 1.1-2.7 2.8-0.2 1.1-2 0.9-1.5 1.5-0.6 1.2-2.8 1.9-1.4 0.3 0-2.4 1.1-2-0.3-1.6 3.2 0.2 1.8-1.2-2.7 0-1.4-0.7-1.2-1.5-0.6-1.9 1.1-1.8-2.2-2-0.5-2.2-0.1-2.5 0.9-0.5 2.1 0.4 2.4-0.2 5.2-0.9 3.4 0.6 1.4-0.1 2-0.7 1.9-0.1 2.2 1.2 0.7-0.5 5.4-1.2-3-1.5 0.1 1.4-3.6 0.3-3.2-0.6-1.3-0.6-0.5 1.3-1.1 0.3-3.4-0.5-4.7 0.3-2.1 0.7-1.4-0.1-2.5-1.2-0.9-0.9-0.3-2.6 2.8-0.3-1.9-2.3-1.9-1.3-0.2-1.4 0.7-1.3 1.5 0.2 3.8-0.1 6 1.5 4.9-0.3-0.8-0.6-2.9 0-7.2-1.3-2.2 0.1-1.2-0.3-0.7-1 0.4-1.9 1.1-0.4 1.2 0.6 1.9-2.3 1.9-1 2-0.5 2 1 1.3-0.1 4-0.8-1.3-0.5-3.5 0.5-0.2-0.5 2.4-2.3 4.2-0.4 5.9 0.5 2.3 0.8 0.4-1.8 5.3-1.4-6.8 0.8-1.8-0.5-4.9 0.7-0.1-1.3 2.3-2.3 4.1-0.9 1.9-1.1 3.1-0.2 2.6 0.3 1.2 1.3 4.4 1.7-5.1-4 1.1-1.7 3.3-0.4 0-1.6-2.2-0.3 0-1.2 1.9-0.9 2.8-0.7 3.2 0.8-0.6 1.3 0.9 0.5 1.7-1.5 3.9-0.8 2.8 2.1 0.5 1.1 1.1-0.5 2.7-0.5 2.7 0.3 1.8-0.2-1-1.3 0.4-1 2.4-1 1.7-0.3 2.6-1.2-0.8-1-1.4-0.3 2.9-1.5-1.7-0.6-2.4 0.9-1.6 0.9 1.5 1-1.1 1.1-6.1 2.8-3 0.8-1.4-0.1-1.9-2.5-2.1-0.1 1.3-2.2 1.6-0.8 1.4-2.3 2.3-1.3 3.2-3.3 2.8-1.1 0.9-1.1 3-1.5 3-0.9 0.3-1-2.7 0.9 0.4-2.1 1.4-1 6.8-2.8 1.6 1.3 2.1-0.2 2.3-1.6-0.3-0.7-2.1 1-1.5 0-0.4-0.6-2.1-0.5-0.3-1.2 1.3-2.8 3.4-3.3 0.5-1.3 1.3-0.7 1.7 0.2-0.2-1.1-2.1-1.1 6.2-1.1 3 0 2.4-0.9 0.5-1-6.4 1.1-2.4 0.1-0.8-2.7 0.2-1.5 1.9-2.2 1.4-0.2 1.7-1.1 0.1-1.5 2.3-0.8 2.1-2.1 2.3-0.5 1.4 0.2 3-0.7 6.6-0.1 0.1-0.6-6.3-0.3-3.5 0.2-0.4-0.6 2.8-2.7 2-1 1.7 0.2 1.8 1 0.6-0.8-1.6-1.5 0.7-1.5-2.6 1.1-1.8 0.3-0.9-2 2.3-2 2.3 0 0.3-1.5 3.3-1.3 1.9-0.2 1.5-0.6 0.6 0.4 0.9 2.3 1.5 0.3 1-0.8-1.3-1.1-1.1-1.8 2-1.5 2.3-0.2 2.6 0.7 2.3-0.2 0.9-1.2-6.3-0.1-0.8-0.9 1.2-1.2 2.2-0.8 2.5-0.1 2.4-1.4 0.9-1.1 0.3-1.6 1.4-1.3 3.9-0.8-0.6-2.2 0.8-1.4 1-0.6 2.1 1.5 1.8 0.5-0.5-1.4 0.3-1.2 2.1 0 1-0.5 0.3-1.3 1.4-1.2 4.7-0.7 0.5 2.5 0.7 1.4 0.8-2.8 1.6-2.1 2.4-0.9 0.9 1.1-0.4 4.3-1.9 2.4 1.5-0.2 2.5-2.3 0.6-1.2-0.7-2.8 0.6-0.8 3.5-0.1 1.9 0.4 0.7-1.5 1.7-0.1 1.8 0.9 4.1 1.4-1.3-2.2-1-0.8-2.1-0.5-2.2-1 1.2-1 2.4 0.3 2-0.8 2.2-0.2 1.1 0.6 0.8-1 2.5-0.5 2.8 0.9 1.6 2.7 2.4 1.4-0.1-1.4 0.6-1.9 2.3-2 2.1-1 1.4-0.1 2.9-3.4-1.6-1 3.3-2.3 1.1-0.1 5.4 2.1 1.5-0.9 3.4 0.8-0.8 1-3.1 2.9-0.5 0.8-0.1 2.2-1.2 1.4 0.8 1.4 1.6-0.4 1.8-1.3 0.1-1.3 4.3-3.7 1.9-2.1 2.3-1.7 1.5-0.3 0.9 1.1-0.2 1.5 0.2 4.3 3.7-1.4 1.1-3 1.1-0.7-0.8-1.4 0.4-1.1 2.3-1.3 2.2 0.4 3.3 0.3 2.7 0.8 0.2 1.4-0.8 0.9-2.9 1.1 0.7 0.7 2-0.6 0.9 5.5 0.9-2.1 1-0.7 0.1-1.5 0.8-1.9 1.8-1.3 2.7 0 3.3 1.7 2.5 0.3 1.8 0.8 2.4-0.7 2 1 0.1 1 3.8 0.3 3.8 1.6 0.6 1.6-4.4 1-1.8 1-3.3 0.4-11.5-0.7 0.4 0.7 8.3 1.5 0.6 0.5 0.4 2.1 1.8 0.7 3.5-0.2 0-1.3 3.2 0.6 3.8 0.2 1.1 1.7-0.3 1.5-2.4 0.1-4.2-1.4-0.4 2.3-1.1 0.9-5.8 1.3-1.1 2.6-2.2 1z m-40.5-27.7l3.7 0.5 2.2 1.4-3.6 0.5-1.7-0.1-2-1.8 1.4-0.5z m-339.6 3.9l-0.1-1 4.5-1.5 1.9-1.4 3.4-0.5-0.2 1.8-3 0.8-3.3 0.5-3.2 1.3z m269.2-45l-1 0.5-1.9-0.8-0.8-1.2 3-0.1 0.7 1.6z m9.6-50.1l3.9 0.2 2 1.9 1.4 2 1.3 0.2 4.7-0.4 3.4 0.7-1.4 1.1 0 1.2 5.5 1.3 1.8 0.1 3-0.4 6.5 1.7-6.6 1.1-2 1.9-3.7 1.3-2.6 0-2.3 1.3-2.2 0.1-1.5-1.9 2.2-1.3-3.1-0.4-1.2 0.5-10.5 1-1.1-0.2-0.9-1.2 2.8-0.6 0.2-1.1 2.5-2.4-5.5-1.6-2-1.2-0.8-1-2.5-0.9 0-1-1.7 0.1-0.4-1.2 10.8-0.9z m46.2-0.6l-1.3 0-2.6-0.8 0.7-1 3.2 1.8z m-137.6 0.4l3.5 1.5 1.9 0.5 2.3 1.5-0.7 0.9-2-1.2-3.6-1.3-2.3-0.2-3.3-2.5-1.5-0.8-0.8-1.7 3.6 0.7 1.6 1-0.3 0.8 1.6 0.8z m155.6-3.4l2.7 0.1-0.1 0.6-7.3-0.4-3.8 0.7 0.4-0.9 2.4-0.6 3.7-0.1 2 0.6z m-109.9-10.8l1.4-0.6 5.4 0.8 2.5 0.9 1.3 1-1.9 1.9 1.7 1 3.2-1.7 2.7 0.3 1.7 0.9 1 1.1-0.2 1.4 3.1 1.1 3.4-0.2 2.4 0.3 1.5 1 1.9-0.2 0.2-0.8 2.6 0.2 3 0.8-2.1 0.9 2.1 0.8 3.4 0.6 2.1 0.6-1.5 1.4-3.2 0-2.9 0.3-5.4 0.3-3 1.6-2.5 1.8-0.4 1.6 0.6 1.1-1.5 0.5-3.3 0.2 0.2 3.9-0.8 1.9-3.3 0.3-1.8 1.1-1.2 2.1-2.1 2 1 1-2.1 1.9 1.2 1.8-1 0.6-2.1 0.3-2.2-0.3-2.3-1.1-6.7-2.2-4.3-2.4-6-1.3-3.3-1.6-1.5-1.3 0.3-1.4 2.8-0.2 2.9 0.7 1.7-1.9 11.3-1.1 7.3-0.2-1.9-1.3-6.9 0.7-4.3-0.2-2.1 0.1-2.1 0.6-4.3 0.5-4.6-0.1-2.9-1-1.3-2 1.2-0.6 3.8 0.1 6.4-0.9 3-0.8 3.1-0.1-0.5-0.8 1.8-0.4 2.4-0.2 5.6 0.1 0.2-0.6-2.6-0.6-0.9-0.6 2.6-1.8-2.2 0.1-3 1.3-1.8 0.5-4.6 0.3-1.7-1.6 0.9-1.2-0.8-0.7-1.3 1.3-2.1 0.3-2-0.9-1.9 0.5 0.7 1-0.6 1 2 0.9-2.3 0.6-2.1 1.1-3.9 0.2-4.5 0.1-4.6-1.6-2.2-1.2-1.8-1.2-2.7-0.6-1.7-0.8-0.4-1.1-1.4-0.7-0.7-1.2 4.4 0-1.7-1.8 0.5-1.6-3.4 0.1 0.4 0.9-2.2 1-1.2-0.2-2.3-1.9-2.4-2.4 0.4-1.3-1.2-1 1.5-0.7 2.5 0.9 0.8-0.7 3.8-0.4 4.6 1.1 0.4-1.1 4.2 0.5 3-0.6 5-0.3 2 0.4-1 1.1-6.3 0.3-4 1.3 5.7-0.2 1 0.1 0.6 1.1 3 0.5 2.3 1 0.8-0.5-0.6-2.2 4.4-2.3 2.1 0.4 2.1 0.9 4 3 2.3 1.9 6.1 2.8-0.7-1.5-4.2-4.5-0.9-1.7 0.9-1.7 1.1-0.5-0.4-1.3 1.3-0.5 2.4 0.3 2.6 1.3z m134.7-2.3l-8 0.4-0.9-0.3 15.7-1.4 1.7 0.5-8.5 0.8z m-118.9-1.9l-1.8 0.6-3.2-0.5 0.9-0.7 4.1 0.6z m18.6 0.5l5.6 0.1 1.5 0.9 5.5 1.1 0.8-1.5-0.6-2.2 1.9-0.1 1.7-0.6 3.1 0.3 0.2 1.3-0.5 1.4 2.1 0.1 2.8-0.3 1.9-1.1 2.4 0.1 1.3-0.6 1.4 0.6 8.2 0.7 3.3 0.6 5.2 0 3.7 0.2 2.8 1 1.1 1.7-0.9 0.4-6.7 2-1.6 0.7-2.4 2.3-4.1 0.7-3.5-0.3-3 0.7-1.9 1-1.5 0.2-9.2-0.4-2.2-1.1 1.2-0.9-8.2 0.3-9.2-0.1-1-0.5-5.6-0.5-4.2-1.1 1.1-0.5 5.8 0-0.7-1.5-2.9-0.1-1.8 0.4-4.3 0.2-4-0.1-1.9-0.3-3.8-1-0.7-0.8 2.8-0.4 2.1-0.7-4.5-0.3-1.9-0.3-0.6-0.9 5.9-0.2 5 0.8-0.7-2.2 3.9 1.1 0.2-1.1-2-1.4 2-0.1 4.5 0.7 5.1 1.6z" id="NO" name="Norway">
-          </path>
-          <path d="M666.8 348l0.6-0.6 2.3 0.7 4.5 2.2 1.1 0.9 0.8 3 2.1 5.1 2.9 4.9 1.7 3.6 0.9 3.9-0.6 1.6-4 1.7-0.8 0.5-2 2.7 0 1.2 3.3 1.3 1.8 1 0.8 1-0.2 2.4 0.4 1.1-0.8 1.5 0.1 1.3 1 1.6 1.2 1.8 0 1.3 2.7 2.8 1.9 2.8 1.4 1-1.2 1.3 1.8 2.6 0.1 1.3-1.2 1.8-3 0.5-4.8 4.6-2.4 2.7-3.4 4.4-0.6 1 1.5 3.8-0.1 1.8 1.9 1.4-0.4 0.9-3.3-0.7-0.9-0.2-5.7-1.9-0.8-1.4-1-0.7-3.1-1-3.6-0.3-3.2 0.2-1.4 1.5-1.8-0.1-2.4-1-3 0.1-2.3 1-1.1 2.1-1.7-0.6-1.4 0.4-0.6-2.7-1.4-0.4-3-3-2.2 1.3-1 1.7-2.2 0-0.5-1.5-1.3-0.2-0.5-1.6-2.8-2.2-0.5-1.8-2.7-0.8-0.5 0.2-3.5-1.8-1.8 1-1-0.6-2.7-2.3 1.4-0.5 0-1.6-3.6 0.7-3.3-1.9-2.2-0.6-1.3 0 1.7 2.4-3.5 2.5-1-0.4-1.5-1.9-2-1.8-1.6-0.9 1.6-1.2 0.7-1.1-1.8-1.2-3.2 0.7-0.8-0.9-2.7-1.1-4.6-1.1-1-1.1-0.3-1.1-3.3-0.8 0.1 1.9-2.1 0.4 1.6-3.6 0.4-2.3-1.6-3.2-2.2-0.9 0-1.6-1.9-3.1 0.8-1.1 0.7-2.6-0.8-1.9-2-2.3 0.6-2.6-1.4-1.7-3.3-2.1-1.6-1.4 0.7-1.6 1.9-1.8 0.3-2.7-1.8-4.1-0.7-2.6 2.8 0.9 0.7-0.5-0.1-1.8-4.1-0.7-0.1-1.2 2 0.4 3.8-1.4 6.5-1.8 6.9-1.7 3.3-0.5 2-2.2 1.9-1.7 3.8-0.7 1.3-0.8 2.8-1.2 6.6-1.2 5.5-0.4 5.4 2.3-0.9 0.3-3-1.2 2.2 3.5 1.1 1.2 2 0.9 1.7 0.3 4.9-0.5 2.2-1.1 0.5 0.1 6.6 0.4 22.9 0.9 7 0.1z" id="PL" name="Poland">
-          </path>
-          <path d="M306 611.9l-1.2 0.2-4.5 2.5-1.3 0-2.5-1.1-4.5-0.4-1.5-0.3-1.8 0.7-1.5 0-1.1 1-0.8-0.3 1-2.1 1.6-4.1 0-2.6 0.4-2.2-0.3-2.1-0.7-1.4 1.1-3.5 0-1.8-0.9-2.3 2.8 0.3-1.7-1.4-1.5 0-2.3 0.9-1.5 0.1 0.1-1.4-0.5-1.8 2-0.6 1.6-1.7-0.3-1.6-1.2 1.1-0.6 1.4-2.8 0.7-1.5-0.5 0-1.9 0.6-1.7 0.4-2.3 0.8-2.2-0.2-1.4 1.6-1.3 1.4-1.9 4.3-8.9-0.6-1 1.7-6.6 1.2-2.3 0.6-4.3-0.2-2-0.7-2-0.7-4.3 0-1.4-0.9-1.8 0.1-1 1.4-1.7 1.2-1.1 1.9-0.9 4.1-1 1 1.8-1.3 1.9 0.9 1.3 3-1.1 2.9-0.1 2.2 0.8 1.4 0 2.5-0.9 0.8-1.4 1.5 0.5 5.2 0.1 0.7 1.1 0.1 3.1 1.9 0.2 1.9 0.9 0.3 1.1-2.5 2.5-2.1 1.1-1.6 1.4-1.1 1.6-2 1.6 0.8 2 0.4 3.5-0.4 3.8 0.4 1.1-2.7 2.1-0.2 1 1.4 1.3 0 1.9-1.7 3.5-1 0.5-4.3 0-1.1 0.3 1.1 1.9 1.4 1.2 0.3 1.9 1.6 3.2 1.7 0.4 0.5 0.8-0.6 2.4-3.2 3-0.9 4 3 4.3 1.7-0.2-0.7 2.4-2.1 0.6-3.5 4.3-0.8 2.2 1.1 6.4z" id="PT" name="Portugal">
-          </path>
-          <path d="M751.4 483.2l1.5 1.6 1.8 0.9 4 0.9 0.6-1.2 0.9 0.3 1.6-0.5 2.2-1.3 2.2-0.2 2.2 0.7 1.9 1.8-0.2 4.3-0.7 2.1-6.2 1.3 0.4-0.6-0.7-2-1-1-0.9 1.1 0.6 1.7-0.7 1.4-0.2 2.4 0.6 0.9-1.6 2-0.5 1.3 0.8 4.8-0.4 3.7-2 0-2.6-0.5-2.2-0.7-2.5-2.6-1.7 0.5-0.9-0.6-3.2-0.4-4.5-2.3-2.9 0.4-4.4 0.9-3.2 1.2-3.3 2.1-1.2 1.6-1.6 0.9-2.3 0.6-4.2-0.2-9.4-1.7-2.5 0.5-3.5-0.4-5.3-1-3.9-0.3-3.7 0.6-0.9-1.8 1.8-2-4.3-2.5-0.8-1.2-1.6-0.9-0.5-1.7 2.5-1.8-3-1.6-1.7 0.5-1.7 1.8-1.3 0.2-1-1.2-1.5-0.7-3.5-0.7-1.5-1.2-2.1-0.6 0.2-0.6 1.8-0.8-2.3-1.1 1.5-2-0.9-1.1-2.6-0.8-3.8-1.9-2.2-1.8-0.4-4.1-0.8 0.2-1.8-2-2.9-1.7-1.7-2 3.2-0.9 1.4 0.5 2.5-2 2.6 0.3 1.3-0.9 1.5-4.7 2.1-1.5-0.2-1.3 1.6-2.7 0-1.2 1.4-1.5 0.7-2.5 1.4-1.4-0.1-1.7 1.2-1 1.9-2.4 4.6-1.1 2.2-2.3 2.1-0.9 0.9-1.2 0.7 0 2.7 1.5 2.7-0.1 6.9 1.4 3.6-0.7 1.2 0.3 4.3 3.3 2.1-0.5 1-1.2 3.4-1.3 8.4-1.2 1.1-1.9 0.2-1.4 3.7-0.8 2.1 0 2.5 1.6 2.5 3 3 4.9 1.5 1.3 2.5 3.2 2.1 1.8 1.3 1.7 3 2.1 1.4 2.9 1.4 2.3 0.5 2.9-0.9 4.8 0.1 2.6 1.4 5-0.9 0.7 2 2.3z" id="RO" name="Romania">
-          </path>
-          <path d="M651.6 473.1l1.7 2 2.9 1.7 1.8 2 0.8-0.2 0.4 4.1 2.2 1.8 3.8 1.9 2.6 0.8 0.9 1.1-1.5 2 2.3 1.1-1.8 0.8-0.2 0.6 2.1 0.6 1.5 1.2 3.5 0.7 1.5 0.7 1 1.2 1.3-0.2 1.7-1.8 1.7-0.5 3 1.6-2.5 1.8 0.5 1.7 1.6 0.9 0.8 1.2-0.9 0.7-0.2 1.9-2.1 1-0.4 2.3 0.6 2.4 2.4 3.9 2.9 1.5 1.3 1.6 1.6 1-0.3 1.4-1.6 1.7-1.1 1.6-1.8 0.1-1.1 0.6 0 3.3 1.4 2.9-1.1 1.7-1 0.3-1.4-0.7-2.3 0.8-1.9-0.3-2 0.9-2.2 0.3-0.6-1.3 1-0.9 1.2-3.2 0.2-1.2-4.7-1.2 0-1.3-2.2-1.2-0.2-0.7-2.3-2.1-2.8-1.3-1.1-1.3-1.7 0.9 0.6 1.6-0.4 1-1.7 1.3 0 1.4-1.5 0.5-0.1-1-5.3-2.9-2.1-0.5-3-1.6-1.9-2-2.6-1.7-0.4-1.2 0.7-0.8 2.5 0.3 0.2-2.2-3.2-3.7 0.5-0.8 3.1 0.1 0.3-0.8-3.3-2.9-2.4-1.2-0.5-0.8 0.1-2.6 1.6-2.7 0.5-2.5-1.5-0.8-2.8 0.7 1-1.6-0.7-2.6 1.7-0.4 2.3-0.1-0.9-1.5-3-1-1.2-1 0.4-2-1.3-0.4-0.2-1.6-1.6-2.7 0.7-1.5 2.1-1.3 1.6 0.5 2.2-1 1.5-1.6 1-0.3 2.9 0.4 1.1-0.2 2.8 0.3 1 0.5z" id="RS" name="Serbia">
-          </path>
-          <path d="M674.8 427.7l-1.5 3-0.8 2.9-1.6 1.7 0.1 2.5-4.3 1.1-0.6-0.2-2.2-2.2-1.4-0.9-4.6 0.7-2.5-0.6-2.7-0.1-1.8 0.4-1.6 3.5-5 2.5-3.5-1.4-0.7 0.2-1 1.5-2.4 0.6-4.3 0.4-1.4 0.7-0.4 1 0.5 1.3-0.6 1-7 0.4-4.7-0.1-1.6-0.7-4.2-2.7-2.1-0.3-2.3-2.9-1.6-2.9-0.1-0.8 0.9-2.4 1.1-2.8 1.4-1.2 3.6 0.5 1.7-0.2 1.5-0.7 2.1-1.9 1.6-0.8 0.7-3 2.3-1.2 0.6-0.8 2-1.5 2.8-0.3 1.3 0.2 0.5 1.5 2.2 0 1-1.7 2.2-1.3 3 3 1.4 0.4 0.6 2.7 1.4-0.4 1.7 0.6 1.1-2.1 2.3-1 3-0.1 2.4 1 1.8 0.1 1.4-1.5 3.2-0.2 3.6 0.3 3.1 1 1 0.7 0.8 1.4 5.7 1.9 0.9 0.2z" id="SK" name="Slovakia">
-          </path>
-          <path d="M605.2 467.1l-2.5-0.6-0.9 0.8 0 1.7-2 0-0.7 1-4.4 1.7-0.4 1.4 0.9 0.9 0.2 2.2-0.4 1.1-2.1 0.6-2.1 1 1 1.1-0.7 0.7 0.8 2.3-1.2 0.4-1.6-0.2-2-0.7-1.3 0.5-1.5-0.7-2.6-2.1-1.2 2.2-0.6 0.3-3.6 0.1-1.1-0.5-1.4 1.3-3.3-0.8-0.5-0.6 1.7-1.1 1.5-0.1-0.2-1.3-1.5-1.3-1.9-1.1 0.4-2-1.3-0.2-0.3-1 1.6-2.1-2.3-0.7-0.7-1.4 3.3-2.3 0.2-0.9 5 0.9 5 0.7 3-1.2 1-1.3 1.9-0.7 2.6-0.2 2.8 0.2 2.3-1.1 1.6-0.2 2.4 0.5 0.1-1.9 1.3-0.9 2.4 0.1 1.4 3.3 1.9 2.2z" id="SI" name="Slovenia">
-          </path>
-          <path d="M591.1 319.4l-1.5-0.3-0.3-3.8 2-4.6 1-0.3 2.7-6.5 0.5 2-1.5 3.2-0.3 2.2-0.6 0.5-2 7.6z m26.2-22.7l-1.3 1.4-1.4 0.5 0.1 3.3 1.5 1.2-1.3 0.5-0.7 1.8-1.8 0.6-1.5 1.6-0.3 1.6-2.1 0.9 1.2-2.4-0.9-0.7-1.4-2.1 0.4-0.9-0.6-3.2 2.7-2.9 1.3-1.1 3.3-1 1.3 0 1.5 0.9z m36.8-113l-2.7 0.3-2.2-0.6-1 0.3-3.8 0.3-1.1 0.7-2.1-0.7-2-1.2-2 1.1-1.6-1-1 1.9 0.1 1.8-1.8-0.2 0.3 1.1-2 1.5-3.2 0.2 0.7 1.5-0.9 0.7 1 1.7-1.3 1.5-2.1 1.9-0.5 1 1.7 1.1 1.6 2.5 1.6 1.1-0.4 1.2-2.1 1.1-2.2 1.7-2 4.3-3.1 1.3-2.4 1.6-3 0.7-2.4 2.2-1.8-0.8-1.5 0.5-1 1.8-1.9 1.5-2.4-0.2 0.2 0.8-2.3 0.3-1 4-2.2 0.6-0.7 0.8-0.9-0.6-2.1 0.1 1.6 2.8-1.7 1.8-1.2 0-1.5 0.7-1.9-0.8-0.2 1.2 0.8 1.3 1.3 1-0.1 1.3-0.9 4.3 0.7 1.8-2.1 1.2-0.8 1.1 0.6 1.7-0.1 1.1 0.7 1.9 0.8 4.2 1.1 2-0.1 1.6 1.3 0.9 2.1-0.1 1.4 1.6 3.1-0.8 0.8 1.1 2.9 2.2 1.7 0.3 1.9 1.2 0 1.5 2.9 1 1.9 2 0.8 1.6-0.1 1-2.6 1.5-1.3 1.3-3.8 2.1-0.6-0.1-2.1 1 2 0.6 1.4-0.7 2.6-0.6 1.4 1.2-2.2 0.5-0.3 1.6-0.8 1-2 0.7-2.8 1.5-4 1.4-1.1 1.2-2.6 1-1.3 0.8-3.8 0-3.7-0.1 1 0.9 0.9-0.2 3.6 0.4 1.7 1.3-3 0.9 1.7 3.2-0.7 0.8 0.4 3.5-1.1 0.1-0.3 1.4 0.6 2.5 1 2.1-0.1 1-1.5 2.4 0.9 2.9-1.5 5.3-1.9 3.1-1.3 4.1-1.8 1.4-2.4-0.9-3.4 0.5-3.2-0.3-3 0.2-0.8 0.4 0.7 1.4-2.3-0.2-1.7 1.1-2 2.1 0 1.5 1.9 3-1.7 2-1.1 0-3.2-0.5-5.5 1.2-5.1-1 0.5-1 0.2-3.1-0.6-1.7-1.3-1.1-3.1-3.8-1.2-2.3 2.4 0.9 1-0.5-1.8-2.6 2.2-0.1 0.7-1-0.6-1.5-1.9-0.6-1.9-2.4-1.8-1.2-3.5-4.7-1.3-3.2-1.1 0.3-1.2-3.7-1.7-0.6-0.6-3.7-1.8-0.4-1.3-1.7-0.4-3.2-1.2-0.6-0.8-1.4-0.8-3-0.3-2.7-0.9-1.8 0.5-1.2 1.1-0.2 1.1 0.8 1 1.8 1.9-0.2 0.7-1.4 0.6-3.9-1.6-4.4 1.5-1.5 0.9-2.4 2.6-0.7 1.3-0.8 1.9-2 0.1-2.8 0.6-2.1-0.5-1.4-3.1-4.9-0.3-1.6 1.8-0.6 2.4 0 1.3-2.5 0.4-1.9-3.4-2.7-1.2-0.4-3.8-2.1 0.9-6.4 0-1.6-2.5-4.4 0.1-1.8-0.6-2.8 1.1-1.1-2.7-4.1 2-2.8-0.5-1.5 1.2-1 3.5-3.8 3.3-1.5 3.3-0.4 7.1 0.9 1.7-2.2-0.1-1.2-1.1-2.9-4.7-1.6 4.4-5 3.3-5 0.1-4.7 0.6-2.7-1.4-3.9 3.8-0.4 2.4-0.5 3.3-1.5-1-2.5 1.3-0.9 3-2.9 3.3-2.9 1.5-1 0.2-1.4-1-1.3-2.7-2.3 0.5-1.1 2.7-0.6 1.1-1.1 1.5-3.5 3.7-1.9 1.5-0.9 6.3 1.8 2.1-3.1-0.8-3.6 0-0.8 2.1-0.5 4.1 0.9 2.9 0.1 8.6 1.7 1 0.1 2.5-1.6-2.9-0.9 1.6-0.9 1.4-1.9-0.1-2-2.6-1.6 5.1-0.2 2.9 0.8 0.4 0.9 2.9 1.1 4.8 2.3 4.2 1.8 8.3 1.7 3.5 1.8 1.2 1.6 1.4 0.1 1.9 1.5 1.8 0.9-1.1 1 0.4 2.4 0.7 1.4-0.3 1.9 2.8 0.4 0.6 1.3-1 0.8-0.1 1.1 0.8 1.6 3.3 2.6 0.6 0.9-0.7 1.4 0.1 1.8-1.5 1.3 0 1.3 1.3 2.6 1.8 0.6 1.9 2.2 1.6 2.5z" id="SE" name="Sweden">
-          </path>
-          <path d="M733.4 565.7l-2.9 0.5-0.1-1.5 2.2-0.6 0.8 1.6z m194.5-21.5l4.3 1.3 1.1-1 3.6 0.1 3.4 0.8 0.9-1.9 1.4-0.4 1.4 0.3 0.6 1.1 1.2 0.4 3.5 2.5 1.1 1.7 1.9 0.2 1.3 1.2 1.3 1.6 1.7 1.2 1.7 3.3-0.2 2.3-1 1.4 0.8 1.9 1.9 3-0.5 0.6 1.8 0.9 2.9 0.9 3.5-0.4 1.6 0.7 2.3 1.7 3.2 2.8 0.8 0.9-3.3-1.9-1.4 1.6-0.1 3.8-0.6 0.4-2.8-0.1-1.2 0.4 1.2 2.5 1.4 1.2 0 2.3 2.1 2.5 0.2 2.1 0.9 2.2 0.3 2.2 0.5 0.7 1.4 0.3-0.6 3.8-0.6 1.2-0.4 2 1.7 0.6 3.2 2 0.1 1.3 0.6 1.5 0.3 2 3.2 2.3 0 2.3-2.1-0.5-3.7 3.1-1.2-1.2-0.3-2.4-1.5-1.5-1.3-0.2-2.1 1.4-4.2-0.3-2.9-1.1-2.9-0.8-1.9 0.6-2.2-0.7-1.5 1.9-2 1.9-1.2 0.3-1.6-2.6-1.3-0.2-1.2 1.3-2.2 0.8-4.6 1-3.2 0.3-4.1-0.6-3.2 0.2-3.1 1.4-5.2 2.8-4.1 1.4-4.2 0.9-7.6-0.2-1.1-0.3-3.5-2.3-3.4-0.6-3.4 1.6-2.3 0.8-3.5 1.6-4.8-0.1-1.9-1.7-3.7-0.7-0.6 1.6-0.3 3.8 1.8 3.1-3.3 1.4 0 2.6-1.8 1.1-0.8 1.6-2.2-1.2-1-0.1 0.7-1.3-2.5-4.9 0.7-1.5 3.5-3.9-0.4-2.4-2-1.6-2.9 2.1-1.7 0.8-0.3 1.2-1.1 0.8-1.8 0.4-2.9-1-3.2-1.4-1.9-1.1-1.4-0.3-1.3 0.5-3.5 2.8-3.1 4.1-0.8 0.8-3.2 1.7-2.2 0.6-1-0.1-4.4 0.8-2.2 0.1-1.6 0.9-3.5-1-2.2-1.3-1.4-1.3-2.3-2.9-1.6-1.3-3.3-1.2-5.8-3-5.3-0.7-4-0.3-0.7 1.1 0.1 4.2-0.5 1.2-0.1 2.2-1.1 1.1-2.1-1-1.9 0.9-3.7 1.3-1.2 0.1-4.6-1.6-2.9-2.1-0.6-2-1.3-2.7-1.8 0.3-2.3-0.4-3.2-1.6-2.4-0.1-1.2 1.9-1 0.7-1.3-0.4 0.8-1.3-3.7 0.2-1.8 1-1.5-0.1-1-1 2-0.6 3.9-0.4 0.9-0.4 0.9-1.3 1.7-1.2-1.2-0.5-6 0.3-4.2-0.2-1 0.7-0.4-1.6 3.6-1.4-0.3-1.3-4.2-2.2-0.3-1.6-2-3.1 1.9-0.5 0.1-2.5-0.4-1.5-3.9-1.3-0.8 0.1-1.1-1.3-1.7-0.9-1.2 0.7-3.3-1.4-0.6-0.6 0.5-1.4 1-1.1-0.9-1.9-0.1-1 1.8-0.1 1 1.1 0.3 2.2 3.6 0.7 2.9-0.6-2.5-1.1-1.1-1.2-1.2-2.3 1.8-1.1 1.2-1.7-2.7-1.2 0.2-2.4-2.5-2.7 0.3-0.8 2.3-2.8-1.2-0.7-4.3 0.7-1.6 0.6-3.1 0.2-0.3-1.6 0.6-1.3-0.5-3.4 0.2-1.8 1.7-0.6 1.7-2.7 3-3.1 3.5 0 1.3-0.9 2.1 0 0.8 1.2 1.9 0.9 3.2-0.1 1.4-0.9-1.6-1.5 1.7-0.5 1.5 0.4-0.1 1.8 4.1-0.5 4.4 0.4 1.4-0.2 3.4 0 0.5-0.5-3.6-1.7 2-1.5 6.8-1.2 3.7-0.8-5.7-0.8-1.4-0.6-2-1.4-1-1.1 0.3-2.6 0.6-0.7 2.2-0.1 7.7 1.2 5.3-0.8 6.1 1.8 5.6-0.4 1.1-0.7 1.1-2.6 7.4-4.2 2.4-2.1 2.8-1.2 5-1.4 4-1.7 1.2-0.2 10.4 0.8 7 0.1 3-1.6 2 0.5-0.1 2.1 2.6 2.6 3.5 1.4 4.4-1.2 1.8 0.5 2.2 4 1.5 1.4 1.8 0.9 1.3 0.2 1.5-1.4 1.7-0.1 2.9 1.3 1.2 1.4 4.8 1.1 4.3 0.6 2 1.2 6.2 1.2 2.2-0.2 3.6-1.3 7-1.3 5.2 1.9 2.5 0.1 1.7 0.5 1.7-0.3 5-2.3 1.4-1.2 1.7-0.4 5.2-3.3 0.9-1.4z m-171.9-7.1l-0.1 1.8 1 2 2.3 2.7 2 1.4 8.1 3.3 1.4 0.3-0.9 3.5-2.1 0.5-6.4-1.5-1.6-0.1-2.9 1.4-2.3-0.4-3.1 0.6-0.6 2.1-2 2.4-3.3 1.9-2.5 1-3.5 3.7-1.5 2.2-1.5 0.7 0.5-2-0.3-1.7 2.3-2 3.3-1.6 0.7-1.3-5.4 0.3-3.3 0-1-1.8 0.8-0.4 2.5-3.2-0.5-4.4 3.4-2.5-0.9-3.1-2.3-1.5-1.2-0.3 0.3-1.4 1.9-0.3 1-2.2 3.4-0.4 1.5-1.1 3.5-0.3 3.4 2.5 1.5-0.6 1.8 0 0.9-0.4 1.7 0.2z" id="TR" name="Turkey">
-          </path>
-          <path d="M796.7 471.6l0 0.6-3.9-0.8-0.9-0.9 4.8 1.1z m-26.4 14.6l-1.9-1.8-2.2-0.7-2.2 0.2-2.2 1.3-1.6 0.5-0.9-0.3-0.6 1.2-4-0.9-1.8-0.9-1.5-1.6 1.1-0.7 2-0.2 0.4-1-0.5-1.4 2.5-2.9 0-1.3 2.3-1.7 0.4-2-1-1.7-0.5-2.1 2.5-1.6 2.1 1 1.9 0.2 2.1 0.8 1.6-0.6 1.2 1.3 2.9-0.4 0.6-0.7-2.9-1.7-0.2-2.9-1-1.6-2.1-0.8-2-1.3-0.9-1.9 0-2.4-2.9-2-2.3-1.2-0.6-1.2 0.6-3.1-0.6-2.3-1.4-1.4-1.4 0.7-1.4-1-1.4-1.9-5.6-0.6-0.6-1.2-2.5-0.3-3.6-2.4-3.5-1-1.6 1-0.8-0.3-1.2 1-4-0.1-0.7-0.2-2.3 1.4-0.2 0.6-3.7 0.8-0.2 1.4-1.1 1.9-8.4 1.2-3.4 1.3-1 1.2-2.1 0.5-4.3-3.3-1.2-0.3-3.6 0.7-6.9-1.4-2.7 0.1-2.7-1.5-0.7 0-0.9 1.2-2.1 0.9-0.7-1.7-0.9-0.7-2.3-0.4-0.9-1.1-2.2-0.8-1.4-2.3-1.5 0-0.1-2.5 1.6-1.7 0.8-2.9 1.5-3 3.3 0.7 0.4-0.9-1.9-1.4 0.1-1.8-1.5-3.8 0.6-1 3.4-4.4 2.4-2.7 4.8-4.6 3-0.5 1.2-1.8-0.1-1.3-1.8-2.6 1.2-1.3-1.4-1-1.9-2.8-2.7-2.8 0-1.3-1.2-1.8-0.1-1.4 1.1-0.5 1.9 0.3 1.1 0.5 1.9-1.2 1.6-1.6 0.8-1.4 5.9-0.5 2.3-0.5 2.4-0.1 7.8 0.4 6.5 1.5 6.1 0.9 2.3 0 1.8 2.1 1 0.3 3-0.1 1.1 0.4 0.8 1.4 1.2-1.7 1.9 0.5 1.9-0.7 5.1 1 0.8 1.3 1 0.3 0.6-1.1 3.8-1.6 2.5 3 0.6 0.5 2.3-0.8 7.1-0.6 2 1.1 0.5 1.2 2.7 0.9 0.8-1.4-1.8-3.6 1-3.3 0.8-1.2 2.2-2.3 1.1-0.5 1.7 0.4 1.4-0.8 5 0.1 2.6 0.8 1.7-0.1 1.8-0.9 0.5-2.4 1.6-0.6 3.7 0.9 1-0.1 2.7-1.2 1.6-0.2 2 0.3 3.4-0.2 2.5 1.4 1.4 1.4 1.7 2.7 4 3-0.1 1-2.9 0.5 1.3 1.9 0.5 2 1.2 1.7-0.4 1 3.1 0.1 2.9 1 4.1-0.5 1.5 2.2 1.9 0.2 0.2 0.9 1.4 2.8 0.9 1.1-0.2 1.8 0.5 1 1.9 1.6 0.7 1 1.1 0.4 2.3-1.4 2.8 0.4 2.7 2 2.3 0 1.7 1.1 1.4-1.3 4.3-0.9 2.3-1 1 0.1 2.3 1.8 0.5 1.2 1.5 1.6 4.7 2.9 1.3-0.6 0.9-1.5 2.6 1.4 2.4 0.2 3.6 1.9 1.4 0.1 1.6-0.6 2 1.8 1.9 0.2 4.4 2.3 2.9-0.3 1 0.8-0.1 1.7 1 0.9-0.1 2.6-1.7 2.1-2.3 0.8 1.1 1.5 3.1 0.9-0.9 0.9-1.4-0.2-0.8 1-0.3 2.3 2.5 0.7 1.2 2.8 0 1.1 1.2 0.3-1.3 4.7-0.1 1.8-4.2 0.2-6-0.3-0.9 0.2-0.9 1.9-2.3 1.4-1.7 0.2-0.8 0.8 0 2.3-0.4 1.3 1.1 0.7-0.7 1.6 0.5 1.3-0.5 0.1-4.3-0.2-3.4 0.3-2.1 2.4-1.5 0-3.2 1.5-1.4 1.7-1.4-0.8-3.1 0.5-1.7 1.1-3.1-0.1-2.3 0.6-4.6 3.8-1.3 0.1-1-1-1.6 2.6-2.4 1.2 0.6 3.1 2.8 4.5 3.6 3.9 1.7 1.4 2.4 0.7 3.1-1.4 2.4 0.4 1.7-1.2 1.5-0.1 3.7 1-1.1 2.5-0.3 2.6-1.9 0.6-2.2-0.1-2.2 0.4-2.7-1.5-2.5 0-1.1 1.9-2.3 1.3-0.6 1.4-2.6-0.3-2.1 0.2-2.8 1.4-1.9 2.8-2.3 1.8-1.9 0.5-2-0.1-1.3-0.6-2.9-1.8 0.7-2 0.5-3.5-1.2-2.9-2.3-1.4-1.6 0.2-0.9-0.3-3.7-2.4-1.9-0.2-1.9 0.5-1.5-1.2 3.5-2.9 3.5-2.4 1.7-0.2 2.1-1.2 2.2-1.6-1.3-2.3-1.9 0.6-2.2-1.1-0.9-0.8-3.1 0.8-1.8-0.1-3.8 0.8-1.9-0.8-4-2-2.6-0.3 0-1 1.8-0.3 0.1-1-3.8-0.6-0.1-1.3 2 0.5 3.2 0.2 2.9 0.5 2.1-1.8-2.4 0.5-2.9-0.5-2.1-1.8-2.2 1.2-3.2-0.5-2.4 0.8-2.3-0.2-4.1 1.1-0.4 2.9-2 4-3.1 3.7-4.6 2.1-1.7-0.4-0.9 1.1 0.2 1.3 1 0.9 1.1 3.1-0.1 1.3z" id="UA" name="Ukraine">
-          </path>
-          <path d="M674 532.8l-2.1 0.4-1.5 1.9-1.6-1.2-1 0.1-3.4 1.5-0.2 2.6-0.5 0.8-1.7-0.3-0.1-2.2-1.4-3.2-1.9-1.3-1.4-0.5-2-2.9-0.5-0.4 0.2-1.3-0.9-1.5 2-0.4 0.2-0.7 1.6-0.4 1.5-0.5 0-1.4 1.7-1.3 0.4-1-0.6-1.6 1.7-0.9 1.1 1.3 2.8 1.3 2.3 2.1 0.2 0.7 2.2 1.2 0 1.3 4.7 1.2-0.2 1.2-1.2 3.2-1 0.9 0.6 1.3z" id="XK" name="Kosovo">
-          </path>
-          <path d="M452.2 392.5l-0.6 1.2-3.2 1.5-3.9-1.1-1.2 0.6-1.2-0.7-0.3-1.3 2.8-0.4 3.5 0.7 1.5-0.6 1.2 0.5 1.4-0.4z m-3.4-5.3l1.5 1.4-1.5 0.3-1.6-1 1.6-0.7z m18.1-8.5l-3-0.4-0.9-0.7 2.4-1.7 3.2-1.5 1.7 0.4 0.5 0.9-1.1 1.1-2.8 1.9z m-7.6-11.5l-1.1 1.1-0.6-1.4 1.7-1.4 0 1.7z m-7.1 25.3l-2.6-0.8-2.2 0.5-2.8-0.7-1.7-1.3 1.2-0.7 2.3-0.1 4 0.7 1.2-0.9-0.6-1-2.3-2.1 1.6-2.7 1.4-1 3.2-3.8 0.9-2 1.2-5.5 1-2 1.4 0.5 2-0.8 3.4-2 1-1.7 1-0.9 4-1.6 2.1-0.4 8.9-0.5 1.8 1.7 2.7 0.6 0.1 4.3-0.7 1.7-1.1 3.8-3.1-0.1-0.6 1.6 0.7 1 2.6 0.3 0.8 1-0.6 2.6-2.6 1.6-0.3 0.9 1 0.9-0.7 1-4.5 1.3-2.3-0.8-1.8 0.7-0.7 1.1 3.1 4.1 0 1.2-1.3 2.8 0.7 1.2-2.2 1.6-0.5 0.8 1.9 1.2-0.6 2.4-1.2-0.1-2.4-0.3-0.7-1.1 1.1-1.3 1-2.9-2.6-1.1-1.7-1.3-1.9 0.4-2.6-1.4-0.5-1.6-2.5 0.8-1.1-1.3-1.5 1-1.5-0.8-1.4 0.7 0.2 0.9-2.1-0.3z m18.1-15.6l0.9-0.9-0.5-1.9-2.1-0.3-0.5-0.8 0.4-2.5-2.8-0.4-0.4-2.5-1.5 0.3-2.3 1.5 0.6 1.3 1.6 1.6 0 0.9-2.1 0.7 0.1 2.6-0.2 1.6 5.4 1.4 3.4-2.6z" id="NL" name="Netherlands">
-          </path>
-          <path d="M420.4 584.7l-0.4 1-2-0.4 0-1.5 1.2-1.6 2.7-0.7 0.8 1.3-2.3 1.9z m21.7-13.6l1.2 0.5 1.3-0.5 1.4 0.4 0.2 1-2.2 3.5-0.6 1.4-2.1 1.3-4-1.7-0.3-1.6-1.4-0.7-1.7 1.3-1.4-1-0.3-1.2 5.3-3.7 1.5-0.9 3.2-0.9 0.5 1.2-0.6 1.6z m14.7-0.8l-0.3 0.2-3.9-1.9-1.6-0.4 0.1-1.4 2.6-0.2 2.1 0.7 1.2 1.8-0.2 1.2z m-77.4-55.5l0.5 1.3 4.3 1.3-0.3 3.2 1.8-0.4 4.4 1.7 2.2 0.2 2.2 2.1 3.6-0.4 3.2 2.1 3.1-0.4 0.7 0.4 4.7 0 0.8-2.4 4 1.1 2.5 1 1.7 0.3 1.1 1.5 0 2.1 0.7 0.4 2.8-1.1 2.8 1.2 1.3 1.2 2.1-1.1 4.7 1.2 1.2-0.8 3.8-1.1 3.1 0.6 1.2 2.2-1.8 0.5-0.2 1.4 1.2 1.3 0.1 2.1-3 2.8-8.7 4.7-2.9 2.7-6.6 1.5-4.5 1.5-2.2 0.5-4.1 3.8 1.1 0.3 1.2 1.2-0.4 0.6-2.5 1.1-0.9 0-2.9 4.6-2.6 3.3-1.5 1.5-1.5 2.1-3.2 5.6-0.1 1.6 1.6 5.5 2.2 2.7 2.4 1.1 0.6 1-0.8 1-2.4 1.7-4.3 2.3-1.8 1.9-0.3 1.8-1.3 0.8-0.5 2.5-1.8 4.4 1.3 1.2-1.3 0.8-6.5 0.3-4.1 2.8-2 2.4-1.9 4.5-2.2 2.6-1 0.5-1.5-1.2-1.9-0.1-1.9 0.3-1 1-1.5 0.5-1.5-0.5-4.6-0.2-2.3 0.8-1.9-0.5-3.2-0.3-7 0.6-4 3.4-3.4 0-3.1 1.2-2.1 3-0.5 1.6-1-0.3-0.3 1.2-2.1 0.8-2.4-1-2-1.5-1-0.1-1.6-2.2-1.2-3.1 0-1.1-1.5-0.6-0.3-1.4 0.2-1.6-1.2-2-5-3.7-3.7-0.3-3 0.5-1.1-6.4 0.8-2.2 3.5-4.3 2.1-0.6 0.7-2.4-1.7 0.2-3-4.3 0.9-4 3.2-3 0.6-2.4-0.5-0.8-1.7-0.4-1.6-3.2-0.3-1.9-1.4-1.2-1.1-1.9 1.1-0.3 4.3 0 1-0.5 1.7-3.5 0-1.9-1.4-1.3 0.2-1 2.7-2.1-0.4-1.1 0.4-3.8-0.4-3.5-0.8-2 2-1.6 1.1-1.6 1.6-1.4 2.1-1.1 2.5-2.5-0.3-1.1-1.9-0.9-1.9-0.2-0.1-3.1-0.7-1.1-5.2-0.1-1.5-0.5-0.8 1.4-2.5 0.9-1.4 0-2.2-0.8-2.9 0.1-3 1.1-0.9-1.3 1.3-1.9-1-1.8-4.1 1-1.9 0.9-1.2 1.1-1.3-0.1 0-2.5 2.6-2.6-1.6-0.2 1.2-1.9-1-1 0.1-2.6-2.3 0.9-0.5-1.2 1.4-2.2-1.4-0.2-2.3-2.5 0.8-3.1 2-1 1.9-1.5 2.6 0.3 1.7-0.3 3.6-1.6-0.4-1.5 0.4-0.7 3.2-1.7 2-0.2 1.9-0.9 1.3 0.5 1.1-0.1 1.3 0.6 1.7 1.6 2.5 0.6 2-0.5 3.6-0.1 1.7 0.2 3.2-0.3 1.8 0.1 2.9-0.8 2.3 1 4.4 0.4 2.6 0.8 7.2 1.4 2.7 0 3.7-0.8 1.6-0.5 1.5 0.3 2.1-0.6 2.3 1 4.7 1.3 2.1-1.3 3.4 0.6 3.3 1.3 1.8 0.1 2.6-0.3 2.5-1z" id="ES" name="Spain">
-          </path>
-          <path d="M521.2 524.1l-0.3 2.3 1 1.7 0.6 6.5-1.8 3.2 0.1 3-1.6 4.3-0.8 1.1-3.8-2-1.2-1.1 1-1.8-2.2-0.9 0.4-1.7-0.2-0.9-1.6-0.5 1-1.3 0-0.8-1.5-1-0.3-0.9 1.3-1.1-0.6-0.9 0.1-1.3 0.9-1.9 1.2-0.9 2.8-0.8 1.2-1.1 1.9 0.6 0.6-1.2-0.2-2.7 0.3-1.1 1.3 0.5 0.4 2.7z m-133.9-47.9l-0.4 1.4-1.9-2.4 1-0.5 1.3 1.5z m84.4-55.6l2.1 1.2 1.4 0 2-0.6 1.3 0.7 1.4 0.1 3.5 4.3 1.8-0.7 1.4 0.4 0.3 0.9 2.1 0.1 3-0.6 2 1.4 4.8 0.8 1.6 0.6 0.1 1.3-3.5 3.8-1.4 5.5-1 1.8-0.3 1.5 0.2 2.4-0.6 2 0 1.5 1.1 1.3-1.5 0.7-0.8 1.4-2.7 0.3-0.8-0.8-1.1 0-1.8 1.4 1.3 1.1-0.6 0.9-3.8 4-2.1 0.9-0.5 2.9-3 2.2-1.1 2.9 0.8 0.7-0.3 1.5-1.5 1 0 1 1.4 0.1 2.3-1.6-0.5-1.3 2.3-1.5 1.9-0.1 2.2 0.3 0.8 2.2-0.5 1.7 2.3 2.3 0.9 1.4-2.6 1.7 0.1 1.6 0.9 0.6 1.7 2.6 1.8 1.6-0.8 2.5-1.2 0.3-1.7 1.3-1.9-0.2-0.8 0.4 1.5 3.1 3.2 1.4 0.5 1.7-0.8 0.7-1.4 2.5 0.7 1.3 0.1 1.4 0.9 0.9 5.1 2.4 3.3-0.6 0.3 2-2.1 2.6 0.2 1.5-0.6 0.3-0.8 0.3-2.4 1.1-3.9 3.4-1.8 1-0.7 1.8-2 1.4-2.4 0.5-2.3 1-1.1-0.4-2.8 0-1.7-1.2-3.4-0.8-1.1-1.8-2.5-0.1-0.8-1.5-1.9 0.3-1.5 0.7-2-0.1-5.9-1.8-1.4-1.4-1.7 0.5-1.6 1.6-6.5 4.1-2.6 4.3-0.1 1.2 0.7 3.9 1.6 2.5-3.1-0.6-3.8 1.1-1.2 0.8-4.7-1.2-2.1 1.1-1.3-1.2-2.8-1.2 0-1.5-2.6-0.6-0.9 0.7-1.1-1.5-1.7-0.3-2.5-1-4-1.1-0.8 2.4-4.7 0-0.7-0.4-3.1 0.4-3.2-2.1-3.6 0.4-2.2-2.1-2.2-0.2-4.4-1.7-1.8 0.4 0.3-3.2-4.3-1.3-0.5-1.3 2-0.5 1.9-1.9 1.7-7.1 1.3-8.3 1-1.6 1.2-0.4-1-1.2-1.1 1.5 0.7-7.6 0.5-2.8 0.9-3 3.1 2.4 0.8 1 0.9 3.4 0.6 0.1-1.1-4.6-1.8-2.3-3.6-2.3-0.5-1.3 1.8-0.6-0.5-1.8-0.5-5.9-3-0.6-4.8-2.6-1.7-2.6-1.6-1.9-0.4-1.7 0.9-1.8-0.8-1.1-1.4-0.8 1.1-1.6-3-0.2-1.8-0.5-0.3-1.1 1.3-1.4-1.6-0.8-2.6 0.2-0.2-1.7-2.2 0.3-1.2-0.3-1.1-1.1-1.3 0.2-2.2-0.4-0.8-0.7-4.8-1.3-2-0.1-1.9 0.6-1.1-0.3-1.3-2.2-3.1-1.1 0.6-0.7 3.1-0.6 0.6-0.7-2.2-0.9-0.2-1.2 1.6 0.3 0.1-1.2-4 0.1-0.4-1.3 0.5-1.4 2.3-1.2 5.8-1.4 2.5 0.2 1.7-0.2 3-1.6 2.9-0.4 2.7 0.8 2.5 2.8 1.2 1 3.1-1.7 4.4 0.1 0.9 0.9 1.2-1.7 1 1 4.7-0.2-1.5-2.5-0.2-6-1.3-1.7-2.1-4.3 0.2-1.4 3.2 0.3 2.7-0.6 1.3 0.4 0.3 2.8 1.1 1.6 2.2 0 2.3 0.5 3 0.1 4.3 0.8 1.8-0.5 3.5-2-1.8-0.7-0.2-0.7 0.9-2.2 5.2-2.5 3.7-0.7 3.8-1.3 2-1.4 1.2-1.8 0.5-1.3 0.3-6.8 1-2.2 2.9-1.6 6.4-1.1 0.9-0.5 0.9 2.2 0 1.2 2.9 2.4 3.2-1 1.6 1.8 0.5 2 4.2 1.1 0.6 2 0.9-0.3 3.6 0.4 1.6 1.1-0.4 1.6 0.7 0.7-0.7 1.4 0.5 0.6 2.3 0.3 2.2-0.3 1.3-0.6 0.5-1.4 1.9-0.6-0.8 2.7 0.6 0.6 0.4 2 1.7 0.1 3.3 1.5 2.8 2.6 3.4-0.4z" id="FR" name="France">
-          </path>
-          <path d="M306 611.9l-1.2 0.2-4.5 2.5-1.3 0-2.5-1.1-4.5-0.4-1.5-0.3-1.8 0.7-1.5 0-1.1 1-0.8-0.3 1-2.1 1.6-4.1 0-2.6 0.4-2.2-0.3-2.1-0.7-1.4 1.1-3.5 0-1.8-0.9-2.3 2.8 0.3-1.7-1.4-1.5 0-2.3 0.9-1.5 0.1 0.1-1.4-0.5-1.8 2-0.6 1.6-1.7-0.3-1.6-1.2 1.1-0.6 1.4-2.8 0.7-1.5-0.5 0-1.9 0.6-1.7 0.4-2.3 0.8-2.2-0.2-1.4 1.6-1.3 1.4-1.9 4.3-8.9-0.6-1 1.7-6.6 1.2-2.3 0.6-4.3-0.2-2-0.7-2-0.7-4.3 0-1.4-0.9-1.8 0.1-1 1.4-1.7 1.2-1.1 1.9-0.9 4.1-1 1 1.8-1.3 1.9 0.9 1.3 3-1.1 2.9-0.1 2.2 0.8 1.4 0 2.5-0.9 0.8-1.4 1.5 0.5 5.2 0.1 0.7 1.1 0.1 3.1 1.9 0.2 1.9 0.9 0.3 1.1-2.5 2.5-2.1 1.1-1.6 1.4-1.1 1.6-2 1.6 0.8 2 0.4 3.5-0.4 3.8 0.4 1.1-2.7 2.1-0.2 1 1.4 1.3 0 1.9-1.7 3.5-1 0.5-4.3 0-1.1 0.3 1.1 1.9 1.4 1.2 0.3 1.9 1.6 3.2 1.7 0.4 0.5 0.8-0.6 2.4-3.2 3-0.9 4 3 4.3 1.7-0.2-0.7 2.4-2.1 0.6-3.5 4.3-0.8 2.2 1.1 6.4z" id="PT" name="Portugal">
-          </path>
-          <path d="M843.2 646.3l-0.1 0-0.1 0 0.1-0.1 0.1 0.1z m0 0l0.1 0 0.1 0 0.1 0.1-0.1 0-0.1 0-0.1 0 0-0.1z m-0.4-0.3l-0.1 0 0-0.1 0.1 0 0-0.1 0.1 0.1 0 0.1-0.1 0z m3.5-0.8l0.2 0.1 0.3 0.3 0.2 0.4 0.1 0.3 0.2 0.2 0.2 0.1-0.2 0-0.3 0-0.3-0.1-0.2-0.2-0.2 0-0.7 0.1-0.6 0.1-0.1 0.1-0.1 0.1-0.3 0-0.3 0-0.1-0.1 0.2-0.1 0.1 0-0.1-0.3-0.2 0-0.2-0.1 0-0.4-0.1-0.1-0.3-0.1 0-0.2 0.1-0.1 0.2-0.1 0.1 0.1 0.1 0.1 0.2-0.1 0.1-0.1 0.1-0.1 0.1-0.1 0.2 0.2 0.2 0.1 0.1 0 0.2 0.1 0.1 0 0.3-0.1 0.2 0 0.1 0.1 0.2 0 0.1 0 0.1 0 0-0.1z m-4 1.1l0 0.2-0.3 0.1-0.3 0.3 0 0.2-0.1 0.3 0 0.3 0 0.3 0 0.3 0 0.1-0.1 0-0.1 0.1 0 0.3-0.1 0.1-0.2 0-0.4 0-0.2 0.1-0.1 0.1-0.1 0.2-0.1 0.1-0.2 0.1-0.4 0.1-0.4 0.2-0.3 0.1-0.2-0.3 0.1 0.5-0.4 0.2-0.9 0.2-0.2 0.1-0.1 0.1-0.2 0.1-0.2 0-0.9-0.1-1 0.1-0.1 0.1-0.2 0.1-0.6 0.5-0.1 0.3-0.3 0-0.3 0.1 0 0.1-0.1-0.1-0.1-0.2 0.1-0.2 0.1 0.1 0.3 0-0.1-0.4-0.4-0.1-0.2 0.2-0.1 0.1-0.2-0.1 0 0.1-0.4-0.1-0.3-0.2-0.1-0.1 0-0.2-0.1 0-0.1 0-0.1 0-0.1 0-0.1 0.1 0 0.1-0.2 0-0.1 0.2-0.2 0-0.2 0-0.1 0.1 0.1 0.2-0.2 0.1-0.5 0-0.6-0.1-0.5-0.2-0.7-0.4-0.3-0.1-0.3-0.1-0.5 0-0.3-0.1-0.2-0.2-0.6-0.4-0.1-0.1-0.1-0.4 0-0.1-0.1-0.1-0.4-0.9-0.1-0.1-0.3-0.2-0.2-0.1-0.1-0.1-0.1-0.2 0-0.2 0.1-0.2-0.3-0.4-0.1-0.2 0-0.4-0.1-0.2-0.3-0.5-0.2-0.3-0.1-0.4 0.1-0.3 0.1 0 0.3 0.1 0.4 0.5 0.3 0.1 0.2 0.1 0.6 0 0.4-0.2 0.3-0.4 0.3-0.4 0.1-0.5 0.1-0.3 0.2-0.1 0.1-0.1 0-0.1 0.1 0 0.1 0.1 0.1 0 0.2 0 0.1 0.1 0.2 0.2 0.2 0 0.1 0 0.2-0.2 0.1-0.2 0-0.2 0.4 0.1 0.2 0.4 0.1 0.2 0.1 0.2 0.2 0.1 0.4 0.1 0.3 0.1 0.2 0.2 0.2 0.1 0.1 0.2 0 0.2 0.1 0.1 0.1 0.1 0.1 0 0.4-0.1 0.1-0.2 0.1-0.2 0.1-0.1 0.1 0.1 0.1 0.1 0.2 0.1 0.2 0 0.2-0.1 0.2-0.2 0.2-0.2 0.2-0.1 0.3-0.2 0.1-0.2 0.2 0 0.3 0.1 0.3 0 0.4 0 0.1-0.1 0.1 0 0.1-0.2 0.3-0.2 0.2 0 0.2 0.1 0.1 0.1 0.2 0 0.1 0 0.2 0.2 0.2 0.2 0.2 0.1 0.3 0.1 0.1 0 0.1-0.1 0-0.1 0.1-0.2 0.3-0.3 0.1 0 0.2 0 0.3 0 0.2 0 0.1 0 0 0.2 0.1 0.2 0.1 0.1 0.2 0.2 0.2 0.2 0 0.1 0.1 0.3 0 0.2 0 0.3 0 0.4-0.1 0.3 0.1 0.2 0.1 0.1 0.2 0 0.2 0 0-0.3 0-0.4 0.1-0.1 0.1-0.1 0.1-0.1 0.1 0.1 0.1 0.4 0.1 0.2 0.1 0.1 0.3-0.1 0-0.2 0.1-0.1 0.2 0 0.1 0.1 0.2 0 0.1-0.1 0.1 0.1 0.1 0 0.3 0.2 0.2 0 0.1 0 0.3 0.2z" id="CY" name="Cyprus">
-          </path>
-          <circle cx="399.9" cy="390.8" id="0">
-          </circle>
-          <circle cx="575.4" cy="412" id="1">
-          </circle>
-          <circle cx="521" cy="266.6" id="2">
-          </circle>
-        </svg>
-        <div id="svgTooltip"></div>
-      </div>
-    </div>
-  </section>
-</main>
+    `;
+  }
+  
+  /** Tooltip för hover */
+  function attachMapTooltip() {
+    const svg = document.getElementById('europeMapSvg');
+    const tooltip = document.getElementById('svgTooltip');
+    if (!svg || !tooltip) return;
+  
+    tooltip.style.position = 'absolute';
+    tooltip.style.pointerEvents = 'none';
+    tooltip.style.background = 'rgba(17,24,39,.95)';
+    tooltip.style.color = '#fff';
+    tooltip.style.padding = '6px 8px';
+    tooltip.style.fontSize = '12px';
+    tooltip.style.borderRadius = '6px';
+    tooltip.style.boxShadow = '0 6px 16px rgba(0,0,0,.25)';
+    tooltip.style.display = 'none';
+    tooltip.style.zIndex = '20';
+  
+    const show = (e, html) => {
+      tooltip.innerHTML = html;
+      tooltip.style.left = (e.pageX + 12) + 'px';
+      tooltip.style.top  = (e.pageY + 12) + 'px';
+      tooltip.style.display = 'block';
+    };
+    const hide = () => { tooltip.style.display = 'none'; };
+  
+    svg.addEventListener('mousemove', (e) => {
+      const t = e.target;
+      if (t && t.tagName === 'path' && t.hasAttribute('name')) {
+        const name = t.getAttribute('name') || t.id;
+        const iso = (t.id || '').toUpperCase();
+        const val = Number(t.dataset.value || 0);
+        show(e, `<strong>${name}</strong><br>${numberFormat(val)} sidvisningar`);
+      } else {
+        hide();
+      }
+    });
+    svg.addEventListener('mouseleave', hide);
+  }
+  
+  /** Klick – markera land (valfritt: trigga egen filtrering) */
+  function attachMapClicks() {
+    const svg = document.getElementById('europeMapSvg');
+    if (!svg) return;
+  
+    svg.addEventListener('click', (e) => {
+      const t = e.target;
+      if (!(t && t.tagName === 'path')) return;
+  
+      // enkel toggling av selected-stil
+      svg.querySelectorAll('path.selected').forEach(x => x.classList.remove('selected'));
+      t.classList.add('selected');
+  
+      // (Hook) här kan du trigga filtrering i din app om du vill
+      // example: filterByCountry(t.id);
+    });
+  
+    // liten CSS för selected
+    const styleId = 'europe-map-selected-style';
+    if (!document.getElementById(styleId)) {
+      const s = document.createElement('style');
+      s.id = styleId;
+      s.textContent = `
+        #europeMapSvg path.selected { outline: none; stroke: #111827; stroke-width: 1.5; }
+        #europeMapSvg path:hover { filter: brightness(1.03); }
+      `;
+      document.head.appendChild(s);
+    }
+  }
+  
+  /** Publik helper – uppdaterar data och målar om */
+  window.setGeoViews = function(newData){
+    try {
+      window.geoViews = Object.fromEntries(
+        Object.entries(newData||{}).map(([k,v]) => [k.toUpperCase(), Number(v)||0])
+      );
+    } catch { window.geoViews = newData || {}; }
+    paintEuropeMap();
+  };
+  
+  // Initiera när sidan laddat
+  document.addEventListener('DOMContentLoaded', () => {
+    paintEuropeMap();
+    attachMapTooltip();
+    attachMapClicks();
+  });
+  </script>
+  
 
 <!-- ====== SCRIPT ====== -->
 <script>
@@ -720,16 +760,54 @@
     const {labels, values} = toSortedSeries(d.byDay||[]);
     buildPvLineChart(labels, values);
   }
+    // Säker fetch-helper (om den inte redan finns)
+    window.authedFetch = window.authedFetch || ((url, opts={}) =>
+    fetch(url, { credentials: 'include', ...opts })
+  );
 
-  /* ==== GEO (Globe + "Europa via world.js") ==== */
-  function makeColorScale(maxVal){
-    const from = [198,218,255], to = [29,78,216];
-    return v => {
-      const t = Math.min(1, (maxVal ? v/maxVal : 0));
-      const ch = i => Math.round(from[i] + t*(to[i]-from[i]));
-      return `rgb(${ch(0)},${ch(1)},${ch(2)})`;
-    };
+
+  /* ==== GEO (Europa) – hämta data och färgsätt SVG ==== */
+  async function loadGeoEurope(){
+    try {
+      // Anta ett API som returnerar { success: true, byCountry: [{ iso2:'SE', count:123 }, ...] }
+      const r = await authedFetch('/api/geo/summary/eu');
+      const d = await r.json();
+      if (!d.success) throw new Error('Kunde inte hämta geo-data');
+
+      const data = Object.fromEntries(
+        (d.byCountry||[]).map(row => [
+          (row.iso2 || row.code || row._id || '').toUpperCase(),
+          Number(row.count) || 0
+        ])
+      );
+      // Måla kartan via helpern från föregående block
+      setGeoViews(data);
+    } catch (e) {
+      console.warn('Geo (Europa) fel:', e);
+    }
   }
+
+  /* ==== Init & UI-händelser ==== */
+  document.addEventListener('DOMContentLoaded', () => {
+    // Period-väljare för sidvisningar (radio/select med name="pvRange")
+    document.querySelectorAll('input[name="pvRange"]').forEach(el => {
+      el.addEventListener('change', (e) => {
+        const v = e.target.value;
+        const days = (v==='7') ? 7 : (v==='30') ? 30 : 180;
+        loadPageviews(days).catch(console.error);
+      });
+    });
+
+    // Första laddning
+    loadSummary().catch(console.error);   // ordrar & KPI
+    loadPageviews(7).catch(console.error); // sidvisningar (7 dagar som default)
+    loadGeoEurope().catch(console.error);  // geodata -> färga kartan
+  });
+</script>
+
+<script>
+ 
+  
   window.NAME_TO_ISO2 = window.NAME_TO_ISO2 || {
   'Sweden':'SE','Norway':'NO','Denmark':'DK','Finland':'FI','Iceland':'IS',
   'Germany':'DE','France':'FR','Netherlands':'NL','Belgium':'BE','Luxembourg':'LU',
@@ -766,255 +844,297 @@ window.makeColorScale = window.makeColorScale || function(maxVal){
     return v ? scale(v) : 'rgba(229,231,235,1)';
   };
 })();
-  function showSvgTooltip(ev, iso, count){
-    const tip = document.getElementById('svgTooltip');
-    if (!tip) return;
-    const name = Object.keys(NAME_TO_ISO2).find(k => NAME_TO_ISO2[k] === iso) || iso;
-    tip.textContent = `${name}: ${count} visningar`;
-    tip.style.left = (ev.clientX + 10) + 'px';
-    tip.style.top  = (ev.clientY + 10) + 'px';
-    tip.style.display = 'block';
+function showSvgTooltip(ev, iso, count){
+  const tip = document.getElementById('svgTooltip');
+  if (!tip) return;
+  const name = Object.keys(window.NAME_TO_ISO2).find(k => window.NAME_TO_ISO2[k] === iso) || iso;
+  tip.textContent = `${name}: ${count} visningar`;
+  tip.style.left = (ev.clientX + 10) + 'px';
+  tip.style.top  = (ev.clientY + 10) + 'px';
+  tip.style.display = 'block';
+}
+function hideSvgTooltip(){
+  const tip = document.getElementById('svgTooltip');
+  if (tip) tip.style.display = 'none';
+}
+
+/* Helper om du inte har mapNameOrIdToIso */
+function elToIso(el){
+  const id = (el.id || '').toUpperCase();
+  const name = el.getAttribute('name');
+  if (id && id.length === 2) return id;
+  if (name && window.NAME_TO_ISO2 && window.NAME_TO_ISO2[name]) return window.NAME_TO_ISO2[name];
+  return '';
+}
+
+function renderEuropeSvg(counts){
+  const svg = document.getElementById('europeMapSvg');
+  if (!svg) return;
+
+  // Hitta "länderna": oftast <path> (ibland <g> innehållande path)
+  const shapes = svg.querySelectorAll('path, polygon, rect');
+  if (!shapes.length) return;
+
+  const values = {};
+  shapes.forEach(el => {
+    el.classList.add('eu-region');
+    const iso = (typeof mapNameOrIdToIso === 'function') ? mapNameOrIdToIso(el) : elToIso(el);
+    if (!iso) return;
+    const val = counts[iso] || 0;
+    values[iso] = val;
+  });
+
+  // Färgskala (OBS: beräkna på values, inte countryCounts)
+  const maxVal = Math.max(1, ...Object.values(values));
+  const colorOf = makeColorScale(maxVal);
+
+  shapes.forEach(el => {
+    const iso = (typeof mapNameOrIdToIso === 'function') ? mapNameOrIdToIso(el) : elToIso(el);
+    if (!iso) return;
+    const v = values[iso] || 0;
+
+    // Sätt fyllning
+    el.style.fill = v ? colorOf(v) : '#e8eefc';
+
+    // Tooltip
+    el.onmousemove = (ev) => showSvgTooltip(ev, iso, v);
+    el.onmouseleave = hideSvgTooltip;
+  });
+}
+
+// Utöka name→ISO2 (du har redan EU tidigare)
+Object.assign(window.NAME_TO_ISO2, {
+  'United States of America':'US','United States':'US','Canada':'CA','Mexico':'MX',
+  'Brazil':'BR','Argentina':'AR','Chile':'CL','Colombia':'CO','Peru':'PE',
+  'China':'CN','Japan':'JP','South Korea':'KR','Korea':'KR','India':'IN',
+  'Singapore':'SG','Hong Kong':'HK','Taiwan':'TW','Thailand':'TH','Malaysia':'MY',
+  'Indonesia':'ID','Philippines':'PH','Saudi Arabia':'SA','United Arab Emirates':'AE',
+  'Israel':'IL','Türkiye':'TR','Turkey':'TR','South Africa':'ZA','Nigeria':'NG',
+  'Egypt':'EG','Morocco':'MA','Kenya':'KE','Ghana':'GH','Algeria':'DZ','Tunisia':'TN',
+  'Ethiopia':'ET','Australia':'AU','New Zealand':'NZ','Russia':'RU',
+  'Bosnia and Herz.':'BA'
+});
+
+let globeInstance;
+async function buildSpinningGlobe(countryCounts){
+  const worldTopo = await authedFetch('https://unpkg.com/world-atlas@2/countries-110m.json').then(r=>r.json());
+  const worldGeo  = topojson.feature(worldTopo, worldTopo.objects.countries);
+
+  // Skala och färg för globen baserat på countryCounts (inte geoViews)
+  const maxVal  = Math.max(1, ...Object.values(countryCounts));
+  const scale = makeColorScale(maxVal);
+  const capColor = f => {
+    const iso = window.NAME_TO_ISO2[f.properties.name] || '';
+    const v = countryCounts[iso] || 0;
+    return v ? scale(v) : 'rgba(229,231,235,1)';
+  };
+  const altitude = feat => {
+    const v = countryCounts[window.NAME_TO_ISO2[feat.properties.name] || ''] || 0;
+    return v ? 0.01 + Math.min(0.05, (v / maxVal) * 0.05) : 0.004;
+  };
+
+  const el = document.getElementById('globeContainer');
+  if (!globeInstance){
+    globeInstance = Globe()(el)
+      .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-dark.jpg')
+      .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
+      .backgroundColor('#0b1220')
+      .showAtmosphere(true).atmosphereColor('#5b8cff').atmosphereAltitude(0.25)
+      .polygonsData(worldGeo.features)
+      .polygonCapColor(capColor)
+      .polygonSideColor(()=> 'rgba(0,0,0,0.25)')
+      .polygonStrokeColor(()=> '#0f172a')
+      .polygonAltitude(altitude)
+      .onPolygonHover(f => showGlobeTooltip(f, countryCounts, el))
+      .onGlobeClick(hideGlobeTooltip)
+      .onZoom(hideGlobeTooltip);
+    globeInstance.controls().autoRotate = true;
+    globeInstance.controls().autoRotateSpeed = 0.8;
+    globeInstance.controls().enableZoom = true;
+    globeInstance.pointOfView({ altitude: 2.6 });
+  } else {
+    globeInstance.polygonsData(worldGeo.features);
+    globeInstance.polygonCapColor(capColor);
+    globeInstance.polygonAltitude(altitude);
   }
-  function hideSvgTooltip(){
-    const tip = document.getElementById('svgTooltip');
-    if (tip) tip.style.display = 'none';
-  }
+}
 
-  function renderEuropeSvg(counts){
-    const svg = document.getElementById('europeMapSvg');
-    if (!svg) return;
-
-    // Hitta "länderna": oftast <path> (ibland <g> innehållande path)
-    const shapes = svg.querySelectorAll('path, polygon, rect');
-    if (!shapes.length) return;
-
-    const values = {};
-    shapes.forEach(el => {
-      // Tagga klass för styling/hover
-      el.classList.add('eu-region');
-
-      // Koppla ett ISO2
-      const iso = mapNameOrIdToIso(el);
-      if (!iso) return;
-      const val = counts[iso] || 0;
-      values[iso] = val;
-    });
-
-    // Färgskala
-    const maxVal = Math.max(1, ...Object.values(values));
-    const colorOf = makeColorScale(maxVal);
-
-    shapes.forEach(el => {
-      const iso = mapNameOrIdToIso(el);
-      if (!iso) return;
-      const v = values[iso] || 0;
-
-      // Sätt fyllning
-      el.style.fill = v ? colorOf(v) : '#e8eefc';
-
-      // Tooltip
-      el.onmousemove = (ev) => showSvgTooltip(ev, iso, v);
-      el.onmouseleave = hideSvgTooltip;
-    });
-  }
-  const NAME_TO_ISO2 = { 'Sweden':'SE','Norway':'NO','Denmark':'DK','Finland':'FI','Iceland':'IS','Germany':'DE','France':'FR','Netherlands':'NL','Belgium':'BE','Luxembourg':'LU','Austria':'AT','Switzerland':'CH','Italy':'IT','Spain':'ES','Portugal':'PT','Ireland':'IE','United Kingdom':'GB','Poland':'PL','Czechia':'CZ','Czech Republic':'CZ','Slovakia':'SK','Hungary':'HU','Slovenia':'SI','Croatia':'HR','Bosnia and Herz.':'BA','Serbia':'RS','Bulgaria':'BG','Romania':'RO','Greece':'GR','Estonia':'EE','Latvia':'LV','Lithuania':'LT','Ukraine':'UA','United States of America':'US','United States':'US','Canada':'CA','Mexico':'MX','Brazil':'BR','Argentina':'AR','Chile':'CL','Colombia':'CO','Peru':'PE','China':'CN','Japan':'JP','South Korea':'KR','Korea':'KR','India':'IN','Singapore':'SG','Hong Kong':'HK','Taiwan':'TW','Thailand':'TH','Malaysia':'MY','Indonesia':'ID','Philippines':'PH','Saudi Arabia':'SA','United Arab Emirates':'AE','Israel':'IL','Türkiye':'TR','Turkey':'TR','South Africa':'ZA','Nigeria':'NG','Egypt':'EG','Morocco':'MA','Kenya':'KE','Ghana':'GH','Algeria':'DZ','Tunisia':'TN','Ethiopia':'ET','Australia':'AU','New Zealand':'NZ','Russia':'RU' };
-
-  let globeInstance;
-  async function buildSpinningGlobe(countryCounts){
-    const worldTopo = await authedFetch('https://unpkg.com/world-atlas@2/countries-110m.json').then(r=>r.json());
-    const worldGeo  = topojson.feature(worldTopo, worldTopo.objects.countries);
-    const maxVal  = Math.max(1, ...Object.values(countryCounts));
-  // Remove the duplicate declaration of NAME_TO_ISO2
-    const capColor = f => colorOf(countryCounts[NAME_TO_ISO2[f.properties.name] || ''] || 0);
-    const altitude = feat => {
-      const v = countryCounts[NAME_TO_ISO2[feat.properties.name] || ''] || 0;
-      return v ? 0.01 + Math.min(0.05, (v / (maxVal || 1)) * 0.05) : 0.004;
-    };
-    const el = document.getElementById('globeContainer');
-    if (!globeInstance){
-      globeInstance = Globe()(el)
-        .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-dark.jpg')
-        .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
-        .backgroundColor('#0b1220')
-        .showAtmosphere(true).atmosphereColor('#5b8cff').atmosphereAltitude(0.25)
-        .polygonsData(worldGeo.features)
-        .polygonCapColor(capColor)
-        .polygonSideColor(()=> 'rgba(0,0,0,0.25)')
-        .polygonStrokeColor(()=> '#0f172a')
-        .polygonAltitude(altitude)
-        .onPolygonHover(f => showGlobeTooltip(f, countryCounts, el))
-        .onGlobeClick(hideGlobeTooltip)
-        .onZoom(hideGlobeTooltip);
-      globeInstance.controls().autoRotate = true;
-      globeInstance.controls().autoRotateSpeed = 0.8;
-      globeInstance.controls().enableZoom = true;
-      globeInstance.pointOfView({ altitude: 2.6 });
-    } else {
-      globeInstance.polygonsData(worldGeo.features);
-      globeInstance.polygonCapColor(capColor);
-      globeInstance.polygonAltitude(altitude);
-    }
-  }
-  const globeContainer = document.getElementById('globeContainer');
+// ResizeObserver – korrekt guard + observe-anrop
+const globeContainer = document.getElementById('globeContainer');
+if (globeContainer) {
   new ResizeObserver(() => {
     if (!globeInstance) return;
-    globeInstance.width(globeContainer.clientWidth).height(globeContainer.clientHeight);
+    globeInstance
+      .width(globeContainer.clientWidth)
+      .height(globeContainer.clientHeight);
   }).observe(globeContainer);
+}
 
-  function showGlobeTooltip(feat, counts, container){
-    const tip = document.getElementById('globeTooltip');
-    if (!feat){ tip.style.display='none'; return; }
-    const name = feat.properties.name || 'Okänt land';
-    const iso2 = NAME_TO_ISO2[name] || '';
-    const val  = counts[iso2] || 0;
-    tip.textContent = `${name}: ${val} visningar`;
-    tip.style.display = 'block';
-    function move(e){
-      const rect = container.getBoundingClientRect();
-      tip.style.left = (e.clientX - rect.left) + 'px';
-      tip.style.top  = (e.clientY - rect.top)  + 'px';
+function showGlobeTooltip(feat, counts, container){
+  const tip = document.getElementById('globeTooltip');
+  if (!feat){ tip.style.display='none'; return; }
+  const name = feat.properties.name || 'Okänt land';
+  const iso2 = window.NAME_TO_ISO2[name] || '';
+  const val  = counts[iso2] || 0;
+  tip.textContent = `${name}: ${val} visningar`;
+  tip.style.display = 'block';
+  function move(e){
+    const rect = container.getBoundingClientRect();
+    tip.style.left = (e.clientX - rect.left) + 'px';
+    tip.style.top  = (e.clientY - rect.top)  + 'px';
+  }
+  window.addEventListener('mousemove', move);
+  tip._h = move;
+}
+function hideGlobeTooltip(){
+  const tip = document.getElementById('globeTooltip');
+  if (!tip) return;
+  tip.style.display = 'none';
+  if (tip._h){ window.removeEventListener('mousemove', tip._h); tip._h = null; }
+}
+
+// Europa via world.js (zoom+mask)
+async function buildEuropeMap(countryCounts){
+  const el = document.getElementById('mapEurope');
+  if (!el) return;
+
+  if (el._jvm && typeof el._jvm.destroy === 'function') { el._jvm.destroy(); el._jvm = null; }
+
+  const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
+  const values = {};
+  Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
+
+  const jvm = new (window.jsVectorMap || window.JSVectorMap)({
+    selector: '#mapEurope',
+    map: 'world',
+    zoomButtons: true,
+    regionStyle: { initial: { fill: '#dbeafe', stroke: '#9fb7f3' } },
+    series: { regions: [{ values, scale: ['#e8eefc', '#1d4ed8'], normalizeFunction: 'polynomial' }] },
+    labels: { regions: { render: c => c } },
+    onRegionTooltipShow: (tipEl, code) => {
+      if (!EURO.has(code)) { tipEl.style.display = 'none'; return; }
+      const val = values[code] || 0;
+      tipEl.textContent = `${tipEl.textContent} — ${val} visningar`;
+      tipEl.style.display = 'block';
     }
-    window.addEventListener('mousemove', move);
-    tip._h = move;
-  }
-  function hideGlobeTooltip(){
-    const tip = document.getElementById('globeTooltip');
-    if (!tip) return;
-    tip.style.display = 'none';
-    if (tip._h){ window.removeEventListener('mousemove', tip._h); tip._h = null; }
-  }
+  });
 
+  try { jvm.setFocus({ region: 'EU', animate: true }); }
+  catch { jvm.setFocus({ x: 0.62, y: 0.32, scale: 2.2, animate: true }); }
 
-  // Europa via world.js (zoom+mask)
-  async function buildEuropeMap(countryCounts){
-    const el = document.getElementById('mapEurope');
-    if (!el) return;
+  Object.keys(jvm.regions).forEach(code => {
+    if (!EURO.has(code)) {
+      jvm.setStyle(code, 'region', 'initial', { fill: '#0b1220', stroke: '#0b1220', fillOpacity: 1, strokeOpacity: 1 });
+    }
+  });
 
-    if (el._jvm && typeof el._jvm.destroy === 'function') { el._jvm.destroy(); el._jvm = null; }
+  el._jvm = jvm;
+}
 
-    const EURO = new Set(['AL','AD','AT','BY','BE','BA','BG','CH','CY','CZ','DE','DK','EE','ES','FI','FR','GB','GR','HR','HU','IE','IS','IT','LI','LT','LU','LV','MC','MD','ME','MK','MT','NL','NO','PL','PT','RO','RS','RU','SE','SI','SK','SM','TR','UA','VA']);
-    const values = {};
-    Object.entries(countryCounts || {}).forEach(([k,v]) => { if (EURO.has(k)) values[k] = v; });
+async function loadGeo(days = 30) {
+  try {
+    const res = await authedFetch(`/api/pageviews/geo/me?days=${days}`, { credentials: 'include' });
+    const d = await res.json();
+    if (!d.success) throw new Error('Kunde inte hämta geo-data');
 
-    const jvm = new (window.jsVectorMap || window.JSVectorMap)({
-      selector: '#mapEurope',
-      map: 'world',
-      zoomButtons: true,
-      regionStyle: { initial: { fill: '#dbeafe', stroke: '#9fb7f3' } },
-      series: { regions: [{ values, scale: ['#e8eefc', '#1d4ed8'], normalizeFunction: 'polynomial' }] },
-      labels: { regions: { render: c => c } },
-      onRegionTooltipShow: (tipEl, code) => {
-        if (!EURO.has(code)) { tipEl.style.display = 'none'; return; }
-        const val = values[code] || 0;
-        tipEl.textContent = `${tipEl.textContent} — ${val} visningar`;
-        tipEl.style.display = 'block';
-      }
+    document.getElementById('geoTotal').textContent  = String(d.totals?.total || 0);
+    document.getElementById('geoUnique').textContent = String(d.totals?.uniqueVisitors || 0);
+
+    const counts = {};
+    (d.countries || []).forEach(row => {
+      const code = (row.country || '').toUpperCase();
+      if (code && code !== 'XX') counts[code] = row.count || 0;
     });
 
-    try { jvm.setFocus({ region: 'EU', animate: true }); }
-    catch { jvm.setFocus({ x: 0.62, y: 0.32, scale: 2.2, animate: true }); }
-
-    Object.keys(jvm.regions).forEach(code => {
-      if (!EURO.has(code)) {
-        jvm.setStyle(code, 'region', 'initial', { fill: '#0b1220', stroke: '#0b1220', fillOpacity: 1, strokeOpacity: 1 });
-      }
-    });
-
-    el._jvm = jvm;
+    await buildSpinningGlobe(counts);
+    buildEuropeMap(counts);
+  } catch (e) {
+    console.error('loadGeo error:', e);
   }
-
-  async function loadGeo(days = 30) {
-    try {
-      const res = await authedFetch(`/api/pageviews/geo/me?days=${days}`, { credentials: 'include' });
-      const d = await res.json();
-      if (!d.success) throw new Error('Kunde inte hämta geo-data');
-
-      document.getElementById('geoTotal').textContent  = String(d.totals?.total || 0);
-      document.getElementById('geoUnique').textContent = String(d.totals?.uniqueVisitors || 0);
-
-      const counts = {};
-      (d.countries || []).forEach(row => {
-        const code = (row.country || '').toUpperCase();
-        if (code && code !== 'XX') counts[code] = row.count || 0;
-      });
-
-      await buildSpinningGlobe(counts);
-      buildEuropeMap(counts);
-    } catch (e) {
-      console.error('loadGeo error:', e);
-    }
-  }
-
+}
   /* ==== SSE ==== */
-  function connectSSE(){
-    const ev = new EventSource(API_BASE + "/api/inventory/stream");
-    ev.onmessage = (e) => {
-      const p = JSON.parse(e.data || "{}");
-      if (p.type === "order" && p.order){
-        const val = Number(document.getElementById('kpiTotalOrders').textContent || 0);
-        document.getElementById('kpiTotalOrders').textContent = String(val + p.order.qty);
-        document.getElementById('kpiLatestOrder').textContent = `${p.order.name} ×${p.order.qty}`;
-        document.getElementById('kpiLatestTime').textContent = fmtTime(p.order.ts);
-
-        if (ordersByHourChart){
-          const idx = ordersByHourChart.data.labels.length - 1;
-          ordersByHourChart.data.datasets[0].data[idx] =
-            (ordersByHourChart.data.datasets[0].data[idx] || 0) + p.order.qty;
-          ordersByHourChart.update('none');
-        }
-        if (bestsellersChart){
-          const name = p.order.name || p.order.sku;
-          const i = bestsellersChart.data.labels.indexOf(name);
-          if (i >= 0) bestsellersChart.data.datasets[0].data[i] += p.order.qty;
-          else {
-            bestsellersChart.data.labels.push(name);
-            bestsellersChart.data.datasets[0].data.push(p.order.qty);
-            if (bestsellersChart.data.labels.length > 7){
-              bestsellersChart.data.labels.shift();
-              bestsellersChart.data.datasets[0].data.shift();
-            }
-          }
-          bestsellersChart.update('none');
-        }
-      }
-    };
-    ev.onerror = () => { setTimeout(connectSSE, 3000); };
+function connectSSE(){
+  const base = (window.API_BASE || "");
+  let ev;
+  try {
+    ev = new EventSource(base + "/api/inventory/stream");
+  } catch (e) {
+    console.warn("EventSource init fail, retrying…", e);
+    setTimeout(connectSSE, 3000);
+    return;
   }
+  ev.onmessage = (e) => {
+    const p = JSON.parse(e.data || "{}");
+    if (p.type === "order" && p.order){
+      const totalEl = document.getElementById('kpiTotalOrders');
+      const latestOrderEl = document.getElementById('kpiLatestOrder');
+      const latestTimeEl  = document.getElementById('kpiLatestTime');
 
-  /* ==== Auth + profilbrickan ==== */
-  (async () => {
-    try {
-      const r = await authedFetch('/api/profile/me', { credentials: 'include' });
-      if (!r.ok) throw new Error('Auth misslyckades');
-      const d = await r.json();
-      if (d?.success) {
-        const email = d.email || '';
-        const name  = d.name  || '';
-        const userEmailEl = document.getElementById('userEmail');
-        if (userEmailEl) userEmailEl.textContent = email || name || 'Inloggad';
+      const val = Number(totalEl?.textContent || 0);
+      if (totalEl) totalEl.textContent = String(val + (p.order.qty||0));
+      if (latestOrderEl) latestOrderEl.textContent = `${p.order.name} ×${p.order.qty}`;
+      if (latestTimeEl)  latestTimeEl.textContent  = fmtTime(p.order.ts);
 
-        const initialsFromName = (name || '').split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();
-        const initials = initialsFromName || (email ? (email[0] + (email.split('@')[1]?.[0] || '')).toUpperCase() : '--');
-        const badge = document.getElementById('profileToggle');
-        if (badge) badge.textContent = initials;
-      } else {
-        window.location.href = '/login.html';
+      if (window.ordersByHourChart){
+        const idx = ordersByHourChart.data.labels.length - 1;
+        ordersByHourChart.data.datasets[0].data[idx] =
+          (ordersByHourChart.data.datasets[0].data[idx] || 0) + (p.order.qty||0);
+        ordersByHourChart.update('none');
       }
-    } catch(e) {
+      if (window.bestsellersChart){
+        const name = p.order.name || p.order.sku;
+        const i = bestsellersChart.data.labels.indexOf(name);
+        if (i >= 0) bestsellersChart.data.datasets[0].data[i] += (p.order.qty||0);
+        else {
+          bestsellersChart.data.labels.push(name);
+          bestsellersChart.data.datasets[0].data.push(p.order.qty||0);
+          if (bestsellersChart.data.labels.length > 7){
+            bestsellersChart.data.labels.shift();
+            bestsellersChart.data.datasets[0].data.shift();
+          }
+        }
+        bestsellersChart.update('none');
+      }
+    }
+  };
+  ev.onerror = () => { try { ev.close(); } catch {} setTimeout(connectSSE, 3000); };
+}
+
+/* ==== Auth + profilbrickan ==== */
+(async () => {
+  try {
+    const r = await authedFetch('/api/profile/me', { credentials: 'include' });
+    if (!r.ok) throw new Error('Auth misslyckades');
+    const d = await r.json();
+    if (d?.success) {
+      const email = d.email || '';
+      const name  = d.name  || '';
+      const userEmailEl = document.getElementById('userEmail');
+      if (userEmailEl) userEmailEl.textContent = email || name || 'Inloggad';
+
+      const initialsFromName = (name || '').split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();
+      const initials = initialsFromName || (email ? (email[0] + (email.split('@')[1]?.[0] || '')).toUpperCase() : '--');
+      const badge = document.getElementById('profileToggle');
+      if (badge) badge.textContent = initials;
+    } else {
       window.location.href = '/login.html';
     }
-  })();
+  } catch(e) {
+    window.location.href = '/login.html';
+  }
+})();
 
-  /* ==== Init ==== */
-  (function initPv(){
-    const select = document.getElementById('pvRange');
-    if (select) {
-      const load = () => loadPageviews(parseInt(select.value,10)).catch(console.error);
-      select.addEventListener('change', load);
-    }
-  })();
+/* ==== Init-val för pvRange (select-varianten) ==== */
+(function initPv(){
+  const select = document.getElementById('pvRange');
+  if (select) {
+    const load = () => loadPageviews(parseInt(select.value,10)).catch(console.error);
+    select.addEventListener('change', load);
+  }
+})();
 
-  // Starta EN gång
+/* ==== Starta när DOM är redo ==== */
+document.addEventListener('DOMContentLoaded', () => {
   loadSummary().catch(console.error);
   connectSSE();
   loadPageviews(7).catch(console.error);
@@ -1022,34 +1142,150 @@ window.makeColorScale = window.makeColorScale || function(maxVal){
 
   /* ==== Profilmenyknappar ==== */
   const toggle = document.getElementById('profileToggle');
-  const menu = document.getElementById('profileMenu');
-  toggle.addEventListener('click', () => {
-    const isOpen = menu.style.display === 'flex';
-    menu.style.display = isOpen ? 'none' : 'flex';
-    toggle.classList.toggle('open', !isOpen);
+  const menu   = document.getElementById('profileMenu');
+
+  if (toggle && menu){
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = menu.style.display === 'flex';
+      menu.style.display = isOpen ? 'none' : 'flex';
+      toggle.classList.toggle('open', !isOpen);
+    });
+
+    window.addEventListener('click', (e) => {
+      const wrap = document.querySelector('.profile-wrapper');
+      if (wrap && !wrap.contains(e.target)) {
+        menu.style.display = 'none';
+        toggle.classList.remove('open');
+      }
+    });
+  }
+
+  const switchBtn = document.getElementById("switchAccount");
+  if (switchBtn){
+    switchBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (confirm("Vill du logga ut och byta konto?")) window.location.href = "login.html";
+    });
+  }
+
+  const settingsBtn = document.getElementById("openSettings");
+  if (settingsBtn){
+    settingsBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.location.href = "profile.html";
+    });
+  }
+
+  const logoutBtn = document.getElementById("logout");
+  if (logoutBtn){
+    logoutBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (confirm("Är du säker på att du vill logga ut?")) {
+        authedFetch('/logout', { method: 'GET', credentials: 'include' })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) { localStorage.clear(); window.location.href = "/login.html"; }
+            else { alert("Utloggning misslyckades."); }
+          })
+          .catch(err => { console.error("Fel vid utloggning:", err); alert("Kunde inte logga ut."); });
+      }
+    });
+  }
+});
+</script>
+
+<script>
+/* === “Exakt visningar”-meny === */
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('exactMenuBtn');
+  const menu = document.getElementById('exactMenu');
+  const totalEl = document.getElementById('exactTotalValue');
+  const footerEl = document.getElementById('exactFooter');
+
+  if (!btn || !menu || !totalEl || !footerEl) return;
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
   });
-  window.addEventListener('click', (e) => {
-    const wrap = document.querySelector('.profile-wrapper');
-    if (wrap && !wrap.contains(e.target)) {
+  document.addEventListener('click', () => { menu.style.display = 'none'; });
+
+  menu.querySelectorAll('.menu-item').forEach(mi => {
+    mi.addEventListener('click', async () => {
+      const range = mi.dataset.range; // today, 7d, month, all
       menu.style.display = 'none';
-      toggle.classList.remove('open');
-    }
+      try {
+        const res = await authedFetch(`/api/analytics/exact-views?range=${encodeURIComponent(range)}`);
+        const data = await res.json(); // { total, periodLabel }
+        totalEl.textContent  = (data?.total ?? 0).toLocaleString('sv-SE');
+        footerEl.textContent = `Period: ${data?.periodLabel || '—'}`;
+      } catch (err) {
+        console.error(err);
+        totalEl.textContent  = '0';
+        footerEl.textContent = 'Period: —';
+      }
+    });
   });
-  document.getElementById("switchAccount").addEventListener("click", (e) => {
-    e.preventDefault(); if (confirm("Vill du logga ut och byta konto?")) window.location.href = "login.html";
+});
+</script>
+
+<script>
+/* === Europa-SVG målning & tooltip === */
+document.addEventListener('DOMContentLoaded', async () => {
+  const svg = document.getElementById('europeMapSvg');
+  const tip = document.getElementById('europeTooltip'); // se till att elementet finns
+  if (!svg || !tip) return;
+
+  // Hämta data
+  let total = 0;
+  let byIso  = {};
+  try {
+    const res  = await authedFetch('/api/analytics/geo/europe');
+    const data = await res.json();
+    total = Number(data?.total || 0);
+    byIso  = data?.byIso || {};
+  } catch(e){
+    console.warn('europe data fail', e);
+  }
+
+  // Färgfunktion
+  const colorOf = (typeof window.buildColorOf === 'function')
+    ? window.buildColorOf(byIso)
+    : (() => () => '#e5e7eb');
+
+  // Måla
+  svg.querySelectorAll('path[id]').forEach(path => {
+    const iso = path.id.toUpperCase();
+    const v   = Number(byIso[iso] || 0);
+
+    path.style.fill = v > 0 ? colorOf(iso) : '#e5e7eb';
+    if (v > 0) path.setAttribute('data-has', '');
+
+    path.addEventListener('mousemove', (ev) => {
+      const name = path.getAttribute('name') || iso;
+      const share = total ? Math.round((v/total)*1000)/10 : 0;
+      tip.innerHTML = `
+        <strong>${name}</strong><br>
+        ${v.toLocaleString('sv-SE')} visningar${total ? ` (${share}%)` : ''}
+      `;
+      // placera relativt SVG container
+      const rect = svg.getBoundingClientRect();
+      tip.style.left = (ev.clientX - rect.left + 10) + 'px';
+      tip.style.top  = (ev.clientY - rect.top  + 10) + 'px';
+      tip.style.display = 'block';
+    });
+    path.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
   });
-  document.getElementById("openSettings").addEventListener("click", (e) => {
-    e.preventDefault(); window.location.href = "profile.html";
+
+  // Klick (hook för filtrering)
+  svg.addEventListener('click', (ev) => {
+    const target = ev.target.closest('path[id]');
+    if (!target) return;
+    const iso = target.id.toUpperCase();
+    // TODO: loadCountryBreakdown(iso)
   });
-  document.getElementById("logout").addEventListener("click", (e) => {
-    e.preventDefault();
-    if (confirm("Är du säker på att du vill logga ut?")) {
-      authedFetch('/logout', { method: 'GET', credentials: 'include' })
-        .then(res => res.json())
-        .then(data => { if (data.success) { localStorage.clear(); window.location.href = "/login.html"; } else { alert("Utloggning misslyckades."); }})
-        .catch(err => { console.error("Fel vid utloggning:", err); alert("Kunde inte logga ut."); });
-    }
-  });
+});
 </script>
 
 <script src="/js/logout.js"></script>
