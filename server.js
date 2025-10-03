@@ -52,7 +52,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "X-Tenant"],
+  allowedHeaders: ["Content-Type", "X-Tenant", "CSRF-Token"],
   preflightContinue: false,
   optionsSuccessStatus: 204,
 };
@@ -135,6 +135,9 @@ app.get('/admin-logins.html', requireLogin, (req, res) => {
   if (!user || user.role !== 'admin') return res.status(403).send('Åtkomst nekad');
   res.sendFile(path.join(__dirname, 'public', 'admin-logins.html'));
 });
+app.get('/profile.html', requireLogin, (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'profile.html'))
+);
 
 // Statisk leverans av övriga assets (CSS/JS/bilder) – måste ligga EFTER routes ovan
 app.use(express.static(path.join(__dirname, 'public')));

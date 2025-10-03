@@ -6,6 +6,9 @@ const rateLimit = require('express-rate-limit');
 const LoginEvent = require('../models/LoginEvent');
 const zxcvbn = require('zxcvbn');
 const csrf = require('csurf');
+const speakeasy = require('speakeasy');
+const crypto = require('crypto');
+
 
 // skapar en token och lägger den i/validerar mot cookie
 const csrfProtection = csrf({ cookie: true });
@@ -16,6 +19,13 @@ const loginLimiter = rateLimit({
   standardHeaders: true,        // skickar RateLimit-* headers
   legacyHeaders: false,
   message: { success: false, message: 'För många inloggningsförsök. Försök igen senare.' }
+});
+const twofaLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 min
+  max: 20,                  // lite högre än lösenordets steg
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'För många verifieringsförsök. Försök igen senare.' }
 });
 
 
@@ -93,30 +103,49 @@ router.post('/login', loginLimiter, csrfProtection, async (req, res) => {
       return res.status(401).json({ success: false, message: '❌ Fel e-post eller lösenord' });
     }
 
-    // 🔐 Regenerera session för att förhindra session fixation
-    await new Promise((resolve, reject) => {
-      req.session.regenerate(err => {
-        if (err) return reject(err);
-        resolve();
-      });
-    });    
-
-    // ✅ Spara endast det som behövs i sessionen
-    req.session.user = {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role || "user",
-      profileImage: user.profileImage,
-      settings: user.settings || {}
-    };
-
-    console.log("✅ Inloggad:", email);
-    // 📊 Logga enhet (IP + User-Agent) efter lyckad inloggning
-const ip = (req.headers['x-forwarded-for']?.split(',')[0] || '').trim() || req.socket.remoteAddress || '';
-const device = req.headers['user-agent'] || '';
-await LoginEvent.create({ userId: user._id, ip, device });
-    res.status(200).json({ success: true, message: '✅ Inloggning lyckades!' });
+        // 🔐 Om 2FA är aktivt => regenerera session och be om steg 2
+        if (user.twofa?.enabled) {
+          await new Promise((resolve, reject) => {
+            req.session.regenerate(err => (err ? reject(err) : resolve()));
+          });
+    
+          // Rensa ev. tidigare user-info för säkerhets skull
+          try { delete req.session.user; } catch (_) {}
+    
+          // Spara bara ett "pre-2FA"-läge i sessionen, INTE full user
+          req.session.pre2fa = {
+            userId: user._id.toString(),
+            methods: Array.isArray(user.twofa.methods) && user.twofa.methods.length ? user.twofa.methods : ['totp'],
+            ts: Date.now()
+          };
+    
+          return res.status(200).json({
+            success: true,
+            need2fa: true,
+            methods: req.session.pre2fa.methods
+          });
+        }
+    
+        // Ingen 2FA: slutför inloggning som tidigare (regenerate + set user)
+        await new Promise((resolve, reject) => {
+          req.session.regenerate(err => (err ? reject(err) : resolve()));
+        });
+    
+        req.session.user = {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role || "user",
+          profileImage: user.profileImage,
+          settings: user.settings || {}
+        };
+    
+        console.log("✅ Inloggad:", email);
+        const ip = (req.headers['x-forwarded-for']?.split(',')[0] || '').trim() || req.socket.remoteAddress || '';
+        const device = req.headers['user-agent'] || '';
+        await LoginEvent.create({ userId: user._id, ip, device });
+    
+        return res.status(200).json({ success: true, message: '✅ Inloggning lyckades!' });     
   } catch (err) {
     console.error('❌ Fel vid inloggning:', err);
     res.status(500).json({ success: false, message: '❌ Serverfel vid inloggning.' });
@@ -144,6 +173,81 @@ router.get('/me', (req, res) => {
   } else {
     console.warn("⚠️ Ingen användare inloggad – session saknas");
     return res.status(401).json({ success: false, message: "Inte inloggad" });
+  }
+});
+// 🔐 Steg 2 av inloggning: verifiera 2FA (TOTP eller backupkod)
+router.post('/login/2fa', twofaLimiter, csrfProtection, async (req, res) => {
+  try {
+    const pre = req.session?.pre2fa;
+    if (!pre?.userId) {
+      return res.status(401).json({ success: false, message: 'Ingen 2FA-session. Logga in igen.' });
+    }
+
+    const { token, code } = req.body || {};
+    const inputRaw = (token || code || '').toString().trim().toUpperCase();
+    if (!inputRaw) {
+      return res.status(400).json({ success: false, message: 'Saknar 2FA-kod' });
+    }
+
+    const user = await Customer.findById(pre.userId);
+    if (!user || !user.twofa?.enabled) {
+      return res.status(401).json({ success: false, message: '2FA inte aktivt för användaren' });
+    }
+
+    let ok = false;
+
+    // 1) TOTP (om secret finns)
+    if (user.twofa.secret) {
+      ok = speakeasy.totp.verify({
+        secret: user.twofa.secret,
+        encoding: 'base32',
+        token: inputRaw,
+        window: 1
+      });
+    }
+
+    // 2) Backupkod (om TOTP misslyckades)
+    if (!ok && Array.isArray(user.twofa.backupCodes) && user.twofa.backupCodes.length) {
+      const hash = crypto.createHash('sha256').update(inputRaw).digest('hex');
+      const idx = user.twofa.backupCodes.findIndex(h => h === hash);
+      if (idx !== -1) {
+        ok = true;
+        // konsumerar backupkoden: ta bort den
+        user.twofa.backupCodes.splice(idx, 1);
+        await user.save();
+      }
+    }
+
+    if (!ok) {
+      return res.status(401).json({ success: false, message: 'Felaktig 2FA-kod' });
+    }
+
+    // ✅ Klart: skapa riktig session och logga händelsen
+    await new Promise((resolve, reject) => {
+      req.session.regenerate(err => (err ? reject(err) : resolve()));
+    });
+
+    req.session.user = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role || "user",
+      profileImage: user.profileImage,
+      settings: user.settings || {}
+    };
+
+    // rensa pre2fa
+    try { delete req.session.pre2fa; } catch (_) {}
+
+    const ip = (req.headers['x-forwarded-for']?.split(',')[0] || '').trim() || req.socket.remoteAddress || '';
+    const device = req.headers['user-agent'] || '';
+    await LoginEvent.create({ userId: user._id, ip, device });
+
+    return res.status(200).json({ success: true, message: '✅ 2FA verifierad – inloggad!' });
+
+  } catch (err) {
+    console.error('❌ Fel vid 2FA-verifiering:', err);
+    return res.status(500).json({ success: false, message: '❌ Serverfel vid 2FA.' });
   }
 });
 

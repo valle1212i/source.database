@@ -209,3 +209,78 @@ button.primary:hover{ filter: brightness(.95); }
   .tab{ font-size:14px; }
   button.primary{ font-size:13px; padding:9px 14px; }
 }
+/* === 2FA Modal-stil === */
+#twofaModal[hidden] { display: none !important; }
+
+#twofaModal {
+  font-family: inherit;
+  color: #111827;
+}
+
+#twofaModal h3, #twofaModal h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+#twofaModal p.hint {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+#twofaModal input[type="text"] {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  padding: 8px 10px;
+  width: 100%;
+}
+
+#twofaModal pre {
+  font-family: monospace;
+  font-size: 0.9rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+#twofaModal button.primary {
+  background-color: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+#twofaModal button.primary:hover {
+  background-color: #1e40af;
+}
+
+#twofaModal button.secondary {
+  background-color: #f3f4f6;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+#twofaModal button.secondary:hover {
+  background-color: #e5e7eb;
+}
+
+#twofaModal button.back-btn {
+  background: transparent;
+  color: #6b7280;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+#twofaModal button.back-btn:hover {
+  text-decoration: underline;
+}

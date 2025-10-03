@@ -1,4 +1,3 @@
-// test
 <!DOCTYPE html>
 <html lang="sv">
 <head>
@@ -16,16 +15,16 @@
         <!-- Header-kortet -->
         <section class="profile-header">
           <div class="ph-left">
-            <div class="avatar">
+            <button type="button" class="avatar" id="avatarBtn" aria-label="Byt profilbild" title="Byt profilbild" style="cursor:pointer;">
               <img id="profileAvatar" src="" alt="Profilbild"/>
-            </div>
+            </button>            
             <div class="identity">
               <div class="badges" id="planBadges"></div>
               <h2 id="profileName" class="display-name">—</h2>
               <div id="profileEmail" class="muted">—</div>
             </div>
           </div>
-          <a href="#edit" class="edit-link">✎ Redigera</a>
+          <button type="button" class="edit-link" id="editProfileBtn">✎ Redigera</button>
         </section>
 
         <!-- Flikar (visuell, en panel just nu) -->
@@ -88,11 +87,13 @@
   <form id="settingsForm" class="grid-2">
     <div class="field">
       <label>Tvåfaktorsinloggning (TOTP)</label>
-      <div class="value-muted" id="twofaStatus">Inte aktiverad</div>
-      <div style="margin-top:8px; display:flex; gap:8px;">
+      <div class="value-muted" id="twofaStatus">Läser status…</div>
+      <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
         <button type="button" id="setup2faBtn" class="primary">Aktivera/Återställ 2FA</button>
+        <button type="button" id="regenBackupCodesBtn" class="secondary" disabled>Skapa nya reservkoder</button>
       </div>
     </div>
+    
 
     <div class="field">
       <label>Fakturering & paket</label>
@@ -107,6 +108,40 @@
 
     </div>
   </div>
+<!-- TOTP-Modal -->
+<div id="twofaModal" hidden
+     style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);z-index:1000;">
+  <div style="background:#fff;border-radius:12px;max-width:420px;width:92%;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.2)">
+    <h3 style="margin:0 0 10px;">Aktivera tvåfaktorsinloggning</h3>
+    <p class="hint" style="margin:0 0 12px;">1) Skanna QR med din Authenticator-app (Google/Microsoft/Authy). 2) Skriv in koden nedan.</p>
+
+    <div style="display:flex;gap:16px;align-items:center;margin:10px 0 14px;">
+      <img id="twofaQr" alt="QR-kod" style="width:140px;height:140px;border:1px solid #e5e7eb;border-radius:8px;object-fit:contain;background:#fff"/>
+      <div style="flex:1;">
+        <label for="twofaToken" style="display:block;margin-bottom:6px;font-weight:600;">6-siffrig kod</label>
+        <input id="twofaToken" type="text" inputmode="numeric" pattern="[0-9]*"
+               style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:16px;" />
+        <div id="twofaMsg" class="hint" style="margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button type="button" id="twofaCancelBtn" class="back-btn">Avbryt</button>
+      <button type="button" id="twofaVerifyBtn" class="primary">Verifiera & aktivera</button>
+    </div>
+
+    <!-- Backupkoder visas här efter aktivering -->
+    <div id="backupCodesBox" style="margin-top:16px;display:none;">
+      <h4 style="margin:0 0 8px;">Reservkoder</h4>
+      <p class="hint" style="margin:0 0 10px;">Spara dessa koder på en säker plats. Varje kod kan användas en gång.</p>
+      <pre id="backupCodesList" style="max-height:160px;overflow:auto;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;"></pre>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="button" id="downloadBackupCodesBtn" class="secondary">Ladda ned .txt</button>
+        <button type="button" id="closeModalAfterBackup" class="primary">Stäng</button>
+      </div>
+    </div>
+  </div>
+</div>
 
   <script>
     // ======= Befintlig logik + header/paket-badge =======
@@ -166,10 +201,184 @@ document.getElementById('billingPortalBtn')?.addEventListener('click', async ()=
   }catch(_){ alert('Tekniskt fel.'); }
 });
 
-// 2FA – föreslår separat sida med QR
-document.getElementById('setup2faBtn')?.addEventListener('click', ()=>{
-  location.href = '/security/2fa';
-});
+// === TOTP/2FA UI & API ===
+async function getCsrf() {
+  // Prova /csrf-token först (du använder den redan), fall back till /auth/csrf
+  const tryUrls = ['/csrf-token', '/auth/csrf', '/csrf'];
+  for (const url of tryUrls) {
+    try {
+      const r = await fetch(url, { credentials: 'include' });
+      if (!r.ok) continue;
+      const j = await r.json();
+      if (j?.csrfToken) return j.csrfToken;
+    } catch(_) {}
+  }
+  throw new Error('Hittar ingen CSRF-token');
+}
+
+
+async function refreshTwofaStatus() {
+  try {
+    const res = await fetch('/api/security/2fa/status', { credentials: 'include' });
+    const data = await res.json();
+    const el = document.getElementById('twofaStatus');
+    const regenBtn = document.getElementById('regenBackupCodesBtn');
+    if (!res.ok) throw new Error(data?.message || 'Kunde inte läsa status');
+
+    const enabled = !!data.enabled;
+    el.textContent = enabled ? 'Aktiverad' : 'Inte aktiverad';
+
+    // Aktivera/avaktivera knappen för reservkoder
+    if (regenBtn) {
+      regenBtn.disabled = !enabled;
+      regenBtn.classList.toggle('disabled', !enabled);
+    }
+  } catch (e) {
+    console.error('2FA-status fel:', e);
+    const el = document.getElementById('twofaStatus');
+    if (el) el.textContent = 'Kunde inte läsa status';
+  }
+}
+
+async function openTwofaModal() {
+  try {
+    const token = await getCsrf();
+    const res = await fetch('/api/security/2fa/totp/init', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'CSRF-Token': token },
+      body: JSON.stringify({})
+    });
+    const data = await res.json();
+    if (!res.ok || !data?.qr) throw new Error(data?.message || 'Kunde inte initiera 2FA');
+
+    document.getElementById('twofaQr').src = data.qr;
+    document.getElementById('twofaToken').value = '';
+    document.getElementById('twofaMsg').textContent = '';
+    document.getElementById('backupCodesBox').style.display = 'none';
+    document.getElementById('twofaModal').hidden = false;
+    setTimeout(()=>document.getElementById('twofaToken').focus(), 50);
+  } catch (e) {
+    alert('Kunde inte starta TOTP-setup.');
+    console.error(e);
+  }
+}
+
+async function verifyTwofaAndShowBackups() {
+  try {
+    const token = await getCsrf();
+    const code = (document.getElementById('twofaToken').value || '')
+  .replace(/\s+/g,'')     // ta bort mellanrum
+  .replace(/[^0-9]/g,'')  // behåll bara siffror
+  .trim();
+    if (!code) {
+      document.getElementById('twofaMsg').textContent = 'Ange koden från din app.';
+      return;
+    }
+
+    const res = await fetch('/api/security/2fa/totp/verify', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'CSRF-Token': token },
+      body: JSON.stringify({ token: code })
+    });
+    const data = await res.json();
+    if (!res.ok || !Array.isArray(data?.backupCodes)) {
+      document.getElementById('twofaMsg').textContent = data?.message || 'Felaktig kod. Försök igen.';
+      return;
+    }
+
+    // Visa backupkoder
+    const list = data.backupCodes.join('\n');
+    document.getElementById('backupCodesList').textContent = list;
+    document.getElementById('backupCodesBox').style.display = 'block';
+    document.getElementById('twofaMsg').textContent = '✅ 2FA är aktiverad. Spara koderna nedan.';
+    await refreshTwofaStatus();
+  } catch (e) {
+    console.error(e);
+    document.getElementById('twofaMsg').textContent = 'Tekniskt fel.';
+  }
+}
+
+function closeTwofaModal() {
+  document.getElementById('twofaModal').hidden = true;
+}
+
+// Ladda ned backupkoder som textfil
+function downloadBackupCodes() {
+  const text = document.getElementById('backupCodesList').textContent || '';
+  const blob = new Blob([text + '\n'], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'source-backupkoder.txt';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+// Regenerera reservkoder (kräver att 2FA redan är aktiv)
+async function regenerateBackupCodes() {
+  try {
+    const token = await getCsrf();
+    const res = await fetch('/api/security/2fa/backup-codes/regenerate', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'CSRF-Token': token },
+      body: JSON.stringify({})
+    });
+    const data = await res.json();
+    if (!res.ok || !Array.isArray(data?.backupCodes)) {
+      alert(data?.message || 'Kunde inte skapa nya koder.');
+      return;
+    }
+    // Visa modal direkt med nya koder
+    document.getElementById('twofaQr').src = '';
+    document.getElementById('twofaToken').value = '';
+    document.getElementById('twofaMsg').textContent = 'Nya reservkoder skapade.';
+    const list = data.backupCodes.join('\n');
+    document.getElementById('backupCodesList').textContent = list;
+    document.getElementById('backupCodesBox').style.display = 'block';
+    document.getElementById('twofaModal').hidden = false;
+  } catch (e) {
+    console.error(e);
+    alert('Tekniskt fel vid skapande av nya koder.');
+  }
+}
+
+// Hooka knappar
+document.getElementById('setup2faBtn')?.addEventListener('click', openTwofaModal);
+document.getElementById('twofaVerifyBtn')?.addEventListener('click', verifyTwofaAndShowBackups);
+document.getElementById('twofaCancelBtn')?.addEventListener('click', closeTwofaModal);
+document.getElementById('closeModalAfterBackup')?.addEventListener('click', closeTwofaModal);
+document.getElementById('downloadBackupCodesBtn')?.addEventListener('click', downloadBackupCodes);
+document.getElementById('regenBackupCodesBtn')?.addEventListener('click', regenerateBackupCodes);
+
+// Öppna filväljaren och säkerställ att "Profiluppgifter"-fliken är aktiv
+function openProfilePicPicker() {
+  const detailsTab = document.querySelector('.tabs .tab[data-tab="details"]');
+  const settingsPanel = document.getElementById('settingsPanel');
+  const detailsPanel = document.querySelector('.panel'); // första panelen
+
+  // Växla till Profiluppgifter om nödvändigt
+  if (detailsTab && !detailsTab.classList.contains('active')) {
+    detailsTab.click();
+  } else {
+    // ifall flikscriptet inte hunnit initiera: säkerställ visning
+    if (detailsPanel) detailsPanel.hidden = false;
+    if (settingsPanel) settingsPanel.hidden = true;
+  }
+
+  const input = document.getElementById('profilePic');
+  if (input) {
+    // Fokusera utan scroll (behagligt) och öppna dialogen
+    try { input.focus({ preventScroll: true }); } catch(_) {}
+    input.click();
+  }
+}
+
+// Koppla klick på "Redigera" och avatar
+document.getElementById('editProfileBtn')?.addEventListener('click', openProfilePicPicker);
+document.getElementById('avatarBtn')?.addEventListener('click', openProfilePicPicker);
 
 
     async function loadProfile() {
@@ -315,8 +524,9 @@ document.getElementById('setup2faBtn')?.addEventListener('click', ()=>{
       }
     });
 
-    // Init
-    loadProfile();
+   // Init
+refreshTwofaStatus && refreshTwofaStatus();
+loadProfile();
   </script>
 </body>
 </html>

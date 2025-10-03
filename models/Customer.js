@@ -135,7 +135,27 @@ const customerSchema = new mongoose.Schema({
     trim: true,
     maxlength: 500,
     default: null
-  }
+  }, // Added comma here
+  // 🔐 Tvåfaktorsautentisering (2FA)
+  twofa: {
+      enabled: { type: Boolean, default: false },
+      // Kan vara ["totp"], ["webauthn"], ["sms"], kombinationer
+      methods: { type: [String], default: [] },
+  
+      // Hemlighet för TOTP (base32), sparas endast när aktiverat
+      secret: { type: String, default: null },
+  
+      // Hashade backupkoder (bcrypt/argon2), aldrig i klartext
+      backupCodes: { type: [String], default: [] },
+  
+      // För framtidssäkerhet: WebAuthn credentials
+      webauthn: [{
+        credId: String,
+        publicKey: String,
+        counter: Number,
+        transports: [String]
+      }]
+    }
 }, { timestamps: true });
 
 // 🔐 Behåll ditt befintliga index (en admin per groupId)
