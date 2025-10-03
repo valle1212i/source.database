@@ -9,7 +9,7 @@
 body {
   font-family: 'Segoe UI', sans-serif;
   color: #333;
-  background-image: url('../images/AIbakgrundbild2.0.png'), url('../images/AIbakgrundbild4.0.png');
+  background-image: url('../Images/AIbakgrundbild2.0.png'), url('../Images/AIbakgrundbild4.0.png');
   background-repeat: no-repeat, no-repeat;
   background-position: 120% -60px, -60% -70px; /* Första bilden till höger, andra bilden till vänster */
   background-size: 54%, 78%; /* Justera storleken för varje bild */
