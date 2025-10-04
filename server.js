@@ -61,7 +61,6 @@ app.use(cors(corsOptions));
 app.options(/.*/, cors(corsOptions)); // handle preflight for any path
 
 
-
 // ── Sessions (återanvänds av Socket.IO) ──────────────────────────────────────
 app.use(cookieParser());
 const sessionMiddleware = session({

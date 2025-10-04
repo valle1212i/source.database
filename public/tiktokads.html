@@ -192,15 +192,16 @@
 
       try {
         const token = await csrfTokenPromise;
-        const res = await fetch("/api/customers/marketing/tiktok", {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { "x-csrf-token": token } : {})
-          },
-          body: JSON.stringify(payload)
-        });
+const res = await fetch("/api/ads/tiktok", {
+  method: "POST",
+  credentials: "include",
+  headers: {
+    "Content-Type": "application/json",
+    ...(token ? { "x-csrf-token": token } : {})
+  },
+  body: JSON.stringify(payload) // { q1, q2, q3, q4, q5, q6, q7, extraInfo? }
+});
+
 
         if (!res.ok) {
           let msg = `Serverfel ${res.status}`;

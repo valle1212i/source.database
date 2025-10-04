@@ -52,6 +52,8 @@ router.post('/:platform', requireAuth, adsLimiter, async (req, res) => {
       platform,
       userId: req.session.user._id
     });
+    await ad.save();                 // 👈 lägg till detta
+    return res.status(200).json({ success: true });
 
         // Behåll legacy-beteende: samma statuskod och svar
     res.status(200).json({ success: true });
