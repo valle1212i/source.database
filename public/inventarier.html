@@ -75,7 +75,12 @@
     <p>Hantera dina produkter och lagersaldo. Få notiser när produkter är slutsålda.</p>
 
     <section class="card">
-      <input type="text" id="searchInput" placeholder="🔍 Sök produkt, artikelnummer eller status..." onkeyup="filterTable()" style="margin-bottom: 15px; padding: 10px; width: 100%; border-radius: 6px; border: 1px solid #ccc;">
+      <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
+        <button id="openNewProduct" type="button" style="padding:10px 14px; border-radius:8px; border:1px solid #ccc; background:var(--card-bg,#fff); cursor:pointer;">
+          ➕ Ny produkt
+        </button>
+        <input type="text" id="searchInput" placeholder="🔍 Sök produkt, artikelnummer eller status..." onkeyup="filterTable()" style="flex:1; min-width:240px; padding:10px; border-radius:6px; border:1px solid #ccc;">
+      </div>
 
       <table class="inventory-table" id="inventoryTable">
         <thead>
@@ -87,15 +92,95 @@
             <th>Redigera</th>
           </tr>
         </thead>
-        <!-- ENDA tbody: fylls via JS -->
         <tbody id="inventoryBody"></tbody>
       </table>
     </section>
+
 
     <section class="notifications">
       <h3>Notiser</h3>
       <ul id="notifList" style="margin:0; padding-left:18px;"></ul>
     </section>
+
+    <!-- Modal: Ny produkt -->
+    <div id="newProductModal" aria-hidden="true" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:5000;">
+      <div role="dialog" aria-modal="true" aria-labelledby="np-title"
+           style="max-width:720px; width:92%; margin:5vh auto; background:var(--card-bg,#fff); border-radius:12px; padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.2);">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;">
+          <h2 id="np-title" style="margin:0;">Ny produkt</h2>
+          <button type="button" id="np-close" aria-label="Stäng" style="border:1px solid #ddd; background:#f7f7f7; border-radius:8px; padding:6px 10px; cursor:pointer;">✕</button>
+        </div>
+
+        <form id="newProductForm">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <label>Produktnamn
+              <input id="np-name" type="text" required style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+            </label>
+            <label>Artikelnummer (SKU)
+              <input id="np-sku" type="text" placeholder="Ex. TS1001" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+            </label>
+            <label style="grid-column:1 / -1;">Beskrivning
+              <textarea id="np-desc" rows="3" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;"></textarea>
+            </label>
+            <label>Bild-URL (valfritt)
+              <input id="np-image" type="url" placeholder="https://..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+            </label>
+            <div>
+              <div id="np-dropzone"
+                   role="button"
+                   tabindex="0"
+                   aria-label="Släpp bild här eller klicka för att välja"
+                   style="display:flex; align-items:center; justify-content:center; text-align:center; min-height:120px; padding:14px; border:2px dashed #d1d5db; border-radius:12px; background:#fafafa; cursor:pointer;">
+                <div>
+                  <div style="font-weight:600; margin-bottom:4px;">Släpp bild här</div>
+                  <div style="color:#6b7280; font-size:14px;">…eller klicka för att välja en fil</div>
+                  <div style="color:#6b7280; font-size:12px; margin-top:6px;">PNG, JPG, WEBP, GIF, HEIC/HEIF · Max 5&nbsp;MB</div>
+                </div>
+              </div>
+            
+              <!-- Dold input som triggas av klick/Enter/Space -->
+              <input id="np-image-file" type="file" accept="image/*" style="display:none;">
+            
+              <div id="np-image-preview" style="margin-top:8px; display:none;">
+                <img id="np-image-preview-img" alt="Förhandsgranskning" style="max-width:180px; max-height:120px; border-radius:8px; border:1px solid #e5e7eb;">
+              </div>
+            </div>                      
+            <label>Antal i lager (om inga varianter)
+              <input id="np-stock" type="number" min="0" value="0" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;">
+            </label>
+          </div>
+
+          <div style="margin-top:12px;">
+            <label style="display:flex; align-items:center; gap:8px;">
+              <input id="np-use-variants" type="checkbox"> Använd varianter (storlek/mått)
+            </label>
+          </div>
+
+          <div id="np-variants" style="display:none; margin-top:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong>Varianter</strong>
+              <button id="np-add-variant" type="button" style="padding:6px 10px; border:1px solid #ccc; border-radius:8px; background:#f7f7f7; cursor:pointer;">➕ Lägg till variant</button>
+            </div>
+            <table style="width:100%; border-collapse:collapse;">
+              <thead>
+                <tr>
+                  <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">Nyckel (t.ex. S/M/L)</th>
+                  <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">Variant-SKU</th>
+                  <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">Lager</th>
+                  <th style="padding:8px; border-bottom:1px solid #eee;"></th>
+                </tr>
+              </thead>
+              <tbody id="np-variant-body"></tbody>
+            </table>
+          </div>
+
+          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+            <button type="button" id="np-cancel" style="padding:10px 14px; border:1px solid #ccc; border-radius:8px; background:#f7f7f7; cursor:pointer;">Avbryt</button>
+            <button type="submit" style="padding:10px 14px; border:1px solid #1f7ae0; border-radius:8px; background:#1f7ae0; color:#fff; cursor:pointer;">Spara produkt</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </main>
 <!-- INVENTARIE-LOGIK: dynamisk render + SSE -->
 <script>
@@ -211,12 +296,203 @@
     rows.forEach(r => tbody.appendChild(r));
   }
 
+  // === Modal "Ny produkt" + Varianter + Spara + Upload ===
+  function qs(id){ return document.getElementById(id); }
+
+  function openNewProduct(){
+    resetNewProductForm();
+    const modal = qs('newProductModal');
+    modal.style.display = 'block';
+    modal.setAttribute('aria-hidden','false');
+    qs('np-name').focus();
+  }
+  function closeNewProduct(){
+    const modal = qs('newProductModal');
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden','true');
+  }
+  function resetNewProductForm(){
+    qs('newProductForm').reset();
+    qs('np-variants').style.display = 'none';
+    const body = qs('np-variant-body');
+    while (body.firstChild) body.removeChild(body.firstChild);
+    const p = qs('np-image-preview'); const img = qs('np-image-preview-img');
+    if (p) p.style.display = 'none';
+    if (img) img.src = '';
+  }
+
+  function addVariantRow(seed = { key:'', sku:'', stock:0 }){
+    const tr = document.createElement('tr');
+    function tdWrap(el){ const td = document.createElement('td'); td.style.padding='6px 8px'; td.appendChild(el); return td; }
+
+    const keyInput = document.createElement('input');
+    keyInput.type = 'text'; keyInput.value = seed.key || '';
+    keyInput.placeholder = 'S / M / L'; keyInput.style.width='100%'; keyInput.style.padding='8px'; keyInput.style.border='1px solid #ccc'; keyInput.style.borderRadius='6px';
+
+    const skuInput = document.createElement('input');
+    skuInput.type = 'text'; skuInput.value = seed.sku || '';
+    skuInput.placeholder = 'SKU-variant'; skuInput.style.width='100%'; skuInput.style.padding='8px'; skuInput.style.border='1px solid #ccc'; skuInput.style.borderRadius='6px';
+
+    const stockInput = document.createElement('input');
+    stockInput.type = 'number'; stockInput.min = '0'; stockInput.value = String(seed.stock ?? 0);
+    stockInput.style.width='100%'; stockInput.style.padding='8px'; stockInput.style.border='1px solid #ccc'; stockInput.style.borderRadius='6px';
+
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button'; delBtn.textContent = 'Ta bort';
+    delBtn.style.padding='6px 10px'; delBtn.style.border='1px solid #ccc'; delBtn.style.borderRadius='6px'; delBtn.style.background='#f7f7f7'; delBtn.style.cursor='pointer';
+    delBtn.onclick = () => tr.remove();
+
+    tr.append(
+      tdWrap(keyInput),
+      tdWrap(skuInput),
+      tdWrap(stockInput),
+      tdWrap(delBtn)
+    );
+    qs('np-variant-body').appendChild(tr);
+  }
+
+  function collectVariants(){
+    const rows = Array.from(qs('np-variant-body').querySelectorAll('tr'));
+    const out = [];
+    for (const r of rows){
+      const [keyEl, skuEl, stockEl] = r.querySelectorAll('input');
+      const key = (keyEl.value || '').trim();
+      const sku = (skuEl.value || '').trim();
+      const stock = Math.max(0, Number(stockEl.value || 0));
+      if (key || sku){ out.push({ key, sku, stock }); }
+    }
+    return out;
+  }
+
+  async function uploadImage(file){
+    if (!file) throw new Error('Ingen fil vald');
+    if (!CSRF_TOKEN) await initCsrf();
+    const fd = new FormData();
+    fd.append('image', file);
+    const r = await fetch(API_BASE + '/api/inventory/upload', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'X-CSRF-Token': CSRF_TOKEN }, // csurf accepterar denna header
+      body: fd
+    });
+    const d = await r.json();
+    if (!r.ok || !d?.success) throw new Error(d?.message || 'Misslyckad uppladdning');
+    return d.url; // t.ex. /uploads/123456-file.jpg
+  }
+
+  async function onImageFileChange(e){
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try{
+      const url = await uploadImage(file);
+      const urlInput = qs('np-image');
+      urlInput.value = url;
+
+      const img = qs('np-image-preview-img');
+      const wrap = qs('np-image-preview');
+      if (img && wrap){
+        img.src = url;
+        wrap.style.display = 'block';
+      }
+    }catch(err){
+      console.error(err);
+      alert(err.message || 'Kunde inte ladda upp bilden.');
+      e.target.value = ''; // resetta filfältet
+    }
+  }
+
+  async function submitNewProduct(e){
+    e.preventDefault();
+    const name = (qs('np-name').value || '').trim();
+    const sku = (qs('np-sku').value || '').trim();
+    const description = (qs('np-desc').value || '').trim();
+    const imageUrl = (qs('np-image').value || '').trim(); // kan komma från uppladdningen
+    const useVariants = qs('np-use-variants').checked;
+    const stock = Math.max(0, Number(qs('np-stock').value || 0));
+
+    const payload = { name, description, imageUrl };
+    if (useVariants){
+      const variants = collectVariants();
+      if (!variants.length) { alert('Lägg till minst en variant.'); return; }
+      payload.variants = variants;
+      if (sku) payload.sku = sku; // valfri topp-SKU
+    } else {
+      payload.sku = sku;
+      payload.stock = stock;
+    }
+
+    try{
+      if (!CSRF_TOKEN) await initCsrf();
+      const r = await fetch(API_BASE + '/api/inventory/items', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': CSRF_TOKEN
+        },
+        body: JSON.stringify(payload)
+      });
+      const d = await r.json();
+      if (!r.ok || !d.success){ throw new Error(d?.error || 'Kunde inte spara produkten'); }
+      const snap = await fetch(API_BASE + '/api/inventory', { credentials:'include' }).then(x=>x.json());
+      if (snap?.success) render(snap.items);
+      closeNewProduct();
+    }catch(err){
+      console.error(err);
+      alert(err.message || 'Något gick fel vid sparning.');
+    }
+  }
+
+   // === Drag & drop (bild) ===
+   function setupDropzone(){
+    const dz = qs('np-dropzone');
+    const fileInput = qs('np-image-file');
+    if (!dz || !fileInput) return;
+
+    function highlight(on){
+      dz.style.borderColor = on ? '#1f7ae0' : '#d1d5db';
+      dz.style.background = on ? '#f5f9ff' : '#fafafa';
+    }
+
+    // Klick + tangentbord öppnar filväljare
+    dz.addEventListener('click', () => fileInput.click());
+    dz.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+    });
+
+    // Förhindra default vid drag events + highlight
+    ['dragenter','dragover'].forEach(ev => {
+      dz.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); highlight(true); });
+    });
+    ['dragleave','dragend'].forEach(ev => {
+      dz.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); highlight(false); });
+    });
+
+    dz.addEventListener('drop', async (e) => {
+      e.preventDefault(); e.stopPropagation(); highlight(false);
+      const file = e.dataTransfer?.files?.[0];
+      if (!file) return;
+      try{
+        const url = await uploadImage(file);
+        const urlInput = qs('np-image');
+        if (urlInput) urlInput.value = url;
+        const img = qs('np-image-preview-img');
+        const wrap = qs('np-image-preview');
+        if (img && wrap){ img.src = url; wrap.style.display = 'block'; }
+      }catch(err){
+        console.error(err);
+        alert(err.message || 'Kunde inte ladda upp bilden.');
+      }
+    });
+  }
+
   // === Redigering / API ===
   function updateStatus(stock, statusCell) {
     const s = statusFor(stock);
     statusCell.textContent = s.text;
     statusCell.className = s.className;
   }
+
 
   function callStockAPI(productId, quantity, op){
     const endpoint = op === "return" ? "/api/inventory/return" : "/api/inventory/buy";
@@ -362,6 +638,27 @@
       .then(r => r.json())
       .then(d => { if (d.success) render(d.items); });
     connectSSE();
+
+    // Wire modal/UI
+    const btn = document.getElementById('openNewProduct');
+    if (btn) btn.addEventListener('click', openNewProduct);
+    const useVar = document.getElementById('np-use-variants');
+    if (useVar) useVar.addEventListener('change', () => {
+      document.getElementById('np-variants').style.display = useVar.checked ? 'block' : 'none';
+    });
+    const addVar = document.getElementById('np-add-variant');
+    if (addVar) addVar.addEventListener('click', () => addVariantRow());
+    const closeBtn = document.getElementById('np-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeNewProduct);
+    const cancelBtn = document.getElementById('np-cancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', closeNewProduct);
+    const form = document.getElementById('newProductForm');
+    if (form) form.addEventListener('submit', submitNewProduct);
+
+    // Upload: filfält + drag & drop
+    const fileInput = document.getElementById('np-image-file');
+    if (fileInput) fileInput.addEventListener('change', onImageFileChange);
+    setupDropzone();
   }
   initInventory();
 

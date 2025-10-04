@@ -26,6 +26,11 @@ const { router: securityRouter, requireAuth } = require("./routes/security");
 const payoutsRoutes = require('./routes/payouts');
 const reportRoutes = require('./routes/reportRoutes');
 
+// Inventarie/Stripe (NYTT)
+const inventoryRoutes = require('./routes/inventoryRoutes');
+const { router: stripeInventoryWebhookRouter, rawBody: stripeRawBody } = require('./routes/stripeInventoryWebhook');
+
+
 // ── App & HTTP/Socket.IO ──────────────────────────────────────────────────────
 const app = express();
 app.set('trust proxy', 1); // krävs på Render för secure cookies
@@ -52,7 +57,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "X-Tenant", "CSRF-Token"],
+  allowedHeaders: ["Content-Type", "X-Tenant", "CSRF-Token", "X-CSRF-Token"],
   preflightContinue: false,
   optionsSuccessStatus: 204,
 };
@@ -89,9 +94,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Stripe webhook (rå body, ingen CSRF) ─────────────────────────────────────
+// OBS: gör inget förrän STRIPE_SECRET_KEY och STRIPE_WEBHOOK_SECRET_INVENTORY finns.
+// Endast denna path använder rawBody → säkert ihop med global express.json().
+app.post('/webhooks/stripe-inventory', stripeRawBody, stripeInventoryWebhookRouter);
+
 // ── Parsers & statics ────────────────────────────────────────────────────────
 app.use(express.urlencoded({ extended: true, limit: '200kb' }));
 app.use(express.json({ limit: '200kb' }));
+
 
 // ── HTML-sidor (skyddade) ────────────────────────────────────────────────────
 // En (1) definition av requireLogin
@@ -212,8 +223,10 @@ const CSRF_SKIP = new Set([
   '/api/pageviews/track',  // extern tracker
   '/api/inventory/buy',
   '/api/inventory/return',
-   '/api/messages',
+  '/api/messages',
+  '/webhooks/stripe-inventory', // webhook ska inte CSRF-skyddas
 ]);
+
 
 app.use((req, res, next) => {
   if (CSRF_SKIP.has(req.path)) return next();
@@ -406,6 +419,10 @@ app.use('/api/pageviews', require('./routes/pageviews_ext.js'));
 app.use('/vendor', express.static(path.join(__dirname, 'vendor')));
 app.use('/api/customer-invoices', customerInvoiceRoutes);
 
+// Inventarie-API (NYTT): /api/inventory, /api/inventory/items, /api/inventory/stream, /buy, /return
+app.use(inventoryRoutes);
+
+
 
 
 
@@ -417,111 +434,9 @@ app.post('/login', (req, res) => {
   });
 });
 
-// ── Inventory + Orders (SSE) ─────────────────────────────────────────────────
-let inventory = {
-  TS1001: { name: "Vit T-shirt",  stock: 0  },
-  HD1002: { name: "Svart Hoodie", stock: 12 },
-  KP1003: { name: "Blå Keps",     stock: 3  },
-  GM1004: { name: "Grå Mössa",    stock: 6  },
-  SN1005: { name: "Vita Sneakers", stock: 0 }
-};
-let orders = []; // { id, productId, sku, name, qty, ts }
+// ── Inventory (flyttat till routes/inventoryRoutes.js) ───────────────────────
+// API-endpoints och SSE hanteras nu i inventoryRoutes med auth + tenant + CSRF.
 
-function ordersPerHourLast24h(list) {
-  const now = Date.now();
-  const ONE_H = 60 * 60 * 1000;
-  const start = now - 23 * ONE_H;
-  const buckets = [];
-  for (let i = 0; i < 24; i++) {
-    const t = start + i * ONE_H;
-    const hour = new Date(t);
-    const count = list
-      .filter(o => {
-        const ts = typeof o.ts === 'number' ? o.ts : Date.parse(o.ts);
-        return ts >= t && ts < t + ONE_H;
-      })
-      .reduce((sum, o) => sum + o.qty, 0);
-    buckets.push({ label: hour.toLocaleTimeString('sv-SE', { hour: '2-digit' }), count });
-  }
-  return buckets;
-}
-
-function bestsellers(list) {
-  const map = new Map();
-  for (const o of list) {
-    const key = o.productId || o.sku;
-    if (!map.has(key)) map.set(key, { id: key, sku: key, name: o.name, qty: 0 });
-    map.get(key).qty += o.qty;
-  }
-  return [...map.values()].sort((a,b)=> b.qty - a.qty);
-}
-
-app.get("/api/orders/summary", (req, res) => {
-  const totalOrders = orders.reduce((sum, o) => sum + o.qty, 0);
-  const latestOrder = orders[orders.length - 1] || null;
-  const top = bestsellers(orders);
-  const perHour = ordersPerHourLast24h(orders);
-  res.json({ success: true, totalOrders, latestOrder, bestsellers: top, perHour });
-});
-
-const sseClients = new Set();
-function toItemsArray(invObj) {
-  return Object.entries(invObj).map(([sku, v]) => ({ id: sku, sku, name: v.name, stock: v.stock }));
-}
-function sseBroadcast(payload) {
-  const data = `data: ${JSON.stringify(payload)}\n\n`;
-  for (const res of sseClients) res.write(data);
-}
-
-app.get("/api/inventory", (req, res) => {
-  if ((req.query.format || '').toLowerCase() === 'object') return res.json(inventory);
-  res.json({ success: true, items: toItemsArray(inventory) });
-});
-
-app.post("/api/inventory/buy", inventoryLimiter, (req, res) => {
-  const { productId, quantity } = req.body || {};
-  const product = inventory[productId];
-  const qty = Number(quantity);
-  if (!product) return res.status(404).json({ success: false, error: "Produkt hittades inte" });
-  if (!Number.isInteger(qty) || qty <= 0) return res.status(400).json({ success: false, error: "Ogiltig kvantitet" });
-  if (product.stock < qty) return res.status(400).json({ success: false, error: "Ej tillräckligt i lager" });
-
-  product.stock -= qty;
-  const item = { id: productId, sku: productId, name: product.name, stock: product.stock };
-
-  const order = { id: `ORD-${Date.now()}`, productId, sku: productId, name: product.name, qty, ts: Date.now() };
-  orders.push(order);
-
-  sseBroadcast({ type: "stock", item });
-  sseBroadcast({ type: "order", order });
-
-  res.json({ success: true, item });
-});
-
-app.post("/api/inventory/return", inventoryLimiter, (req, res) => {
-  const { productId, quantity } = req.body || {};
-  const product = inventory[productId];
-  const qty = Number(quantity);
-  if (!product) return res.status(404).json({ success: false, error: "Produkt hittades inte" });
-  if (!Number.isInteger(qty) || qty <= 0) return res.status(400).json({ success: false, error: "Ogiltig kvantitet" });
-
-  product.stock += qty;
-  const item = { id: productId, sku: productId, name: product.name, stock: product.stock };
-  sseBroadcast({ type: "stock", item });
-  res.json({ success: true, item });
-});
-
-app.get("/api/inventory/stream", (req, res) => {
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-  res.setHeader("X-Accel-Buffering", "no");
-  if (res.flushHeaders) res.flushHeaders();
-
-  res.write(`data: ${JSON.stringify({ type: "snapshot", items: toItemsArray(inventory) })}\n\n`);
-  sseClients.add(res);
-  req.on("close", () => sseClients.delete(res));
-});
 
 // ── Socket.IO (med delad session + auth) ─────────────────────────────────────
 const io = require('socket.io')(http, { cors: { origin: allowedOrigins, credentials: true }});
