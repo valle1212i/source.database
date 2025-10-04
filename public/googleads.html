@@ -187,65 +187,56 @@
       }
     }
 
-    document.getElementById("stepForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
+document.getElementById("stepForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
 
-      const formData = new FormData(this);
-      const data = Object.fromEntries(formData.entries());
+  try {
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
 
-      // Mappa svaren till backend-formatet som adminportalen visar
-      const payload = {
-        // userEmail: "valfritt@fallback.se", // behövs inte om du har session → req.user.email
-        marketing: {
-          googleAds: {
-            // Admin-HTML tittar på ".goals"
-            goals: data.q2 || "",
-            // Övrig struktur (sparas också i DB)
-            type: data.q1 || "",
-            adType: data.q3 || "",
-            geography: data.q4 || "",
-            useImages: data.q5 || "",
-            brief: data.q6 || "",
-            offerOrDeadline: data.q7 || "",
-            updatedAt: new Date().toISOString()
-          }
-        }
-      };
+    // SKICKA PLATT BODY enligt adsRoutes.js schema
+    const payload = {
+      q1: data.q1 || "",
+      q2: data.q2 || "",
+      q3: data.q3 || "",
+      q4: data.q4 || "",
+      q5: data.q5 || "",
+      q6: data.q6 || "",
+      q7: data.q7 || "",
+    };
 
-      try {
-        const token = await csrfTokenPromise;
-const res = await fetch("/api/ads/google", {
-  method: "POST",
-  credentials: "include",
-  headers: {
-    "Content-Type": "application/json",
-    ...(token ? { "x-csrf-token": token } : {})
-  },
-  body: JSON.stringify(payload) // { q1, q2, q3, q4, q5, q6, q7, extraInfo? }
-});
-
-
-        if (!res.ok) {
-          let msg = `Serverfel ${res.status}`;
-          try {
-            const j = await res.json();
-            if (j?.message || j?.error) msg = j.message || j.error;
-          } catch {}
-          throw new Error(msg);
-        }
-
-        // Visa tack-skärmen
-        steps[currentStep].classList.remove("active");
-        currentStep++;
-        if (steps[currentStep]) {
-          steps[currentStep].classList.add("active");
-          updateProgressBar();
-        }
-      } catch (err) {
-        console.error("Fel:", err);
-        alert("❌ Kunde inte skicka in formuläret. " + (err?.message || "Försök igen."));
-      }
+    const token = await csrfTokenPromise;
+    const res = await fetch("/api/ads/google", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { "x-csrf-token": token } : {})
+      },
+      body: JSON.stringify(payload)
     });
+
+    if (!res.ok) {
+      let msg = `Serverfel ${res.status}`;
+      try {
+        const j = await res.json();
+        if (j?.message || j?.error) msg = j.message || j.error;
+      } catch {}
+      throw new Error(msg);
+    }
+
+    // Visa tack-skärmen
+    steps[currentStep].classList.remove("active");
+    currentStep++;
+    if (steps[currentStep]) {
+      steps[currentStep].classList.add("active");
+      updateProgressBar();
+    }
+  } catch (err) {
+    console.error("Fel:", err);
+    alert("❌ Kunde inte skicka in formuläret. " + (err?.message || "Försök igen."));
+  }
+});
 
     // Tillgängliggör i global scope
     window.nextStep = nextStep;
