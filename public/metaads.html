@@ -10,7 +10,7 @@
 <body>
   <div class="sidebar">
     <div class="logo">
-      <img src="Images/logo.png" alt="Logotyp" class="logo-img" />
+      <img src="images/logo.png" alt="Logotyp" class="logo-img" />
     </div>
     <ul class="nav-menu">
       <li><a href="customerportal.html"><i class="fas fa-home"></i> Hem</a></li>
@@ -163,7 +163,7 @@
         for (const input of inputs) {
           if (input.type === "radio") {
             const name = input.name;
-            const group = current.querySelectorAll(`input[name="${name}"]`);
+            const group = current.querySelectorAll('input[name="' + name + '"]');
             if (![...group].some(i => i.checked)) {
               alert("Välj ett alternativ innan du går vidare.");
               return;
@@ -196,37 +196,31 @@
       document.getElementById("stepForm").addEventListener("submit", async function (e) {
         e.preventDefault();
 
-        const data = Object.fromEntries(new FormData(this).entries());
-
-        // Mappa till backend/admin-format
-        const payload = {
-          marketing: {
-            metaAds: {
-              goals: data.huvudmal || data.q1 || "", // admin-HTML tittar på ".goals"
-              campaignType: data.q1 || "",
-              audience: data.q2 || "",
-              objective: data.huvudmal || "",
-              media: data.media || "",
-              budget: data.budget || "",
-              businessDesc: data.verksamhet || "",
-              message: data.budskap || "",
-              updatedAt: new Date().toISOString()
-            }
-          }
-        };
-
         try {
-          const token = await csrfTokenPromise;
-const res = await fetch("/api/ads/meta", {
-  method: "POST",
-  credentials: "include",
-  headers: {
-    "Content-Type": "application/json",
-    ...(token ? { "x-csrf-token": token } : {})
-  },
-  body: JSON.stringify(payload) // { q1, q2, q3, q4, q5, q6, q7, extraInfo? }
-});
+          const formData = new FormData(this);
+          const data = Object.fromEntries(formData.entries());
 
+          // Mappa fältnamn → q1..q7 för adsRoutes.js
+          const payload = {
+            q1: data.q1 || "",                // kampanjtyp
+            q2: data.q2 || "",                // målgrupp
+            q3: data.huvudmal || "",          // huvudmål
+            q4: data.media || "",             // media
+            q5: data.budget || "",            // budget
+            q6: data.verksamhet || "",        // kort beskrivning
+            q7: data.budskap || ""            // budskap
+          };
+
+          const token = await csrfTokenPromise;
+          const res = await fetch("/api/ads/meta", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { "x-csrf-token": token } : {})
+            },
+            body: JSON.stringify(payload)
+          });
 
           if (!res.ok) {
             let msg = `Serverfel ${res.status}`;

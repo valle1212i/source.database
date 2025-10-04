@@ -161,45 +161,55 @@
         }
       }
 
-      document.getElementById("stepForm").addEventListener("submit", async function (e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData.entries());
+document.getElementById("stepForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  try {
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
 
-        try {
-          const token = await csrfTokenPromise;
-const res = await fetch("/api/ads/linkedin", {
-  method: "POST",
-  credentials: "include",
-  headers: {
-    "Content-Type": "application/json",
-    ...(token ? { "x-csrf-token": token } : {})
-  },
-  body: JSON.stringify(payload) // { q1, q2, q3, q4, q5, q6, q7, extraInfo? }
+    // SKICKA PLATT BODY enligt adsRoutes.js schema
+    const payload = {
+      q1: data.q1 || "",
+      q2: data.q2 || "",
+      q3: data.q3 || "",
+      q4: data.q4 || "",
+      q5: data.q5 || "",
+      q6: data.q6 || "",
+      q7: data.q7 || "",
+    };
+
+    const token = await csrfTokenPromise;
+    const res = await fetch("/api/ads/linkedin", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { "x-csrf-token": token } : {})
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      let msg = `Serverfel ${res.status}`;
+      try {
+        const j = await res.json();
+        if (j?.message || j?.error) msg = j.message || j.error;
+      } catch {}
+      throw new Error(msg);
+    }
+
+    // Visa tack-sidan
+    steps[currentStep].classList.remove("active");
+    currentStep++;
+    if (steps[currentStep]) {
+      steps[currentStep].classList.add("active");
+      updateProgressBar();
+    }
+  } catch (err) {
+    console.error("Fel:", err);
+    alert("❌ Kunde inte skicka in formuläret. " + (err?.message || ""));
+  }
 });
-
-
-          if (!res.ok) {
-            let msg = `Serverfel ${res.status}`;
-            try {
-              const j = await res.json();
-              if (j?.message || j?.error) msg = j.message || j.error;
-            } catch {}
-            throw new Error(msg);
-          }
-
-          // Visa tack-sidan
-          steps[currentStep].classList.remove("active");
-          currentStep++;
-          if (steps[currentStep]) {
-            steps[currentStep].classList.add("active");
-            updateProgressBar();
-          }
-        } catch (err) {
-          console.error("Fel:", err);
-          alert("❌ Kunde inte skicka in formuläret. " + (err?.message || ""));
-        }
-      });
 
       // Exponera för knapparna i HTML
       window.nextStep = nextStep;

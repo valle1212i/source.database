@@ -169,55 +169,49 @@
     }
 
     // 🟢 Skicka till servern
-    document.getElementById("stepForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
+document.getElementById("stepForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
 
-      const data = Object.fromEntries(new FormData(this).entries());
+  try {
+    const data = Object.fromEntries(new FormData(this).entries());
 
-      // Mappa till backend/admin-format
-      const payload = {
-        marketing: {
-          tiktokAds: {
-            goals: data.objective || "",          // admin-HTML använder ".goals"
-            objective: data.objective || "",
-            target: data.target || "",
-            message: data.message || "",
-            style: data.style || "",
-            hashtag: data.hashtag || "",
-            cta: data.cta || "",
-            updatedAt: new Date().toISOString()
-          }
-        }
-      };
+    // SKICKA PLATT BODY enligt adsRoutes.js schema
+    const payload = {
+      q1: data.q1 || "",
+      q2: data.q2 || "",
+      q3: data.q3 || "",
+      q4: data.q4 || "",
+      q5: data.q5 || "",
+      q6: data.q6 || "",
+      q7: data.q7 || "",
+    };
 
-      try {
-        const token = await csrfTokenPromise;
-const res = await fetch("/api/ads/tiktok", {
-  method: "POST",
-  credentials: "include",
-  headers: {
-    "Content-Type": "application/json",
-    ...(token ? { "x-csrf-token": token } : {})
-  },
-  body: JSON.stringify(payload) // { q1, q2, q3, q4, q5, q6, q7, extraInfo? }
-});
-
-
-        if (!res.ok) {
-          let msg = `Serverfel ${res.status}`;
-          try {
-            const j = await res.json();
-            if (j?.message || j?.error) msg = j.message || j.error;
-          } catch {}
-          throw new Error(msg);
-        }
-
-        showStep(currentStep + 1, "next"); // visa tack-sidan
-      } catch (err) {
-        alert("❌ Kunde inte skicka formuläret. " + (err?.message || "Försök igen."));
-        console.error(err);
-      }
+    const token = await csrfTokenPromise;
+    const res = await fetch("/api/ads/tiktok", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { "x-csrf-token": token } : {})
+      },
+      body: JSON.stringify(payload)
     });
+
+    if (!res.ok) {
+      let msg = `Serverfel ${res.status}`;
+      try {
+        const j = await res.json();
+        if (j?.message || j?.error) msg = j.message || j.error;
+      } catch {}
+      throw new Error(msg);
+    }
+
+    showStep(currentStep + 1, "next"); // visa tack-sidan
+  } catch (err) {
+    alert("❌ Kunde inte skicka formuläret. " + (err?.message || "Försök igen."));
+    console.error(err);
+  }
+});
 
     window.nextStep = nextStep;
     window.prevStep = prevStep;
